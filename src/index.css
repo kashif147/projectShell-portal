@@ -1,0 +1,218 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-color: #0A1929;
+  --font-poppins: 'Poppins', sans-serif;
+  --font-inter: 'Inter', sans-serif;
+}
+
+/* Base Typography */
+body {
+  margin: 0;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #1f2937;
+}
+
+/* Typography Classes */
+.font-poppins {
+  font-family: var(--font-poppins);
+}
+
+.font-inter {
+  font-family: var(--font-inter);
+}
+
+/* Heading Styles */
+h1, h2, h3, h4, h5, h6,
+.ant-card-head-title,
+.ant-modal-title,
+.ant-page-header-heading-title {
+  font-family: var(--font-poppins);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Component Typography */
+.header-title {
+  font-family: var(--font-poppins);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.user-name {
+  font-family: var(--font-inter);
+  font-weight: 500;
+}
+
+/* Ant Design Component Overrides */
+.ant-btn {
+  font-family: var(--font-inter);
+  font-weight: 500;
+}
+
+.ant-menu {
+  font-family: var(--font-inter);
+}
+
+.ant-menu-item {
+  font-weight: 500;
+}
+
+.ant-card-meta-title {
+  font-family: var(--font-poppins);
+  font-weight: 600;
+}
+
+.ant-card-meta-description {
+  font-family: var(--font-inter);
+}
+
+.ant-statistic-title {
+  font-family: var(--font-inter);
+  font-weight: 500;
+}
+
+.ant-statistic-content {
+  font-family: var(--font-poppins);
+  font-weight: 600;
+}
+
+.ant-table {
+  font-family: var(--font-inter);
+}
+
+.ant-table-thead > tr > th {
+  font-family: var(--font-poppins);
+  font-weight: 600;
+}
+
+.ant-form-item-label > label {
+  font-family: var(--font-inter);
+  font-weight: 500;
+}
+
+.ant-dropdown-menu {
+  font-family: var(--font-inter);
+}
+
+.ant-tabs-tab {
+  font-family: var(--font-inter);
+  font-weight: 500;
+}
+
+/* Layout Styles */
+.ant-layout {
+  min-height: 100vh;
+}
+
+.ant-menu-dark.ant-menu-inline .ant-menu-item {
+  margin: 4px 0;
+}
+
+.ant-menu-dark.ant-menu-inline .ant-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .ant-card {
+    margin-bottom: 16px;
+  }
+
+  .ant-table {
+    overflow-x: auto;
+  }
+
+  .ant-list-item {
+    padding: 12px !important;
+  }
+
+  .ant-list-item-meta-title {
+    font-size: 14px !important;
+    font-family: var(--font-poppins);
+    font-weight: 600;
+  }
+
+  .ant-list-item-meta-description {
+    font-family: var(--font-inter);
+  }
+
+  .ant-statistic-title {
+    font-size: 14px !important;
+  }
+
+  .ant-statistic-content {
+    font-size: 20px !important;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Custom Button Styles */
+.ant-btn {
+  @apply rounded-md border-0 shadow-sm;
+}
+
+.ant-btn-primary {
+  background: linear-gradient(to right, #1890ff, #096dd9);
+  @apply text-white border-0;
+}
+
+.ant-btn-primary:hover {
+  background: linear-gradient(to right, #096dd9, #0050b3);
+}
+
+.ant-btn-default {
+  @apply bg-white border border-gray-200;
+}
+
+.ant-btn-dashed {
+  @apply border-gray-300;
+}
+
+.ant-btn-link {
+  @apply shadow-none text-blue-500;
+}
+
+.ant-btn-text {
+  @apply shadow-none text-gray-700;
+}
+
+.ant-btn-dangerous {
+  @apply bg-red-500 text-white border-0;
+}
+
+.ant-btn-dangerous:hover {
+  @apply bg-red-600;
+}
+
+/* Disabled state */
+.ant-btn[disabled],
+.ant-btn[disabled]:hover,
+.ant-btn[disabled]:focus,
+.ant-btn[disabled]:active {
+  @apply opacity-50 cursor-not-allowed;
+} 
