@@ -1,8 +1,9 @@
-export const initialState = {
+const initialState = {
   auth: {
-    user: {name: 'John Doe', email: 'john.doe@example.com'},
-    isAuthenticated: true,
-    loading: false,
-    error: null,
+    isLoading: true,
+    isSignedIn: false,
+    user: {},
   },
-}; 
+};
+
+export default initialState;
