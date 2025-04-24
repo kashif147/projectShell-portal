@@ -10,6 +10,7 @@ import Queries from '../pages/Queries';
 import Voting from '../pages/Voting';
 import Resources from '../pages/Resources';
 import LandingPage from '../pages/landingPage';
+import Application from '../pages/Application';
 
 export const publicRoutes = [
   {
@@ -38,6 +39,10 @@ export const privateRoutes = [
       {
         path: 'subscriptions',
         element: <Subscriptions />,
+      },
+      {
+        path: 'application',
+        element: <Application />,
       },
       {
         path: 'payments',

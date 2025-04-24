@@ -10,6 +10,8 @@ import { publicRoutes, privateRoutes } from './config/routes';;
 import './assets/theme/index.css';
 import { signInMicrosoft, validation } from './services/auth.services'
 import './config/globals.js';
+import { ErrorPage } from './pages/errorPage';
+import { getVerifier } from './helpers/verifier.helper.js';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
@@ -34,6 +36,7 @@ const Router = ({ auth }) => {
           ))}
         </Route>
       ))}
+        <Route exact path="*" element={<ErrorPage />} />
     </Routes>
   );
 };
@@ -59,7 +62,6 @@ const App = () => {
           dispatch(validation());
         }
       } catch (error) {
-        console.error('Authentication error:', error);
         toast.error('Authentication failed');
       }
     };

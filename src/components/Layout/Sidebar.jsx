@@ -10,6 +10,7 @@ import {
   QuestionCircleOutlined,
   FileOutlined,
   BookOutlined,
+  FormOutlined,
 } from '@ant-design/icons';
 
 const Sidebar = ({ collapsed }) => {
@@ -21,6 +22,11 @@ const Sidebar = ({ collapsed }) => {
       key: '/',
       icon: <DashboardOutlined />,
       label: 'Dashboard',
+    },
+    {
+      key: '/application',
+      icon: <FormOutlined />,
+      label: 'Application',
     },
     {
       key: '/profile',
