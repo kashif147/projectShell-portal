@@ -71,7 +71,7 @@ const MainLayout = () => {
     <Layout>
       {renderSidebar()}
       <Layout style={{ 
-        marginLeft: isMobile ? 0 : (collapsed ? 80 : 250), 
+        marginLeft: isMobile ? 0 : (collapsed ? 80 : 220), 
         transition: 'all 0.2s' 
       }}>
         <Header 
@@ -82,7 +82,7 @@ const MainLayout = () => {
         />
         <Content
           style={{
-            margin: '24px 16px',
+            margin: '12px 12px',
             padding: 24,
             background: colorBgContainer,
             borderRadius: borderRadiusLG,

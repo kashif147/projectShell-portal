@@ -2,10 +2,12 @@ import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Dropdown, Avatar } from 'antd';
 import { UserOutlined, BellOutlined } from '@ant-design/icons';
-import { logout } from '../../store/slice/auth.slice';
+import { signOut } from '../../services/auth.services';
+import { useNavigate } from 'react-router-dom';
 
 const Header = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
 
   const items = [
@@ -16,7 +18,7 @@ const Header = () => {
     {
       key: 'logout',
       label: 'Log out',
-      onClick: () => dispatch(logout()),
+      onClick: () => dispatch(signOut(navigate)),
     },
   ];
 

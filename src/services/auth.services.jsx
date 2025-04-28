@@ -3,7 +3,7 @@ import {
   signInMicrosoftRequest,
   signInRequest,
 } from '../api/auth.api';
-import { getHeaders, setHeaders } from '../helpers/auth.helper';
+import { deleteHeaders, getHeaders, setHeaders } from '../helpers/auth.helper';
 import { deleteVerifier } from '../helpers/verifier.helper';
 import { setSignedIn, setUser } from '../store/slice/auth.slice';
 
@@ -62,3 +62,17 @@ export const signInMicrosoft = data => {
   };
 };
 
+
+export const signOut = (navigate) => {
+  return dispatch => {
+    console.log('hellow');
+    try {
+      deleteHeaders();
+      dispatch(setSignedIn(false));
+      dispatch(setUser({}));
+      navigate('/landing')
+    } catch (error) {
+      toast.error('Something went wrong')
+    }
+  }
+};
