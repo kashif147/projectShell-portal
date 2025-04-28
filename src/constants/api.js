@@ -1,5 +1,5 @@
-// const DOMAIN = process.env.REACT_APP_BASE_URL_DEV;
-// const VERSION = 'v1';
-const BASE_URL = `https://projectshellapi-c0hqhbdwaaahbcab.northeurope-01.azurewebsites.net`;
+const DOMAIN = 'userserviceshell-aqf6f0b8fqgmagch.canadacentral-01.azurewebsites.net';
+const VERSION = 'v1';
+const BASE_URL = `https://${DOMAIN}/api/${VERSION}`;
 
 export { BASE_URL };

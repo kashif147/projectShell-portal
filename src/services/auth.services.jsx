@@ -39,26 +39,18 @@ export const signIn = data => {
 };
 
 export const signInMicrosoft = data => {
-  return async dispatch => {
-    try {
-      const res = await axios.post(
-        `https://userserviceshell-aqf6f0b8fqgmagch.canadacentral-01.azurewebsites.net/api/v1/auth/microsoft`, data,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
+  return dispatch => {
+    signInMicrosoftRequest(data)
+      .then(res => {
+        if (res.status === 200) {
+          setHeaders(res.data);
+          deleteVerifier()
+          dispatch(setSignedIn(true));
+        } else {
+          toast.error(res.data.errors[0] ?? 'Unable to Sign In');
         }
-      );
-      if (res.status === 200) {
-        setHeaders(res.data);
-        deleteVerifier()
-        dispatch(setSignedIn(true));
-      } else {
-        toast.error(res.data.errors[0] ?? 'Unable to Sign In');
-      }
-    } catch (error) {
-      toast.error('Something went wrong');
-    }
+      })
+      .catch(() => toast.error('Something went wrong'));
   };
 };
 
