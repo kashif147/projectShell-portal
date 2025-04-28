@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
 import { Card } from '../components/ui/Card';
 import PersonalInformation from '../components/application/PersonalInformation';
-import CorrespondenceDetails from '../components/application/CorrespondenceDetails';
 import ProfessionalDetails from '../components/application/ProfessionalDetails';
+import SubscriptionDetails from '../components/application/SubscriptionDetails';
 import Button from '../components/common/Button';
 
 const Application = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     personalInfo: {},
-    correspondenceDetails: {},
-    professionalDetails: {}
+    professionalDetails: {},
+    subscriptionDetails: {}
   });
 
   const steps = [
     { number: 1, title: 'Personal Information' },
-    { number: 2, title: 'Correspondence Details' },
-    { number: 3, title: 'Professional Details' }
+    { number: 2, title: 'Professional Details' },
+    { number: 3, title: 'Subscription Details' }
   ];
 
   const handleNext = () => {
@@ -39,23 +39,23 @@ const Application = () => {
   const validateCurrentStep = () => {
     switch (currentStep) {
       case 1:
-        const { forename, surname, gender, dateOfBirth } = formData.personalInfo || {};
-        if (!forename || !surname || !gender || !dateOfBirth) {
+        const { forename, surname, gender, dateOfBirth, email, mobileNo, addressLine1, addressLine4 } = formData.personalInfo || {};
+        if (!forename || !surname || !gender || !dateOfBirth || !email || !mobileNo || !addressLine1 || !addressLine4) {
           alert('Please fill in all required fields in Personal Information');
           return false;
         }
         break;
       case 2:
-        const { addressLine1, addressLine4, email, mobileNo } = formData.correspondenceDetails || {};
-        if (!addressLine1 || !addressLine4 || !email || !mobileNo) {
-          alert('Please fill in all required fields in Correspondence Details');
+        const { station, workLocation, rank, duty } = formData.professionalDetails || {};
+        if (!station || !workLocation || !rank || !duty) {
+          alert('Please fill in all required fields in Professional Details');
           return false;
         }
         break;
       case 3:
-        const { station, workLocation, rank, duty } = formData.professionalDetails || {};
-        if (!station || !workLocation || !rank || !duty) {
-          alert('Please fill in all required fields in Professional Details');
+        const { membershipType, paymentFrequency, cardNumber, cardHolderName, expiryDate, cvv } = formData.subscriptionDetails || {};
+        if (!membershipType || !paymentFrequency || !cardNumber || !cardHolderName || !expiryDate || !cvv) {
+          alert('Please fill in all required fields in Subscription Details');
           return false;
         }
         break;
@@ -82,16 +82,16 @@ const Application = () => {
         );
       case 2:
         return (
-          <CorrespondenceDetails
-            formData={formData.correspondenceDetails}
-            onFormDataChange={(data) => handleFormDataChange('correspondenceDetails', data)}
+          <ProfessionalDetails
+            formData={formData.professionalDetails}
+            onFormDataChange={(data) => handleFormDataChange('professionalDetails', data)}
           />
         );
       case 3:
         return (
-          <ProfessionalDetails
-            formData={formData.professionalDetails}
-            onFormDataChange={(data) => handleFormDataChange('professionalDetails', data)}
+          <SubscriptionDetails
+            formData={formData.subscriptionDetails}
+            onFormDataChange={(data) => handleFormDataChange('subscriptionDetails', data)}
           />
         );
       default:
