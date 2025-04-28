@@ -6,6 +6,7 @@ import {
 import { deleteHeaders, getHeaders, setHeaders } from '../helpers/auth.helper';
 import { deleteVerifier } from '../helpers/verifier.helper';
 import { setSignedIn, setUser } from '../store/slice/auth.slice';
+import { Navigate } from 'react-router-dom';
 
 export const validation = () => {
   return async (dispatch) => {
@@ -22,22 +23,6 @@ export const validation = () => {
   };
 };
 
-export const signIn = data => {
-  return dispatch => {
-    signInRequest(data)
-      .then(res => {
-        if (res.status === 200) {
-          setHeaders(res.data);
-          dispatch(setSignedIn(true));
-          // dispatch(setUser(res.data.data));
-        } else {
-          toast.error(res.data.errors[0] ?? 'Unable to Sign In');
-        }
-      })
-      .catch(() => toast.error('Something went wrong'));
-  };
-};
-
 export const signInMicrosoft = data => {
   return dispatch => {
     signInMicrosoftRequest(data)
@@ -46,6 +31,7 @@ export const signInMicrosoft = data => {
           setHeaders(res.data);
           deleteVerifier()
           dispatch(setSignedIn(true));
+          dispatch(setUser(res.data.data));
         } else {
           toast.error(res.data.errors[0] ?? 'Unable to Sign In');
         }
@@ -57,7 +43,6 @@ export const signInMicrosoft = data => {
 
 export const signOut = (navigate) => {
   return dispatch => {
-    console.log('hellow');
     try {
       deleteHeaders();
       dispatch(setSignedIn(false));

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-// import { RouterHelper } from '../helpers/router.helper';
+import Button from '../components/common/Button';
 
 export const ErrorPage = () => {
   const navigate = useNavigate()
@@ -11,12 +11,13 @@ export const ErrorPage = () => {
       <p className="mb-8 text-2xl font-medium">
         The page you're looking for doesn't exist.
       </p>
-
-      {/* <button
-        onClick={() => navigate(RouterHelper.homePath())}
-        className="px-6 py-3 bg-blue-500 hover:bg-blue-400 text-white font-semibold rounded-md">
+      <Button
+        type="primary"
+        onClick={() => navigate('/')}
+        className="block mx-auto px-6 py-3 bg-blue-500 hover:bg-blue-400 text-white font-semibold rounded-md"
+      >
         HOME
-      </button> */}
+      </Button>
     </div>
   );
 };

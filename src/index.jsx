@@ -36,7 +36,7 @@ const Router = ({ auth }) => {
           ))}
         </Route>
       ))}
-        <Route exact path="*" element={<ErrorPage />} />
+      <Route exact path="*" element={<ErrorPage />} />
     </Routes>
   );
 };
@@ -51,8 +51,8 @@ const App = () => {
   React.useEffect(() => {
     const handleAuthentication = async () => {
       try {
-        if (authCode) {
-          const code_verifier = getVerifier();
+        const code_verifier = getVerifier();
+        if (authCode && code_verifier) {
           const data = {
             code: authCode,
             codeVerifier: code_verifier
