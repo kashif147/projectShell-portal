@@ -5,10 +5,10 @@ import Button from '../common/Button';
 import { useDispatch } from 'react-redux';
 import { signOut } from '../../services/auth.services';
 import { useNavigate } from 'react-router-dom';
-// import { useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 
 const Header = ({ collapsed, setCollapsed, isMobile, setDrawerVisible }) => {
-  // const user = useSelector((state) => state.auth?.user);
+  const {user} = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -71,7 +71,7 @@ const Header = ({ collapsed, setCollapsed, isMobile, setDrawerVisible }) => {
                 boxShadow: '0 2px 4px rgba(24,144,255,0.2)'
               }}
             />
-            <span className="hidden sm:inline user-name text-gray-700">{'John Doe'}</span>
+            <span className="hidden sm:inline user-name text-gray-700">{user?.userFullName ?? 'John Doe'}</span>
           </div>
         </Dropdown>
       </div>

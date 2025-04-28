@@ -1,12 +1,10 @@
 import axios from 'axios';
 import {
   signInMicrosoftRequest,
-  signInRequest,
 } from '../api/auth.api';
 import { deleteHeaders, getHeaders, setHeaders } from '../helpers/auth.helper';
 import { deleteVerifier } from '../helpers/verifier.helper';
 import { setSignedIn, setUser } from '../store/slice/auth.slice';
-import { Navigate } from 'react-router-dom';
 
 export const validation = () => {
   return async (dispatch) => {
@@ -28,10 +26,11 @@ export const signInMicrosoft = data => {
     signInMicrosoftRequest(data)
       .then(res => {
         if (res.status === 200) {
+          console.log('res.data',res.data);
           setHeaders(res.data);
           deleteVerifier()
           dispatch(setSignedIn(true));
-          dispatch(setUser(res.data.data));
+          dispatch(setUser(res.data.user));
         } else {
           toast.error(res.data.errors[0] ?? 'Unable to Sign In');
         }
