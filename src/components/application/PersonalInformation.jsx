@@ -26,14 +26,16 @@ const PersonalInformation = ({ formData, onFormDataChange }) => {
             label="Forename"
             name="forename"
             required
-            value={formData?.forename || ''}
+            placeholder="Enter your forename"
+            value={formData?.forename || user?.userFirstName || ''}
             onChange={handleInputChange}
           />
           <Input
             label="Surname"
             name="surname"
             required
-            value={formData?.surname || ''}
+            placeholder="Enter your surname"
+            value={formData?.surname || user?.userLastName || ''}
             onChange={handleInputChange}
           />
           <Select
@@ -54,6 +56,7 @@ const PersonalInformation = ({ formData, onFormDataChange }) => {
             required
             value={formData?.dateOfBirth || ''}
             onChange={handleInputChange}
+            max={new Date().toISOString().split('T')[0]}
           />
           <Input
             label="Country Primary Qualification"
@@ -70,8 +73,7 @@ const PersonalInformation = ({ formData, onFormDataChange }) => {
           <Select
             label="Preferred address"
             name="preferredAddress"
-            defaultValue="home"
-            value={formData?.preferredAddress || ''}
+            value={formData?.preferredAddress || 'home'}
             onChange={handleInputChange}
             options={[
               { value: 'home', label: 'Home' },
@@ -113,8 +115,7 @@ const PersonalInformation = ({ formData, onFormDataChange }) => {
           <Select
             label="Country"
             name="country"
-            defaultValue="ireland"
-            value={formData?.country || ''}
+            value={formData?.country || 'ireland'}
             onChange={handleInputChange}
             options={[
               { value: 'ireland', label: 'Ireland' },
@@ -128,43 +129,42 @@ const PersonalInformation = ({ formData, onFormDataChange }) => {
           <Select
             label="Preferred Email"
             name="preferredEmail"
-            defaultValue="work"
-            value={formData?.preferredEmail || ''}
+            value={formData?.preferredEmail || 'work'}
             onChange={handleInputChange}
             options={[
               { value: 'work', label: 'Work' },
               { value: 'personal', label: 'Personal' }
             ]}
           />
+          <Checkbox
+            label={<span className="font-medium">Consent to receive SMS Alerts</span>}
+            name="smsConsent"
+            checked={formData?.smsConsent || false}
+            onChange={handleInputChange}
+          />
+          <Checkbox
+            label={<span className="font-medium">Consent to receive Email Alerts</span>}
+            name="emailConsent"
+            checked={formData?.emailConsent || false}
+            onChange={handleInputChange}
+          />
           <Input
             label="Email"
             name="email"
             type="email"
+            placeholder="Enter your email"
             required
-            value={formData?.email || ''}
+            value={formData?.email || user?.userEmail || ''}
             onChange={handleInputChange}
           />
           <Input
             label="Mobile No"
             name="mobileNo"
             required
-            value={formData?.mobileNo || ''}
+            placeholder="Enter your mobile number"
+            value={formData?.mobileNo || user?.userMobilePhone || ''}
             onChange={handleInputChange}
           />
-          <div className="flex flex-col gap-2">
-            <Checkbox
-              label="Consent to receive SMS Alerts"
-              name="smsConsent"
-              checked={formData?.smsConsent || false}
-              onChange={handleInputChange}
-            />
-            <Checkbox
-              label="Consent to receive Email Alerts"
-              name="emailConsent"
-              checked={formData?.emailConsent || false}
-              onChange={handleInputChange}
-            />
-          </div>
         </div>
       </Card>
     </div>
