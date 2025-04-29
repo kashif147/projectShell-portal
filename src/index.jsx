@@ -70,6 +70,8 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authCode, dispatch, location, navigate]);
 
+  console.log('auth========>',auth);
+
   return auth.isLoading ? <div>loading...</div> : <Router auth={auth} />;
 };
 

@@ -4,8 +4,11 @@ import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
 import { DatePicker } from '../ui/DatePicker';
 import { Card } from '../ui/Card';
+import { useSelector } from 'react-redux';
 
 const PersonalInformation = ({ formData, onFormDataChange }) => {
+  const { user } = useSelector(state => state.auth);
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     onFormDataChange({
@@ -56,46 +59,6 @@ const PersonalInformation = ({ formData, onFormDataChange }) => {
             label="Country Primary Qualification"
             name="countryPrimaryQualification"
             value={formData?.countryPrimaryQualification || ''}
-            onChange={handleInputChange}
-          />
-          <div className="flex flex-col gap-2">
-            <Checkbox
-              label="Deceased"
-              name="deceased"
-              checked={formData?.deceased || false}
-              onChange={handleInputChange}
-            />
-            {formData?.deceased && (
-              <DatePicker
-                label="Deceased Date"
-                name="deceasedDate"
-                value={formData?.deceasedDate || ''}
-                onChange={handleInputChange}
-              />
-            )}
-          </div>
-          <Select
-            label="Marital Status"
-            name="maritalStatus"
-            value={formData?.maritalStatus || ''}
-            onChange={handleInputChange}
-            options={[
-              { value: 'single', label: 'Single' },
-              { value: 'married', label: 'Married' },
-              { value: 'divorced', label: 'Divorced' },
-              { value: 'widowed', label: 'Widowed' }
-            ]}
-          />
-          <Input
-            label="Partner Details"
-            name="partnerDetails"
-            value={formData?.partnerDetails || ''}
-            onChange={handleInputChange}
-          />
-          <Input
-            label="Children Details"
-            name="childrenDetails"
-            value={formData?.childrenDetails || ''}
             onChange={handleInputChange}
           />
         </div>

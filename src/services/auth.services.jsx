@@ -2,7 +2,7 @@ import axios from 'axios';
 import {
   signInMicrosoftRequest,
 } from '../api/auth.api';
-import { deleteHeaders, getHeaders, setHeaders } from '../helpers/auth.helper';
+import { deleteHeaders, deleteUser, getHeaders, getUser, saveUser, setHeaders } from '../helpers/auth.helper';
 import { deleteVerifier } from '../helpers/verifier.helper';
 import { setSignedIn, setUser } from '../store/slice/auth.slice';
 
@@ -10,8 +10,11 @@ export const validation = () => {
   return async (dispatch) => {
     try {
       const res = getHeaders();
-      if (res?.token) {
+      const user = getUser()
+      console.log(user);
+      if (res?.token && user?.user) {
         dispatch(setSignedIn(true));
+        dispatch(setUser(JSON.parse(user?.user)));
       } else {
         dispatch(setSignedIn(false));
       }
@@ -26,8 +29,9 @@ export const signInMicrosoft = data => {
     signInMicrosoftRequest(data)
       .then(res => {
         if (res.status === 200) {
-          console.log('res.data',res.data);
+          console.log('res.data', res.data);
           setHeaders(res.data);
+          saveUser(res.data.user)
           deleteVerifier()
           dispatch(setSignedIn(true));
           dispatch(setUser(res.data.user));
@@ -44,6 +48,7 @@ export const signOut = (navigate) => {
   return dispatch => {
     try {
       deleteHeaders();
+      deleteUser();
       dispatch(setSignedIn(false));
       dispatch(setUser({}));
       navigate('/landing')
