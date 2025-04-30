@@ -65,6 +65,7 @@ const PersonalInformation = ({ formData, onFormDataChange, showValidation = fals
           <Input
             label="Country Primary Qualification"
             name="countryPrimaryQualification"
+            placeholder="Enter your country primary qualification"
             value={formData?.countryPrimaryQualification || ''}
             onChange={handleInputChange}
           />
@@ -132,38 +133,6 @@ const PersonalInformation = ({ formData, onFormDataChange, showValidation = fals
               { value: 'newzealand', label: 'New Zealand' }
             ]}
           />
-          <Select
-            label="Preferred Email"
-            name="preferredEmail"
-            value={formData?.preferredEmail || 'work'}
-            onChange={handleInputChange}
-            options={[
-              { value: 'work', label: 'Work' },
-              { value: 'personal', label: 'Personal' }
-            ]}
-          />
-          <Checkbox
-            label={<span className="font-medium">Consent to receive SMS Alerts</span>}
-            name="smsConsent"
-            checked={formData?.smsConsent || false}
-            onChange={handleInputChange}
-          />
-          <Checkbox
-            label={<span className="font-medium">Consent to receive Email Alerts</span>}
-            name="emailConsent"
-            checked={formData?.emailConsent || false}
-            onChange={handleInputChange}
-          />
-          <Input
-            label="Email"
-            name="email"
-            type="email"
-            placeholder="Enter your email"
-            required
-            value={formData?.email || user?.userEmail || ''}
-            onChange={handleInputChange}
-            showValidation={showValidation}
-          />
           <Input
             label="Mobile No"
             name="mobileNo"
@@ -173,6 +142,46 @@ const PersonalInformation = ({ formData, onFormDataChange, showValidation = fals
             onChange={handleInputChange}
             showValidation={showValidation}
           />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm font-medium text-gray-700">Preferred Email</label>
+              <Checkbox
+                label={<span className="font-medium text-sm">Consent to receive SMS Alerts</span>}
+                name="smsConsent"
+                checked={formData?.smsConsent || false}
+                onChange={handleInputChange}
+              />
+            </div>
+            <Select
+              name="preferredEmail"
+              value={formData?.preferredEmail || 'work'}
+              onChange={handleInputChange}
+              options={[
+                { value: 'work', label: 'Work' },
+                { value: 'personal', label: 'Personal' }
+              ]}
+            />
+          </div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <Checkbox
+                label={<span className="font-medium text-sm">Consent to receive Email Alerts</span>}
+                name="emailConsent"
+                checked={formData?.emailConsent || false}
+                onChange={handleInputChange}
+              />
+            </div>
+            <Input
+              name="email"
+              type="email"
+              placeholder="Enter your email"
+              required
+              value={formData?.email || user?.userEmail || ''}
+              onChange={handleInputChange}
+              showValidation={showValidation}
+            />
+          </div>
         </div>
       </Card>
     </div>
