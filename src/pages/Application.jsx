@@ -1,17 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../components/ui/Card';
 import PersonalInformation from '../components/application/PersonalInformation';
 import ProfessionalDetails from '../components/application/ProfessionalDetails';
 import SubscriptionDetails from '../components/application/SubscriptionDetails';
 import Button from '../components/common/Button';
+import { useSelector } from 'react-redux';
 
 const Application = () => {
+  const { user } = useSelector(state => state.auth);
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    personalInfo: {},
+    personalInfo: {
+      forename: user?.userFirstName || '',
+      surname: user?.userLastName || '',
+      email: user?.userEmail || '',
+      mobileNo: user?.userMobilePhone || '',
+      preferredAddress: 'home',
+      country: 'ireland',
+      preferredEmail: 'work',
+      smsConsent: false,
+      emailConsent: false
+    },
     professionalDetails: {},
     subscriptionDetails: {}
   });
+  const [showValidation, setShowValidation] = useState(false);
 
   const steps = [
     { number: 1, title: 'Personal Information' },
@@ -20,8 +33,10 @@ const Application = () => {
   ];
 
   const handleNext = () => {
+    setShowValidation(true);
     if (validateCurrentStep()) {
       setCurrentStep(prev => Math.min(prev + 1, steps.length));
+      setShowValidation(false);
     }
   };
 
@@ -41,21 +56,18 @@ const Application = () => {
       case 1:
         const { forename, surname, gender, dateOfBirth, email, mobileNo, addressLine1, addressLine4 } = formData.personalInfo || {};
         if (!forename || !surname || !gender || !dateOfBirth || !email || !mobileNo || !addressLine1 || !addressLine4) {
-          alert('Please fill in all required fields in Personal Information');
           return false;
         }
         break;
       case 2:
         const { station, workLocation, rank, duty } = formData.professionalDetails || {};
         if (!station || !workLocation || !rank || !duty) {
-          alert('Please fill in all required fields in Professional Details');
           return false;
         }
         break;
       case 3:
         const { membershipType, paymentFrequency, cardNumber, cardHolderName, expiryDate, cvv } = formData.subscriptionDetails || {};
         if (!membershipType || !paymentFrequency || !cardNumber || !cardHolderName || !expiryDate || !cvv) {
-          alert('Please fill in all required fields in Subscription Details');
           return false;
         }
         break;
@@ -64,6 +76,7 @@ const Application = () => {
   };
 
   const handleSubmit = () => {
+    setShowValidation(true);
     if (validateCurrentStep()) {
       // Here you would typically send the form data to your backend
       console.log('Form submitted:', formData);
@@ -78,6 +91,7 @@ const Application = () => {
           <PersonalInformation
             formData={formData.personalInfo}
             onFormDataChange={(data) => handleFormDataChange('personalInfo', data)}
+            showValidation={showValidation}
           />
         );
       case 2:
@@ -85,6 +99,7 @@ const Application = () => {
           <ProfessionalDetails
             formData={formData.professionalDetails}
             onFormDataChange={(data) => handleFormDataChange('professionalDetails', data)}
+            showValidation={showValidation}
           />
         );
       case 3:
@@ -92,6 +107,7 @@ const Application = () => {
           <SubscriptionDetails
             formData={formData.subscriptionDetails}
             onFormDataChange={(data) => handleFormDataChange('subscriptionDetails', data)}
+            showValidation={showValidation}
           />
         );
       default:

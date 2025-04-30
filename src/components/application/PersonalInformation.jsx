@@ -6,7 +6,7 @@ import { DatePicker } from '../ui/DatePicker';
 import { Card } from '../ui/Card';
 import { useSelector } from 'react-redux';
 
-const PersonalInformation = ({ formData, onFormDataChange }) => {
+const PersonalInformation = ({ formData, onFormDataChange, showValidation = false }) => {
   const { user } = useSelector(state => state.auth);
 
   const handleInputChange = (e) => {
@@ -29,6 +29,7 @@ const PersonalInformation = ({ formData, onFormDataChange }) => {
             placeholder="Enter your forename"
             value={formData?.forename || user?.userFirstName || ''}
             onChange={handleInputChange}
+            showValidation={showValidation}
           />
           <Input
             label="Surname"
@@ -37,6 +38,7 @@ const PersonalInformation = ({ formData, onFormDataChange }) => {
             placeholder="Enter your surname"
             value={formData?.surname || user?.userLastName || ''}
             onChange={handleInputChange}
+            showValidation={showValidation}
           />
           <Select
             label="Gender"
@@ -44,6 +46,7 @@ const PersonalInformation = ({ formData, onFormDataChange }) => {
             required
             value={formData?.gender || ''}
             onChange={handleInputChange}
+            showValidation={showValidation}
             options={[
               { value: 'male', label: 'Male' },
               { value: 'female', label: 'Female' },
@@ -57,6 +60,7 @@ const PersonalInformation = ({ formData, onFormDataChange }) => {
             value={formData?.dateOfBirth || ''}
             onChange={handleInputChange}
             max={new Date().toISOString().split('T')[0]}
+            showValidation={showValidation}
           />
           <Input
             label="Country Primary Qualification"
@@ -92,6 +96,7 @@ const PersonalInformation = ({ formData, onFormDataChange }) => {
             required
             value={formData?.addressLine1 || ''}
             onChange={handleInputChange}
+            showValidation={showValidation}
           />
           <Input
             label="Address line 2 (Street or Road)"
@@ -111,6 +116,7 @@ const PersonalInformation = ({ formData, onFormDataChange }) => {
             required
             value={formData?.addressLine4 || ''}
             onChange={handleInputChange}
+            showValidation={showValidation}
           />
           <Select
             label="Country"
@@ -156,6 +162,7 @@ const PersonalInformation = ({ formData, onFormDataChange }) => {
             required
             value={formData?.email || user?.userEmail || ''}
             onChange={handleInputChange}
+            showValidation={showValidation}
           />
           <Input
             label="Mobile No"
@@ -164,6 +171,7 @@ const PersonalInformation = ({ formData, onFormDataChange }) => {
             placeholder="Enter your mobile number"
             value={formData?.mobileNo || user?.userMobilePhone || ''}
             onChange={handleInputChange}
+            showValidation={showValidation}
           />
         </div>
       </Card>
