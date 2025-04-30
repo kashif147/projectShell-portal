@@ -5,6 +5,7 @@ import { Checkbox } from '../ui/Checkbox';
 import { DatePicker } from '../ui/DatePicker';
 import { Card } from '../ui/Card';
 import { useSelector } from 'react-redux';
+import { countries } from '../../constants/countries';
 
 const PersonalInformation = ({ formData, onFormDataChange, showValidation = false }) => {
   const { user } = useSelector(state => state.auth);
@@ -122,16 +123,11 @@ const PersonalInformation = ({ formData, onFormDataChange, showValidation = fals
           <Select
             label="Country"
             name="country"
-            value={formData?.country || 'ireland'}
+            value={formData?.country || 'IE'}
             onChange={handleInputChange}
-            options={[
-              { value: 'ireland', label: 'Ireland' },
-              { value: 'uk', label: 'United Kingdom' },
-              { value: 'usa', label: 'United States' },
-              { value: 'canada', label: 'Canada' },
-              { value: 'australia', label: 'Australia' },
-              { value: 'newzealand', label: 'New Zealand' }
-            ]}
+            options={countries}
+            isSearchable
+            placeholder="Search for a country..."
           />
           <Input
             label="Mobile No"
