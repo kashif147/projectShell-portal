@@ -144,7 +144,7 @@ const PersonalInformation = ({ formData, onFormDataChange, showValidation = fals
               <Checkbox
                 label={<span className="font-medium text-sm">Consent to receive SMS Alerts</span>}
                 name="smsConsent"
-                checked={formData?.smsConsent || false}
+                checked={formData?.smsConsent || true}
                 onChange={handleInputChange}
               />
             </div>
@@ -164,7 +164,7 @@ const PersonalInformation = ({ formData, onFormDataChange, showValidation = fals
               <Checkbox
                 label={<span className="font-medium text-sm">Consent to receive Email Alerts</span>}
                 name="emailConsent"
-                checked={formData?.emailConsent || false}
+                checked={formData?.emailConsent || true}
                 onChange={handleInputChange}
               />
             </div>

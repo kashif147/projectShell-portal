@@ -7,6 +7,7 @@ export const DatePicker = ({
   className = '',
   value,
   onChange,
+  disableAgeValidation = false,
   ...props
 }) => {
   const [dateValue, setDateValue] = useState('');
@@ -22,6 +23,8 @@ export const DatePicker = ({
   `;
 
   const validateAge = (dateString) => {
+    if (disableAgeValidation) return 16; // Skip age validation if disabled
+    
     const today = new Date();
     const birthDate = new Date(dateString);
     const age = today.getFullYear() - birthDate.getFullYear();
@@ -71,7 +74,7 @@ export const DatePicker = ({
         setDateValue(isoDate);
         
         const age = validateAge(isoDate);
-        if (age < 16) {
+        if (age < 16 && !disableAgeValidation) {
           setError('You must be 16 years or older to proceed');
         } else {
           setError('');
