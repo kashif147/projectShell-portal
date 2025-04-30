@@ -4,7 +4,7 @@ import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
 import { Card } from '../ui/Card';
 
-const SubscriptionDetails = ({ formData, onFormDataChange }) => {
+const SubscriptionDetails = ({ formData, onFormDataChange, showValidation = false }) => {
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     onFormDataChange({
@@ -24,6 +24,8 @@ const SubscriptionDetails = ({ formData, onFormDataChange }) => {
             required
             value={formData?.membershipType || ''}
             onChange={handleInputChange}
+            showValidation={showValidation}
+            placeholder="Select membership type"
             options={[
               { value: 'regular', label: 'Regular Membership' },
               { value: 'premium', label: 'Premium Membership' },
@@ -36,6 +38,8 @@ const SubscriptionDetails = ({ formData, onFormDataChange }) => {
             required
             value={formData?.paymentFrequency || ''}
             onChange={handleInputChange}
+            showValidation={showValidation}
+            placeholder="Select payment frequency"
             options={[
               { value: 'monthly', label: 'Monthly' },
               { value: 'quarterly', label: 'Quarterly' },
@@ -70,43 +74,6 @@ const SubscriptionDetails = ({ formData, onFormDataChange }) => {
             label="Premium Content Access"
             name="premiumContent"
             checked={formData?.premiumContent || false}
-            onChange={handleInputChange}
-          />
-        </div>
-      </Card>
-
-      <Card className="p-4">
-        <h3 className="text-lg font-semibold mb-4">Payment Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            label="Card Number"
-            name="cardNumber"
-            type="text"
-            required
-            value={formData?.cardNumber || ''}
-            onChange={handleInputChange}
-          />
-          <Input
-            label="Card Holder Name"
-            name="cardHolderName"
-            required
-            value={formData?.cardHolderName || ''}
-            onChange={handleInputChange}
-          />
-          <Input
-            label="Expiry Date"
-            name="expiryDate"
-            type="month"
-            required
-            value={formData?.expiryDate || ''}
-            onChange={handleInputChange}
-          />
-          <Input
-            label="CVV"
-            name="cvv"
-            type="text"
-            required
-            value={formData?.cvv || ''}
             onChange={handleInputChange}
           />
         </div>
