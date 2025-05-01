@@ -1,29 +1,69 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { DatePicker } from '../ui/DatePicker';
 import { Checkbox } from '../ui/Checkbox';
+import { InfoCircleOutlined } from '@ant-design/icons';
 
 const ProfessionalDetails = ({ formData, onFormDataChange, showValidation = false }) => {
+  const [showOtherLocation, setShowOtherLocation] = useState(false);
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     onFormDataChange({
       ...formData,
       [name]: type === 'checkbox' ? checked : value
     });
+
+    if (name === 'workLocation' && value === 'other') {
+      setShowOtherLocation(true);
+    } else if (name === 'workLocation') {
+      setShowOtherLocation(false);
+    }
   };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <Input
-        label="Work location"
-        name="workLocation"
-        required
-        value={formData?.workLocation || ''}
-        onChange={handleInputChange}
-        showValidation={showValidation}
-        placeholder="Enter work location"
-      />
+      <div className="relative">
+        <div className="flex items-center justify-between mb-1">
+          <label className="block text-sm font-medium text-gray-700">Work location</label>
+          <div className="group relative">
+            <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 cursor-help" />
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 p-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+              Select your primary work location. If your location is not listed, choose 'Other' and specify it below.
+            </div>
+          </div>
+        </div>
+        <Select
+          name="workLocation"
+          required
+          value={formData?.workLocation || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+          placeholder="Select work location"
+          options={[
+            { value: 'dublin', label: 'Dublin' },
+            { value: 'cork', label: 'Cork' },
+            { value: 'galway', label: 'Galway' },
+            { value: 'limerick', label: 'Limerick' },
+            { value: 'waterford', label: 'Waterford' },
+            { value: 'other', label: 'Other' }
+          ]}
+        />
+        {showOtherLocation && (
+          <div className="mt-2">
+            <Input
+              label="Work Location"
+              name="otherWorkLocation"
+              required
+              value={formData?.otherWorkLocation || ''}
+              onChange={handleInputChange}
+              showValidation={showValidation}
+              placeholder="Enter your work location"
+            />
+          </div>
+        )}
+      </div>
       <Select
         label="Grade"
         name="grade"
