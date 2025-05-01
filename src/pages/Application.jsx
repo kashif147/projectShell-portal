@@ -120,23 +120,28 @@ const Application = () => {
       <h1 className="text-2xl font-bold mb-4">Application</h1>
 
       {/* Stepper */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 sm:gap-0">
         {steps.map((step) => (
-          <div key={step.number} className="flex items-center">
-            <div className={`
-              w-8 h-8 rounded-full flex items-center justify-center
-              ${currentStep === step.number ? 'bg-blue-500 text-white' :
-                currentStep > step.number ? 'bg-green-500 text-white' : 'bg-gray-200'}
-            `}>
-              {currentStep > step.number ? '✓' : step.number}
-            </div>
-            <div className="ml-2 hidden sm:block">
-              <p className={`text-sm ${currentStep === step.number ? 'text-blue-500 font-semibold' : 'text-gray-500'}`}>
-                {step.title}
-              </p>
+          <div key={step.number} className="flex items-center w-full sm:w-auto">
+            <div className="flex items-center w-full sm:w-auto">
+              <div className={`
+                w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
+                ${currentStep === step.number ? 'bg-blue-500 text-white' :
+                  currentStep > step.number ? 'bg-green-500 text-white' : 'bg-gray-200'}
+              `}>
+                {currentStep > step.number ? '✓' : step.number}
+              </div>
+              <div className="ml-2">
+                <p className={`text-sm whitespace-nowrap ${currentStep === step.number ? 'text-blue-500 font-semibold' : 'text-gray-500'}`}>
+                  {step.title}
+                </p>
+              </div>
             </div>
             {step.number < steps.length && (
-              <div className={`w-full sm:w-16 h-1 mx-2 ${currentStep > step.number ? 'bg-green-500' : 'bg-gray-200'}`} />
+              <div className={`
+                hidden sm:block flex-grow mx-2 h-1 min-w-[16px]
+                ${currentStep > step.number ? 'bg-green-500' : 'bg-gray-200'}
+              `} />
             )}
           </div>
         ))}
