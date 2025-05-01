@@ -7,6 +7,7 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 
 const ProfessionalDetails = ({ formData, onFormDataChange, showValidation = false }) => {
   const [showOtherLocation, setShowOtherLocation] = useState(false);
+  const [showOtherGrade, setShowOtherGrade] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -20,6 +21,12 @@ const ProfessionalDetails = ({ formData, onFormDataChange, showValidation = fals
     } else if (name === 'workLocation') {
       setShowOtherLocation(false);
     }
+
+    if (name === 'grade' && value === 'other') {
+      setShowOtherGrade(true);
+    } else if (name === 'grade') {
+      setShowOtherGrade(false);
+    }
   };
 
   return (
@@ -29,8 +36,11 @@ const ProfessionalDetails = ({ formData, onFormDataChange, showValidation = fals
           <label className="block text-sm font-medium text-gray-700">Work location</label>
           <div className="group relative">
             <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 cursor-help" />
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 p-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-              Select your primary work location. If your location is not listed, choose 'Other' and specify it below.
+            <div className="absolute right-0 bottom-full mb-2 w-48 p-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+              <div className="relative">
+                <div className="absolute -bottom-1 right-2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                Select your primary work location. If your location is not listed, choose 'Other' and specify it below.
+              </div>
             </div>
           </div>
         </div>
@@ -64,21 +74,48 @@ const ProfessionalDetails = ({ formData, onFormDataChange, showValidation = fals
           </div>
         )}
       </div>
-      <Select
-        label="Grade"
-        name="grade"
-        required
-        value={formData?.grade || ''}
-        onChange={handleInputChange}
-        showValidation={showValidation}
-        placeholder="Select grade"
-        options={[
-          { value: 'junior', label: 'Junior' },
-          { value: 'senior', label: 'Senior' },
-          { value: 'lead', label: 'Lead' },
-          { value: 'manager', label: 'Manager' }
-        ]}
-      />
+      <div className="relative">
+        <div className="flex items-center justify-between mb-1">
+          <label className="block text-sm font-medium text-gray-700">Grade</label>
+          <div className="group relative">
+            <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 cursor-help" />
+            <div className="absolute right-0 bottom-full mb-2 w-48 p-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+              <div className="relative">
+                <div className="absolute -bottom-1 right-2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                Select your current grade. If your grade is not listed, choose 'Other' and specify it below.
+              </div>
+            </div>
+          </div>
+        </div>
+        <Select
+          name="grade"
+          required
+          value={formData?.grade || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+          placeholder="Select grade"
+          options={[
+            { value: 'junior', label: 'Junior' },
+            { value: 'senior', label: 'Senior' },
+            { value: 'lead', label: 'Lead' },
+            { value: 'manager', label: 'Manager' },
+            { value: 'other', label: 'Other' }
+          ]}
+        />
+        {showOtherGrade && (
+          <div className="mt-2">
+            <Input
+              label="Grade"
+              name="otherGrade"
+              required
+              value={formData?.otherGrade || ''}
+              onChange={handleInputChange}
+              showValidation={showValidation}
+              placeholder="Enter your grade"
+            />
+          </div>
+        )}
+      </div>
       <Select
         label="Section"
         name="section"
