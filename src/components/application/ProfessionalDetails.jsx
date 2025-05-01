@@ -4,10 +4,58 @@ import { Select } from '../ui/Select';
 import { DatePicker } from '../ui/DatePicker';
 import { Checkbox } from '../ui/Checkbox';
 import { InfoCircleOutlined } from '@ant-design/icons';
+import { TreeSelect } from 'antd';
+
+const { SHOW_PARENT } = TreeSelect;
 
 const ProfessionalDetails = ({ formData, onFormDataChange, showValidation = false }) => {
   const [showOtherLocation, setShowOtherLocation] = useState(false);
   const [showOtherGrade, setShowOtherGrade] = useState(false);
+
+  const treeData = [
+    {
+      title: 'Section 1',
+      value: 'section1',
+      children: [
+        {
+          title: 'Subsection 1.1',
+          value: 'section1.1',
+        },
+        {
+          title: 'Subsection 1.2',
+          value: 'section1.2',
+        },
+      ],
+    },
+    {
+      title: 'Section 2',
+      value: 'section2',
+      children: [
+        {
+          title: 'Subsection 2.1',
+          value: 'section2.1',
+        },
+        {
+          title: 'Subsection 2.2',
+          value: 'section2.2',
+        },
+      ],
+    },
+    {
+      title: 'Section 3',
+      value: 'section3',
+      children: [
+        {
+          title: 'Subsection 3.1',
+          value: 'section3.1',
+        },
+        {
+          title: 'Subsection 3.2',
+          value: 'section3.2',
+        },
+      ],
+    },
+  ];
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -28,6 +76,23 @@ const ProfessionalDetails = ({ formData, onFormDataChange, showValidation = fals
       setShowOtherGrade(false);
     }
   };
+
+  const handleSectionChange = (value) => {
+    // Ensure only 2 selections are allowed
+    if (value.length <= 2) {
+      onFormDataChange({
+        ...formData,
+        section: value
+      });
+    }
+  };
+
+  const customDropdownRender = (menu) => (
+    <div className="p-2">
+      <div className="text-xs text-gray-500 mb-2">Select up to 2 sections</div>
+      {menu}
+    </div>
+  );
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -116,18 +181,27 @@ const ProfessionalDetails = ({ formData, onFormDataChange, showValidation = fals
           </div>
         )}
       </div>
-      <Select
-        label="Section"
-        name="section"
-        value={formData?.section || ''}
-        onChange={handleInputChange}
-        placeholder="Select section"
-        options={[
-          { value: 'section1', label: 'Section 1' },
-          { value: 'section2', label: 'Section 2' },
-          { value: 'section3', label: 'Section 3' }
-        ]}
-      />
+      <div className="relative">
+        <div className="flex items-center justify-between mb-1">
+          <label className="block text-sm font-medium text-gray-700">Section</label>
+        </div>
+        <TreeSelect
+          className="w-full"
+          treeData={treeData}
+          value={formData?.section || []}
+          onChange={handleSectionChange}
+          treeCheckable={true}
+          showCheckedStrategy={SHOW_PARENT}
+          maxTagCount={2}
+          maxTagPlaceholder={(omittedValues) => `+ ${omittedValues.length} more`}
+          placeholder="Select sections"
+          dropdownRender={customDropdownRender}
+          treeDefaultExpandAll
+          style={{
+            width: '100%',
+          }}
+        />
+      </div>
       <Select
         label="Branch"
         name="branch"
