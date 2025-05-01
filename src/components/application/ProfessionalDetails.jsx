@@ -15,20 +15,6 @@ const ProfessionalDetails = ({ formData, onFormDataChange, showValidation = fals
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <Select
-        label="Station"
-        name="station"
-        required
-        value={formData?.station || ''}
-        onChange={handleInputChange}
-        showValidation={showValidation}
-        placeholder="Select station"
-        options={[
-          { value: 'station1', label: 'Station 1' },
-          { value: 'station2', label: 'Station 2' },
-          { value: 'station3', label: 'Station 3' }
-        ]}
-      />
       <Input
         label="Work location"
         name="workLocation"
@@ -39,13 +25,13 @@ const ProfessionalDetails = ({ formData, onFormDataChange, showValidation = fals
         placeholder="Enter work location"
       />
       <Select
-        label="Rank/Grade"
-        name="rank"
+        label="Grade"
+        name="grade"
         required
-        value={formData?.rank || ''}
+        value={formData?.grade || ''}
         onChange={handleInputChange}
         showValidation={showValidation}
-        placeholder="Select rank/grade"
+        placeholder="Select grade"
         options={[
           { value: 'junior', label: 'Junior' },
           { value: 'senior', label: 'Senior' },
@@ -66,41 +52,27 @@ const ProfessionalDetails = ({ formData, onFormDataChange, showValidation = fals
         ]}
       />
       <Select
-        label="Duty"
-        name="duty"
-        required
-        value={formData?.duty || ''}
+        label="Branch"
+        name="branch"
+        value={formData?.branch || ''}
         onChange={handleInputChange}
-        showValidation={showValidation}
-        placeholder="Select duty"
+        placeholder="Select branch"
         options={[
-          { value: 'duty1', label: 'Duty 1' },
-          { value: 'duty2', label: 'Duty 2' },
-          { value: 'duty3', label: 'Duty 3' }
+          { value: 'branch1', label: 'Branch 1' },
+          { value: 'branch2', label: 'Branch 2' },
+          { value: 'branch3', label: 'Branch 3' }
         ]}
       />
       <Select
-        label="District"
-        name="district"
-        value={formData?.district || ''}
+        label="Region"
+        name="region"
+        value={formData?.region || ''}
         onChange={handleInputChange}
-        placeholder="Select district"
+        placeholder="Select region"
         options={[
-          { value: 'district1', label: 'District 1' },
-          { value: 'district2', label: 'District 2' },
-          { value: 'district3', label: 'District 3' }
-        ]}
-      />
-      <Select
-        label="Division"
-        name="division"
-        value={formData?.division || ''}
-        onChange={handleInputChange}
-        placeholder="Select division"
-        options={[
-          { value: 'division1', label: 'Division 1' },
-          { value: 'division2', label: 'Division 2' },
-          { value: 'division3', label: 'Division 3' }
+          { value: 'region1', label: 'Region 1' },
+          { value: 'region2', label: 'Region 2' },
+          { value: 'region3', label: 'Region 3' }
         ]}
       />
       <div className="flex flex-col gap-2">
@@ -140,41 +112,12 @@ const ProfessionalDetails = ({ formData, onFormDataChange, showValidation = fals
           { value: 'location3', label: 'Location 3' }
         ]}
       />
-      <Input
-        label="Templemore"
-        name="templemore"
-        value={formData?.templemore || ''}
-        onChange={handleInputChange}
-        placeholder="Enter templemore"
-      />
-      <Input
-        label="Class"
-        name="class"
-        value={formData?.class || ''}
-        onChange={handleInputChange}
-        placeholder="Enter class"
-      />
-      <DatePicker
-        label="Attested Date"
-        name="attestedDate"
-        value={formData?.attestedDate || ''}
-        onChange={handleInputChange}
-        disableAgeValidation
-      />
       <DatePicker
         label="Graduation Date"
         name="graduationDate"
         value={formData?.graduationDate || ''}
         onChange={handleInputChange}
         disableAgeValidation
-      />
-      <Input
-        label="Notes"
-        name="notes"
-        multiline
-        className="col-span-2"
-        value={formData?.notes || ''}
-        onChange={handleInputChange}
       />
     </div>
   );

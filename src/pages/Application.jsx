@@ -60,8 +60,8 @@ const Application = () => {
         }
         break;
       case 2:
-        const { station, workLocation, rank, duty } = formData.professionalDetails || {};
-        if (!station || !workLocation || !rank || !duty) {
+        const { workLocation, grade, } = formData.professionalDetails || {};
+        if (!grade || !workLocation) {
           return false;
         }
         break;
