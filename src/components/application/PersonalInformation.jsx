@@ -24,20 +24,20 @@ const PersonalInformation = ({ formData, onFormDataChange, showValidation = fals
         <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
-            label="Forename"
-            name="forename"
-            required
-            placeholder="Enter your forename"
-            value={formData?.forename || user?.userFirstName || ''}
-            onChange={handleInputChange}
-            showValidation={showValidation}
-          />
-          <Input
             label="Surname"
             name="surname"
             required
             placeholder="Enter your surname"
             value={formData?.surname || user?.userLastName || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+          />
+          <Input
+            label="Forename"
+            name="forename"
+            required
+            placeholder="Enter your forename"
+            value={formData?.forename || user?.userFirstName || ''}
             onChange={handleInputChange}
             showValidation={showValidation}
           />
@@ -63,12 +63,14 @@ const PersonalInformation = ({ formData, onFormDataChange, showValidation = fals
             max={new Date().toISOString().split('T')[0]}
             showValidation={showValidation}
           />
-          <Input
-            label="Country Primary Qualification"
+          <Select
+            label="Country of Primary Qualification"
             name="countryPrimaryQualification"
-            placeholder="Enter your country primary qualification"
             value={formData?.countryPrimaryQualification || ''}
             onChange={handleInputChange}
+            options={countries}
+            isSearchable
+            placeholder="Select country of primary qualification"
           />
         </div>
       </Card>
@@ -76,6 +78,12 @@ const PersonalInformation = ({ formData, onFormDataChange, showValidation = fals
       <Card className="p-4">
         <h3 className="text-lg font-semibold mb-4">Correspondence Details</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            label="Eircode"
+            name="eircode"
+            value={formData?.eircode || ''}
+            onChange={handleInputChange}
+          />
           <Select
             label="Preferred address"
             name="preferredAddress"
@@ -85,12 +93,6 @@ const PersonalInformation = ({ formData, onFormDataChange, showValidation = fals
               { value: 'home', label: 'Home' },
               { value: 'work', label: 'Work' }
             ]}
-          />
-          <Input
-            label="Eircode"
-            name="eircode"
-            value={formData?.eircode || ''}
-            onChange={handleInputChange}
           />
           <Input
             label="Address line 1 (Building or House)"
@@ -129,18 +131,9 @@ const PersonalInformation = ({ formData, onFormDataChange, showValidation = fals
             isSearchable
             placeholder="Search for a country..."
           />
-          <Input
-            label="Mobile No"
-            name="mobileNo"
-            required
-            placeholder="Enter your mobile number"
-            value={formData?.mobileNo || user?.userMobilePhone || ''}
-            onChange={handleInputChange}
-            showValidation={showValidation}
-          />
           <div className="relative">
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-medium text-gray-700">Preferred Email</label>
+              <label className="block text-sm font-medium text-gray-700">Mobile No</label>
               <Checkbox
                 label={<span className="font-medium text-sm">Consent to receive SMS Alerts</span>}
                 name="smsConsent"
@@ -148,16 +141,25 @@ const PersonalInformation = ({ formData, onFormDataChange, showValidation = fals
                 onChange={handleInputChange}
               />
             </div>
-            <Select
-              name="preferredEmail"
-              value={formData?.preferredEmail || 'work'}
+            <Input
+              name="mobileNo"
+              required
+              placeholder="Enter your mobile number"
+              value={formData?.mobileNo || user?.userMobilePhone || ''}
               onChange={handleInputChange}
-              options={[
-                { value: 'work', label: 'Work' },
-                { value: 'personal', label: 'Personal' }
-              ]}
+              showValidation={showValidation}
             />
           </div>
+          <Select
+            label='Preferred Email'
+            name="preferredEmail"
+            value={formData?.preferredEmail || 'work'}
+            onChange={handleInputChange}
+            options={[
+              { value: 'work', label: 'Work' },
+              { value: 'personal', label: 'Personal' }
+            ]}
+          />
           <div className="relative">
             <div className="flex items-center justify-between mb-1">
               <label className="block text-sm font-medium text-gray-700">Email</label>

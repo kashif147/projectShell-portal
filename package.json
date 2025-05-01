@@ -45,7 +45,9 @@
     ],
     "overrides": [
       {
-        "files": ["src/**/*.{js,jsx}"],
+        "files": [
+          "src/**/*.{js,jsx}"
+        ],
         "globals": {
           "React": "readonly",
           "toast": "readonly"

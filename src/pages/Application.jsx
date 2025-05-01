@@ -118,14 +118,14 @@ const Application = () => {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold mb-4">Application</h1>
-      
+
       {/* Stepper */}
       <div className="flex justify-between items-center mb-8">
         {steps.map((step) => (
           <div key={step.number} className="flex items-center">
             <div className={`
               w-8 h-8 rounded-full flex items-center justify-center
-              ${currentStep === step.number ? 'bg-blue-500 text-white' : 
+              ${currentStep === step.number ? 'bg-blue-500 text-white' :
                 currentStep > step.number ? 'bg-green-500 text-white' : 'bg-gray-200'}
             `}>
               {currentStep > step.number ? '✓' : step.number}

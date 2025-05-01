@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   semi: true,
   tabWidth: 2,
   printWidth: 80,
@@ -7,5 +7,4 @@ module.exports = {
   trailingComma: 'all',
   bracketSpacing: true,
   bracketSameLine: true,
-  jsxBracketSameLine: true,
 };
