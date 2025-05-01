@@ -3,12 +3,15 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { DatePicker } from '../ui/DatePicker';
 import { Checkbox } from '../ui/Checkbox';
+import { TreeSelect } from '../ui/TreeSelect';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { TreeSelect } from 'antd';
+import { Card } from '../ui/Card';
 
-const { SHOW_PARENT } = TreeSelect;
-
-const ProfessionalDetails = ({ formData, onFormDataChange, showValidation = false }) => {
+const ProfessionalDetails = ({
+  formData,
+  onFormDataChange,
+  showValidation = false,
+}) => {
   const [showOtherLocation, setShowOtherLocation] = useState(false);
   const [showOtherGrade, setShowOtherGrade] = useState(false);
 
@@ -57,11 +60,11 @@ const ProfessionalDetails = ({ formData, onFormDataChange, showValidation = fals
     },
   ];
 
-  const handleInputChange = (e) => {
+  const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
     onFormDataChange({
       ...formData,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : value,
     });
 
     if (name === 'workLocation' && value === 'other') {
@@ -77,201 +80,201 @@ const ProfessionalDetails = ({ formData, onFormDataChange, showValidation = fals
     }
   };
 
-  const handleSectionChange = (value) => {
+  const handleSectionChange = value => {
     // Ensure only 2 selections are allowed
     if (value.length <= 2) {
       onFormDataChange({
         ...formData,
-        section: value
+        section: value,
       });
     }
   };
 
-  const customDropdownRender = (menu) => (
-    <div className="p-2">
-      <div className="text-xs text-gray-500 mb-2">Select up to 2 sections</div>
-      {menu}
-    </div>
-  );
-
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="relative">
-        <div className="flex items-center justify-between mb-1">
-          <label className="block text-sm font-medium text-gray-700">Work location</label>
-          <div className="group relative">
-            <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 cursor-help" />
-            <div className="absolute right-0 bottom-full mb-2 w-48 p-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-              <div className="relative">
-                <div className="absolute -bottom-1 right-2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
-                Select your primary work location. If your location is not listed, choose 'Other' and specify it below.
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="relative">
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-sm font-medium text-gray-700">
+              Work location
+            </label>
+            <div className="group relative">
+              <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 cursor-help" />
+              <div className="absolute right-0 bottom-full mb-2 w-48 p-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                <div className="relative">
+                  <div className="absolute -bottom-1 right-2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                  Select your primary work location. If your location is not
+                  listed, choose 'Other' and specify it below.
+                </div>
               </div>
             </div>
           </div>
+          <Select
+            name="workLocation"
+            required
+            value={formData?.workLocation || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+            placeholder="Select work location"
+            options={[
+              { value: 'dublin', label: 'Dublin' },
+              { value: 'cork', label: 'Cork' },
+              { value: 'galway', label: 'Galway' },
+              { value: 'limerick', label: 'Limerick' },
+              { value: 'waterford', label: 'Waterford' },
+              { value: 'other', label: 'Other' },
+            ]}
+          />
+          {showOtherLocation && (
+            <div className="mt-2">
+              <Input
+                label="Work Location"
+                name="otherWorkLocation"
+                required
+                value={formData?.otherWorkLocation || ''}
+                onChange={handleInputChange}
+                showValidation={showValidation}
+                placeholder="Enter your work location"
+              />
+            </div>
+          )}
         </div>
-        <Select
-          name="workLocation"
-          required
-          value={formData?.workLocation || ''}
-          onChange={handleInputChange}
-          showValidation={showValidation}
-          placeholder="Select work location"
-          options={[
-            { value: 'dublin', label: 'Dublin' },
-            { value: 'cork', label: 'Cork' },
-            { value: 'galway', label: 'Galway' },
-            { value: 'limerick', label: 'Limerick' },
-            { value: 'waterford', label: 'Waterford' },
-            { value: 'other', label: 'Other' }
-          ]}
-        />
-        {showOtherLocation && (
-          <div className="mt-2">
-            <Input
-              label="Work Location"
-              name="otherWorkLocation"
-              required
-              value={formData?.otherWorkLocation || ''}
-              onChange={handleInputChange}
-              showValidation={showValidation}
-              placeholder="Enter your work location"
-            />
-          </div>
-        )}
-      </div>
-      <div className="relative">
-        <div className="flex items-center justify-between mb-1">
-          <label className="block text-sm font-medium text-gray-700">Grade</label>
-          <div className="group relative">
-            <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 cursor-help" />
-            <div className="absolute right-0 bottom-full mb-2 w-48 p-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-              <div className="relative">
-                <div className="absolute -bottom-1 right-2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
-                Select your current grade. If your grade is not listed, choose 'Other' and specify it below.
+        <div className="relative">
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-sm font-medium text-gray-700">
+              Grade
+            </label>
+            <div className="group relative">
+              <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 cursor-help" />
+              <div className="absolute right-0 bottom-full mb-2 w-48 p-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                <div className="relative">
+                  <div className="absolute -bottom-1 right-2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                  Select your current grade. If your grade is not listed, choose
+                  'Other' and specify it below.
+                </div>
               </div>
             </div>
           </div>
+          <Select
+            name="grade"
+            required
+            value={formData?.grade || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+            placeholder="Select grade"
+            options={[
+              { value: 'junior', label: 'Junior' },
+              { value: 'senior', label: 'Senior' },
+              { value: 'lead', label: 'Lead' },
+              { value: 'manager', label: 'Manager' },
+              { value: 'other', label: 'Other' },
+            ]}
+          />
+          {showOtherGrade && (
+            <div className="mt-2">
+              <Input
+                label="Grade"
+                name="otherGrade"
+                required
+                value={formData?.otherGrade || ''}
+                onChange={handleInputChange}
+                showValidation={showValidation}
+                placeholder="Enter your grade"
+              />
+            </div>
+          )}
         </div>
-        <Select
-          name="grade"
-          required
-          value={formData?.grade || ''}
-          onChange={handleInputChange}
-          showValidation={showValidation}
-          placeholder="Select grade"
-          options={[
-            { value: 'junior', label: 'Junior' },
-            { value: 'senior', label: 'Senior' },
-            { value: 'lead', label: 'Lead' },
-            { value: 'manager', label: 'Manager' },
-            { value: 'other', label: 'Other' }
-          ]}
-        />
-        {showOtherGrade && (
-          <div className="mt-2">
-            <Input
-              label="Grade"
-              name="otherGrade"
-              required
-              value={formData?.otherGrade || ''}
-              onChange={handleInputChange}
-              showValidation={showValidation}
-              placeholder="Enter your grade"
-            />
-          </div>
-        )}
-      </div>
-      <div className="relative">
-        <div className="flex items-center justify-between mb-1">
-          <label className="block text-sm font-medium text-gray-700">Section</label>
-        </div>
+
         <TreeSelect
-          className="w-full"
+          label="Section"
+          name="section"
           treeData={treeData}
           value={formData?.section || []}
           onChange={handleSectionChange}
-          treeCheckable={true}
-          showCheckedStrategy={SHOW_PARENT}
+          multiple={true}
           maxTagCount={2}
-          maxTagPlaceholder={(omittedValues) => `+ ${omittedValues.length} more`}
+          maxTagPlaceholder={omittedValues => `+ ${omittedValues.length} more`}
           placeholder="Select sections"
-          dropdownRender={customDropdownRender}
-          treeDefaultExpandAll
-          style={{
-            width: '100%',
-          }}
+        />
+        <Select
+          label="Branch"
+          name="branch"
+          value={formData?.branch || ''}
+          onChange={handleInputChange}
+          placeholder="Select branch"
+          options={[
+            { value: 'branch1', label: 'Branch 1' },
+            { value: 'branch2', label: 'Branch 2' },
+            { value: 'branch3', label: 'Branch 3' },
+          ]}
+        />
+        <Select
+          label="Region"
+          name="region"
+          value={formData?.region || ''}
+          onChange={handleInputChange}
+          placeholder="Select region"
+          options={[
+            { value: 'region1', label: 'Region 1' },
+            { value: 'region2', label: 'Region 2' },
+            { value: 'region3', label: 'Region 3' },
+          ]}
+        />
+        <Select
+          label="Study Location"
+          name="studyLocation"
+          value={formData?.studyLocation || ''}
+          onChange={handleInputChange}
+          placeholder="Select study location"
+          options={[
+            { value: 'location1', label: 'Location 1' },
+            { value: 'location2', label: 'Location 2' },
+            { value: 'location3', label: 'Location 3' },
+          ]}
+        />
+        <DatePicker
+          label="Graduation Date"
+          name="graduationDate"
+          value={formData?.graduationDate || ''}
+          onChange={handleInputChange}
+          disableAgeValidation
         />
       </div>
-      <Select
-        label="Branch"
-        name="branch"
-        value={formData?.branch || ''}
-        onChange={handleInputChange}
-        placeholder="Select branch"
-        options={[
-          { value: 'branch1', label: 'Branch 1' },
-          { value: 'branch2', label: 'Branch 2' },
-          { value: 'branch3', label: 'Branch 3' }
-        ]}
-      />
-      <Select
-        label="Region"
-        name="region"
-        value={formData?.region || ''}
-        onChange={handleInputChange}
-        placeholder="Select region"
-        options={[
-          { value: 'region1', label: 'Region 1' },
-          { value: 'region2', label: 'Region 2' },
-          { value: 'region3', label: 'Region 3' }
-        ]}
-      />
-      <div className="flex flex-col gap-2">
-        <Checkbox
-          label="Is Retired"
-          name="isRetired"
-          checked={formData?.isRetired || false}
-          onChange={handleInputChange}
-        />
-        {formData?.isRetired && (
-          <div className="flex flex-col gap-2">
-            <DatePicker
-              label="Retired Date"
-              name="retiredDate"
-              value={formData?.retiredDate || ''}
-              onChange={handleInputChange}
-              disableAgeValidation
-            />
-            <Input
-              label="Pension No"
-              name="pensionNo"
-              value={formData?.pensionNo || ''}
+      <Card className="p-4 bg-gray-50">
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              label={
+                <span className="font-medium text-gray-700">Is Retired</span>
+              }
+              name="isRetired"
+              checked={formData?.isRetired || false}
               onChange={handleInputChange}
             />
           </div>
-        )}
-      </div>
-      <Select
-        label="Study Location"
-        name="studyLocation"
-        value={formData?.studyLocation || ''}
-        onChange={handleInputChange}
-        placeholder="Select study location"
-        options={[
-          { value: 'location1', label: 'Location 1' },
-          { value: 'location2', label: 'Location 2' },
-          { value: 'location3', label: 'Location 3' }
-        ]}
-      />
-      <DatePicker
-        label="Graduation Date"
-        name="graduationDate"
-        value={formData?.graduationDate || ''}
-        onChange={handleInputChange}
-        disableAgeValidation
-      />
+
+          {formData?.isRetired && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-6 border-l-2 border-gray-200">
+              <DatePicker
+                label="Retired Date"
+                name="retiredDate"
+                value={formData?.retiredDate || ''}
+                onChange={handleInputChange}
+                disableAgeValidation
+              />
+              <Input
+                label="Pension No"
+                name="pensionNo"
+                value={formData?.pensionNo || ''}
+                onChange={handleInputChange}
+                placeholder="Enter your pension number"
+              />
+            </div>
+          )}
+        </div>
+      </Card>
     </div>
   );
 };
 
-export default ProfessionalDetails; 
+export default ProfessionalDetails;
