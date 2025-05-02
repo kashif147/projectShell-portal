@@ -3,7 +3,16 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
 import { InfoCircleOutlined } from '@ant-design/icons';
+import { Radio } from 'antd';
 
+const nurseTypeOptions = [
+  { value: 'general', label: 'General Nurse' },
+  { value: 'publicHealth', label: 'Public Health Nurse' },
+  { value: 'mentalHealth', label: 'Mental health nurse' },
+  { value: 'midwife', label: 'Midwife' },
+  { value: 'sickChildren', label: "Sick Children's Nurse" },
+  { value: 'intellectualDisability', label: 'Registered Nurse for Intellectual Disability' },
+];
 
 const SubscriptionDetails = ({
   formData,
@@ -15,6 +24,13 @@ const SubscriptionDetails = ({
     onFormDataChange({
       ...formData,
       [name]: type === 'checkbox' ? checked : value,
+    });
+  };
+
+  const handleNurseTypeChange = e => {
+    onFormDataChange({
+      ...formData,
+      nurseType: e.target.value,
     });
   };
 
@@ -31,7 +47,9 @@ const SubscriptionDetails = ({
               <div className="absolute right-0 bottom-full mb-2 w-48 p-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
                 <div className="relative">
                   <div className="absolute -bottom-1 right-2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
-                  Please select the membership category most appropriate to yourselves. Some category selections will require you to contact our Membership team.
+                  Please select the membership category most appropriate to
+                  yourselves. Some category selections will require you to
+                  contact our Membership team.
                 </div>
               </div>
             </div>
@@ -77,6 +95,35 @@ const SubscriptionDetails = ({
           />
         </div>
       )}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Input
+          label="NMBI No / An Board Altranais Number"
+          name="nmbiNumber"
+          required
+          value={formData?.nmbiNumber || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+          placeholder="Enter your NMBI number"
+        />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Please tick one of the following
+          </label>
+          <Radio.Group
+            name="nurseType"
+            value={formData?.nurseType || ''}
+            onChange={handleNurseTypeChange}
+          >
+            {nurseTypeOptions.map(option => (
+              <Radio key={option.value} value={option.value} className="block">
+                {option.label}
+              </Radio>
+            ))}
+          </Radio.Group>
+        </div>
+      </div>
     </div>
   );
 };
