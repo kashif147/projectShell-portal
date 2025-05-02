@@ -87,7 +87,9 @@ const PersonalInformation = ({
         <Select
           label="Preferred address"
           name="preferredAddress"
-          value={formData?.preferredAddress || 'home'}
+          required
+          showValidation={showValidation}
+          value={formData?.preferredAddress}
           onChange={handleInputChange}
           options={[
             { value: 'home', label: 'Home' },
@@ -159,7 +161,9 @@ const PersonalInformation = ({
         <Select
           label="Preferred Email"
           name="preferredEmail"
-          value={formData?.preferredEmail || 'work'}
+          required
+          showValidation={showValidation}
+          value={formData?.preferredEmail}
           onChange={handleInputChange}
           options={[
             { value: 'work', label: 'Work' },

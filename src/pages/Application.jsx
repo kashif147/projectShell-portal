@@ -15,9 +15,7 @@ const Application = () => {
       surname: user?.userLastName || '',
       email: user?.userEmail || '',
       mobileNo: user?.userMobilePhone || '',
-      preferredAddress: 'home',
       country: 'ireland',
-      preferredEmail: 'work',
       smsConsent: false,
       emailConsent: false
     },
