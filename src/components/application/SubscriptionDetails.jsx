@@ -64,6 +64,19 @@ const SubscriptionDetails = ({
           ]}
         />
       </div>
+      {formData?.paymentType === 'deduction' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            label="Payroll No"
+            name="payrollNo"
+            required
+            value={formData?.payrollNo || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+            placeholder="Enter your payroll number"
+          />
+        </div>
+      )}
     </div>
   );
 };
