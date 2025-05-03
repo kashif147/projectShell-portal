@@ -125,19 +125,18 @@ const ProfessionalDetails = ({
               { value: 'other', label: 'Other' },
             ]}
           />
-          {showOtherLocation && (
-            <div className="mt-2">
-              <Input
-                label="Work Location"
-                name="otherWorkLocation"
-                required
-                value={formData?.otherWorkLocation || ''}
-                onChange={handleInputChange}
-                showValidation={showValidation}
-                placeholder="Enter your work location"
-              />
-            </div>
-          )}
+          <div className="mt-2">
+            <Input
+              label="Work Location"
+              name="otherWorkLocation"
+              required={formData?.workLocation === 'other'}
+              disabled={formData?.workLocation !== 'other'}
+              value={formData?.otherWorkLocation || ''}
+              onChange={handleInputChange}
+              showValidation={showValidation}
+              placeholder="Enter your work other location"
+            />
+          </div>
         </div>
         <div className="relative">
           <div className="flex items-center justify-between mb-1">
@@ -170,19 +169,18 @@ const ProfessionalDetails = ({
               { value: 'other', label: 'Other' },
             ]}
           />
-          {showOtherGrade && (
-            <div className="mt-2">
-              <Input
-                label="Grade"
-                name="otherGrade"
-                required
-                value={formData?.otherGrade || ''}
-                onChange={handleInputChange}
-                showValidation={showValidation}
-                placeholder="Enter your grade"
-              />
-            </div>
-          )}
+          <div className="mt-2">
+            <Input
+              label="Grade"
+              name="otherGrade"
+              required={formData?.grade === 'other'}
+              disabled={formData?.grade !== 'other'}
+              value={formData?.otherGrade || ''}
+              onChange={handleInputChange}
+              showValidation={showValidation}
+              placeholder="Enter your other grade"
+            />
+          </div>
         </div>
 
         <TreeSelect
