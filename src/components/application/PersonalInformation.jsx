@@ -158,6 +158,8 @@ const PersonalInformation = ({
             showValidation={showValidation}
           />
         </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="relative">
           <div className="flex items-center justify-between mb-1">
             <label className="block text-sm font-medium text-gray-700">
@@ -198,6 +200,30 @@ const PersonalInformation = ({
             />
           </div>
         </div>
+        {formData?.preferredEmail === 'work' && (
+          <Input
+            label="Work Email"
+            name="workEmail"
+            type="email"
+            required
+            placeholder="Enter your work email"
+            value={formData?.workEmail || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+          />
+        )}
+        {formData?.preferredEmail === 'personal' && (
+          <Input
+            label="Personal Email"
+            name="personalEmail"
+            type="email"
+            required
+            placeholder="Enter your personal email"
+            value={formData?.personalEmail || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+          />
+        )}
       </div>
     </div>
   );
