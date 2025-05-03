@@ -11,7 +11,10 @@ const nurseTypeOptions = [
   { value: 'mentalHealth', label: 'Mental health nurse' },
   { value: 'midwife', label: 'Midwife' },
   { value: 'sickChildren', label: "Sick Children's Nurse" },
-  { value: 'intellectualDisability', label: 'Registered Nurse for Intellectual Disability' },
+  {
+    value: 'intellectualDisability',
+    label: 'Registered Nurse for Intellectual Disability',
+  },
 ];
 
 const SubscriptionDetails = ({
@@ -68,32 +71,29 @@ const SubscriptionDetails = ({
             ]}
           />
         </div> */}
-        <div className="grid grid-cols-1 gap-4">
-          <Select
-            label="Payment Type"
-            name="paymentType"
-            required
-            value={formData?.paymentType || ''}
-            onChange={handleInputChange}
-            showValidation={showValidation}
-            placeholder="Select payment type"
-            options={[
-              { value: 'deduction', label: 'Deduction at Source' },
-              { value: 'creditCard', label: 'Credit Card' },
-            ]}
-          />
-          {formData?.paymentType === 'deduction' && (
-            <Input
-              label="Payroll No"
-              name="payrollNo"
-              required
-              value={formData?.payrollNo || ''}
-              onChange={handleInputChange}
-              showValidation={showValidation}
-              placeholder="Enter your payroll number"
-            />
-          )}
-        </div>
+        <Select
+          label="Payment Type"
+          name="paymentType"
+          required
+          value={formData?.paymentType || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+          placeholder="Select payment type"
+          options={[
+            { value: 'deduction', label: 'Deduction at Source' },
+            { value: 'creditCard', label: 'Credit Card' },
+          ]}
+        />
+        <Input
+          label="Payroll No"
+          name="payrollNo"
+          required={formData?.paymentType === 'deduction'}
+          disabled={formData?.paymentType !== 'deduction'}
+          value={formData?.payrollNo || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+          placeholder="Enter your payroll number"
+        />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input
@@ -112,8 +112,7 @@ const SubscriptionDetails = ({
           <Radio.Group
             name="nurseType"
             value={formData?.nurseType || ''}
-            onChange={handleNurseTypeChange}
-          >
+            onChange={handleNurseTypeChange}>
             {nurseTypeOptions.map(option => (
               <Radio key={option.value} value={option.value} className="block">
                 {option.label}
@@ -134,22 +133,37 @@ const SubscriptionDetails = ({
           options={[
             { value: 'new', label: 'You are a new member' },
             { value: 'graduate', label: 'You are newly graduated' },
-            { value: 'rejoin', label: 'You were previously a member of the INMO, and are rejoining' },
-            { value: 'careerBreak', label: 'You are returning from a career break' },
-            { value: 'nursingAbroad', label: 'You are returning from nursing abroad' },
+            {
+              value: 'rejoin',
+              label:
+                'You were previously a member of the INMO, and are rejoining',
+            },
+            {
+              value: 'careerBreak',
+              label: 'You are returning from a career break',
+            },
+            {
+              value: 'nursingAbroad',
+              label: 'You are returning from nursing abroad',
+            },
           ]}
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Are you a member of another Irish Trade Union? <span className="text-red-500">*</span>
+            Are you a member of another Irish Trade Union?{' '}
+            <span className="text-red-500">*</span>
           </label>
           <Radio.Group
             name="otherIrishTradeUnion"
             value={formData?.otherIrishTradeUnion || ''}
-            onChange={e => onFormDataChange({ ...formData, otherIrishTradeUnion: e.target.value })}
-          >
+            onChange={e =>
+              onFormDataChange({
+                ...formData,
+                otherIrishTradeUnion: e.target.value,
+              })
+            }>
             <Radio value="yes">Yes</Radio>
             <Radio value="no">No</Radio>
           </Radio.Group>
@@ -158,13 +172,15 @@ const SubscriptionDetails = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Are you or were you a member of another Irish trade Union salary or Income Protection Scheme? <span className="text-red-500">*</span>
+            Are you or were you a member of another Irish trade Union salary or
+            Income Protection Scheme? <span className="text-red-500">*</span>
           </label>
           <Radio.Group
             name="otherScheme"
             value={formData?.otherScheme || ''}
-            onChange={e => onFormDataChange({ ...formData, otherScheme: e.target.value })}
-          >
+            onChange={e =>
+              onFormDataChange({ ...formData, otherScheme: e.target.value })
+            }>
             <Radio value="yes">Yes</Radio>
             <Radio value="no">No</Radio>
           </Radio.Group>
