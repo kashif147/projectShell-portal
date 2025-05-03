@@ -2,7 +2,6 @@ import React from 'react';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
-import { InfoCircleOutlined } from '@ant-design/icons';
 import { Radio } from 'antd';
 
 const nurseTypeOptions = [
@@ -40,37 +39,6 @@ const SubscriptionDetails = ({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* <div className="relative">
-          <div className="flex items-center justify-between mb-1">
-            <label className="block text-sm font-medium text-gray-700">
-              Membership Category
-            </label>
-            <div className="group relative">
-              <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 cursor-help" />
-              <div className="absolute right-0 bottom-full mb-2 w-48 p-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-                <div className="relative">
-                  <div className="absolute -bottom-1 right-2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
-                  Please select the membership category most appropriate to
-                  yourselves. Some category selections will require you to
-                  contact our Membership team.
-                </div>
-              </div>
-            </div>
-          </div>
-          <Select
-            name="membershipCategory"
-            required
-            value={formData?.membershipCategory || ''}
-            onChange={handleInputChange}
-            showValidation={showValidation}
-            placeholder="Select membership category"
-            options={[
-              { value: 'regular', label: 'Regular Membership' },
-              { value: 'premium', label: 'Premium Membership' },
-              { value: 'student', label: 'Student Membership' },
-            ]}
-          />
-        </div> */}
         <Select
           label="Payment Type"
           name="paymentType"
@@ -149,42 +117,94 @@ const SubscriptionDetails = ({
           ]}
         />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Are you a member of another Irish Trade Union?{' '}
-            <span className="text-red-500">*</span>
-          </label>
-          <Radio.Group
-            name="otherIrishTradeUnion"
-            value={formData?.otherIrishTradeUnion || ''}
-            onChange={e =>
-              onFormDataChange({
-                ...formData,
-                otherIrishTradeUnion: e.target.value,
-              })
-            }>
-            <Radio value="yes">Yes</Radio>
-            <Radio value="no">No</Radio>
-          </Radio.Group>
-        </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Are you a member of another Irish Trade Union?{' '}
+          <span className="text-red-500">*</span>
+        </label>
+        <Radio.Group
+          name="otherIrishTradeUnion"
+          value={formData?.otherIrishTradeUnion || ''}
+          onChange={e =>
+            onFormDataChange({
+              ...formData,
+              otherIrishTradeUnion: e.target.value,
+            })
+          }>
+          <Radio value="yes">Yes</Radio>
+          <Radio value="no">No</Radio>
+        </Radio.Group>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Are you or were you a member of another Irish trade Union salary or
+          Income Protection Scheme? <span className="text-red-500">*</span>
+        </label>
+        <Radio.Group
+          name="otherScheme"
+          value={formData?.otherScheme || ''}
+          onChange={e =>
+            onFormDataChange({ ...formData, otherScheme: e.target.value })
+          }>
+          <Radio value="yes">Yes</Radio>
+          <Radio value="no">No</Radio>
+        </Radio.Group>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Are you or were you a member of another Irish trade Union salary or
-            Income Protection Scheme? <span className="text-red-500">*</span>
-          </label>
-          <Radio.Group
-            name="otherScheme"
-            value={formData?.otherScheme || ''}
-            onChange={e =>
-              onFormDataChange({ ...formData, otherScheme: e.target.value })
-            }>
-            <Radio value="yes">Yes</Radio>
-            <Radio value="no">No</Radio>
-          </Radio.Group>
-        </div>
+        <Input
+          label="Recurited By"
+          name="recuritedBy"
+          value={formData?.recuritedBy || ''}
+          onChange={handleInputChange}
+          placeholder="Enter the name of the person who recruited you"
+        />
+        <Input
+          label="Recurited By (Membership No)"
+          name="recuritedByMembershipNo"
+          value={formData?.recuritedByMembershipNo || ''}
+          onChange={handleInputChange}
+          placeholder="Enter the membership number of the recruiter"
+        />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Checkbox
+          label={
+            <span className="font-medium text-gray-700">
+              INMO Income Protection Scheme
+            </span>
+          }
+          name="incomeProtectionScheme"
+          checked={formData?.incomeProtectionScheme || false}
+          onChange={handleInputChange}
+        />
+        <Checkbox
+          label={
+            <span className="font-medium text-gray-700">INMO Rewards</span>
+          }
+          name="inmoRewards"
+          checked={formData?.inmoRewards || false}
+          onChange={handleInputChange}
+        />
+        <Checkbox
+          label={
+            <span className="font-medium text-gray-700">
+              Value Added Services
+            </span>
+          }
+          name="valueAddedServices"
+          checked={formData?.valueAddedServices || false}
+          onChange={handleInputChange}
+        />
+        <Checkbox
+          label={
+            <span className="font-medium text-gray-700">
+              Terms & Conditions
+            </span>
+          }
+          name="termsAndConditions"
+          checked={formData?.termsAndConditions || false}
+          onChange={handleInputChange}
+        />
       </div>
     </div>
   );
