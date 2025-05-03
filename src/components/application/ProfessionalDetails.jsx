@@ -94,15 +94,19 @@ const ProfessionalDetails = ({
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="relative">
-          <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2 mb-1">
             <label className="block text-sm font-medium text-gray-700">
               Work location
             </label>
             <div className="group relative">
               <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 cursor-help" />
-              <div className="absolute right-0 bottom-full mb-2 w-48 p-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+              <div
+                className="absolute left-1/2 -translate-x-1/2 top-full mt-2 max-w-[90vw] w-auto min-w-[180px] break-words text-center p-1.5 md:p-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10
+                md:left-auto md:right-0 md:top-auto md:bottom-full md:mb-2 md:mt-0 md:translate-x-0 md:text-left md:max-w-xs"
+              >
                 <div className="relative">
-                  <div className="absolute -bottom-1 right-2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                  <div className="hidden md:block absolute -bottom-1 right-2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                  <div className="block md:hidden absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
                   Select your primary work location. If your location is not
                   listed, choose 'Other' and specify it below.
                 </div>
@@ -139,15 +143,19 @@ const ProfessionalDetails = ({
           </div>
         </div>
         <div className="relative">
-          <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2 mb-1">
             <label className="block text-sm font-medium text-gray-700">
               Grade
             </label>
             <div className="group relative">
               <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 cursor-help" />
-              <div className="absolute right-0 bottom-full mb-2 w-48 p-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+              <div
+                className="absolute left-1/2 -translate-x-1/2 top-full mt-2 max-w-[90vw] w-auto min-w-[180px] break-words text-center p-1.5 md:p-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10
+                md:left-auto md:right-0 md:top-auto md:bottom-full md:mb-2 md:mt-0 md:translate-x-0 md:text-left md:max-w-xs"
+              >
                 <div className="relative">
-                  <div className="absolute -bottom-1 right-2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                  <div className="hidden md:block absolute -bottom-1 right-2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                  <div className="block md:hidden absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
                   Select your current grade. If your grade is not listed, choose
                   'Other' and specify it below.
                 </div>
