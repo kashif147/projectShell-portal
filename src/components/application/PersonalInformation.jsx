@@ -158,22 +158,10 @@ const PersonalInformation = ({
             showValidation={showValidation}
           />
         </div>
-        <Select
-          label="Preferred Email"
-          name="preferredEmail"
-          required
-          showValidation={showValidation}
-          value={formData?.preferredEmail}
-          onChange={handleInputChange}
-          options={[
-            { value: 'work', label: 'Work' },
-            { value: 'personal', label: 'Personal' },
-          ]}
-        />
         <div className="relative">
           <div className="flex items-center justify-between mb-1">
             <label className="block text-sm font-medium text-gray-700">
-              Email
+              Preferred Email
             </label>
             <Checkbox
               label={
@@ -186,15 +174,29 @@ const PersonalInformation = ({
               onChange={handleInputChange}
             />
           </div>
-          <Input
-            name="email"
-            type="email"
-            placeholder="Enter your email"
+          <Select
+            name="preferredEmail"
             required
-            value={formData?.email || user?.userEmail || ''}
-            onChange={handleInputChange}
             showValidation={showValidation}
+            value={formData?.preferredEmail}
+            onChange={handleInputChange}
+            options={[
+              { value: 'work', label: 'Work' },
+              { value: 'personal', label: 'Personal' },
+            ]}
           />
+          <div className="mt-2">
+            <Input
+              label="Email"
+              name="email"
+              type="email"
+              placeholder="Enter your email"
+              required
+              value={formData?.email || user?.userEmail || ''}
+              onChange={handleInputChange}
+              showValidation={showValidation}
+            />
+          </div>
         </div>
       </div>
     </div>

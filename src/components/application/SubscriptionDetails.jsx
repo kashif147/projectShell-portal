@@ -68,41 +68,39 @@ const SubscriptionDetails = ({
             ]}
           />
         </div>
-        <Select
-          label="Payment Type"
-          name="paymentType"
-          required
-          value={formData?.paymentType || ''}
-          onChange={handleInputChange}
-          showValidation={showValidation}
-          placeholder="Select payment type"
-          options={[
-            { value: 'deduction', label: 'Deduction at Source' },
-            { value: 'creditCard', label: 'Credit Card' },
-          ]}
-        />
-      </div>
-      {formData?.paymentType === 'deduction' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            label="Payroll No"
-            name="payrollNo"
+        <div className="grid grid-cols-1 gap-4">
+          <Select
+            label="Payment Type"
+            name="paymentType"
             required
-            value={formData?.payrollNo || ''}
+            value={formData?.paymentType || ''}
             onChange={handleInputChange}
             showValidation={showValidation}
-            placeholder="Enter your payroll number"
+            placeholder="Select payment type"
+            options={[
+              { value: 'deduction', label: 'Deduction at Source' },
+              { value: 'creditCard', label: 'Credit Card' },
+            ]}
           />
+          {formData?.paymentType === 'deduction' && (
+            <Input
+              label="Payroll No"
+              name="payrollNo"
+              required
+              value={formData?.payrollNo || ''}
+              onChange={handleInputChange}
+              showValidation={showValidation}
+              placeholder="Enter your payroll number"
+            />
+          )}
         </div>
-      )}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input
           label="NMBI No / An Board Altranais Number"
           name="nmbiNumber"
-          required
           value={formData?.nmbiNumber || ''}
           onChange={handleInputChange}
-          showValidation={showValidation}
           placeholder="Enter your NMBI number"
         />
       </div>
@@ -121,6 +119,54 @@ const SubscriptionDetails = ({
                 {option.label}
               </Radio>
             ))}
+          </Radio.Group>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Select
+          label="Please select the most appropriate option below"
+          name="memberStatus"
+          required
+          value={formData?.memberStatus || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+          placeholder="Select an option"
+          options={[
+            { value: 'new', label: 'You are a new member' },
+            { value: 'graduate', label: 'You are newly graduated' },
+            { value: 'rejoin', label: 'You were previously a member of the INMO, and are rejoining' },
+            { value: 'careerBreak', label: 'You are returning from a career break' },
+            { value: 'nursingAbroad', label: 'You are returning from nursing abroad' },
+          ]}
+        />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Are you a member of another Irish Trade Union? <span className="text-red-500">*</span>
+          </label>
+          <Radio.Group
+            name="otherIrishTradeUnion"
+            value={formData?.otherIrishTradeUnion || ''}
+            onChange={e => onFormDataChange({ ...formData, otherIrishTradeUnion: e.target.value })}
+          >
+            <Radio value="yes">Yes</Radio>
+            <Radio value="no">No</Radio>
+          </Radio.Group>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Are you or were you a member of another Irish trade Union salary or Income Protection Scheme? <span className="text-red-500">*</span>
+          </label>
+          <Radio.Group
+            name="otherScheme"
+            value={formData?.otherScheme || ''}
+            onChange={e => onFormDataChange({ ...formData, otherScheme: e.target.value })}
+          >
+            <Radio value="yes">Yes</Radio>
+            <Radio value="no">No</Radio>
           </Radio.Group>
         </div>
       </div>
