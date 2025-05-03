@@ -66,18 +66,6 @@ const ProfessionalDetails = ({
       ...formData,
       [name]: type === 'checkbox' ? checked : value,
     });
-
-    if (name === 'workLocation' && value === 'other') {
-      setShowOtherLocation(true);
-    } else if (name === 'workLocation') {
-      setShowOtherLocation(false);
-    }
-
-    if (name === 'grade' && value === 'other') {
-      setShowOtherGrade(true);
-    } else if (name === 'grade') {
-      setShowOtherGrade(false);
-    }
   };
 
   const handleSectionChange = value => {
@@ -102,8 +90,7 @@ const ProfessionalDetails = ({
               <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 cursor-help" />
               <div
                 className="absolute left-1/2 -translate-x-1/2 top-full mt-2 max-w-[90vw] w-auto min-w-[180px] break-words text-center p-1.5 md:p-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10
-                md:left-auto md:right-0 md:top-auto md:bottom-full md:mb-2 md:mt-0 md:translate-x-0 md:text-left md:max-w-xs"
-              >
+                md:left-auto md:right-0 md:top-auto md:bottom-full md:mb-2 md:mt-0 md:translate-x-0 md:text-left md:max-w-xs">
                 <div className="relative">
                   <div className="hidden md:block absolute -bottom-1 right-2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
                   <div className="block md:hidden absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
@@ -151,8 +138,7 @@ const ProfessionalDetails = ({
               <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 cursor-help" />
               <div
                 className="absolute left-1/2 -translate-x-1/2 top-full mt-2 max-w-[90vw] w-auto min-w-[180px] break-words text-center p-1.5 md:p-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10
-                md:left-auto md:right-0 md:top-auto md:bottom-full md:mb-2 md:mt-0 md:translate-x-0 md:text-left md:max-w-xs"
-              >
+                md:left-auto md:right-0 md:top-auto md:bottom-full md:mb-2 md:mt-0 md:translate-x-0 md:text-left md:max-w-xs">
                 <div className="relative">
                   <div className="hidden md:block absolute -bottom-1 right-2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
                   <div className="block md:hidden absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
@@ -226,6 +212,40 @@ const ProfessionalDetails = ({
             { value: 'region3', label: 'Region 3' },
           ]}
         />
+        <div className="relative">
+          <div className="flex items-center gap-2 mb-1">
+            <label className="block text-sm font-medium text-gray-700">
+              Membership Category
+            </label>
+            <div className="group relative">
+              <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 cursor-help" />
+              <div
+                className="absolute left-1/2 -translate-x-1/2 top-full mt-2 max-w-[90vw] w-auto min-w-[180px] break-words text-center p-1.5 md:p-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10
+                md:left-auto md:right-0 md:top-auto md:bottom-full md:mb-2 md:mt-0 md:translate-x-0 md:text-left md:max-w-xs">
+                <div className="relative">
+                  <div className="hidden md:block absolute -bottom-1 right-2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                  <div className="block md:hidden absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                  Please select the membership category most appropriate to
+                  yourselves. Some category selections will require you to
+                  contact our Membership team.
+                </div>
+              </div>
+            </div>
+          </div>
+          <Select
+            name="membershipCategory"
+            required
+            value={formData?.membershipCategory || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+            placeholder="Select membership category"
+            options={[
+              { value: 'regular', label: 'Regular Membership' },
+              { value: 'premium', label: 'Premium Membership' },
+              { value: 'student', label: 'Student Membership' },
+            ]}
+          />
+        </div>
         <Select
           label="Study Location"
           name="studyLocation"
@@ -239,46 +259,43 @@ const ProfessionalDetails = ({
           ]}
         />
         <DatePicker
-          label="Graduation Date"
+          label="Graduation Data"
           name="graduationDate"
           value={formData?.graduationDate || ''}
           onChange={handleInputChange}
           disableAgeValidation
         />
-      </div>
-      <Card className="p-4 bg-gray-50">
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
+        <div className="relative">
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-sm font-medium text-gray-700">
+              Retired Date
+            </label>
             <Checkbox
               label={
-                <span className="font-medium text-gray-700">Is Retired</span>
+                <span className="font-medium text-gray-700">Retired</span>
               }
               name="isRetired"
               checked={formData?.isRetired || false}
               onChange={handleInputChange}
             />
           </div>
-
-          {formData?.isRetired && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-6 border-l-2 border-gray-200">
-              <DatePicker
-                label="Retired Date"
-                name="retiredDate"
-                value={formData?.retiredDate || ''}
-                onChange={handleInputChange}
-                disableAgeValidation
-              />
-              <Input
-                label="Pension No"
-                name="pensionNo"
-                value={formData?.pensionNo || ''}
-                onChange={handleInputChange}
-                placeholder="Enter your pension number"
-              />
-            </div>
-          )}
+          <DatePicker
+            disabled={!formData?.isRetired}
+            name="retiredDate"
+            value={formData?.retiredDate || ''}
+            onChange={handleInputChange}
+            disableAgeValidation
+          />
         </div>
-      </Card>
+        <Input
+          label="Pension No"
+          name="pensionNo"
+          disabled={!formData?.isRetired}
+          value={formData?.pensionNo || ''}
+          onChange={handleInputChange}
+          placeholder="Enter your pension number"
+        />
+      </div>
     </div>
   );
 };

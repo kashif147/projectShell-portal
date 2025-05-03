@@ -37,7 +37,7 @@ const SubscriptionDetails = ({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="relative">
+        {/* <div className="relative">
           <div className="flex items-center justify-between mb-1">
             <label className="block text-sm font-medium text-gray-700">
               Membership Category
@@ -67,7 +67,7 @@ const SubscriptionDetails = ({
               { value: 'student', label: 'Student Membership' },
             ]}
           />
-        </div>
+        </div> */}
         <div className="grid grid-cols-1 gap-4">
           <Select
             label="Payment Type"
