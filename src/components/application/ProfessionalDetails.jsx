@@ -118,7 +118,7 @@ const ProfessionalDetails = ({
           />
           <div className="mt-2">
             <Input
-              label="Work Location"
+              label="Other Work Location"
               name="otherWorkLocation"
               required={formData?.workLocation === 'other'}
               disabled={formData?.workLocation !== 'other'}
@@ -165,7 +165,7 @@ const ProfessionalDetails = ({
           />
           <div className="mt-2">
             <Input
-              label="Grade"
+              label="Other Grade"
               name="otherGrade"
               required={formData?.grade === 'other'}
               disabled={formData?.grade !== 'other'}
@@ -259,7 +259,7 @@ const ProfessionalDetails = ({
           ]}
         />
         <DatePicker
-          label="Graduation Data"
+          label="Graduation Date"
           name="graduationDate"
           value={formData?.graduationDate || ''}
           onChange={handleInputChange}
