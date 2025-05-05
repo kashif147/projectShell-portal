@@ -13,21 +13,21 @@ const Application = () => {
     personalInfo: {
       forename: user?.userFirstName || '',
       surname: user?.userLastName || '',
-      email: user?.userEmail || '',
+      personalEmail: user?.userEmail || '',
       mobileNo: user?.userMobilePhone || '',
       country: 'ireland',
-      smsConsent: false,
-      emailConsent: false
+      smsConsent: true,
+      emailConsent: true,
     },
     professionalDetails: {},
-    subscriptionDetails: {}
+    subscriptionDetails: {},
   });
   const [showValidation, setShowValidation] = useState(false);
 
   const steps = [
     { number: 1, title: 'Personal Information' },
     { number: 2, title: 'Professional Details' },
-    { number: 3, title: 'Subscription Details' }
+    { number: 3, title: 'Subscription Details' },
   ];
 
   const handleNext = () => {
@@ -45,27 +45,59 @@ const Application = () => {
   const handleFormDataChange = (stepName, data) => {
     setFormData(prev => ({
       ...prev,
-      [stepName]: data
+      [stepName]: data,
     }));
   };
 
   const validateCurrentStep = () => {
     switch (currentStep) {
       case 1:
-        const { forename, surname, gender, dateOfBirth, email, mobileNo, addressLine1, addressLine4 } = formData.personalInfo || {};
-        if (!forename || !surname || !gender || !dateOfBirth || !email || !mobileNo || !addressLine1 || !addressLine4) {
+        const {
+          forename,
+          surname,
+          gender,
+          dateOfBirth,
+          personalEmail,
+          mobileNo,
+          addressLine1,
+          addressLine4,
+        } = formData.personalInfo || {};
+        if (
+          !forename ||
+          !surname ||
+          !gender ||
+          !dateOfBirth ||
+          !personalEmail ||
+          !mobileNo ||
+          !addressLine1 ||
+          !addressLine4
+        ) {
           return false;
         }
         break;
       case 2:
-        const { workLocation, grade, } = formData.professionalDetails || {};
+        const { workLocation, grade } = formData.professionalDetails || {};
         if (!grade || !workLocation) {
           return false;
         }
         break;
       case 3:
-        const { membershipType, paymentFrequency, cardNumber, cardHolderName, expiryDate, cvv } = formData.subscriptionDetails || {};
-        if (!membershipType || !paymentFrequency || !cardNumber || !cardHolderName || !expiryDate || !cvv) {
+        const {
+          membershipType,
+          paymentFrequency,
+          cardNumber,
+          cardHolderName,
+          expiryDate,
+          cvv,
+        } = formData.subscriptionDetails || {};
+        if (
+          !membershipType ||
+          !paymentFrequency ||
+          !cardNumber ||
+          !cardHolderName ||
+          !expiryDate ||
+          !cvv
+        ) {
           return false;
         }
         break;
@@ -88,7 +120,9 @@ const Application = () => {
         return (
           <PersonalInformation
             formData={formData.personalInfo}
-            onFormDataChange={(data) => handleFormDataChange('personalInfo', data)}
+            onFormDataChange={data =>
+              handleFormDataChange('personalInfo', data)
+            }
             showValidation={showValidation}
           />
         );
@@ -96,7 +130,9 @@ const Application = () => {
         return (
           <ProfessionalDetails
             formData={formData.professionalDetails}
-            onFormDataChange={(data) => handleFormDataChange('professionalDetails', data)}
+            onFormDataChange={data =>
+              handleFormDataChange('professionalDetails', data)
+            }
             showValidation={showValidation}
           />
         );
@@ -104,7 +140,9 @@ const Application = () => {
         return (
           <SubscriptionDetails
             formData={formData.subscriptionDetails}
-            onFormDataChange={(data) => handleFormDataChange('subscriptionDetails', data)}
+            onFormDataChange={data =>
+              handleFormDataChange('subscriptionDetails', data)
+            }
             showValidation={showValidation}
           />
         );
@@ -119,50 +157,55 @@ const Application = () => {
 
       {/* Stepper */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 sm:gap-0">
-        {steps.map((step) => (
+        {steps.map(step => (
           <div key={step.number} className="flex items-center w-full sm:w-auto">
             <div className="flex items-center w-full sm:w-auto">
-              <div className={`
+              <div
+                className={`
                 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
-                ${currentStep === step.number ? 'bg-blue-500 text-white' :
-                  currentStep > step.number ? 'bg-green-500 text-white' : 'bg-gray-200'}
+                ${
+                  currentStep === step.number
+                    ? 'bg-blue-500 text-white'
+                    : currentStep > step.number
+                      ? 'bg-green-500 text-white'
+                      : 'bg-gray-200'
+                }
               `}>
                 {currentStep > step.number ? '✓' : step.number}
               </div>
               <div className="ml-2">
-                <p className={`text-sm whitespace-nowrap ${currentStep === step.number ? 'text-blue-500 font-semibold' : 'text-gray-500'}`}>
+                <p
+                  className={`text-sm whitespace-nowrap ${currentStep === step.number ? 'text-blue-500 font-semibold' : 'text-gray-500'}`}>
                   {step.title}
                 </p>
               </div>
             </div>
             {step.number < steps.length && (
-              <div className={`
+              <div
+                className={`
                 hidden sm:block flex-grow mx-2 h-1 min-w-[16px]
                 ${currentStep > step.number ? 'bg-green-500' : 'bg-gray-200'}
-              `} />
+              `}
+              />
             )}
           </div>
         ))}
       </div>
 
       {/* Step Content */}
-      <Card className="p-4">
-        {renderStepContent()}
-      </Card>
+      <Card className="p-4">{renderStepContent()}</Card>
 
       {/* Navigation Buttons */}
       <div className="flex justify-between mt-4">
         <Button
           onClick={handlePrevious}
           disabled={currentStep === 1}
-          className={currentStep === 1 ? 'opacity-50 cursor-not-allowed' : ''}
-        >
+          className={currentStep === 1 ? 'opacity-50 cursor-not-allowed' : ''}>
           Previous
         </Button>
         <Button
           type="primary"
-          onClick={currentStep === steps.length ? handleSubmit : handleNext}
-        >
+          onClick={currentStep === steps.length ? handleSubmit : handleNext}>
           {currentStep === steps.length ? 'Submit' : 'Next'}
         </Button>
       </div>
@@ -170,4 +213,4 @@ const Application = () => {
   );
 };
 
-export default Application; 
+export default Application;

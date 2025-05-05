@@ -1,6 +1,5 @@
 import React from 'react';
 import MainLayout from '../components/Layout/MainLayout';
-import Home from '../pages/Home';
 import Profile from '../pages/Profile';
 import Subscriptions from '../pages/Subscriptions';
 import Payments from '../pages/Payments';
@@ -11,6 +10,7 @@ import Voting from '../pages/Voting';
 import Resources from '../pages/Resources';
 import LandingPage from '../pages/landingPage';
 import Application from '../pages/Application';
+import Dashboard from '../pages/Dashboard';
 
 export const publicRoutes = [
   {
@@ -30,7 +30,7 @@ export const privateRoutes = [
     children: [
       {
         index: true,
-        element: <Home />,
+        element: <Dashboard />,
       },
       {
         path: 'profile',

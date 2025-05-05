@@ -3,7 +3,6 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
 import { DatePicker } from '../ui/DatePicker';
-import { Card } from '../ui/Card';
 import { useSelector } from 'react-redux';
 import { countries } from '../../constants/countries';
 
@@ -31,7 +30,7 @@ const PersonalInformation = ({
           name="surname"
           required
           placeholder="Enter your surname"
-          value={formData?.surname || user?.userLastName || ''}
+          value={formData?.surname || ''}
           onChange={handleInputChange}
           showValidation={showValidation}
         />
@@ -40,7 +39,7 @@ const PersonalInformation = ({
           name="forename"
           required
           placeholder="Enter your forename"
-          value={formData?.forename || user?.userFirstName || ''}
+          value={formData?.forename || ''}
           onChange={handleInputChange}
           showValidation={showValidation}
         />
@@ -153,7 +152,7 @@ const PersonalInformation = ({
             name="mobileNo"
             required
             placeholder="Enter your mobile number"
-            value={formData?.mobileNo || user?.userMobilePhone || ''}
+            value={formData?.mobileNo || ''}
             onChange={handleInputChange}
             showValidation={showValidation}
           />
@@ -187,43 +186,29 @@ const PersonalInformation = ({
               { value: 'personal', label: 'Personal' },
             ]}
           />
-          <div className="mt-2">
-            <Input
-              label="Email"
-              name="email"
-              type="email"
-              placeholder="Enter your email"
-              required
-              value={formData?.email || user?.userEmail || ''}
-              onChange={handleInputChange}
-              showValidation={showValidation}
-            />
-          </div>
         </div>
-        {formData?.preferredEmail === 'work' && (
-          <Input
-            label="Work Email"
-            name="workEmail"
-            type="email"
-            required
-            placeholder="Enter your work email"
-            value={formData?.workEmail || ''}
-            onChange={handleInputChange}
-            showValidation={showValidation}
-          />
-        )}
-        {formData?.preferredEmail === 'personal' && (
-          <Input
-            label="Personal Email"
-            name="personalEmail"
-            type="email"
-            required
-            placeholder="Enter your personal email"
-            value={formData?.personalEmail || ''}
-            onChange={handleInputChange}
-            showValidation={showValidation}
-          />
-        )}
+        <Input
+          label="Personal Email"
+          name="personalEmail"
+          type="email"
+          required={formData?.preferredEmail === 'personal'}
+          disabled={formData?.preferredEmail !== 'personal'}
+          placeholder="Enter your personal email"
+          value={formData?.personalEmail || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+        />
+        <Input
+          label="Work Email"
+          name="workEmail"
+          type="email"
+          required={formData?.preferredEmail === 'work'}
+          disabled={formData?.preferredEmail !== 'work'}
+          placeholder="Enter your work email"
+          value={formData?.workEmail || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+        />
       </div>
     </div>
   );
