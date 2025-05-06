@@ -16,9 +16,9 @@ export const Select = ({
 }) => {
   const isEmpty = required && !value && showValidation;
   const selectClasses = `
-    w-full px-3 py-2 border rounded-md bg-white
-    ${props.disabled ? 'bg-gray-300 border-gray-400 text-gray-400 cursor-not-allowed' : 'bg-white'}
-    ${isEmpty ? 'border-red-500 bg-red-50' : required ? 'border-blue-500' : 'border-gray-300'}
+    w-full px-3 py-2 border rounded-md
+    ${props.disabled ? 'bg-gray-200 text-gray-400 cursor-not-allowed border-gray-300' : 'bg-white border-gray-300'}
+    ${isEmpty ? 'border-red-500 bg-red-50' : required ? 'border-blue-500' : ''}
     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
     ${className}
   `;

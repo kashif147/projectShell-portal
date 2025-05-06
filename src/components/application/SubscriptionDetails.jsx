@@ -115,32 +115,36 @@ const SubscriptionDetails = ({
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Select
-          label="Please select the most appropriate option below"
-          name="memberStatus"
-          required
-          value={formData?.memberStatus || ''}
-          onChange={handleInputChange}
-          showValidation={showValidation}
-          placeholder="Select an option"
-          options={[
-            { value: 'new', label: 'You are a new member' },
-            { value: 'graduate', label: 'You are newly graduated' },
-            {
-              value: 'rejoin',
-              label:
-                'You were previously a member of the INMO, and are rejoining',
-            },
-            {
-              value: 'careerBreak',
-              label: 'You are returning from a career break',
-            },
-            {
-              value: 'nursingAbroad',
-              label: 'You are returning from nursing abroad',
-            },
-          ]}
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Please select the most appropriate option below
+          </label>
+          <Radio.Group
+            name="memberStatus"
+            value={formData?.memberStatus || ''}
+            onChange={e =>
+              onFormDataChange({
+                ...formData,
+                memberStatus: e.target.value,
+              })
+            }>
+            <Radio value="new" className="block">
+              You are a new member
+            </Radio>
+            <Radio value="graduate" className="block">
+              You are newly graduated
+            </Radio>
+            <Radio value="rejoin" className="block">
+              You were previously a member of the INMO, and are rejoining
+            </Radio>
+            <Radio value="careerBreak" className="block">
+              You are returning from a career break
+            </Radio>
+            <Radio value="nursingAbroad" className="block">
+              You are returning from nursing abroad
+            </Radio>
+          </Radio.Group>
+        </div>
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -222,45 +226,79 @@ const SubscriptionDetails = ({
           ]}
         />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Checkbox
-          label={
-            <span className="font-medium text-gray-700">
-              INMO Income Protection Scheme
-            </span>
-          }
-          name="incomeProtectionScheme"
-          checked={formData?.incomeProtectionScheme || false}
-          onChange={handleInputChange}
-        />
-        <Checkbox
-          label={
-            <span className="font-medium text-gray-700">INMO Rewards</span>
-          }
-          name="inmoRewards"
-          checked={formData?.inmoRewards || false}
-          onChange={handleInputChange}
-        />
-        <Checkbox
-          label={
-            <span className="font-medium text-gray-700">
-              Value Added Services
-            </span>
-          }
-          name="valueAddedServices"
-          checked={formData?.valueAddedServices || false}
-          onChange={handleInputChange}
-        />
-        <Checkbox
-          label={
-            <span className="font-medium text-gray-700">
-              Terms & Conditions
-            </span>
-          }
-          name="termsAndConditions"
-          checked={formData?.termsAndConditions || false}
-          onChange={handleInputChange}
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="flex items-start">
+          <div className="mt-1">
+            <Checkbox
+              label={
+                <span className="font-medium text-gray-700 text-sm leading-tight block pl-2">
+                  Tick here to join INMO Income Protection Scheme
+                </span>
+              }
+              name="incomeProtectionScheme"
+              checked={formData?.incomeProtectionScheme || false}
+              onChange={handleInputChange}
+              disabled={formData?.memberStatus !== 'new'}
+            />
+          </div>
+        </div>
+        <div className="flex items-start">
+          <div className="mt-1">
+            <Checkbox
+              label={
+                <span className="font-medium text-gray-700 text-sm leading-tight block pl-2">
+                  Tick here to join Rewards for INMO members
+                </span>
+              }
+              name="inmoRewards"
+              checked={formData?.inmoRewards || false}
+              onChange={handleInputChange}
+              disabled={formData?.memberStatus !== 'new'}
+            />
+          </div>
+        </div>
+        <div className="flex items-start">
+          <div className="mt-1">
+            <Checkbox
+              label={
+                <span className="font-medium text-gray-700 text-sm leading-tight block pl-2">
+                  Tick here to allow our partners to contact you about Value
+                  added Services by Email and SMS
+                </span>
+              }
+              name="valueAddedServices"
+              checked={formData?.valueAddedServices || false}
+              onChange={handleInputChange}
+            />
+          </div>
+        </div>
+        <div className="flex items-start">
+          <div className="mt-1">
+            <Checkbox
+              label={
+                <span className="font-medium text-gray-700 text-sm leading-tight block pl-2">
+                  I have read and agree to the INMO Data{' '}
+                  <a
+                    href="#"
+                    className="text-blue-600 underline hover:text-blue-800">
+                    Protection Statement
+                  </a>
+                  , the INMO{' '}
+                  <a
+                    href="#"
+                    className="text-blue-600 underline hover:text-blue-800">
+                    Privacy Statement
+                  </a>{' '}
+                  and the INMO conditions of membership
+                  <span className="text-red-500 ml-1">*</span>
+                </span>
+              }
+              name="termsAndConditions"
+              checked={formData?.termsAndConditions || false}
+              onChange={handleInputChange}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
