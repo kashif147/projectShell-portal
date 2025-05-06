@@ -76,8 +76,8 @@ const Application = () => {
         }
         break;
       case 2:
-        const { workLocation, grade } = formData.professionalDetails || {};
-        if (!grade || !workLocation) {
+        const { workLocation, grade, membershipCategory } = formData.professionalDetails || {};
+        if (!grade || !workLocation || !membershipCategory) {
           return false;
         }
         break;

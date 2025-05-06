@@ -1,5 +1,6 @@
 import React from 'react';
-import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { ExclamationCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { Tooltip } from 'antd';
 
 export const Select = ({
   label,
@@ -10,11 +11,13 @@ export const Select = ({
   className = '',
   value = '',
   showValidation = false,
+  tooltip,
   ...props
 }) => {
   const isEmpty = required && !value && showValidation;
   const selectClasses = `
     w-full px-3 py-2 border rounded-md bg-white
+    ${props.disabled ? 'bg-gray-300 border-gray-400 text-gray-400 cursor-not-allowed' : 'bg-white'}
     ${isEmpty ? 'border-red-500 bg-red-50' : required ? 'border-blue-500' : 'border-gray-300'}
     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
     ${className}
@@ -32,8 +35,17 @@ export const Select = ({
     <div className="flex flex-col">
       {label && (
         <label htmlFor={name} className={labelClasses}>
-          {label} {required && <span className="text-red-500">*</span>}
-          {isEmpty && <span className="ml-1 text-xs text-red-500">(Required)</span>}
+          <span className="flex items-center gap-1">
+            {label} {required && <span className="text-red-500">*</span>}
+            {tooltip && (
+              <Tooltip title={tooltip}>
+                <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 cursor-help" />
+              </Tooltip>
+            )}
+            {isEmpty && (
+              <span className="ml-1 text-xs text-red-500">(Required)</span>
+            )}
+          </span>
         </label>
       )}
       <div className="relative">
@@ -42,10 +54,9 @@ export const Select = ({
           name={name}
           value={actualValue}
           className={selectClasses}
-          {...props}
-        >
+          {...props}>
           <option value="">Select...</option>
-          {options.map((option) => (
+          {options.map(option => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
@@ -61,4 +72,4 @@ export const Select = ({
   );
 };
 
-export default Select; 
+export default Select;

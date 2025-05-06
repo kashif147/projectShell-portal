@@ -5,7 +5,7 @@ import { DatePicker } from '../ui/DatePicker';
 import { Checkbox } from '../ui/Checkbox';
 import { TreeSelect } from '../ui/TreeSelect';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Card } from '../ui/Card';
+import { Tooltip } from 'antd';
 
 const ProfessionalDetails = ({
   formData,
@@ -81,26 +81,31 @@ const ProfessionalDetails = ({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Select
+          label="Membership Category"
+          tooltip="Please select the membership category most appropriate to yourselves. Some category selections will require you to contact our Membership team."
+          name="membershipCategory"
+          required
+          value={formData?.membershipCategory || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+          placeholder="Select membership category"
+          options={[
+            { value: 'general', label: 'General (all grades)' },
+            { value: 'postgraduate_student', label: 'Postgraduate Student' },
+            { value: 'short_term_relief', label: 'Short-term/ Relief (under 15 hrs/wk average)' },
+            { value: 'private_nursing_home', label: 'Private nursing home' },
+            { value: 'affiliate_non_practicing', label: 'Affiliate members (non-practicing)' },
+            { value: 'lecturing', label: 'Lecturing (employed in universities and IT institutes)' },
+            { value: 'associate', label: 'Associate (not currently employed as a nurse/midwife)' },
+            { value: 'retired_associate', label: 'Retired Associate' },
+            { value: 'undergraduate_student', label: 'Undergraduate Student' },
+          ]}
+        />
         <div className="relative">
-          <div className="flex items-center gap-2 mb-1">
-            <label className="block text-sm font-medium text-gray-700">
-              Work location
-            </label>
-            <div className="group relative">
-              <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 cursor-help" />
-              <div
-                className="absolute left-1/2 -translate-x-1/2 top-full mt-2 max-w-[90vw] w-auto min-w-[180px] break-words text-center p-1.5 md:p-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10
-                md:left-auto md:right-0 md:top-auto md:bottom-full md:mb-2 md:mt-0 md:translate-x-0 md:text-left md:max-w-xs">
-                <div className="relative">
-                  <div className="hidden md:block absolute -bottom-1 right-2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
-                  <div className="block md:hidden absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
-                  Select your primary work location. If your location is not
-                  listed, choose 'Other' and specify it below.
-                </div>
-              </div>
-            </div>
-          </div>
           <Select
+            label="Work Location"
+            tooltip="Select your primary work location. If your location is not listed, choose 'Other' and specify it below."
             name="workLocation"
             required
             value={formData?.workLocation || ''}
@@ -130,25 +135,9 @@ const ProfessionalDetails = ({
           </div>
         </div>
         <div className="relative">
-          <div className="flex items-center gap-2 mb-1">
-            <label className="block text-sm font-medium text-gray-700">
-              Grade
-            </label>
-            <div className="group relative">
-              <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 cursor-help" />
-              <div
-                className="absolute left-1/2 -translate-x-1/2 top-full mt-2 max-w-[90vw] w-auto min-w-[180px] break-words text-center p-1.5 md:p-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10
-                md:left-auto md:right-0 md:top-auto md:bottom-full md:mb-2 md:mt-0 md:translate-x-0 md:text-left md:max-w-xs">
-                <div className="relative">
-                  <div className="hidden md:block absolute -bottom-1 right-2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
-                  <div className="block md:hidden absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
-                  Select your current grade. If your grade is not listed, choose
-                  'Other' and specify it below.
-                </div>
-              </div>
-            </div>
-          </div>
           <Select
+            label="Grade"
+            tooltip="Select your current grade. If your grade is not listed, choose 'Other' and specify it below."
             name="grade"
             required
             value={formData?.grade || ''}
@@ -177,7 +166,7 @@ const ProfessionalDetails = ({
           </div>
         </div>
 
-        <TreeSelect
+        {/* <TreeSelect
           label="Section"
           name="section"
           treeData={treeData}
@@ -187,7 +176,7 @@ const ProfessionalDetails = ({
           maxTagCount={2}
           maxTagPlaceholder={omittedValues => `+ ${omittedValues.length} more`}
           placeholder="Select sections"
-        />
+        /> */}
         <Select
           label="Branch"
           name="branch"
@@ -212,43 +201,10 @@ const ProfessionalDetails = ({
             { value: 'region3', label: 'Region 3' },
           ]}
         />
-        <div className="relative">
-          <div className="flex items-center gap-2 mb-1">
-            <label className="block text-sm font-medium text-gray-700">
-              Membership Category
-            </label>
-            <div className="group relative">
-              <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 cursor-help" />
-              <div
-                className="absolute left-1/2 -translate-x-1/2 top-full mt-2 max-w-[90vw] w-auto min-w-[180px] break-words text-center p-1.5 md:p-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10
-                md:left-auto md:right-0 md:top-auto md:bottom-full md:mb-2 md:mt-0 md:translate-x-0 md:text-left md:max-w-xs">
-                <div className="relative">
-                  <div className="hidden md:block absolute -bottom-1 right-2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
-                  <div className="block md:hidden absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 transform rotate-45"></div>
-                  Please select the membership category most appropriate to
-                  yourselves. Some category selections will require you to
-                  contact our Membership team.
-                </div>
-              </div>
-            </div>
-          </div>
-          <Select
-            name="membershipCategory"
-            required
-            value={formData?.membershipCategory || ''}
-            onChange={handleInputChange}
-            showValidation={showValidation}
-            placeholder="Select membership category"
-            options={[
-              { value: 'regular', label: 'Regular Membership' },
-              { value: 'premium', label: 'Premium Membership' },
-              { value: 'student', label: 'Student Membership' },
-            ]}
-          />
-        </div>
         <Select
           label="Study Location"
           name="studyLocation"
+          disabled={formData?.membershipCategory !== 'undergraduate_student'}
           value={formData?.studyLocation || ''}
           onChange={handleInputChange}
           placeholder="Select study location"
@@ -260,6 +216,7 @@ const ProfessionalDetails = ({
         />
         <DatePicker
           label="Graduation Date"
+          disabled={formData?.membershipCategory !== 'undergraduate_student'}
           name="graduationDate"
           value={formData?.graduationDate || ''}
           onChange={handleInputChange}
@@ -275,12 +232,12 @@ const ProfessionalDetails = ({
                 <span className="font-medium text-gray-700">Retired</span>
               }
               name="isRetired"
-              checked={formData?.isRetired || false}
+              checked={formData?.isRetired || formData?.membershipCategory === 'retired_associate'}
               onChange={handleInputChange}
             />
           </div>
           <DatePicker
-            disabled={!formData?.isRetired}
+            disabled={formData?.isRetired || formData?.membershipCategory !== 'retired_associate'}
             name="retiredDate"
             value={formData?.retiredDate || ''}
             onChange={handleInputChange}
@@ -290,7 +247,7 @@ const ProfessionalDetails = ({
         <Input
           label="Pension No"
           name="pensionNo"
-          disabled={!formData?.isRetired}
+          disabled={formData?.isRetired || formData?.membershipCategory !== 'retired_associate'}
           value={formData?.pensionNo || ''}
           onChange={handleInputChange}
           placeholder="Enter your pension number"
