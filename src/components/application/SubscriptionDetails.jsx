@@ -36,6 +36,8 @@ const SubscriptionDetails = ({
     });
   };
 
+  console.log('formData', formData.nursingAdaptationProgramme);
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -63,8 +65,26 @@ const SubscriptionDetails = ({
           placeholder="Enter your payroll number"
         />
       </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Are you currently undertaking a nursing adaptation programme?
+        </label>
+        <Radio.Group
+          name="nursingAdaptationProgramme"
+          value={formData?.nursingAdaptationProgramme || ''}
+          onChange={e =>
+            onFormDataChange({
+              ...formData,
+              nursingAdaptationProgramme: e.target.value,
+            })
+          }>
+          <Radio value="yes">Yes</Radio>
+          <Radio value="no">No</Radio>
+        </Radio.Group>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input
+          disabled={formData?.nursingAdaptationProgramme !== 'yes'}
           label="NMBI No / An Board Altranais Number"
           name="nmbiNumber"
           value={formData?.nmbiNumber || ''}
@@ -79,10 +99,15 @@ const SubscriptionDetails = ({
           </label>
           <Radio.Group
             name="nurseType"
+            disabled={formData?.nursingAdaptationProgramme !== 'yes'}
             value={formData?.nurseType || ''}
             onChange={handleNurseTypeChange}>
             {nurseTypeOptions.map(option => (
-              <Radio key={option.value} value={option.value} className="block">
+              <Radio
+                key={option.value}
+                value={option.value}
+                className="block"
+                disabled={formData?.nursingAdaptationProgramme !== 'yes'}>
                 {option.label}
               </Radio>
             ))}
@@ -164,6 +189,37 @@ const SubscriptionDetails = ({
           value={formData?.recuritedByMembershipNo || ''}
           onChange={handleInputChange}
           placeholder="Enter the membership number of the recruiter"
+        />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Select
+          label="Primary Section"
+          name="primarySection"
+          value={formData?.primarySection || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+          placeholder="Select primary section"
+          options={[
+            { value: 'section1', label: 'Section 1' },
+            { value: 'section2', label: 'Section 2' },
+            { value: 'section3', label: 'Section 3' },
+            { value: 'section4', label: 'Section 4' },
+            { value: 'section5', label: 'Section 5' },
+          ]}
+        />
+        <Select
+          label="Secondary Section"
+          name="secondarySection"
+          value={formData?.secondarySection || ''}
+          onChange={handleInputChange}
+          placeholder="Select secondary section"
+          options={[
+            { value: 'section1', label: 'Section 1' },
+            { value: 'section2', label: 'Section 2' },
+            { value: 'section3', label: 'Section 3' },
+            { value: 'section4', label: 'Section 4' },
+            { value: 'section5', label: 'Section 5' },
+          ]}
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
