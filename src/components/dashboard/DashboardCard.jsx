@@ -9,7 +9,7 @@ const DashboardCard = ({ title, description, icon, link }) => {
       <div className="text-3xl sm:text-4xl text-blue-600 mb-3 sm:mb-4">
         {icon}
       </div>
-      <h3 className="text-lg sm:text-xl font-semibold mb-2">{title}</h3>
+      <h3 className="text-lg sm:text-xl font-semibold mb-2">{title === 'Let\'s get started' ? 'Application' : title}</h3>
       <p className="text-gray-600 mb-3 sm:mb-6 text-sm sm:text-base flex-grow">{description}</p>
       <button
         onClick={() => navigate(link)}

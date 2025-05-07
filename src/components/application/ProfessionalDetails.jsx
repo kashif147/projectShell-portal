@@ -81,76 +81,45 @@ const ProfessionalDetails = ({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="relative">
-          <Select
-            label="Membership Category"
-            tooltip="Please select the membership category most appropriate to yourselves. Some category selections will require you to contact our Membership team."
-            name="membershipCategory"
-            required
-            value={formData?.membershipCategory || ''}
-            onChange={handleInputChange}
-            showValidation={showValidation}
-            placeholder="Select membership category"
-            options={[
-              { value: 'general', label: 'General (all grades)' },
-              { value: 'postgraduate_student', label: 'Postgraduate Student' },
-              {
-                value: 'short_term_relief',
-                label: 'Short-term/ Relief (under 15 hrs/wk average)',
-              },
-              { value: 'private_nursing_home', label: 'Private nursing home' },
-              {
-                value: 'affiliate_non_practicing',
-                label: 'Affiliate members (non-practicing)',
-              },
-              {
-                value: 'lecturing',
-                label: 'Lecturing (employed in universities and IT institutes)',
-              },
-              {
-                value: 'associate',
-                label: 'Associate (not currently employed as a nurse/midwife)',
-              },
-              { value: 'retired_associate', label: 'Retired Associate' },
-              {
-                value: 'undergraduate_student',
-                label: 'Undergraduate Student',
-              },
-            ]}
-          />
-          <div className="mt-2">
-            <Select
-              label="Grade"
-              tooltip="Select your current grade. If your grade is not listed, choose 'Other' and specify it below."
-              name="grade"
-              required
-              value={formData?.grade || ''}
-              onChange={handleInputChange}
-              showValidation={showValidation}
-              placeholder="Select grade"
-              options={[
-                { value: 'junior', label: 'Junior' },
-                { value: 'senior', label: 'Senior' },
-                { value: 'lead', label: 'Lead' },
-                { value: 'manager', label: 'Manager' },
-                { value: 'other', label: 'Other' },
-              ]}
-            />
-            <div className="mt-2">
-              <Input
-                label="Other Grade"
-                name="otherGrade"
-                required={formData?.grade === 'other'}
-                disabled={formData?.grade !== 'other'}
-                value={formData?.otherGrade || ''}
-                onChange={handleInputChange}
-                showValidation={showValidation}
-                placeholder="Enter your other grade"
-              />
-            </div>
-          </div>
-        </div>
-        <div className="relative">
+        <Select
+          label="Membership Category"
+          tooltip="Please select the membership category most appropriate to yourselves. Some category selections will require you to contact our Membership team."
+          name="membershipCategory"
+          required
+          value={formData?.membershipCategory || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+          placeholder="Select membership category"
+          options={[
+            { value: 'general', label: 'General (all grades)' },
+            { value: 'postgraduate_student', label: 'Postgraduate Student' },
+            {
+              value: 'short_term_relief',
+              label: 'Short-term/ Relief (under 15 hrs/wk average)',
+            },
+            { value: 'private_nursing_home', label: 'Private nursing home' },
+            {
+              value: 'affiliate_non_practicing',
+              label: 'Affiliate members (non-practicing)',
+            },
+            {
+              value: 'lecturing',
+              label: 'Lecturing (employed in universities and IT institutes)',
+            },
+            {
+              value: 'associate',
+              label: 'Associate (not currently employed as a nurse/midwife)',
+            },
+            { value: 'retired_associate', label: 'Retired Associate' },
+            {
+              value: 'undergraduate_student',
+              label: 'Undergraduate Student',
+            },
+          ]}
+        />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
           <Select
             label="Work Location"
             tooltip="Select your primary work location. If your location is not listed, choose 'Other' and specify it below."
@@ -182,18 +151,37 @@ const ProfessionalDetails = ({
             />
           </div>
         </div>
-        <Select
-          label="Region"
-          name="region"
-          value={formData?.region || ''}
-          onChange={handleInputChange}
-          placeholder="Select region"
-          options={[
-            { value: 'region1', label: 'Region 1' },
-            { value: 'region2', label: 'Region 2' },
-            { value: 'region3', label: 'Region 3' },
-          ]}
-        />
+        <div >
+          <Select
+            label="Grade"
+            tooltip="Select your current grade. If your grade is not listed, choose 'Other' and specify it below."
+            name="grade"
+            required
+            value={formData?.grade || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+            placeholder="Select grade"
+            options={[
+              { value: 'junior', label: 'Junior' },
+              { value: 'senior', label: 'Senior' },
+              { value: 'lead', label: 'Lead' },
+              { value: 'manager', label: 'Manager' },
+              { value: 'other', label: 'Other' },
+            ]}
+          />
+          <div className="mt-2">
+            <Input
+              label="Other Grade"
+              name="otherGrade"
+              required={formData?.grade === 'other'}
+              disabled={formData?.grade !== 'other'}
+              value={formData?.otherGrade || ''}
+              onChange={handleInputChange}
+              showValidation={showValidation}
+              placeholder="Enter your other grade"
+            />
+          </div>
+        </div>
         <Select
           label="Branch"
           name="branch"
@@ -204,6 +192,18 @@ const ProfessionalDetails = ({
             { value: 'branch1', label: 'Branch 1' },
             { value: 'branch2', label: 'Branch 2' },
             { value: 'branch3', label: 'Branch 3' },
+          ]}
+        />
+        <Select
+          label="Region"
+          name="region"
+          value={formData?.region || ''}
+          onChange={handleInputChange}
+          placeholder="Select region"
+          options={[
+            { value: 'region1', label: 'Region 1' },
+            { value: 'region2', label: 'Region 2' },
+            { value: 'region3', label: 'Region 3' },
           ]}
         />
         <Select

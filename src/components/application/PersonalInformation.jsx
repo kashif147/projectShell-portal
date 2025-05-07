@@ -186,29 +186,32 @@ const PersonalInformation = ({
               { value: 'personal', label: 'Personal' },
             ]}
           />
+          <div className="mt-2">
+
+            <Input
+              label="Personal Email"
+              name="personalEmail"
+              type="email"
+              required={formData?.preferredEmail === 'personal'}
+              placeholder="Enter your personal email"
+              value={formData?.personalEmail || ''}
+              onChange={handleInputChange}
+              showValidation={showValidation}
+            />
+          </div>
+          <div className="mt-2">
+            <Input
+              label="Work Email"
+              name="workEmail"
+              type="email"
+              required={formData?.preferredEmail === 'work'}
+              placeholder="Enter your work email"
+              value={formData?.workEmail || ''}
+              onChange={handleInputChange}
+              showValidation={showValidation}
+            />
+          </div>
         </div>
-        <Input
-          label="Personal Email"
-          name="personalEmail"
-          type="email"
-          required={formData?.preferredEmail === 'personal'}
-          disabled={formData?.preferredEmail !== 'personal'}
-          placeholder="Enter your personal email"
-          value={formData?.personalEmail || ''}
-          onChange={handleInputChange}
-          showValidation={showValidation}
-        />
-        <Input
-          label="Work Email"
-          name="workEmail"
-          type="email"
-          required={formData?.preferredEmail === 'work'}
-          disabled={formData?.preferredEmail !== 'work'}
-          placeholder="Enter your work email"
-          value={formData?.workEmail || ''}
-          onChange={handleInputChange}
-          showValidation={showValidation}
-        />
       </div>
     </div>
   );
