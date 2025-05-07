@@ -9,6 +9,7 @@ import { useSelector } from 'react-redux';
 const Application = () => {
   const { user } = useSelector(state => state.auth);
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState({
     personalInfo: {
       forename: user?.userFirstName || '',
@@ -122,6 +123,7 @@ const Application = () => {
     if (validateCurrentStep()) {
       // Here you would typically send the form data to your backend
       console.log('Form submitted:', formData);
+      setIsSubmitted(true);
       alert('Application submitted successfully!');
     }
   };
@@ -176,18 +178,26 @@ const Application = () => {
                 className={`
                 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
                 ${
-                  currentStep === step.number
+                  isSubmitted && step.number === 3
+                    ? 'bg-green-500 text-white'
+                    : currentStep === step.number
                     ? 'bg-blue-500 text-white'
                     : currentStep > step.number
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-200'
+                    ? 'bg-green-500 text-white'
+                    : 'bg-gray-200'
                 }
               `}>
-                {currentStep > step.number ? '✓' : step.number}
+                {isSubmitted && step.number === 3 ? '✓' : currentStep > step.number ? '✓' : step.number}
               </div>
               <div className="ml-2">
                 <p
-                  className={`text-sm whitespace-nowrap ${currentStep === step.number ? 'text-blue-500 font-semibold' : 'text-gray-500'}`}>
+                  className={`text-sm whitespace-nowrap ${
+                    isSubmitted && step.number === 3
+                      ? 'text-green-500 font-semibold'
+                      : currentStep === step.number
+                      ? 'text-blue-500 font-semibold'
+                      : 'text-gray-500'
+                  }`}>
                   {step.title}
                 </p>
               </div>
@@ -196,7 +206,7 @@ const Application = () => {
               <div
                 className={`
                 hidden sm:block flex-grow mx-2 h-1 min-w-[16px]
-                ${currentStep > step.number ? 'bg-green-500' : 'bg-gray-200'}
+                ${(isSubmitted && step.number === 2) || currentStep > step.number ? 'bg-green-500' : 'bg-gray-200'}
               `}
               />
             )}
