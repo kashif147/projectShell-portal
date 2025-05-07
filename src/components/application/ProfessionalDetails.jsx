@@ -170,7 +170,7 @@ const ProfessionalDetails = ({
                 { value: 'location3', label: 'Location 3' },
               ]}
             />
-            <div className="mt-4">
+            <div className="mt-2">
               <DatePicker
                 label="Graduation Date"
                 disabled={

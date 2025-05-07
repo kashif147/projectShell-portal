@@ -2,7 +2,7 @@ import React from 'react';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
-import { Radio } from 'antd';
+import { Radio } from '../ui/Radio';
 
 const nurseTypeOptions = [
   { value: 'general', label: 'General Nurse' },
@@ -66,10 +66,8 @@ const SubscriptionDetails = ({
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Are you currently undertaking a nursing adaptation programme?
-        </label>
-        <Radio.Group
+        <Radio
+          label="Are you currently undertaking a nursing adaptation programme?"
           name="nursingAdaptationProgramme"
           value={formData?.nursingAdaptationProgramme || ''}
           onChange={e =>
@@ -77,49 +75,43 @@ const SubscriptionDetails = ({
               ...formData,
               nursingAdaptationProgramme: e.target.value,
             })
-          }>
-          <Radio value="yes">Yes</Radio>
-          <Radio value="no">No</Radio>
-        </Radio.Group>
+          }
+          options={[
+            { value: 'yes', label: 'Yes' },
+            { value: 'no', label: 'No' },
+          ]}
+        />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input
           disabled={formData?.nursingAdaptationProgramme !== 'yes'}
+          required={formData?.nursingAdaptationProgramme === 'yes'}
           label="NMBI No / An Board Altranais Number"
           name="nmbiNumber"
           value={formData?.nmbiNumber || ''}
           onChange={handleInputChange}
+          showValidation={showValidation}
           placeholder="Enter your NMBI number"
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Please tick one of the following
-          </label>
-          <Radio.Group
+          <Radio
+            label="Please tick one of the following"
             name="nurseType"
+            required={formData?.nursingAdaptationProgramme === 'yes'}
             disabled={formData?.nursingAdaptationProgramme !== 'yes'}
             value={formData?.nurseType || ''}
-            onChange={handleNurseTypeChange}>
-            {nurseTypeOptions.map(option => (
-              <Radio
-                key={option.value}
-                value={option.value}
-                className="block"
-                disabled={formData?.nursingAdaptationProgramme !== 'yes'}>
-                {option.label}
-              </Radio>
-            ))}
-          </Radio.Group>
+            onChange={handleNurseTypeChange}
+            showValidation={showValidation}
+            options={nurseTypeOptions}
+          />
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Please select the most appropriate option below
-          </label>
-          <Radio.Group
+          <Radio
+            label="Please select the most appropriate option below"
             name="memberStatus"
             value={formData?.memberStatus || ''}
             onChange={e =>
@@ -127,57 +119,64 @@ const SubscriptionDetails = ({
                 ...formData,
                 memberStatus: e.target.value,
               })
-            }>
-            <Radio value="new" className="block">
-              You are a new member
-            </Radio>
-            <Radio value="graduate" className="block">
-              You are newly graduated
-            </Radio>
-            <Radio value="rejoin" className="block">
-              You were previously a member of the INMO, and are rejoining
-            </Radio>
-            <Radio value="careerBreak" className="block">
-              You are returning from a career break
-            </Radio>
-            <Radio value="nursingAbroad" className="block">
-              You are returning from nursing abroad
-            </Radio>
-          </Radio.Group>
+            }
+            options={[
+              { value: 'new', label: 'You are a new member' },
+              { value: 'graduate', label: 'You are newly graduated' },
+              {
+                value: 'rejoin',
+                label:
+                  'You were previously a member of the INMO, and are rejoining',
+              },
+              {
+                value: 'careerBreak',
+                label: 'You are returning from a career break',
+              },
+              {
+                value: 'nursingAbroad',
+                label: 'You are returning from nursing abroad',
+              },
+            ]}
+          />
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Are you a member of another Irish Trade Union?{' '}
-          <span className="text-red-500">*</span>
-        </label>
-        <Radio.Group
+        <Radio
+          label="Are you a member of another Irish Trade Union?"
           name="otherIrishTradeUnion"
+          required
           value={formData?.otherIrishTradeUnion || ''}
           onChange={e =>
             onFormDataChange({
               ...formData,
               otherIrishTradeUnion: e.target.value,
             })
-          }>
-          <Radio value="yes">Yes</Radio>
-          <Radio value="no">No</Radio>
-        </Radio.Group>
+          }
+          showValidation={showValidation}
+          options={[
+            { value: 'yes', label: 'Yes' },
+            { value: 'no', label: 'No' },
+          ]}
+        />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Are you or were you a member of another Irish trade Union salary or
-          Income Protection Scheme? <span className="text-red-500">*</span>
-        </label>
-        <Radio.Group
+        <Radio
+          label="Are you or were you a member of another Irish trade Union salary or Income Protection Scheme?"
           name="otherScheme"
+          required
           value={formData?.otherScheme || ''}
           onChange={e =>
-            onFormDataChange({ ...formData, otherScheme: e.target.value })
-          }>
-          <Radio value="yes">Yes</Radio>
-          <Radio value="no">No</Radio>
-        </Radio.Group>
+            onFormDataChange({
+              ...formData,
+              otherScheme: e.target.value,
+            })
+          }
+          showValidation={showValidation}
+          options={[
+            { value: 'yes', label: 'Yes' },
+            { value: 'no', label: 'No' },
+          ]}
+        />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input
@@ -196,35 +195,65 @@ const SubscriptionDetails = ({
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Select
-          label="Primary Section"
-          name="primarySection"
-          value={formData?.primarySection || ''}
-          onChange={handleInputChange}
-          showValidation={showValidation}
-          placeholder="Select primary section"
-          options={[
-            { value: 'section1', label: 'Section 1' },
-            { value: 'section2', label: 'Section 2' },
-            { value: 'section3', label: 'Section 3' },
-            { value: 'section4', label: 'Section 4' },
-            { value: 'section5', label: 'Section 5' },
-          ]}
-        />
-        <Select
-          label="Secondary Section"
-          name="secondarySection"
-          value={formData?.secondarySection || ''}
-          onChange={handleInputChange}
-          placeholder="Select secondary section"
-          options={[
-            { value: 'section1', label: 'Section 1' },
-            { value: 'section2', label: 'Section 2' },
-            { value: 'section3', label: 'Section 3' },
-            { value: 'section4', label: 'Section 4' },
-            { value: 'section5', label: 'Section 5' },
-          ]}
-        />
+        <div>
+          <Select
+            label="Primary Section"
+            name="primarySection"
+            value={formData?.primarySection || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+            placeholder="Select primary section"
+            options={[
+              { value: 'section1', label: 'Section 1' },
+              { value: 'section2', label: 'Section 2' },
+              { value: 'section3', label: 'Section 3' },
+              { value: 'section4', label: 'Section 4' },
+              { value: 'section5', label: 'Section 5' },
+              { value: 'other', label: 'Other' },
+            ]}
+          />
+          <div className="mt-2">
+            <Input
+              label="Other Primary Section"
+              name="otherPrimarySection"
+              required={formData?.primarySection === 'other'}
+              disabled={formData?.primarySection !== 'other'}
+              value={formData?.otherPrimarySection || ''}
+              onChange={handleInputChange}
+              showValidation={showValidation}
+              placeholder="Enter your other primary section"
+            />
+          </div>
+        </div>
+        <div>
+          <Select
+            label="Secondary Section"
+            name="secondarySection"
+            value={formData?.secondarySection || ''}
+            onChange={handleInputChange}
+            placeholder="Select secondary section"
+            options={[
+              { value: 'section1', label: 'Section 1' },
+              { value: 'section2', label: 'Section 2' },
+              { value: 'section3', label: 'Section 3' },
+              { value: 'section4', label: 'Section 4' },
+              { value: 'section5', label: 'Section 5' },
+              { value: 'other', label: 'Other' },
+            ]}
+          />
+          <div className="mt-2">
+            <Input
+              label="Other Secondary Section"
+              name="otherSecondarySection"
+              required={formData?.secondarySection === 'other'}
+              disabled={formData?.secondarySection !== 'other'}
+              value={formData?.otherSecondarySection || ''}
+              onChange={handleInputChange}
+              showValidation={showValidation}
+              placeholder="Enter your other secondary section"
+            />
+          </div>
+        </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="flex items-start">
@@ -238,7 +267,8 @@ const SubscriptionDetails = ({
               name="incomeProtectionScheme"
               checked={formData?.incomeProtectionScheme || false}
               onChange={handleInputChange}
-              disabled={formData?.memberStatus !== 'new'}
+              disabled={formData?.memberStatus !== 'new' && formData?.memberStatus !== 'graduate'}
+              required={formData?.memberStatus === 'new' || formData?.memberStatus === 'graduate'}
             />
           </div>
         </div>
@@ -253,7 +283,8 @@ const SubscriptionDetails = ({
               name="inmoRewards"
               checked={formData?.inmoRewards || false}
               onChange={handleInputChange}
-              disabled={formData?.memberStatus !== 'new'}
+              disabled={formData?.memberStatus !== 'new' && formData?.memberStatus !== 'graduate'}
+              required={formData?.memberStatus === 'new' || formData?.memberStatus === 'graduate'}
             />
           </div>
         </div>
@@ -262,8 +293,7 @@ const SubscriptionDetails = ({
             <Checkbox
               label={
                 <span className="font-medium text-gray-700 text-sm leading-tight block pl-2">
-                  Tick here to allow our partners to contact you about Value
-                  added Services by Email and SMS
+                  Tick here to allow our partners to contact you about Value added Services by Email and SMS
                 </span>
               }
               name="valueAddedServices"
@@ -277,25 +307,26 @@ const SubscriptionDetails = ({
             <Checkbox
               label={
                 <span className="font-medium text-gray-700 text-sm leading-tight block pl-2">
-                  I have read and agree to the INMO Data{' '}
-                  <a
-                    href="#"
-                    className="text-blue-600 underline hover:text-blue-800">
-                    Protection Statement
+                  I have read and agree to the INMO{' '}
+                  <a href="#" className="text-blue-600 underline hover:text-blue-800">
+                    Data Protection Statement
                   </a>
                   , the INMO{' '}
-                  <a
-                    href="#"
-                    className="text-blue-600 underline hover:text-blue-800">
+                  <a href="#" className="text-blue-600 underline hover:text-blue-800">
                     Privacy Statement
                   </a>{' '}
-                  and the INMO conditions of membership
+                  and the INMO{' '}
+                  <a href="#" className="text-blue-600 underline hover:text-blue-800">
+                    Conditions of Membership
+                  </a>
                   <span className="text-red-500 ml-1">*</span>
                 </span>
               }
               name="termsAndConditions"
               checked={formData?.termsAndConditions || false}
               onChange={handleInputChange}
+              required
+              showValidation={showValidation}
             />
           </div>
         </div>

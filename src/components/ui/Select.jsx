@@ -18,7 +18,7 @@ export const Select = ({
 }) => {
   const isEmpty = required && !value && showValidation;
   const selectClasses = `
-    w-full h-10
+    w-full h- 
     ${props.disabled ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white'}
     ${isEmpty ? 'border-red-500 bg-red-50' : required ? 'border-blue-500' : ''}
     ${className}
@@ -133,7 +133,7 @@ export const Select = ({
           ))}
         </select>
         {isEmpty && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 pointer-events-none">
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500 pointer-events-none">
             <ExclamationCircleOutlined />
           </div>
         )}

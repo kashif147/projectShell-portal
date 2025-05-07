@@ -15,7 +15,7 @@ const Application = () => {
       surname: user?.userLastName || '',
       personalEmail: user?.userEmail || '',
       mobileNo: user?.userMobilePhone || '',
-      country: 'ireland',
+      country: 'Ireland',
       smsConsent: true,
       emailConsent: true,
     },
@@ -76,29 +76,41 @@ const Application = () => {
         }
         break;
       case 2:
-        const { workLocation, grade, membershipCategory } = formData.professionalDetails || {};
+        const { workLocation, grade, membershipCategory } =
+          formData.professionalDetails || {};
         if (!grade || !workLocation || !membershipCategory) {
           return false;
         }
         break;
       case 3:
         const {
-          membershipType,
-          paymentFrequency,
-          cardNumber,
-          cardHolderName,
-          expiryDate,
-          cvv,
+          paymentType,
+          incomeProtectionScheme,
+          inmoRewards,
+          termsAndConditions,
+          otherIrishTradeUnion,
+          otherScheme,
+          memberStatus,
+          nursingAdaptationProgramme,
+          nurseType,
+          nmbiNumber
         } = formData.subscriptionDetails || {};
-        if (
-          !membershipType ||
-          !paymentFrequency ||
-          !cardNumber ||
-          !cardHolderName ||
-          !expiryDate ||
-          !cvv
-        ) {
-          return false;
+        if (!paymentType) return false;
+        
+        if (paymentType === 'deduction' && !formData.subscriptionDetails?.payrollNo) return false;
+
+        if (nursingAdaptationProgramme === 'yes') {
+          if (!nurseType || !nmbiNumber) return false;
+        }
+
+        if (!memberStatus) return false;
+
+        if (!otherIrishTradeUnion || !otherScheme) return false;
+
+        if (!termsAndConditions) return false;
+
+        if (memberStatus === 'new' || memberStatus === 'graduate') {
+          if (!incomeProtectionScheme || !inmoRewards) return false;
         }
         break;
     }
