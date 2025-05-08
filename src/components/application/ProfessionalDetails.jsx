@@ -3,62 +3,12 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { DatePicker } from '../ui/DatePicker';
 import { Checkbox } from '../ui/Checkbox';
-import { TreeSelect } from '../ui/TreeSelect';
-import { InfoCircleOutlined } from '@ant-design/icons';
-import { Tooltip } from 'antd';
 
 const ProfessionalDetails = ({
   formData,
   onFormDataChange,
   showValidation = false,
 }) => {
-  const [showOtherLocation, setShowOtherLocation] = useState(false);
-  const [showOtherGrade, setShowOtherGrade] = useState(false);
-
-  const treeData = [
-    {
-      title: 'Section 1',
-      value: 'section1',
-      children: [
-        {
-          title: 'Subsection 1.1',
-          value: 'section1.1',
-        },
-        {
-          title: 'Subsection 1.2',
-          value: 'section1.2',
-        },
-      ],
-    },
-    {
-      title: 'Section 2',
-      value: 'section2',
-      children: [
-        {
-          title: 'Subsection 2.1',
-          value: 'section2.1',
-        },
-        {
-          title: 'Subsection 2.2',
-          value: 'section2.2',
-        },
-      ],
-    },
-    {
-      title: 'Section 3',
-      value: 'section3',
-      children: [
-        {
-          title: 'Subsection 3.1',
-          value: 'section3.1',
-        },
-        {
-          title: 'Subsection 3.2',
-          value: 'section3.2',
-        },
-      ],
-    },
-  ];
 
   const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
@@ -118,103 +68,98 @@ const ProfessionalDetails = ({
           ]}
         />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {formData?.membershipCategory !== 'undergraduate_student' && (
-          <div>
-            <Select
-              label="Work Location"
-              tooltip="Select your primary work location. If your location is not listed, choose 'Other' and specify it below."
-              name="workLocation"
-              required={formData?.membershipCategory !== 'undergraduate_student'}
-              value={formData?.workLocation || ''}
-              onChange={handleInputChange}
-              showValidation={showValidation}
-              placeholder="Select work location"
-              options={[
-                { value: 'dublin', label: 'Dublin' },
-                { value: 'cork', label: 'Cork' },
-                { value: 'galway', label: 'Galway' },
-                { value: 'limerick', label: 'Limerick' },
-                { value: 'waterford', label: 'Waterford' },
-                { value: 'other', label: 'Other' },
-              ]}
-            />
-            <div className="mt-2">
-              <Input
-                label="Other Work Location"
-                name="otherWorkLocation"
-                required={formData?.workLocation === 'other'}
-                disabled={formData?.workLocation !== 'other'}
-                value={formData?.otherWorkLocation || ''}
-                onChange={handleInputChange}
-                showValidation={showValidation}
-                placeholder="Enter your work other location"
-              />
-            </div>
-          </div>
-        )}
-        {formData?.membershipCategory === 'undergraduate_student' && (
-          <div>
-            <Select
-              label="Study Location"
-              name="studyLocation"
-              disabled={
-                formData?.membershipCategory !== 'undergraduate_student'
-              }
-              value={formData?.studyLocation || ''}
-              onChange={handleInputChange}
-              placeholder="Select study location"
-              options={[
-                { value: 'location1', label: 'Location 1' },
-                { value: 'location2', label: 'Location 2' },
-                { value: 'location3', label: 'Location 3' },
-              ]}
-            />
-            <div className="mt-2">
-              <DatePicker
-                label="Graduation Date"
-                disabled={
-                  formData?.membershipCategory !== 'undergraduate_student'
-                }
-                name="graduationDate"
-                value={formData?.graduationDate || ''}
-                onChange={handleInputChange}
-                disableAgeValidation
-              />
-            </div>
-          </div>
-        )}
-        <div>
+      {formData?.membershipCategory !== 'undergraduate_student' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Select
-            label="Grade"
-            tooltip="Select your current grade. If your grade is not listed, choose 'Other' and specify it below."
-            name="grade"
-            required
-            value={formData?.grade || ''}
+            label="Work Location"
+            tooltip="Select your primary work location. If your location is not listed, choose 'Other' and specify it below."
+            name="workLocation"
+            required={formData?.membershipCategory !== 'undergraduate_student'}
+            value={formData?.workLocation || ''}
             onChange={handleInputChange}
             showValidation={showValidation}
-            placeholder="Select grade"
+            placeholder="Select work location"
             options={[
-              { value: 'junior', label: 'Junior' },
-              { value: 'senior', label: 'Senior' },
-              { value: 'lead', label: 'Lead' },
-              { value: 'manager', label: 'Manager' },
+              { value: 'dublin', label: 'Dublin' },
+              { value: 'cork', label: 'Cork' },
+              { value: 'galway', label: 'Galway' },
+              { value: 'limerick', label: 'Limerick' },
+              { value: 'waterford', label: 'Waterford' },
               { value: 'other', label: 'Other' },
             ]}
           />
-          <div className="mt-2">
-            <Input
-              label="Other Grade"
-              name="otherGrade"
-              required={formData?.grade === 'other'}
-              disabled={formData?.grade !== 'other'}
-              value={formData?.otherGrade || ''}
-              onChange={handleInputChange}
-              showValidation={showValidation}
-              placeholder="Enter your other grade"
-            />
-          </div>
+          <Input
+            label="Other Work Location"
+            name="otherWorkLocation"
+            required={formData?.workLocation === 'other'}
+            disabled={formData?.workLocation !== 'other'}
+            value={formData?.otherWorkLocation || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+            placeholder="Enter your work other location"
+          />
         </div>
+      )}
+
+      {formData?.membershipCategory === 'undergraduate_student' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Select
+            label="Study Location"
+            name="studyLocation"
+            disabled={
+              formData?.membershipCategory !== 'undergraduate_student'
+            }
+            value={formData?.studyLocation || ''}
+            onChange={handleInputChange}
+            placeholder="Select study location"
+            options={[
+              { value: 'location1', label: 'Location 1' },
+              { value: 'location2', label: 'Location 2' },
+              { value: 'location3', label: 'Location 3' },
+            ]}
+          />
+          <DatePicker
+            label="Graduation Date"
+            disabled={
+              formData?.membershipCategory !== 'undergraduate_student'
+            }
+            name="graduationDate"
+            value={formData?.graduationDate || ''}
+            onChange={handleInputChange}
+            disableAgeValidation
+          />
+        </div>
+      )}
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+        <Select
+          label="Grade"
+          tooltip="Select your current grade. If your grade is not listed, choose 'Other' and specify it below."
+          name="grade"
+          required
+          value={formData?.grade || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+          placeholder="Select grade"
+          options={[
+            { value: 'junior', label: 'Junior' },
+            { value: 'senior', label: 'Senior' },
+            { value: 'lead', label: 'Lead' },
+            { value: 'manager', label: 'Manager' },
+            { value: 'other', label: 'Other' },
+          ]}
+        />
+        <Input
+          label="Other Grade"
+          name="otherGrade"
+          required={formData?.grade === 'other'}
+          disabled={formData?.grade !== 'other'}
+          value={formData?.otherGrade || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+          placeholder="Enter your other grade"
+        />
+      </div>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
         <Select
           label="Branch"
           name="branch"
@@ -277,7 +222,7 @@ const ProfessionalDetails = ({
           placeholder="Enter your pension number"
         />
       </div>
-    </div>
+    </div >
   );
 };
 

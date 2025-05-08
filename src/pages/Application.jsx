@@ -1,15 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from '../components/ui/Card';
+import { Card } from 'antd';
 import PersonalInformation from '../components/application/PersonalInformation';
 import ProfessionalDetails from '../components/application/ProfessionalDetails';
 import SubscriptionDetails from '../components/application/SubscriptionDetails';
+import { SubscriptionModal } from '../components/modals';
 import Button from '../components/common/Button';
 import { useSelector } from 'react-redux';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+
+// Initialize Stripe
+const stripePromise = loadStripe('your_publishable_key'); // Replace with your Stripe publishable key
 
 const Application = () => {
   const { user } = useSelector(state => state.auth);
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [formData, setFormData] = useState({
     personalInfo: {
       forename: user?.userFirstName || '',
@@ -124,8 +131,18 @@ const Application = () => {
       // Here you would typically send the form data to your backend
       console.log('Form submitted:', formData);
       setIsSubmitted(true);
-      alert('Application submitted successfully!');
+      setIsModalVisible(true);
     }
+  };
+
+  const handleModalClose = () => {
+    setIsModalVisible(false);
+  };
+
+  const handleSubscriptionSuccess = () => {
+    setIsModalVisible(false);
+    // Redirect to dashboard or show success message
+    window.location.href = '/';
   };
 
   const renderStepContent = () => {
@@ -231,6 +248,16 @@ const Application = () => {
           {currentStep === steps.length ? 'Submit' : 'Next'}
         </Button>
       </div>
+
+      {/* Subscription Modal with Stripe Integration */}
+      <Elements stripe={stripePromise}>
+        <SubscriptionModal
+          isVisible={isModalVisible}
+          onClose={handleModalClose}
+          onSuccess={handleSubscriptionSuccess}
+          membershipCategory={formData.professionalDetails.membershipCategory}
+        />
+      </Elements>
     </div>
   );
 };
