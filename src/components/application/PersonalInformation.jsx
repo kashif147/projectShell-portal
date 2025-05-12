@@ -1,10 +1,45 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
 import { DatePicker } from '../ui/DatePicker';
 import { useSelector } from 'react-redux';
 import { countries } from '../../constants/countries';
+import { Spin } from 'antd';
+
+// Dummy Eircode data for demonstration
+const eircodeData = {
+  'D01X4X0': {
+    addressLine1: '1 O\'Connell Street',
+    addressLine2: 'North City',
+    addressLine3: 'Dublin 1',
+    addressLine4: 'Dublin',
+  },
+  'D02X4X0': {
+    addressLine1: '2 Grafton Street',
+    addressLine2: 'South City',
+    addressLine3: 'Dublin 2',
+    addressLine4: 'Dublin',
+  },
+  'D03X4X0': {
+    addressLine1: '3 Parnell Street',
+    addressLine2: 'North Inner City',
+    addressLine3: 'Dublin 3',
+    addressLine4: 'Dublin',
+  },
+  'D04X4X0': {
+    addressLine1: '4 Ballsbridge',
+    addressLine2: 'South Dublin',
+    addressLine3: 'Dublin 4',
+    addressLine4: 'Dublin',
+  },
+  'D05X4X0': {
+    addressLine1: '5 Coolock',
+    addressLine2: 'North Dublin',
+    addressLine3: 'Dublin 5',
+    addressLine4: 'Dublin',
+  },
+};
 
 const PersonalInformation = ({
   formData,
@@ -12,6 +47,7 @@ const PersonalInformation = ({
   showValidation = false,
 }) => {
   const { user } = useSelector(state => state.auth);
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
@@ -19,6 +55,34 @@ const PersonalInformation = ({
       ...formData,
       [name]: type === 'checkbox' ? checked : value,
     });
+  };
+
+  const handleEircodeChange = async (e) => {
+    const eircode = e.target.value.toUpperCase();
+    handleInputChange(e);
+
+    if (eircode.length === 7) {
+      setLoading(true);
+      try {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const addressData = eircodeData[eircode];
+        if (addressData) {
+          onFormDataChange({
+            ...formData,
+            eircode,
+            addressLine1: addressData.addressLine1,
+            addressLine2: addressData.addressLine2,
+            addressLine3: addressData.addressLine3,
+            addressLine4: addressData.addressLine4,
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching address:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   return (
@@ -77,12 +141,21 @@ const PersonalInformation = ({
       </div>
       <h3 className="text-lg font-semibold mb-4">Correspondence Details</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label="Eircode"
-          name="eircode"
-          value={formData?.eircode || ''}
-          onChange={handleInputChange}
-        />
+        <div className="relative">
+          <Input
+            label="Eircode"
+            name="eircode"
+            value={formData?.eircode || ''}
+            onChange={handleEircodeChange}
+            placeholder="Enter Eircode (e.g., D01X4X0)"
+            maxLength={7}
+          />
+          {loading && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <Spin size="small" />
+            </div>
+          )}
+        </div>
         <Select
           label="Preferred address"
           name="preferredAddress"
@@ -210,7 +283,6 @@ const PersonalInformation = ({
           showValidation={showValidation}
         />
       </div>
-      {/* </div> */}
     </div>
   );
 };
