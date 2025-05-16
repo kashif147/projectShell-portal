@@ -75,30 +75,30 @@ const SubscriptionModal = ({ isVisible, onClose, onSuccess, membershipCategory }
     <Modal
       title={
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Membership Subscription</h2>
-          <p className="text-gray-500">Review your membership and complete payment</p>
+          <h2 className="text-xl font-bold mb-1">Membership Subscription</h2>
+          <p className="text-sm text-gray-500">Review your membership and complete payment</p>
         </div>
       }
       open={isVisible}
       onCancel={onClose}
       footer={null}
-      width={window.innerWidth <= 768 ? '95%' : '70%'}
+      width={window.innerWidth <= 768 ? '95%' : '500px'}
       centered
       className="subscription-modal"
-      bodyStyle={{ padding: '24px' }}
+      bodyStyle={{ padding: '16px' }}
     >
-      <div className="mb-6 p-4 rounded-lg border border-blue-100 bg-blue-50 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <CheckCircleOutlined className="text-blue-500 text-2xl" />
+      <div className="mb-4 p-3 rounded-lg border border-blue-100 bg-blue-50 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <CheckCircleOutlined className="text-blue-500 text-xl" />
           <div>
-            <div className="text-base font-semibold text-blue-900">Membership Category</div>
-            <div className="text-lg font-bold text-blue-700">{membershipCategory || 'N/A'}</div>
+            <div className="text-sm font-semibold text-blue-900">Membership Category</div>
+            <div className="text-base font-bold text-blue-700">{membershipCategory || 'N/A'}</div>
           </div>
         </div>
         <div className="text-right">
-          <div className="text-sm text-gray-500">Annual Fee</div>
-          <div className="text-xl font-bold text-blue-700">€{priceInfo.full.toFixed(2)}</div>
-          <div className="text-xs text-gray-500">Monthly Payment: <span className="font-semibold text-blue-600">€{priceInfo.monthly.toFixed(2)}</span></div>
+          <div className="text-xs text-gray-500">Annual Fee</div>
+          <div className="text-lg font-bold text-blue-700">€{priceInfo.full.toFixed(2)}</div>
+          <div className="text-xs text-gray-500">Monthly: <span className="font-semibold text-blue-600">€{priceInfo.monthly.toFixed(2)}</span></div>
         </div>
       </div>
 
@@ -106,13 +106,14 @@ const SubscriptionModal = ({ isVisible, onClose, onSuccess, membershipCategory }
         form={form}
         layout="vertical"
         onFinish={handleSubmit}
-        className="mt-6"
+        className="mt-4"
+        size="small"
       >
-        <div className="bg-gray-50 p-4 rounded-lg mb-6">
+        <div className="bg-gray-50 p-3 rounded-lg mb-4">
           <Form.Item
             name="paymentMethod"
             label={
-              <span className="text-base font-medium">
+              <span className="text-sm font-medium">
                 Payment Method
                 <Tooltip title="Choose your preferred payment method">
                   <InfoCircleOutlined className="ml-2 text-gray-400" />
@@ -141,14 +142,14 @@ const SubscriptionModal = ({ isVisible, onClose, onSuccess, membershipCategory }
         </div>
 
         {paymentMethod === 'card' && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Form.Item
                 name="name"
                 label="Name on Card"
                 rules={[{ required: true, message: 'Please enter the name on card' }]}
               >
-                <Input placeholder="John Doe" className="h-10" />
+                <Input placeholder="John Doe" className="h-8" />
               </Form.Item>
 
               <Form.Item
@@ -159,16 +160,16 @@ const SubscriptionModal = ({ isVisible, onClose, onSuccess, membershipCategory }
                   { type: 'email', message: 'Please enter a valid email' }
                 ]}
               >
-                <Input placeholder="john@example.com" className="h-10" />
+                <Input placeholder="john@example.com" className="h-8" />
               </Form.Item>
             </div>
 
             <Form.Item
               label="Card Details"
               required
-              className="mb-4"
+              className="mb-3"
             >
-              <div className="p-4 border rounded-lg bg-white shadow-sm">
+              <div className="p-3 border rounded-lg bg-white shadow-sm">
                 <CardElement options={cardElementOptions} />
               </div>
             </Form.Item>
@@ -183,30 +184,30 @@ const SubscriptionModal = ({ isVisible, onClose, onSuccess, membershipCategory }
           >
             <Input.TextArea
               placeholder="Enter your bank account details"
-              rows={4}
+              rows={3}
               className="rounded-lg"
             />
           </Form.Item>
         )}
 
-        <Divider className="my-6" />
+        <Divider className="my-4" />
 
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="text-sm text-gray-600">
-            <p className="text-lg font-semibold text-gray-800">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-3">
+          <div className="text-xs text-gray-600">
+            <p className="text-base font-semibold text-gray-800">
               Total Amount: <span className="text-blue-600">€{priceInfo.monthly.toFixed(2)}</span>
             </p>
             <p className="text-xs text-gray-500">Billed monthly • Cancel anytime</p>
           </div>
-          <Space size="middle">
-            <Button onClick={onClose} className="px-6">
+          <Space size="small">
+            <Button onClick={onClose} className="px-4">
               Cancel
             </Button>
             <Button
               type="primary"
               htmlType="submit"
               loading={loading}
-              className="px-8"
+              className="px-6"
               disabled={priceInfo.monthly === 0}
             >
               Subscribe Now
