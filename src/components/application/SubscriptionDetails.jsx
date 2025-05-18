@@ -69,7 +69,7 @@ const SubscriptionDetails = ({
         <Radio
           label="Are you currently undertaking a nursing adaptation programme?"
           name="nursingAdaptationProgramme"
-          value={formData?.nursingAdaptationProgramme || ''}
+          value={formData?.nursingAdaptationProgramme || 'no'}
           onChange={e =>
             onFormDataChange({
               ...formData,
@@ -195,65 +195,59 @@ const SubscriptionDetails = ({
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Select
-            label="Primary Section"
-            name="primarySection"
-            value={formData?.primarySection || ''}
-            onChange={handleInputChange}
-            showValidation={showValidation}
-            placeholder="Select primary section"
-            options={[
-              { value: 'section1', label: 'Section 1' },
-              { value: 'section2', label: 'Section 2' },
-              { value: 'section3', label: 'Section 3' },
-              { value: 'section4', label: 'Section 4' },
-              { value: 'section5', label: 'Section 5' },
-              { value: 'other', label: 'Other' },
-            ]}
-          />
-          <div className="mt-2">
-            <Input
-              label="Other Primary Section"
-              name="otherPrimarySection"
-              required={formData?.primarySection === 'other'}
-              disabled={formData?.primarySection !== 'other'}
-              value={formData?.otherPrimarySection || ''}
-              onChange={handleInputChange}
-              showValidation={showValidation}
-              placeholder="Enter your other primary section"
-            />
-          </div>
-        </div>
-        <div>
-          <Select
-            label="Secondary Section"
-            name="secondarySection"
-            value={formData?.secondarySection || ''}
-            onChange={handleInputChange}
-            placeholder="Select secondary section"
-            options={[
-              { value: 'section1', label: 'Section 1' },
-              { value: 'section2', label: 'Section 2' },
-              { value: 'section3', label: 'Section 3' },
-              { value: 'section4', label: 'Section 4' },
-              { value: 'section5', label: 'Section 5' },
-              { value: 'other', label: 'Other' },
-            ]}
-          />
-          <div className="mt-2">
-            <Input
-              label="Other Secondary Section"
-              name="otherSecondarySection"
-              required={formData?.secondarySection === 'other'}
-              disabled={formData?.secondarySection !== 'other'}
-              value={formData?.otherSecondarySection || ''}
-              onChange={handleInputChange}
-              showValidation={showValidation}
-              placeholder="Enter your other secondary section"
-            />
-          </div>
-        </div>
+        <Select
+          label="Primary Section"
+          name="primarySection"
+          value={formData?.primarySection || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+          placeholder="Select primary section"
+          options={[
+            { value: 'section1', label: 'Section 1' },
+            { value: 'section2', label: 'Section 2' },
+            { value: 'section3', label: 'Section 3' },
+            { value: 'section4', label: 'Section 4' },
+            { value: 'section5', label: 'Section 5' },
+            { value: 'other', label: 'Other' },
+          ]}
+        />
+        <Input
+          label="Other Primary Section"
+          name="otherPrimarySection"
+          required={formData?.primarySection === 'other'}
+          disabled={formData?.primarySection !== 'other'}
+          value={formData?.otherPrimarySection || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+          placeholder="Enter your other primary section"
+        />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Select
+          label="Secondary Section"
+          name="secondarySection"
+          value={formData?.secondarySection || ''}
+          onChange={handleInputChange}
+          placeholder="Select secondary section"
+          options={[
+            { value: 'section1', label: 'Section 1' },
+            { value: 'section2', label: 'Section 2' },
+            { value: 'section3', label: 'Section 3' },
+            { value: 'section4', label: 'Section 4' },
+            { value: 'section5', label: 'Section 5' },
+            { value: 'other', label: 'Other' },
+          ]}
+        />
+        <Input
+          label="Other Secondary Section"
+          name="otherSecondarySection"
+          required={formData?.secondarySection === 'other'}
+          disabled={formData?.secondarySection !== 'other'}
+          value={formData?.otherSecondarySection || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+          placeholder="Enter your other secondary section"
+        />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="flex items-start">
@@ -267,8 +261,14 @@ const SubscriptionDetails = ({
               name="incomeProtectionScheme"
               checked={formData?.incomeProtectionScheme || false}
               onChange={handleInputChange}
-              disabled={formData?.memberStatus !== 'new' && formData?.memberStatus !== 'graduate'}
-              required={formData?.memberStatus === 'new' || formData?.memberStatus === 'graduate'}
+              disabled={
+                formData?.memberStatus !== 'new' &&
+                formData?.memberStatus !== 'graduate'
+              }
+              required={
+                formData?.memberStatus === 'new' ||
+                formData?.memberStatus === 'graduate'
+              }
             />
           </div>
         </div>
@@ -283,8 +283,14 @@ const SubscriptionDetails = ({
               name="inmoRewards"
               checked={formData?.inmoRewards || false}
               onChange={handleInputChange}
-              disabled={formData?.memberStatus !== 'new' && formData?.memberStatus !== 'graduate'}
-              required={formData?.memberStatus === 'new' || formData?.memberStatus === 'graduate'}
+              disabled={
+                formData?.memberStatus !== 'new' &&
+                formData?.memberStatus !== 'graduate'
+              }
+              required={
+                formData?.memberStatus === 'new' ||
+                formData?.memberStatus === 'graduate'
+              }
             />
           </div>
         </div>
@@ -293,7 +299,8 @@ const SubscriptionDetails = ({
             <Checkbox
               label={
                 <span className="font-medium text-gray-700 text-sm leading-tight block pl-2">
-                  Tick here to allow our partners to contact you about Value added Services by Email and SMS
+                  Tick here to allow our partners to contact you about Value
+                  added Services by Email and SMS
                 </span>
               }
               name="valueAddedServices"
@@ -308,18 +315,24 @@ const SubscriptionDetails = ({
               label={
                 <span className="font-medium text-gray-700 text-sm leading-tight block pl-2">
                   I have read and agree to the INMO{' '}
-                  <a href="#" className="text-blue-600 underline hover:text-blue-800">
+                  <a
+                    href="#"
+                    className="text-blue-600 underline hover:text-blue-800">
                     Data Protection Statement
                   </a>
                   , the INMO{' '}
-                  <a href="#" className="text-blue-600 underline hover:text-blue-800">
+                  <a
+                    href="#"
+                    className="text-blue-600 underline hover:text-blue-800">
                     Privacy Statement
                   </a>{' '}
                   and the INMO{' '}
-                  <a href="#" className="text-blue-600 underline hover:text-blue-800">
+                  <a
+                    href="#"
+                    className="text-blue-600 underline hover:text-blue-800">
                     Conditions of Membership
                   </a>
-                  <span className="text-red-500 ml-1">*</span>
+                  {!formData?.termsAndConditions && <span className="ml-1 text-xs text-red-600">(Required)</span>}
                 </span>
               }
               name="termsAndConditions"
