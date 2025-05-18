@@ -44,15 +44,12 @@ const SubscriptionModal = ({ isVisible, onClose, onSuccess, membershipCategory }
         if (error) {
           throw new Error(error.message);
         }
-        // Here you would typically send the payment method ID to your backend
         console.log('Payment Method:', stripePaymentMethod);
       }
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       onSuccess();
     } catch (error) {
       console.error('Payment error:', error);
-      // Handle error appropriately
     } finally {
       setLoading(false);
     }
