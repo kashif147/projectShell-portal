@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { ExclamationCircleOutlined, CalendarOutlined } from '@ant-design/icons';
+import { DatePicker as AntDatePicker } from 'antd';
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+
+dayjs.extend(customParseFormat);
 
 export const DatePicker = ({
   label,
@@ -15,11 +20,12 @@ export const DatePicker = ({
   const [dateValue, setDateValue] = useState('');
   const [error, setError] = useState('');
   const [displayValue, setDisplayValue] = useState('');
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const isEmpty = required && !value && showValidation;
 
   const inputClasses = `
-    w-full px-3 py-2 border rounded-md
+    w-full px-3 py-2 border rounded-md pr-10
     ${props.disabled ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white'}
     ${isEmpty ? 'border-red-500 bg-red-50' : required ? 'border-blue-500' : 'border-gray-300'}
     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
@@ -33,7 +39,7 @@ export const DatePicker = ({
   `;
 
   const validateAge = (dateString) => {
-    if (disableAgeValidation) return 16; // Skip age validation if disabled
+    if (disableAgeValidation) return 16;
     
     const today = new Date();
     const birthDate = new Date(dateString);
@@ -48,14 +54,7 @@ export const DatePicker = ({
 
   const formatDate = (date) => {
     if (!date) return '';
-    const [year, month, day] = date.split('-');
-    return `${day}/${month}/${year}`;
-  };
-
-  const parseDate = (displayDate) => {
-    if (!displayDate) return '';
-    const [day, month, year] = displayDate.split('/');
-    return `${year}-${month}-${day}`;
+    return dayjs(date).format('DD/MM/YYYY');
   };
 
   const handleInputChange = (e) => {
@@ -106,6 +105,36 @@ export const DatePicker = ({
     }
   };
 
+  const handleCalendarChange = (date) => {
+    if (date) {
+      const isoDate = date.format('YYYY-MM-DD');
+      setDateValue(isoDate);
+      setDisplayValue(date.format('DD/MM/YYYY'));
+      
+      const age = validateAge(isoDate);
+      if (age < 16 && !disableAgeValidation) {
+        setError('You must be 16 years or older to proceed');
+      } else {
+        setError('');
+      }
+
+      if (onChange) {
+        const event = {
+          target: {
+            name,
+            value: isoDate
+          }
+        };
+        onChange(event);
+      }
+    } else {
+      setDateValue('');
+      setDisplayValue('');
+      setError('');
+    }
+    setIsCalendarOpen(false);
+  };
+
   useEffect(() => {
     if (value) {
       setDateValue(value);
@@ -134,9 +163,31 @@ export const DatePicker = ({
           disabled={props.disabled}
           {...props}
         />
+        <button
+          type="button"
+          onClick={() => !props.disabled && setIsCalendarOpen(true)}
+          className={`absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 
+            ${props.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+          disabled={props.disabled}
+        >
+          <CalendarOutlined />
+        </button>
         {isEmpty && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 pointer-events-none">
+          <div className="absolute right-10 top-1/2 -translate-y-1/2 text-red-500 pointer-events-none">
             <ExclamationCircleOutlined />
+          </div>
+        )}
+        {isCalendarOpen && (
+          <div className="absolute z-10 mt-1">
+            <AntDatePicker
+              open={isCalendarOpen}
+              onChange={handleCalendarChange}
+              value={dateValue ? dayjs(dateValue) : null}
+              format="DD/MM/YYYY"
+              disabled={props.disabled}
+              onOpenChange={setIsCalendarOpen}
+              allowClear={false}
+            />
           </div>
         )}
       </div>
