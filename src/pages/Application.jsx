@@ -10,7 +10,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 
 // Initialize Stripe
-const stripePromise = loadStripe('your_publishable_key'); // Replace with your Stripe publishable key
+const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx'); // Replace with your Stripe publishable key
 
 const Application = () => {
   const { user } = useSelector(state => state.auth);

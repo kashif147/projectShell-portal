@@ -1,6 +1,6 @@
-// import React from 'react';
-// import { BoardsProvider } from '@contexts';
+import React from 'react';
+import { LookupProvider } from './lookupContext';
 
-// export const ContextProvider = ({ children }) => {
-//   return <ThemeProvider>{children}</ThemeProvider>;
-// };
+export const ContextProvider = ({ children }) => {
+  return <LookupProvider>{children}</LookupProvider>;
+};

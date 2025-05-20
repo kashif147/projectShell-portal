@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useEffect } from 'react';
 import axios from 'axios';
-import { baseURL } from '../config/constants';
+import { LOOKUP_URL } from '../constants/api';
 
 const getAllLookups = async () => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${baseURL}/lookup`, {
+    const response = await axios.get(`${LOOKUP_URL}/lookup`, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -21,6 +21,11 @@ const LookupContext = createContext();
 
 export const LookupProvider = ({ children }) => {
   const [lookups, setLookups] = React.useState([]);
+  const [genderLookups, setGenderLookups] = React.useState(() => {
+    // Initialize gender lookups from localStorage if available
+    const storedGenderLookups = localStorage.getItem('genderLookups');
+    return storedGenderLookups ? JSON.parse(storedGenderLookups) : [];
+  });
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
 
@@ -28,8 +33,21 @@ export const LookupProvider = ({ children }) => {
     const fetchLookups = async () => {
       try {
         setLoading(true);
-        const result = await getAllLookups();
-        setLookups(result);
+        // Only fetch if we don't have gender data in localStorage
+        if (!localStorage.getItem('genderLookups')) {
+          const result = await getAllLookups();
+          console.log('result========>', result);
+          setLookups(result);
+          
+          // Filter gender lookups
+          const genderData = result.filter(item => 
+            item.lookuptypeId?.lookuptype === 'Gender'
+          );
+          setGenderLookups(genderData);
+          
+          // Store in localStorage
+          localStorage.setItem('genderLookups', JSON.stringify(genderData));
+        }
         setError(null);
       } catch (err) {
         setError(err.message);
@@ -43,6 +61,7 @@ export const LookupProvider = ({ children }) => {
 
   const value = {
     lookups,
+    genderLookups,
     loading,
     error,
     refreshLookups: async () => {
@@ -50,6 +69,16 @@ export const LookupProvider = ({ children }) => {
         setLoading(true);
         const result = await getAllLookups();
         setLookups(result);
+        
+        // Filter gender lookups
+        const genderData = result.filter(item => 
+          item.lookuptypeId?.lookuptype === 'Gender'
+        );
+        setGenderLookups(genderData);
+        
+        // Store in localStorage
+        localStorage.setItem('genderLookups', JSON.stringify(genderData));
+        
         setError(null);
       } catch (err) {
         setError(err.message);
@@ -57,6 +86,11 @@ export const LookupProvider = ({ children }) => {
         setLoading(false);
       }
     },
+    // Add function to clear gender data from localStorage
+    clearGenderLookups: () => {
+      localStorage.removeItem('genderLookups');
+      setGenderLookups([]);
+    }
   };
 
   return (

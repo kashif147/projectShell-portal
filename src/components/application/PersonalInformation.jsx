@@ -6,6 +6,7 @@ import { DatePicker } from '../ui/DatePicker';
 import { useSelector } from 'react-redux';
 import { countries } from '../../constants/countries';
 import { Spin } from 'antd';
+import { useLookup } from '../../contexts/lookupContext';
 
 // Dummy Eircode data for demonstration
 const eircodeData = {
@@ -48,7 +49,7 @@ const PersonalInformation = ({
 }) => {
   const { user } = useSelector(state => state.auth);
   const [loading, setLoading] = useState(false);
-
+  const { genderLookups } = useLookup();
   const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
     onFormDataChange({
@@ -114,11 +115,10 @@ const PersonalInformation = ({
           value={formData?.gender || ''}
           onChange={handleInputChange}
           showValidation={showValidation}
-          options={[
-            { value: 'male', label: 'Male' },
-            { value: 'female', label: 'Female' },
-            { value: 'other', label: 'Other' },
-          ]}
+          options={genderLookups?.map(item => ({
+            value: item.lookupname,
+            label: item.lookupname,
+          }))}
         />
         <DatePicker
           label="Date of Birth"

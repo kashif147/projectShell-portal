@@ -18,6 +18,7 @@ import { signInMicrosoft, validation } from './services/auth.services';
 import './config/globals.js';
 import { ErrorPage } from './pages/errorPage';
 import { getVerifier } from './helpers/verifier.helper.js';
+import { ContextProvider } from './contexts/ContextProvider';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
@@ -82,10 +83,10 @@ root.render(
     <Provider store={store}>
       <BrowserRouter>
         <ConfigProvider>
-          {/* <CcontextProvider> */}
+          <ContextProvider>
             <ToastContainer />
             <App />
-          {/* </ContextProvider> */}
+          </ContextProvider>
         </ConfigProvider>
       </BrowserRouter>
     </Provider>
