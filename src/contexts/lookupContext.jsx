@@ -1,96 +1,79 @@
 import React, { createContext, useContext, useEffect } from 'react';
 import axios from 'axios';
 import { LOOKUP_URL } from '../constants/api';
+import { useLocalStorage } from '../hooks/useLocalStorage';
+import { getHeaders } from '../helpers/auth.helper';
 
 const getAllLookups = async () => {
   try {
-    const token = localStorage.getItem('token');
+    const headers = getHeaders();
+    if (!headers.token) {
+      throw new Error('No token found');
+    }
     const response = await axios.get(`${LOOKUP_URL}/lookup`, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${headers.token}`,
         'Content-Type': 'application/json',
       },
     });
     return response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch lookups');
+    toast.error(error.response?.data?.message || 'Failed to fetch lookups');
   }
 };
 
 const LookupContext = createContext();
 
 export const LookupProvider = ({ children }) => {
+  const { fetchLocal, saveLocal } = useLocalStorage();
   const [lookups, setLookups] = React.useState([]);
-  const [genderLookups, setGenderLookups] = React.useState(() => {
-    // Initialize gender lookups from localStorage if available
-    const storedGenderLookups = localStorage.getItem('genderLookups');
-    return storedGenderLookups ? JSON.parse(storedGenderLookups) : [];
-  });
+  const [cityLookups, setCityLookups] = React.useState([]);
+  const [genderLookups, setGenderLookups] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
 
-  useEffect(() => {
-    const fetchLookups = async () => {
-      try {
-        setLoading(true);
-        // Only fetch if we don't have gender data in localStorage
-        if (!localStorage.getItem('genderLookups')) {
-          const result = await getAllLookups();
-          console.log('result========>', result);
-          setLookups(result);
-          
-          // Filter gender lookups
-          const genderData = result.filter(item => 
-            item.lookuptypeId?.lookuptype === 'Gender'
-          );
-          setGenderLookups(genderData);
-          
-          // Store in localStorage
-          localStorage.setItem('genderLookups', JSON.stringify(genderData));
-        }
-        setError(null);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+  const fetchLookups = async () => {
+    try {
+      setLoading(true);
+      const result = await getAllLookups();
+      console.log('result============>', result);
+      if (result) {
+        const genderData = result.filter(
+          item => item.lookuptypeId?.lookuptype === 'Gender',
+        );
+        const cityData = result.filter(
+          item => item.lookuptypeId?.lookuptype === 'City',
+        );
+        await saveLocal('genderLookups', genderData);
+        await saveLocal('cityLookups', cityData);
+        setLookups(result);
       }
-    };
 
-    fetchLookups();
-  }, []);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchGenderLookups = async () => {
+      const genderLookups = await fetchLocal('genderLookups');
+      const cityLookups = await fetchLocal('cityLookups');
+      setGenderLookups(genderLookups);
+      setCityLookups(cityLookups);
+    };
+    fetchGenderLookups();
+  }, [lookups]);
 
   const value = {
     lookups,
     genderLookups,
+    cityLookups,
     loading,
     error,
-    refreshLookups: async () => {
-      try {
-        setLoading(true);
-        const result = await getAllLookups();
-        setLookups(result);
-        
-        // Filter gender lookups
-        const genderData = result.filter(item => 
-          item.lookuptypeId?.lookuptype === 'Gender'
-        );
-        setGenderLookups(genderData);
-        
-        // Store in localStorage
-        localStorage.setItem('genderLookups', JSON.stringify(genderData));
-        
-        setError(null);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    },
-    // Add function to clear gender data from localStorage
-    clearGenderLookups: () => {
-      localStorage.removeItem('genderLookups');
-      setGenderLookups([]);
-    }
+    fetchLookups,
   };
 
   return (

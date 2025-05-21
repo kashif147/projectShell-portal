@@ -3,13 +3,13 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { DatePicker } from '../ui/DatePicker';
 import { Checkbox } from '../ui/Checkbox';
-
+import { useLookup } from '../../contexts/lookupContext';
 const ProfessionalDetails = ({
   formData,
   onFormDataChange,
   showValidation = false,
 }) => {
-
+  const { cityLookups } = useLookup();
   const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
     onFormDataChange({
@@ -68,47 +68,12 @@ const ProfessionalDetails = ({
           ]}
         />
       </div>
-      {formData?.membershipCategory !== 'undergraduate_student' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Select
-            label="Work Location"
-            tooltip="Select your primary work location. If your location is not listed, choose 'Other' and specify it below."
-            name="workLocation"
-            required={formData?.membershipCategory !== 'undergraduate_student'}
-            value={formData?.workLocation || ''}
-            onChange={handleInputChange}
-            showValidation={showValidation}
-            placeholder="Select work location"
-            options={[
-              { value: 'dublin', label: 'Dublin' },
-              { value: 'cork', label: 'Cork' },
-              { value: 'galway', label: 'Galway' },
-              { value: 'limerick', label: 'Limerick' },
-              { value: 'waterford', label: 'Waterford' },
-              { value: 'other', label: 'Other' },
-            ]}
-          />
-          <Input
-            label="Other Work Location"
-            name="otherWorkLocation"
-            required={formData?.workLocation === 'other'}
-            disabled={formData?.workLocation !== 'other'}
-            value={formData?.otherWorkLocation || ''}
-            onChange={handleInputChange}
-            showValidation={showValidation}
-            placeholder="Enter your work other location"
-          />
-        </div>
-      )}
-
       {formData?.membershipCategory === 'undergraduate_student' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Select
             label="Study Location"
             name="studyLocation"
-            disabled={
-              formData?.membershipCategory !== 'undergraduate_student'
-            }
+            disabled={formData?.membershipCategory !== 'undergraduate_student'}
             value={formData?.studyLocation || ''}
             onChange={handleInputChange}
             placeholder="Select study location"
@@ -120,9 +85,7 @@ const ProfessionalDetails = ({
           />
           <DatePicker
             label="Graduation Date"
-            disabled={
-              formData?.membershipCategory !== 'undergraduate_student'
-            }
+            disabled={formData?.membershipCategory !== 'undergraduate_student'}
             name="graduationDate"
             value={formData?.graduationDate || ''}
             onChange={handleInputChange}
@@ -130,7 +93,33 @@ const ProfessionalDetails = ({
           />
         </div>
       )}
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Select
+          label="Work Location"
+          tooltip="Select your primary work location. If your location is not listed, choose 'Other' and specify it below."
+          name="workLocation"
+          required={formData?.membershipCategory !== 'undergraduate_student'}
+          value={formData?.workLocation || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+          placeholder="Select work location"
+          options={cityLookups?.map(item => ({
+            value: item.lookupname,
+            label: item.lookupname,
+          }))}
+        />
+        <Input
+          label="Other Work Location"
+          name="otherWorkLocation"
+          required={formData?.workLocation === 'other'}
+          disabled={formData?.workLocation !== 'other'}
+          value={formData?.otherWorkLocation || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+          placeholder="Enter your work other location"
+        />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Select
           label="Grade"
           tooltip="Select your current grade. If your grade is not listed, choose 'Other' and specify it below."
@@ -159,7 +148,7 @@ const ProfessionalDetails = ({
           placeholder="Enter your other grade"
         />
       </div>
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Select
           label="Branch"
           name="branch"
@@ -222,7 +211,7 @@ const ProfessionalDetails = ({
           placeholder="Enter your pension number"
         />
       </div>
-    </div >
+    </div>
   );
 };
 

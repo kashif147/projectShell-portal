@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Layout, Avatar, Dropdown, Badge } from 'antd';
 import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, BellOutlined } from '@ant-design/icons';
 import Button from '../common/Button';
@@ -6,11 +6,17 @@ import { useDispatch } from 'react-redux';
 import { signOut } from '../../services/auth.services';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { useLookup } from '../../contexts/lookupContext';
 
 const Header = ({ collapsed, setCollapsed, isMobile, setDrawerVisible }) => {
   const {user} = useSelector((state) => state.auth);
+  const {fetchLookups} = useLookup();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchLookups();
+  }, []);
 
   const items = [
     {
