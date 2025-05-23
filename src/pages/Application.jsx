@@ -61,6 +61,7 @@ const Application = () => {
     switch (currentStep) {
       case 1:
         const {
+          title,
           forename,
           surname,
           gender,
@@ -71,6 +72,7 @@ const Application = () => {
           addressLine4,
         } = formData.personalInfo || {};
         if (
+          !title ||
           !forename ||
           !surname ||
           !gender ||

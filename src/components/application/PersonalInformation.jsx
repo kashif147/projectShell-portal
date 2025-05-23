@@ -10,31 +10,31 @@ import { useLookup } from '../../contexts/lookupContext';
 
 // Dummy Eircode data for demonstration
 const eircodeData = {
-  'D01X4X0': {
-    addressLine1: '1 O\'Connell Street',
+  D01X4X0: {
+    addressLine1: "1 O'Connell Street",
     addressLine2: 'North City',
     addressLine3: 'Dublin 1',
     addressLine4: 'Dublin',
   },
-  'D02X4X0': {
+  D02X4X0: {
     addressLine1: '2 Grafton Street',
     addressLine2: 'South City',
     addressLine3: 'Dublin 2',
     addressLine4: 'Dublin',
   },
-  'D03X4X0': {
+  D03X4X0: {
     addressLine1: '3 Parnell Street',
     addressLine2: 'North Inner City',
     addressLine3: 'Dublin 3',
     addressLine4: 'Dublin',
   },
-  'D04X4X0': {
+  D04X4X0: {
     addressLine1: '4 Ballsbridge',
     addressLine2: 'South Dublin',
     addressLine3: 'Dublin 4',
     addressLine4: 'Dublin',
   },
-  'D05X4X0': {
+  D05X4X0: {
     addressLine1: '5 Coolock',
     addressLine2: 'North Dublin',
     addressLine3: 'Dublin 5',
@@ -58,7 +58,7 @@ const PersonalInformation = ({
     });
   };
 
-  const handleEircodeChange = async (e) => {
+  const handleEircodeChange = async e => {
     const eircode = e.target.value.toUpperCase();
     handleInputChange(e);
 
@@ -66,7 +66,7 @@ const PersonalInformation = ({
       setLoading(true);
       try {
         await new Promise(resolve => setTimeout(resolve, 500));
-        
+
         const addressData = eircodeData[eircode];
         if (addressData) {
           onFormDataChange({
@@ -89,6 +89,23 @@ const PersonalInformation = ({
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Select
+          label="Title"
+          name="title"
+          required
+          placeholder="Enter your title"
+          onChange={handleInputChange}
+          showValidation={showValidation}
+          value={formData?.title || ''}
+          options={[
+            { value: 'Mr', label: 'Mr' },
+            { value: 'Mrs', label: 'Mrs' },
+            { value: 'Ms', label: 'Ms' },
+            { value: 'Miss', label: 'Miss' },
+          ]}
+          />
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input
           label="Surname"

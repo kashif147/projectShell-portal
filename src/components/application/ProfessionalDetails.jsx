@@ -103,10 +103,13 @@ const ProfessionalDetails = ({
           onChange={handleInputChange}
           showValidation={showValidation}
           placeholder="Select work location"
-          options={cityLookups?.map(item => ({
-            value: item.lookupname,
-            label: item.lookupname,
-          }))}
+          options={[
+            ...cityLookups?.map(item => ({
+              value: item.lookupname,
+              label: item.lookupname,
+            })),
+            { value: 'other', label: 'other' }
+          ]}
         />
         <Input
           label="Other Work Location"
