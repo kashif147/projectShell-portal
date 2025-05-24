@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
@@ -7,6 +7,7 @@ import { useSelector } from 'react-redux';
 import { countries } from '../../constants/countries';
 import { Spin } from 'antd';
 import { useLookup } from '../../contexts/lookupContext';
+import { useLoadScript, Autocomplete } from '@react-google-maps/api';
 
 // Dummy Eircode data for demonstration
 const eircodeData = {
@@ -42,6 +43,8 @@ const eircodeData = {
   },
 };
 
+const libraries = ['places'];
+
 const PersonalInformation = ({
   formData,
   onFormDataChange,
@@ -50,6 +53,13 @@ const PersonalInformation = ({
   const { user } = useSelector(state => state.auth);
   const [loading, setLoading] = useState(false);
   const { genderLookups } = useLookup();
+  const [autocomplete, setAutocomplete] = useState(null);
+
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries,
+  });
+
   const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
     onFormDataChange({
@@ -62,26 +72,77 @@ const PersonalInformation = ({
     const eircode = e.target.value.toUpperCase();
     handleInputChange(e);
 
-    if (eircode.length === 7) {
+    if (eircode.length === 7 && autocomplete) {
       setLoading(true);
       try {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        const geocoder = new window.google.maps.Geocoder();
+        const result = await geocoder.geocode({
+          address: eircode,
+          componentRestrictions: {
+            country: 'IE'
+          }
+        });
 
-        const addressData = eircodeData[eircode];
-        if (addressData) {
+        if (result.results[0]) {
+          const addressComponents = result.results[0].address_components;
+          const formattedAddress = result.results[0].formatted_address.split(',');
+          
+          // Extract address components
+          const streetNumber = addressComponents.find(component => 
+            component.types.includes('street_number'))?.long_name || '';
+          const route = addressComponents.find(component => 
+            component.types.includes('route'))?.long_name || '';
+          const locality = addressComponents.find(component => 
+            component.types.includes('locality'))?.long_name || '';
+          const administrativeArea = addressComponents.find(component => 
+            component.types.includes('administrative_area_level_1'))?.long_name || '';
+
           onFormDataChange({
             ...formData,
             eircode,
-            addressLine1: addressData.addressLine1,
-            addressLine2: addressData.addressLine2,
-            addressLine3: addressData.addressLine3,
-            addressLine4: addressData.addressLine4,
+            addressLine1: streetNumber ? `${streetNumber} ${route}` : route,
+            addressLine2: locality,
+            addressLine3: administrativeArea,
+            addressLine4: formattedAddress[formattedAddress.length - 1].trim(),
           });
         }
       } catch (error) {
         console.error('Error fetching address:', error);
       } finally {
         setLoading(false);
+      }
+    }
+  };
+
+  const onLoad = (autocomplete) => {
+    setAutocomplete(autocomplete);
+  };
+
+  const onPlaceChanged = () => {
+    if (autocomplete) {
+      const place = autocomplete.getPlace();
+      if (place.geometry) {
+        const addressComponents = place.address_components;
+        const formattedAddress = place.formatted_address.split(',');
+        
+        // Extract address components
+        const streetNumber = addressComponents.find(component => 
+          component.types.includes('street_number'))?.long_name || '';
+        const route = addressComponents.find(component => 
+          component.types.includes('route'))?.long_name || '';
+        const locality = addressComponents.find(component => 
+          component.types.includes('locality'))?.long_name || '';
+        const administrativeArea = addressComponents.find(component => 
+          component.types.includes('administrative_area_level_1'))?.long_name || '';
+
+        onFormDataChange({
+          ...formData,
+          eircode: place.formatted_address.match(/[A-Z0-9]{3}\s[A-Z0-9]{4}/)?.[0] || '',
+          addressLine1: streetNumber ? `${streetNumber} ${route}` : route,
+          addressLine2: locality,
+          addressLine3: administrativeArea,
+          addressLine4: formattedAddress[formattedAddress.length - 1].trim(),
+        });
       }
     }
   };
@@ -159,14 +220,31 @@ const PersonalInformation = ({
       <h3 className="text-lg font-semibold mb-4">Correspondence Details</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="relative">
-          <Input
-            label="Eircode"
-            name="eircode"
-            value={formData?.eircode || ''}
-            onChange={handleEircodeChange}
-            placeholder="Enter Eircode (e.g., D01X4X0)"
-            maxLength={7}
-          />
+          {isLoaded ? (
+            <Autocomplete
+              onLoad={onLoad}
+              onPlaceChanged={onPlaceChanged}
+              restrictions={{ country: 'ie' }}
+            >
+              <Input
+                label="Eircode"
+                name="eircode"
+                value={formData?.eircode || ''}
+                onChange={handleEircodeChange}
+                placeholder="Enter Eircode or address"
+                maxLength={7}
+              />
+            </Autocomplete>
+          ) : (
+            <Input
+              label="Eircode"
+              name="eircode"
+              value={formData?.eircode || ''}
+              onChange={handleEircodeChange}
+              placeholder="Enter Eircode (e.g., D01X4X0)"
+              maxLength={7}
+            />
+          )}
           {loading && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
               <Spin size="small" />

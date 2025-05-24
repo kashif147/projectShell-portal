@@ -142,7 +142,7 @@ const SubscriptionDetails = ({
       </div>
       <div>
         <Radio
-          label="Are you a member of another Irish Trade Union?"
+          label="if you are a member of another Trade Union. If yes, which Union?"
           name="otherIrishTradeUnion"
           required
           value={formData?.otherIrishTradeUnion || ''}

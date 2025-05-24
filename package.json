@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^5.0.0",
+    "@react-google-maps/api": "^2.20.6",
     "@reduxjs/toolkit": "^2.0.0",
     "@stripe/react-stripe-js": "^2.4.0",
     "@stripe/stripe-js": "^2.2.0",
