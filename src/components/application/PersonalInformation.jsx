@@ -49,7 +49,7 @@ const PersonalInformation = ({
 }) => {
   const { user } = useSelector(state => state.auth);
   const [loading, setLoading] = useState(false);
-  const { genderLookups } = useLookup();
+  const { genderLookups, titleLookups } = useLookup();
 
   const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
@@ -99,12 +99,10 @@ const PersonalInformation = ({
           onChange={handleInputChange}
           showValidation={showValidation}
           value={formData?.title || ''}
-          options={[
-            { value: 'Mr', label: 'Mr' },
-            { value: 'Mrs', label: 'Mrs' },
-            { value: 'Ms', label: 'Ms' },
-            { value: 'Miss', label: 'Miss' },
-          ]}
+          options={titleLookups?.map(item => ({
+            value: item.lookupname,
+            label: item.lookupname,
+          }))}
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

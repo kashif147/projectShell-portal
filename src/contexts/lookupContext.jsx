@@ -29,6 +29,7 @@ export const LookupProvider = ({ children }) => {
   const [lookups, setLookups] = React.useState([]);
   const [cityLookups, setCityLookups] = React.useState([]);
   const [genderLookups, setGenderLookups] = React.useState([]);
+  const [titleLookups, setTitleLookups] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
 
@@ -44,8 +45,12 @@ export const LookupProvider = ({ children }) => {
         const cityData = result.filter(
           item => item.lookuptypeId?.lookuptype === 'City',
         );
+        const titleData = result.filter(
+          item => item.lookuptypeId?.lookuptype === 'Title',
+        );
         await saveLocal('genderLookups', genderData);
         await saveLocal('cityLookups', cityData);
+        await saveLocal('titleLookups', titleData);
         setLookups(result);
       }
 
@@ -61,8 +66,10 @@ export const LookupProvider = ({ children }) => {
     const fetchGenderLookups = async () => {
       const genderLookups = await fetchLocal('genderLookups');
       const cityLookups = await fetchLocal('cityLookups');
+      const titleLookups = await fetchLocal('titleLookups');
       setGenderLookups(genderLookups);
       setCityLookups(cityLookups);
+      setTitleLookups(titleLookups);
     };
     fetchGenderLookups();
   }, [lookups]);
@@ -71,6 +78,7 @@ export const LookupProvider = ({ children }) => {
     lookups,
     genderLookups,
     cityLookups,
+    titleLookups,
     loading,
     error,
     fetchLookups,
