@@ -50,7 +50,7 @@ const PersonalInformation = ({
   const { user } = useSelector(state => state.auth);
   const [loading, setLoading] = useState(false);
   const { genderLookups } = useLookup();
-  
+
   const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
     onFormDataChange({
@@ -105,7 +105,7 @@ const PersonalInformation = ({
             { value: 'Ms', label: 'Ms' },
             { value: 'Miss', label: 'Miss' },
           ]}
-          />
+        />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input
@@ -223,6 +223,8 @@ const PersonalInformation = ({
           isSearchable
           placeholder="Search for a country..."
         />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="relative">
           <div className="flex items-center justify-between mb-1">
             <label className="block text-sm font-medium text-gray-700">
@@ -248,6 +250,13 @@ const PersonalInformation = ({
             showValidation={showValidation}
           />
         </div>
+        <Input
+          label="Home / Work Tel Number"
+          name="homeWorkTelNo"
+          placeholder="Enter your mobile number"
+          value={formData?.homeWorkTelNo || ''}
+          onChange={handleInputChange}
+        />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="relative">
