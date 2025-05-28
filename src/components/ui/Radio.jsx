@@ -48,16 +48,18 @@ export const Radio = ({
           `}
           {...props}
         >
-          {options.map(option => (
-            <AntRadio
-              key={option.value}
-              value={option.value}
-              className="block mb-2"
-              disabled={disabled}
-            >
-              {option.label}
-            </AntRadio>
-          ))}
+          <div className="flex flex-row flex-wrap gap-4">
+            {options.map(option => (
+              <AntRadio
+                key={option.value}
+                value={option.value}
+                className="mb-0"
+                disabled={disabled}
+              >
+                {option.label}
+              </AntRadio>
+            ))}
+          </div>
         </AntRadio.Group>
         {isEmpty && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 pointer-events-none">
