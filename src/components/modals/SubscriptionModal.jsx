@@ -5,15 +5,15 @@ import { CheckCircleOutlined, InfoCircleOutlined, CreditCardOutlined, BankOutlin
 import Button from '../common/Button';
 
 const membershipPrices = {
-  'General (all grades)': { full: 299.0, monthly: 99.67 },
-  'Postgraduate Student': { full: 299.0, monthly: 99.67 },
-  'Short-term/ Relief (under 15 hrs/wk average)': { full: 228.0, monthly: 76.0 },
-  'Private nursing home': { full: 288.0, monthly: 96.0 },
-  'Affiliate members (non-practicing)': { full: 116.0, monthly: 38.67 },
-  'Lecturing (employed in universities and IT institutes)': { full: 116.0, monthly: 38.67 },
-  'Associate (not currently employed as a nurse/midwife)': { full: 75.0, monthly: 25.0 },
-  'Retired Associate': { full: 25.0, monthly: 25.0 },
-  'Undergraduate Student': { full: 0.0, monthly: 0.0 },
+  'general': { full: 299.0, monthly: 99.67 },
+  'postgraduate_student': { full: 299.0, monthly: 99.67 },
+  'short_term_relief': { full: 228.0, monthly: 76.0 },
+  'private_nursing_home': { full: 288.0, monthly: 96.0 },
+  'affiliate_members': { full: 116.0, monthly: 38.67 },
+  'lecturing': { full: 116.0, monthly: 38.67 },
+  'associate': { full: 75.0, monthly: 25.0 },
+  'retired_associate': { full: 25.0, monthly: 25.0 },
+  'undergraduate_student': { full: 0.0, monthly: 0.0 },
 };
 
 const SubscriptionModal = ({ isVisible, onClose, onSuccess, membershipCategory }) => {
@@ -22,6 +22,7 @@ const SubscriptionModal = ({ isVisible, onClose, onSuccess, membershipCategory }
   const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
+  console.log('membershipCategory======>',membershipCategory);
 
   // Get price info from mapping
   const priceInfo = membershipPrices[membershipCategory] || { full: 0, monthly: 0 };
