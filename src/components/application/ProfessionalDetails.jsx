@@ -1,21 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { DatePicker } from '../ui/DatePicker';
 import { Checkbox } from '../ui/Checkbox';
 import { useLookup } from '../../contexts/lookupContext';
+import {
+  GoogleMap,
+  useJsApiLoader,
+  StandaloneSearchBox,
+} from '@react-google-maps/api';
+
+const libraries = ['places', 'maps'];
+
 const ProfessionalDetails = ({
   formData,
   onFormDataChange,
   showValidation = false,
 }) => {
+  const inputRef = useRef(null);
   const { cityLookups } = useLookup();
+
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: 'AIzaSyDeE_dbD-rhJXGislvVA-NhTPiPkvLRADE',
+    libraries: libraries,
+  });
+
+  console.log('isLoaded=========>', isLoaded);
+
   const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
     onFormDataChange({
       ...formData,
       [name]: type === 'checkbox' ? checked : value,
     });
+  };
+
+  const handlePlacesChanged = () => {
+    const places = inputRef.current.getPlaces();
+    console.log('places=========>', places);
+    if (places && places.length > 0) {
+      const place = places[0];
+      const address = place.formatted_address;
+      onFormDataChange({
+        ...formData,
+        workLocation: address,
+        otherWorkLocation: address,
+      });
+    }
   };
 
   const handleSectionChange = value => {
@@ -94,23 +126,24 @@ const ProfessionalDetails = ({
         </div>
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Select
-          label="Work Location"
-          tooltip="Select your primary work location. If your location is not listed, choose 'Other' and specify it below."
-          name="workLocation"
-          required={formData?.membershipCategory !== 'undergraduate_student'}
-          value={formData?.workLocation || ''}
-          onChange={handleInputChange}
-          showValidation={showValidation}
-          placeholder="Select work location"
-          options={[
-            ...cityLookups?.map(item => ({
-              value: item.lookupname,
-              label: item.lookupname,
-            })),
-            { value: 'other', label: 'other' }
-          ]}
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Work Location
+          </label>
+          {isLoaded && (
+            <StandaloneSearchBox
+              onLoad={ref => (inputRef.current = ref)}
+              onPlacesChanged={handlePlacesChanged}>
+              <input
+                type="text"
+                placeholder="Search work location..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                disabled={formData?.membershipCategory === 'undergraduate_student'}
+                required={formData?.membershipCategory !== 'undergraduate_student'}
+              />
+            </StandaloneSearchBox>
+          )}
+        </div>
         <Input
           label="Other Work Location"
           name="otherWorkLocation"

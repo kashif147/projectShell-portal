@@ -14,7 +14,7 @@ const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx'); // Replace
 
 const Application = () => {
   const { user } = useSelector(state => state.auth);
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(2);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [formData, setFormData] = useState({
@@ -88,7 +88,7 @@ const Application = () => {
       case 2:
         const { workLocation, grade, membershipCategory } =
           formData.professionalDetails || {};
-        if (!grade || !workLocation || !membershipCategory) {
+        if (!grade || !membershipCategory) {
           return false;
         }
         break;
