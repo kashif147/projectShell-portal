@@ -1,55 +1,33 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
 import { DatePicker } from '../ui/DatePicker';
-import { useSelector } from 'react-redux';
 import { countries } from '../../constants/countries';
 import { Spin } from 'antd';
 import { useLookup } from '../../contexts/lookupContext';
+import {
+  useJsApiLoader,
+  StandaloneSearchBox,
+} from '@react-google-maps/api';
 
-// Dummy Eircode data for demonstration
-const eircodeData = {
-  D01X4X0: {
-    addressLine1: "1 O'Connell Street",
-    addressLine2: 'North City',
-    addressLine3: 'Dublin 1',
-    addressLine4: 'Dublin',
-  },
-  D02X4X0: {
-    addressLine1: '2 Grafton Street',
-    addressLine2: 'South City',
-    addressLine3: 'Dublin 2',
-    addressLine4: 'Dublin',
-  },
-  D03X4X0: {
-    addressLine1: '3 Parnell Street',
-    addressLine2: 'North Inner City',
-    addressLine3: 'Dublin 3',
-    addressLine4: 'Dublin',
-  },
-  D04X4X0: {
-    addressLine1: '4 Ballsbridge',
-    addressLine2: 'South Dublin',
-    addressLine3: 'Dublin 4',
-    addressLine4: 'Dublin',
-  },
-  D05X4X0: {
-    addressLine1: '5 Coolock',
-    addressLine2: 'North Dublin',
-    addressLine3: 'Dublin 5',
-    addressLine4: 'Dublin',
-  },
-};
+const libraries = ['places', 'maps'];
 
 const PersonalInformation = ({
   formData,
   onFormDataChange,
   showValidation = false,
 }) => {
-  const { user } = useSelector(state => state.auth);
+  const inputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const { genderLookups, titleLookups } = useLookup();
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: 'AIzaSyCJYpj8WV5Rzof7O3jGhW9XabD0J4Yqe1o',
+    libraries: libraries,
+  });
+
+  console.log('isLoaded=========>', isLoaded);
 
   const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
@@ -59,31 +37,25 @@ const PersonalInformation = ({
     });
   };
 
-  const handleEircodeChange = async e => {
-    const eircode = e.target.value.toUpperCase();
-    handleInputChange(e);
+  const handlePlacesChanged = () => {
+    const places = inputRef.current.getPlaces();
+    console.log('places=========>', places);
+    if (places && places.length > 0) {
+      const place = places[0];
+      const address = place.formatted_address;
+      const addressParts = address.split(', ').map(part => part.trim());
+      const addressLine1 = addressParts[0] || ''; 
+      const addressLine2 = addressParts[1] || ''; 
+      const addressLine3 = addressParts[2] || ''; 
+      const addressLine4 = addressParts[3] || ''; 
 
-    if (eircode.length === 7) {
-      setLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        const addressData = eircodeData[eircode];
-        if (addressData) {
-          onFormDataChange({
-            ...formData,
-            eircode,
-            addressLine1: addressData.addressLine1,
-            addressLine2: addressData.addressLine2,
-            addressLine3: addressData.addressLine3,
-            addressLine4: addressData.addressLine4,
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching address:', error);
-      } finally {
-        setLoading(false);
-      }
+      onFormDataChange({
+        ...formData,
+        addressLine1,
+        addressLine2,
+        addressLine3,
+        addressLine4,
+      });
     }
   };
 
@@ -158,14 +130,28 @@ const PersonalInformation = ({
       <h3 className="text-lg font-semibold mb-4">Correspondence Details</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="relative">
-          <Input
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Eircode
+          </label>
+          {isLoaded && (
+            <StandaloneSearchBox
+              onLoad={ref => (inputRef.current = ref)}
+              onPlacesChanged={handlePlacesChanged}>
+              <input
+                type="text"
+                placeholder="Enter Eircode (e.g., D01X4X0)"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </StandaloneSearchBox>
+          )}
+          {/* <Input
             label="Eircode"
             name="eircode"
             value={formData?.eircode || ''}
             onChange={handleEircodeChange}
             placeholder="Enter Eircode (e.g., D01X4X0)"
             maxLength={7}
-          />
+          /> */}
           {loading && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
               <Spin size="small" />

@@ -22,7 +22,7 @@ const ProfessionalDetails = ({
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: 'AIzaSyDeE_dbD-rhJXGislvVA-NhTPiPkvLRADE',
+    googleMapsApiKey: 'AIzaSyCJYpj8WV5Rzof7O3jGhW9XabD0J4Yqe1o',
     libraries: libraries,
   });
 
