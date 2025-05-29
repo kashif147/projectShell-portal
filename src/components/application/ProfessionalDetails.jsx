@@ -1,32 +1,63 @@
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { DatePicker } from '../ui/DatePicker';
 import { Checkbox } from '../ui/Checkbox';
 import { useLookup } from '../../contexts/lookupContext';
-import {
-  GoogleMap,
-  useJsApiLoader,
-  StandaloneSearchBox,
-} from '@react-google-maps/api';
 
-const libraries = ['places', 'maps'];
+// Dummy work locations extracted from the provided image
+const workLocations = [
+  "ATU (LIMERICK)",
+  "BLANCHARDSTOWN INSTITUTE OF TECHNOLOGY",
+  "CAREDOC (CORK)",
+  "DUBLIN INSTITUTE OF TECHNOLOGY",
+  "GLENDALE NURSING HOME (TULLOW)",
+  "HOME INSTEAD (WESTERN REGION)",
+  "LETTERKENNY INSTITUTE OF TECHNOLOGY",
+  "LIMERICK INSTITUTE OF TECHNOLOGY",
+  "SLIGO INSTITUTE OF TECHNOLOGY",
+  "ST JOSEPHS HOSPITAL- MOUNT DESERT",
+  "TALLAGHT INSTITUTE OF TECHNOLOGY",
+  "Atu (Letterkenny)",
+  "Regional Centre Of Nursing & Midwifery Education",
+  "Newtown School",
+  "Tipperary Education & Training Board",
+  "National University Ireland Galway",
+  "South East Technological University (Setu)",
+  "Tud (Tallaght)",
+  "College Of Anaesthetists",
+  "Tud (Blanchardstown)",
+  "Gmit (Galway)",
+  "Cork University College",
+  "Mtu (Cork)",
+  "Student",
+  "St Columbas College (Dublin)",
+  "Setu (Waterford)",
+  "Nui Galway",
+  "Roscrea College",
+  "Dun Laoghaire Institute Of Art & Design",
+  "Mtu (Kerry)",
+  "Tus (Limerick)",
+  "Dundalk Institute Of Technology (Dkit)",
+  "Atu (Sligo)",
+  "Tud (Bolton Street)",
+  "Dublin City University",
+  "National University Ireland Maynooth",
+  "University College Dublin",
+  "Limerick University",
+  "Trinity College",
+  "St Angelas College (Sligo)",
+  "Royal College Of Surgeons",
+  "Tus (Technological University Of The Shannon)",
+  "Galway Mayo Institute Of Tech(C'Bar)"
+];
 
 const ProfessionalDetails = ({
   formData,
   onFormDataChange,
   showValidation = false,
 }) => {
-  const inputRef = useRef(null);
   const { cityLookups } = useLookup();
-
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: 'AIzaSyCJYpj8WV5Rzof7O3jGhW9XabD0J4Yqe1o',
-    libraries: libraries,
-  });
-
-  console.log('isLoaded=========>', isLoaded);
 
   const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
@@ -34,20 +65,6 @@ const ProfessionalDetails = ({
       ...formData,
       [name]: type === 'checkbox' ? checked : value,
     });
-  };
-
-  const handlePlacesChanged = () => {
-    const places = inputRef.current.getPlaces();
-    console.log('places=========>', places);
-    if (places && places.length > 0) {
-      const place = places[0];
-      const address = place.formatted_address;
-      onFormDataChange({
-        ...formData,
-        workLocation: address,
-        otherWorkLocation: address,
-      });
-    }
   };
 
   const handleSectionChange = value => {
@@ -126,24 +143,20 @@ const ProfessionalDetails = ({
         </div>
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Work Location
-          </label>
-          {isLoaded && (
-            <StandaloneSearchBox
-              onLoad={ref => (inputRef.current = ref)}
-              onPlacesChanged={handlePlacesChanged}>
-              <input
-                type="text"
-                placeholder="Search work location..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                disabled={formData?.membershipCategory === 'undergraduate_student'}
-                required={formData?.membershipCategory !== 'undergraduate_student'}
-              />
-            </StandaloneSearchBox>
-          )}
-        </div>
+        <Select
+          label="Work Location"
+          tooltip="Select your primary work location. If your location is not listed, choose 'Other' and specify it below."
+          name="workLocation"
+          required={formData?.membershipCategory !== 'undergraduate_student'}
+          value={formData?.workLocation || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+          placeholder="Select work location"
+          options={[
+            ...workLocations.map(loc => ({ value: loc, label: loc })),
+            { value: 'other', label: 'other' },
+          ]}
+        />
         <Input
           label="Other Work Location"
           name="otherWorkLocation"

@@ -1,15 +1,11 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
 import { DatePicker } from '../ui/DatePicker';
 import { countries } from '../../constants/countries';
-import { Spin } from 'antd';
 import { useLookup } from '../../contexts/lookupContext';
-import {
-  useJsApiLoader,
-  StandaloneSearchBox,
-} from '@react-google-maps/api';
+import { useJsApiLoader, StandaloneSearchBox } from '@react-google-maps/api';
 
 const libraries = ['places', 'maps'];
 
@@ -19,7 +15,6 @@ const PersonalInformation = ({
   showValidation = false,
 }) => {
   const inputRef = useRef(null);
-  const [loading, setLoading] = useState(false);
   const { genderLookups, titleLookups } = useLookup();
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -44,10 +39,10 @@ const PersonalInformation = ({
       const place = places[0];
       const address = place.formatted_address;
       const addressParts = address.split(', ').map(part => part.trim());
-      const addressLine1 = addressParts[0] || ''; 
-      const addressLine2 = addressParts[1] || ''; 
-      const addressLine3 = addressParts[2] || ''; 
-      const addressLine4 = addressParts[3] || ''; 
+      const addressLine1 = addressParts[0] || '';
+      const addressLine2 = addressParts[1] || '';
+      const addressLine3 = addressParts[2] || '';
+      const addressLine4 = addressParts[3] || '';
 
       onFormDataChange({
         ...formData,
@@ -143,19 +138,6 @@ const PersonalInformation = ({
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
             </StandaloneSearchBox>
-          )}
-          {/* <Input
-            label="Eircode"
-            name="eircode"
-            value={formData?.eircode || ''}
-            onChange={handleEircodeChange}
-            placeholder="Enter Eircode (e.g., D01X4X0)"
-            maxLength={7}
-          /> */}
-          {loading && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <Spin size="small" />
-            </div>
           )}
         </div>
         <Select
