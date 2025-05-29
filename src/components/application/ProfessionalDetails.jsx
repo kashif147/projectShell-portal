@@ -52,6 +52,56 @@ const workLocations = [
   "Galway Mayo Institute Of Tech(C'Bar)"
 ];
 
+// Mapping of work locations to their branches and regions
+const workLocationDetails = {
+  "ATU (LIMERICK)": { branch: "Limerick", region: "Limerick" },
+  "BLANCHARDSTOWN INSTITUTE OF TECHNOLOGY": { branch: "Dublin Northern Branch", region: "Dublin Mid Leinster" },
+  "CAREDOC (CORK)": { branch: "Cork Vol/Private Branch", region: "South - South East" },
+  "DUBLIN INSTITUTE OF TECHNOLOGY": { branch: "Dublin South West Branch", region: "Dublin Mid Leinster" },
+  "GLENDALE NURSING HOME (TULLOW)": { branch: "Carlow", region: "South - South East" },
+  "HOME INSTEAD (WESTERN REGION)": { branch: "Roscommon", region: "West" },
+  "LETTERKENNY INSTITUTE OF TECHNOLOGY": { branch: "Letterkenny", region: "Letterkenny" },
+  "LIMERICK INSTITUTE OF TECHNOLOGY": { branch: "Limerick", region: "Limerick" },
+  "SLIGO INSTITUTE OF TECHNOLOGY": { branch: "Sligo", region: "Sligo" },
+  "ST JOSEPHS HOSPITAL- MOUNT DESERT": { branch: "Cork Vol/Private Branch", region: "South - South East" },
+  "TALLAGHT INSTITUTE OF TECHNOLOGY": { branch: "Dublin South West Branch", region: "Dublin Mid Leinster" },
+  "Atu (Letterkenny)": { branch: "Letterkenny", region: "Letterkenny" },
+  "Regional Centre Of Nursing & Midwifery Education": { branch: "Offaly", region: "Mid Leinster" },
+  "Newtown School": { branch: "Waterford", region: "South - South East" },
+  "Tipperary Education & Training Board": { branch: "Tipperary-North-Mwhb", region: "Mid-West, West and North West" },
+  "National University Ireland Galway": { branch: "Galway", region: "Mid-West, West and North West" },
+  "South East Technological University (Setu)": { branch: "Carlow", region: "South - South East" },
+  "Tud (Tallaght)": { branch: "Dublin South West Branch", region: "Dublin Mid Leinster" },
+  "College Of Anaesthetists": { branch: "Dublin South West Branch", region: "Dublin Mid Leinster" },
+  "Tud (Blanchardstown)": { branch: "Dublin Northern Branch", region: "Dublin North East" },
+  "Gmit (Galway)": { branch: "Galway", region: "Mid-West, West and North West" },
+  "Cork University College": { branch: "Cork Vol/Private Branch", region: "South - South East" },
+  "Mtu (Cork)": { branch: "Cork Vol/Private Branch", region: "South - South East" },
+  "Student": { branch: "Student", region: "Student" },
+  "St Columbas College (Dublin)": { branch: "Dublin East Coast Branch", region: "Dublin Mid Leinster" },
+  "Setu (Waterford)": { branch: "Waterford", region: "South - South East" },
+  "Nui Galway": { branch: "Galway City", region: "Mid-West, West and North West" },
+  "Roscrea College": { branch: "Tipperary-North-Mwhb", region: "Mid-West, West and North West" },
+  "Dun Laoghaire Institute Of Art & Design": { branch: "Dunlaoghaire", region: "Dublin Mid Leinster" },
+  "Mtu (Kerry)": { branch: "Kerry", region: "South - South East" },
+  "Tus (Limerick)": { branch: "Limerick", region: "Mid-West, West and North West" },
+  "Dundalk Institute Of Technology (Dkit)": { branch: "Dundalk", region: "Dublin North East" },
+  "Atu (Sligo)": { branch: "Sligo", region: "Mid-West, West and North West" },
+  "Tud (Bolton Street)": { branch: "Dublin South West Branch", region: "Dublin Mid Leinster" },
+  "Dublin City University": { branch: "Dublin Northern Branch", region: "Dublin North East" },
+  "National University Ireland Maynooth": { branch: "Kildare/Naas", region: "Dublin Mid Leinster" },
+  "University College Dublin": { branch: "Dublin East Coast Branch", region: "Dublin Mid Leinster" },
+  "Limerick University": { branch: "Limerick", region: "Limerick" },
+  "Trinity College": { branch: "Dublin East Coast Branch", region: "Dublin Mid Leinster" },
+  "St Angelas College (Sligo)": { branch: "Sligo", region: "Sligo" },
+  "Royal College Of Surgeons": { branch: "Dublin East Coast Branch", region: "Dublin North East" },
+  "Tus (Technological University Of The Shannon)": { branch: "Athlone", region: "Dublin North East" },
+  "Galway Mayo Institute Of Tech(C'Bar)": { branch: "Castlebar", region: "Mid-West, West and North West" },
+};
+
+const allBranches = Array.from(new Set(Object.values(workLocationDetails).map(d => d.branch)));
+const allRegions = Array.from(new Set(Object.values(workLocationDetails).map(d => d.region)));
+
 const ProfessionalDetails = ({
   formData,
   onFormDataChange,
@@ -61,10 +111,17 @@ const ProfessionalDetails = ({
 
   const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
-    onFormDataChange({
+    let newFormData = {
       ...formData,
       [name]: type === 'checkbox' ? checked : value,
-    });
+    };
+
+    if (name === 'workLocation' && workLocationDetails[value]) {
+      newFormData.branch = workLocationDetails[value].branch;
+      newFormData.region = workLocationDetails[value].region;
+    }
+
+    onFormDataChange(newFormData);
   };
 
   const handleSectionChange = value => {
@@ -204,11 +261,8 @@ const ProfessionalDetails = ({
           value={formData?.branch || ''}
           onChange={handleInputChange}
           placeholder="Select branch"
-          options={[
-            { value: 'branch1', label: 'Branch 1' },
-            { value: 'branch2', label: 'Branch 2' },
-            { value: 'branch3', label: 'Branch 3' },
-          ]}
+          options={allBranches.map(branch => ({ value: branch, label: branch }))}
+          showValidation={showValidation}
         />
         <Select
           label="Region"
@@ -216,11 +270,8 @@ const ProfessionalDetails = ({
           value={formData?.region || ''}
           onChange={handleInputChange}
           placeholder="Select region"
-          options={[
-            { value: 'region1', label: 'Region 1' },
-            { value: 'region2', label: 'Region 2' },
-            { value: 'region3', label: 'Region 3' },
-          ]}
+          options={allRegions.map(region => ({ value: region, label: region }))}
+          showValidation={showValidation}
         />
         <div className="relative">
           <div className="flex items-center justify-between mb-1">
