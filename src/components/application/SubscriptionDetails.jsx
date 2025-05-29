@@ -65,23 +65,21 @@ const SubscriptionDetails = ({
           placeholder="Enter your payroll number"
         />
       </div>
-      <div>
-        <Radio
-          label="Are you currently undertaking a nursing adaptation programme?"
-          name="nursingAdaptationProgramme"
-          value={formData?.nursingAdaptationProgramme || 'no'}
-          onChange={e =>
-            onFormDataChange({
-              ...formData,
-              nursingAdaptationProgramme: e.target.value,
-            })
-          }
-          options={[
-            { value: 'yes', label: 'Yes' },
-            { value: 'no', label: 'No' },
-          ]}
-        />
-      </div>
+      <Radio
+        label="Are you currently undertaking a nursing adaptation programme?"
+        name="nursingAdaptationProgramme"
+        value={formData?.nursingAdaptationProgramme || 'no'}
+        onChange={e =>
+          onFormDataChange({
+            ...formData,
+            nursingAdaptationProgramme: e.target.value,
+          })
+        }
+        options={[
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+        ]}
+      />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input
           disabled={formData?.nursingAdaptationProgramme !== 'yes'}
@@ -94,51 +92,45 @@ const SubscriptionDetails = ({
           placeholder="Enter your NMBI number"
         />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Radio
-            label="Please tick one of the following"
-            name="nurseType"
-            required={formData?.nursingAdaptationProgramme === 'yes'}
-            disabled={formData?.nursingAdaptationProgramme !== 'yes'}
-            value={formData?.nurseType || ''}
-            onChange={handleNurseTypeChange}
-            showValidation={showValidation}
-            options={nurseTypeOptions}
-          />
-        </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Radio
-            label="Please select the most appropriate option below"
-            name="memberStatus"
-            value={formData?.memberStatus || ''}
-            onChange={e =>
-              onFormDataChange({
-                ...formData,
-                memberStatus: e.target.value,
-              })
-            }
-            options={[
-              { value: 'new', label: 'You are a new member' },
-              { value: 'graduate', label: 'You are newly graduated' },
-              {
-                value: 'rejoin',
-                label:
-                  'You were previously a member of the INMO, and are rejoining',
-              },
-              {
-                value: 'careerBreak',
-                label: 'You are returning from a career break',
-              },
-              {
-                value: 'nursingAbroad',
-                label: 'You are returning from nursing abroad',
-              },
-            ]}
-          />
-        </div>
+      <Radio
+        label="Please tick one of the following"
+        name="nurseType"
+        required={formData?.nursingAdaptationProgramme === 'yes'}
+        disabled={formData?.nursingAdaptationProgramme !== 'yes'}
+        value={formData?.nurseType || ''}
+        onChange={handleNurseTypeChange}
+        showValidation={showValidation}
+        options={nurseTypeOptions}
+      />
+      <div>
+        <Radio
+          label="Please select the most appropriate option below"
+          name="memberStatus"
+          value={formData?.memberStatus || ''}
+          onChange={e =>
+            onFormDataChange({
+              ...formData,
+              memberStatus: e.target.value,
+            })
+          }
+          options={[
+            { value: 'new', label: 'You are a new member' },
+            { value: 'graduate', label: 'You are newly graduated' },
+            {
+              value: 'rejoin',
+              label:
+                'You were previously a member of the INMO, and are rejoining',
+            },
+            {
+              value: 'careerBreak',
+              label: 'You are returning from a career break',
+            },
+            {
+              value: 'nursingAbroad',
+              label: 'You are returning from nursing abroad',
+            },
+          ]}
+        />
       </div>
       <div>
         <Radio
@@ -332,7 +324,11 @@ const SubscriptionDetails = ({
                     className="text-blue-600 underline hover:text-blue-800">
                     Conditions of Membership
                   </a>
-                  {!formData?.termsAndConditions && <span className="ml-1 text-xs text-red-600">(Required)</span>}
+                  {!formData?.termsAndConditions && (
+                    <span className="ml-1 text-xs text-red-600">
+                      (Required)
+                    </span>
+                  )}
                 </span>
               }
               name="termsAndConditions"
