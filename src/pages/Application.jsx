@@ -88,7 +88,7 @@ const Application = () => {
       case 2:
         const { workLocation, grade, membershipCategory } =
           formData.professionalDetails || {};
-        if (!grade || !membershipCategory) {
+        if (!grade || !workLocation || !membershipCategory) {
           return false;
         }
         break;
@@ -106,7 +106,7 @@ const Application = () => {
           nmbiNumber
         } = formData.subscriptionDetails || {};
         if (!paymentType) return false;
-        
+
         if (paymentType === 'deduction' && !formData.subscriptionDetails?.payrollNo) return false;
 
         if (nursingAdaptationProgramme === 'yes') {
@@ -196,27 +196,25 @@ const Application = () => {
               <div
                 className={`
                 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
-                ${
-                  isSubmitted && step.number === 3
+                ${isSubmitted && step.number === 3
                     ? 'bg-green-500 text-white'
                     : currentStep === step.number
-                    ? 'bg-blue-500 text-white'
-                    : currentStep > step.number
-                    ? 'bg-green-500 text-white'
-                    : 'bg-gray-200'
-                }
+                      ? 'bg-blue-500 text-white'
+                      : currentStep > step.number
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-200'
+                  }
               `}>
                 {isSubmitted && step.number === 3 ? '✓' : currentStep > step.number ? '✓' : step.number}
               </div>
               <div className="ml-2">
                 <p
-                  className={`text-sm whitespace-nowrap ${
-                    isSubmitted && step.number === 3
+                  className={`text-sm whitespace-nowrap ${isSubmitted && step.number === 3
                       ? 'text-green-500 font-semibold'
                       : currentStep === step.number
-                      ? 'text-blue-500 font-semibold'
-                      : 'text-gray-500'
-                  }`}>
+                        ? 'text-blue-500 font-semibold'
+                        : 'text-gray-500'
+                    }`}>
                   {step.title}
                 </p>
               </div>
