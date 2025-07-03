@@ -5,6 +5,7 @@ import {
 import { deleteHeaders, deleteUser, getHeaders, getUser, saveUser, setHeaders } from '../helpers/auth.helper';
 import { deleteVerifier } from '../helpers/verifier.helper';
 import { setSignedIn, setUser } from '../store/slice/auth.slice';
+import { microSoftUrlRedirect } from '../helpers/B2C.helper';
 
 export const validation = () => {
   return async (dispatch) => {
@@ -29,7 +30,6 @@ export const signInMicrosoft = data => {
     signInMicrosoftRequest(data)
       .then(res => {
         if (res.status === 200) {
-          console.log('res.data', res.data);
           setHeaders(res.data);
           saveUser(res.data.user)
           deleteVerifier()
