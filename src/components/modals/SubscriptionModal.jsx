@@ -45,8 +45,6 @@ const SubscriptionModal = ({
     ? formData?.personalInfo?.workEmail 
     : formData?.personalInfo?.personalEmail;
 
-  console.log('defaultEmail======>', defaultEmail);
-
   const handleSubmit = async values => {
     if (!stripe || !elements) {
       return;

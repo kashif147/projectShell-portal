@@ -34,25 +34,56 @@ const PersonalInformation = ({
 
   const handlePlacesChanged = () => {
     const places = inputRef.current.getPlaces();
-    console.log('places=========>', places);
+
     if (places && places.length > 0) {
       const place = places[0];
-      const address = place.formatted_address;
-      const addressParts = address.split(', ').map(part => part.trim());
-      const addressLine1 = addressParts[0] || '';
-      const addressLine2 = addressParts[1] || '';
-      const addressLine3 = addressParts[2] || '';
-      const addressLine4 = addressParts[3] || '';
+      const placeId = place.place_id;
 
-      onFormDataChange({
-        ...formData,
-        addressLine1,
-        addressLine2,
-        addressLine3,
-        addressLine4,
+      const service = new window.google.maps.places.PlacesService(
+        document.createElement('div')
+      );
+
+      const request = {
+        placeId: placeId,
+        fields: ['address_components', 'name', 'formatted_address'],
+      };
+
+      service.getDetails(request, (details, status) => {
+        if (
+          status === window.google.maps.places.PlacesServiceStatus.OK &&
+          details
+        ) {
+          const components = details.address_components;
+
+          const getComponent = type =>
+            components.find(c => c.types.includes(type))?.long_name || '';
+
+          const streetNumber = getComponent('street_number');
+          const route = getComponent('route');
+          const sublocality = getComponent('sublocality') || '';
+          const town = getComponent('locality') || getComponent('postal_town') || '';
+          const county =
+            getComponent('administrative_area_level_1') || '';
+          const postalCode = getComponent('postal_code');
+
+          const addressLine1 = `${streetNumber} ${route}`.trim();
+          const addressLine2 = sublocality;
+          const addressLine3 = town;
+          const addressLine4 = `${county}, ${postalCode}`.trim();
+
+          onFormDataChange({
+            ...formData,
+            addressLine1,
+            addressLine2,
+            addressLine3,
+            addressLine4,
+          });
+        }
       });
     }
   };
+
+
 
   return (
     <div className="space-y-6">

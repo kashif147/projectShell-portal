@@ -143,8 +143,9 @@ const Application = () => {
 
   const handleSubscriptionSuccess = () => {
     setIsModalVisible(false);
+    console.log('Form submitted:', formData);
     // Redirect to dashboard or show success message
-    window.location.href = '/';
+    // window.location.href = '/';
   };
 
   const renderStepContent = () => {
@@ -210,10 +211,10 @@ const Application = () => {
               <div className="ml-2">
                 <p
                   className={`text-sm whitespace-nowrap ${isSubmitted && step.number === 3
-                      ? 'text-green-500 font-semibold'
-                      : currentStep === step.number
-                        ? 'text-blue-500 font-semibold'
-                        : 'text-gray-500'
+                    ? 'text-green-500 font-semibold'
+                    : currentStep === step.number
+                      ? 'text-blue-500 font-semibold'
+                      : 'text-gray-500'
                     }`}>
                   {step.title}
                 </p>

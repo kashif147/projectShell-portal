@@ -45,15 +45,15 @@ export const signInMicrosoft = data => {
 
 
 export const signOut = (navigate) => {
-  return dispatch => {
+  return async (dispatch) => {
     try {
-      deleteHeaders();
-      deleteUser();
       dispatch(setSignedIn(false));
       dispatch(setUser({}));
-      navigate('/landing')
+      deleteHeaders();
+      deleteUser();
+      await microSoftUrlRedirect();
     } catch (error) {
-      toast.error('Something went wrong')
+      toast.error('Something went wrong');
     }
-  }
+  };
 };
