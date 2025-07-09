@@ -69,7 +69,8 @@ const PersonalInformation = ({
           const addressLine1 = `${streetNumber} ${route}`.trim();
           const addressLine2 = sublocality;
           const addressLine3 = town;
-          const addressLine4 = `${county}, ${postalCode}`.trim();
+          const addressLine4 = `${county}`.trim();
+          const eircode = `${postalCode}`.trim();
 
           onFormDataChange({
             ...formData,
@@ -77,6 +78,7 @@ const PersonalInformation = ({
             addressLine2,
             addressLine3,
             addressLine4,
+            eircode,
           });
         }
       });
@@ -157,7 +159,7 @@ const PersonalInformation = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="relative">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Eircode
+            Search by address or Eircode
           </label>
           {isLoaded && (
             <StandaloneSearchBox
@@ -210,6 +212,12 @@ const PersonalInformation = ({
           value={formData?.addressLine4 || ''}
           onChange={handleInputChange}
           showValidation={showValidation}
+        />
+        <Input
+          label="Eircode"
+          name="eircode"
+          value={formData?.eircode || ''}
+          onChange={handleInputChange}
         />
         <Select
           label="Country"

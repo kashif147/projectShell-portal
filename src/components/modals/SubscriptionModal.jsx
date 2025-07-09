@@ -34,13 +34,11 @@ const SubscriptionModal = ({
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
 
-  // Get price info from mapping
   const priceInfo = membershipPrices[membershipCategory] || {
     full: 0,
     monthly: 0,
   };
 
-  // Get default email based on preferredEmail
   const defaultEmail = formData?.personalInfo?.preferredEmail === 'work' 
     ? formData?.personalInfo?.workEmail 
     : formData?.personalInfo?.personalEmail;

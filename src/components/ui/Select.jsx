@@ -118,7 +118,7 @@ export const Select = ({
           value={actualValue}
           className={`
             w-full px-3 py-2 border rounded-md
-            ${props.disabled ? 'bg-gray-200 text-gray-500 cursor-not-allowed border-gray-300' : 'bg-white border-gray-300'}
+            ${props.disabled ? 'bg-gray-200 text-gray-800 cursor-not-allowed border-gray-300' : 'bg-white border-gray-300'}
             ${isEmpty ? 'border-red-500 bg-red-50' : required ? 'border-blue-500' : ''}
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
             ${className}

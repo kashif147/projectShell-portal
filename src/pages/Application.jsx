@@ -38,23 +38,38 @@ const Application = () => {
     { number: 3, title: 'Subscription Details' },
   ];
 
+  // Helper to save progress
+  const saveProgress = (data, step) => {
+    localStorage.setItem('applicationFormData', JSON.stringify(data));
+    localStorage.setItem('applicationCurrentStep', step);
+  };
+
   const handleNext = () => {
     setShowValidation(true);
     if (validateCurrentStep()) {
-      setCurrentStep(prev => Math.min(prev + 1, steps.length));
+      setCurrentStep(prev => {
+        const nextStep = Math.min(prev + 1, steps.length);
+        saveProgress(formData, nextStep);
+        return nextStep;
+      });
       setShowValidation(false);
     }
   };
 
   const handlePrevious = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
+    setCurrentStep(prev => {
+      const prevStep = Math.max(prev - 1, 1);
+      saveProgress(formData, prevStep);
+      return prevStep;
+    });
   };
 
   const handleFormDataChange = (stepName, data) => {
-    setFormData(prev => ({
-      ...prev,
-      [stepName]: data,
-    }));
+    setFormData(prev => {
+      const newData = { ...prev, [stepName]: data };
+      saveProgress(newData, currentStep);
+      return newData;
+    });
   };
 
   const validateCurrentStep = () => {
@@ -132,6 +147,8 @@ const Application = () => {
     if (validateCurrentStep()) {
       // Here you would typically send the form data to your backend
       console.log('Form submitted:', formData);
+      localStorage.removeItem('applicationFormData');
+      localStorage.removeItem('applicationCurrentStep');
       setIsSubmitted(true);
       setIsModalVisible(true);
     }
@@ -184,6 +201,21 @@ const Application = () => {
         return null;
     }
   };
+
+  // Load progress on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem('applicationFormData');
+    const savedStep = localStorage.getItem('applicationCurrentStep');
+    if (savedData) {
+      const parsedData = JSON.parse(savedData);
+      setFormData(parsedData);
+      if (savedStep) {
+        setCurrentStep(Number(savedStep));
+      } else {
+        setCurrentStep(getFirstIncompleteStep(parsedData));
+      }
+    }
+  }, []);
 
   return (
     <div className="space-y-4">
