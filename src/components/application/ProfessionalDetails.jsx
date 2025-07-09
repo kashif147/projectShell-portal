@@ -338,6 +338,31 @@ const ProfessionalDetails = ({
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Select
+          label="Branch"
+          name="branch"
+          value={formData?.branch || ''}
+          onChange={handleInputChange}
+          placeholder="Select branch"
+          disabled={true}
+          options={allBranches.map(branch => ({
+            value: branch,
+            label: branch,
+          }))}
+          showValidation={showValidation}
+        />
+        <Select
+          label="Region"
+          name="region"
+          value={formData?.region || ''}
+          onChange={handleInputChange}
+          placeholder="Select region"
+          disabled={true}
+          options={allRegions.map(region => ({ value: region, label: region }))}
+          showValidation={showValidation}
+        />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Select
           label="Grade"
           tooltip="Select your current grade. If your grade is not listed, choose 'Other' and specify it below."
           name="grade"
@@ -366,29 +391,6 @@ const ProfessionalDetails = ({
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Select
-          label="Branch"
-          name="branch"
-          value={formData?.branch || ''}
-          onChange={handleInputChange}
-          placeholder="Select branch"
-          disabled={true}
-          options={allBranches.map(branch => ({
-            value: branch,
-            label: branch,
-          }))}
-          showValidation={showValidation}
-        />
-        <Select
-          label="Region"
-          name="region"
-          value={formData?.region || ''}
-          onChange={handleInputChange}
-          placeholder="Select region"
-          disabled={true}
-          options={allRegions.map(region => ({ value: region, label: region }))}
-          showValidation={showValidation}
-        />
         <div className="relative">
           <div className="flex items-center justify-between mb-1">
             <label className="block text-sm font-medium text-gray-700">

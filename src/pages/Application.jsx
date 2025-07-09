@@ -282,7 +282,6 @@ const Application = () => {
         </Button>
       </div>
 
-      {/* Subscription Modal with Stripe Integration */}
       <Elements stripe={stripePromise}>
         <SubscriptionModal
           isVisible={isModalVisible}
