@@ -39,8 +39,8 @@ const SubscriptionModal = ({
     monthly: 0,
   };
 
-  const defaultEmail = formData?.personalInfo?.preferredEmail === 'work' 
-    ? formData?.personalInfo?.workEmail 
+  const defaultEmail = formData?.personalInfo?.preferredEmail === 'work'
+    ? formData?.personalInfo?.workEmail
     : formData?.personalInfo?.personalEmail;
 
   const handleSubmit = async values => {
@@ -87,6 +87,7 @@ const SubscriptionModal = ({
         color: '#9e2146',
       },
     },
+    hidePostalCode: true,
   };
 
   return (
@@ -140,7 +141,7 @@ const SubscriptionModal = ({
         size="small"
         initialValues={{
           email: defaultEmail,
-          name: formData?.personalInfo?.forename && formData?.personalInfo?.surname 
+          name: formData?.personalInfo?.forename && formData?.personalInfo?.surname
             ? `${formData.personalInfo.forename} ${formData.personalInfo.surname}`
             : undefined
         }}>

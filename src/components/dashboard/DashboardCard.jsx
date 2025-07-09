@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const DashboardCard = ({ title, description, icon, link }) => {
+const DashboardCard = ({ title, description, icon, link, buttonText }) => {
   const navigate = useNavigate();
 
   return (
@@ -15,7 +15,7 @@ const DashboardCard = ({ title, description, icon, link }) => {
         onClick={() => navigate(link)}
         className="bg-blue-500 hover:bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-md transition-colors w-full sm:w-auto mt-auto"
       >
-        {title === 'Let\'s get started' ? title : `View ${title}`}
+        {buttonText || (title === 'Let\'s get started' ? title : `View ${title}`)}
       </button>
     </div>
   );

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import DashboardCard from '../components/dashboard/DashboardCard';
 import {
   UserOutlined,
@@ -8,6 +8,14 @@ import {
 } from '@ant-design/icons';
 
 const Dashboard = () => {
+  const [hasInProgressApplication, setHasInProgressApplication] = useState(false);
+
+  useEffect(() => {
+    const savedData = localStorage.getItem('applicationFormData');
+    const savedStep = localStorage.getItem('applicationCurrentStep');
+    setHasInProgressApplication(!!(savedData && savedStep));
+  }, []);
+
   return (
     <div>
       <h1 className="text-3xl font-bold mb-2">Welcome to Members Portal</h1>
@@ -20,6 +28,7 @@ const Dashboard = () => {
           description="Start or continue your membership application"
           icon={<FormOutlined />}
           link="/application"
+          buttonText={hasInProgressApplication ? 'Resume Application' : 'Start Application'}
         />
         <DashboardCard
           title="My Profile"
