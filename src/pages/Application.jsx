@@ -8,11 +8,12 @@ import Button from '../components/common/Button';
 import { useSelector } from 'react-redux';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
+import { useNavigate } from 'react-router-dom';
 
-// Initialize Stripe
-const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx'); // Replace with your Stripe publishable key
+const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx'); 
 
 const Application = () => {
+  const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -164,9 +165,20 @@ const Application = () => {
     setIsModalVisible(false);
   };
 
-  const handleSubscriptionSuccess = () => {
+  const handleSubscriptionSuccess = (paymentData) => {
     setIsModalVisible(false);
-    console.log('Form submitted:', formData);
+    const updatedSubscriptionDetails = {
+      ...formData.subscriptionDetails,
+      paymentData,
+      dateOfSubscription: new Date().toISOString(),
+    };
+    const updatedFormData = {
+      ...formData,
+      subscriptionDetails: updatedSubscriptionDetails,
+    };
+    setFormData(updatedFormData);
+    saveProgress(updatedFormData, currentStep);
+    console.log('Form submitted:', updatedFormData);
     navigate('/');
   };
 

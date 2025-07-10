@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Descriptions, Avatar, Row, Col } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import PersonalInformation from '../components/application/PersonalInformation';
 import Button from '../components/common/Button';
 
@@ -17,7 +17,6 @@ const mapUserToPersonalInfo = user => ({
 
 const Profile = () => {
   const { user } = useSelector(state => state.auth);
-  const dispatch = useDispatch();
   const [editMode, setEditMode] = useState(false);
   const [personalInfo, setPersonalInfo] = useState(mapUserToPersonalInfo(user));
   const [showValidation, setShowValidation] = useState(false);

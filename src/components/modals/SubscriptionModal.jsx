@@ -65,7 +65,11 @@ const SubscriptionModal = ({
         console.log('Payment Method:', stripePaymentMethod);
       }
       await new Promise(resolve => setTimeout(resolve, 1000));
-      onSuccess();
+      onSuccess({
+        paymentMethod,
+        total: priceInfo.monthly,
+        paymentDetails: paymentMethod === 'card' ? values : { bankDetails: values.bankDetails }
+      });
     } catch (error) {
       console.error('Payment error:', error);
     } finally {
