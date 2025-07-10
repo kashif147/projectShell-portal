@@ -6,6 +6,19 @@ import Header from './Header';
 
 const { Content } = Layout;
 
+const routeTitleMap = {
+  '/': 'Dashboard',
+  '/profile': 'Profile',
+  '/subscriptions': 'Subscriptions',
+  '/application': 'Application',
+  '/payments': 'Payments',
+  '/events': 'Events',
+  '/communications': 'Communications',
+  '/queries': 'Queries',
+  '/voting': 'Voting',
+  '/resources': 'Resources',
+};
+
 const MainLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -67,6 +80,8 @@ const MainLayout = () => {
     );
   };
 
+  const pageTitle = routeTitleMap[location.pathname] || 'Dashboard';
+
   return (
     <Layout>
       {renderSidebar()}
@@ -79,6 +94,7 @@ const MainLayout = () => {
           setCollapsed={setCollapsed}
           isMobile={isMobile}
           setDrawerVisible={setDrawerVisible}
+          pageTitle={pageTitle}
         />
         <Content
           style={{

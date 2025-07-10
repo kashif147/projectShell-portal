@@ -153,8 +153,8 @@ const Application = () => {
     if (validateCurrentStep()) {
       // Here you would typically send the form data to your backend
       console.log('Form submitted:', formData);
-      localStorage.removeItem('applicationFormData');
-      localStorage.removeItem('applicationCurrentStep');
+      // localStorage.removeItem('applicationFormData');
+      // localStorage.removeItem('applicationCurrentStep');
       setIsSubmitted(true);
       setIsModalVisible(true);
     }
@@ -167,8 +167,7 @@ const Application = () => {
   const handleSubscriptionSuccess = () => {
     setIsModalVisible(false);
     console.log('Form submitted:', formData);
-    // Redirect to dashboard or show success message
-    // window.location.href = '/';
+    navigate('/');
   };
 
   const renderStepContent = () => {
@@ -277,7 +276,9 @@ const Application = () => {
       </div>
 
       {/* Step Content */}
-      <Card className="p-4">{renderStepContent()}</Card>
+      <Card title={steps[currentStep - 1].title} className="p-4">
+        {renderStepContent()}
+      </Card>
 
       {/* Navigation Buttons */}
       <div className="flex justify-between mt-4">

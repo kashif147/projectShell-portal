@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useLookup } from '../../contexts/lookupContext';
 
-const Header = ({ collapsed, setCollapsed, isMobile, setDrawerVisible }) => {
+const Header = ({ collapsed, setCollapsed, isMobile, setDrawerVisible, pageTitle }) => {
   const {user} = useSelector((state) => state.auth);
   const {fetchLookups} = useLookup();
   const dispatch = useDispatch();
@@ -57,7 +57,7 @@ const Header = ({ collapsed, setCollapsed, isMobile, setDrawerVisible }) => {
           onClick={() => isMobile ? setDrawerVisible(true) : setCollapsed(!collapsed)}
           className="ml-[-24px] w-16 h-16"
         />
-        <h1 className="header-title text-2xl ml-4 text-gray-800 tracking-tight">Dashboard</h1>
+        <h1 className="header-title text-2xl ml-4 text-gray-800 tracking-tight">{pageTitle}</h1>
       </div>
 
       <div className="flex items-center space-x-6">
