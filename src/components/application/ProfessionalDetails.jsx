@@ -4,8 +4,20 @@ import { Select } from '../ui/Select';
 import { DatePicker } from '../ui/DatePicker';
 import { Checkbox } from '../ui/Checkbox';
 import { useLookup } from '../../contexts/lookupContext';
+import Radio from '../ui/Radio';
 
-// Dummy work locations extracted from the provided image
+const nurseTypeOptions = [
+  { value: 'general', label: 'General Nurse' },
+  { value: 'publicHealth', label: 'Public Health Nurse' },
+  { value: 'mentalHealth', label: 'Mental health nurse' },
+  { value: 'midwife', label: 'Midwife' },
+  { value: 'sickChildren', label: "Sick Children's Nurse" },
+  {
+    value: 'intellectualDisability',
+    label: 'Registered Nurse for Intellectual Disability',
+  },
+];
+
 const workLocations = [
   '24 Hour Care Services',
   '24 Hour Care Services (Mid-West)',
@@ -235,14 +247,11 @@ const ProfessionalDetails = ({
     onFormDataChange(newFormData);
   };
 
-  const handleSectionChange = value => {
-    // Ensure only 2 selections are allowed
-    if (value.length <= 2) {
-      onFormDataChange({
-        ...formData,
-        section: value,
-      });
-    }
+   const handleNurseTypeChange = e => {
+    onFormDataChange({
+      ...formData,
+      nurseType: e.target.value,
+    });
   };
 
   return (
@@ -361,6 +370,43 @@ const ProfessionalDetails = ({
           showValidation={showValidation}
         />
       </div>
+      <Radio
+        label="Are you currently undertaking a nursing adaptation programme?"
+        name="nursingAdaptationProgramme"
+        value={formData?.nursingAdaptationProgramme || 'no'}
+        onChange={e =>
+          onFormDataChange({
+            ...formData,
+            nursingAdaptationProgramme: e.target.value,
+          })
+        }
+        options={[
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+        ]}
+      />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Input
+          disabled={formData?.nursingAdaptationProgramme !== 'yes'}
+          required={formData?.nursingAdaptationProgramme === 'yes'}
+          label="NMBI No / An Board Altranais Number"
+          name="nmbiNumber"
+          value={formData?.nmbiNumber || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+          placeholder="Enter your NMBI number"
+        />
+      </div>
+      <Radio
+        label="Please tick one of the following"
+        name="nurseType"
+        required={formData?.nursingAdaptationProgramme === 'yes'}
+        disabled={formData?.nursingAdaptationProgramme !== 'yes'}
+        value={formData?.nurseType || ''}
+        onChange={handleNurseTypeChange}
+        showValidation={showValidation}
+        options={nurseTypeOptions}
+      />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Select
           label="Grade"

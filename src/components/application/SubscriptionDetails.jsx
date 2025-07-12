@@ -29,13 +29,6 @@ const SubscriptionDetails = ({
     });
   };
 
-  const handleNurseTypeChange = e => {
-    onFormDataChange({
-      ...formData,
-      nurseType: e.target.value,
-    });
-  };
-
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -63,43 +56,6 @@ const SubscriptionDetails = ({
           placeholder="Enter your payroll number"
         />
       </div>
-      <Radio
-        label="Are you currently undertaking a nursing adaptation programme?"
-        name="nursingAdaptationProgramme"
-        value={formData?.nursingAdaptationProgramme || 'no'}
-        onChange={e =>
-          onFormDataChange({
-            ...formData,
-            nursingAdaptationProgramme: e.target.value,
-          })
-        }
-        options={[
-          { value: 'yes', label: 'Yes' },
-          { value: 'no', label: 'No' },
-        ]}
-      />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          disabled={formData?.nursingAdaptationProgramme !== 'yes'}
-          required={formData?.nursingAdaptationProgramme === 'yes'}
-          label="NMBI No / An Board Altranais Number"
-          name="nmbiNumber"
-          value={formData?.nmbiNumber || ''}
-          onChange={handleInputChange}
-          showValidation={showValidation}
-          placeholder="Enter your NMBI number"
-        />
-      </div>
-      <Radio
-        label="Please tick one of the following"
-        name="nurseType"
-        required={formData?.nursingAdaptationProgramme === 'yes'}
-        disabled={formData?.nursingAdaptationProgramme !== 'yes'}
-        value={formData?.nurseType || ''}
-        onChange={handleNurseTypeChange}
-        showValidation={showValidation}
-        options={nurseTypeOptions}
-      />
       <div>
         <Radio
           label="Please select the most appropriate option below"

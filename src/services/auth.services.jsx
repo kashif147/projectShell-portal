@@ -51,7 +51,8 @@ export const signOut = (navigate) => {
       dispatch(setUser({}));
       deleteHeaders();
       deleteUser();
-      await microSoftUrlRedirect();
+      navigate('/')
+      // await microSoftUrlRedirect();
     } catch (error) {
       toast.error('Something went wrong');
     }
