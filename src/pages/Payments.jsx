@@ -25,7 +25,7 @@ const Payments = () => {
           date: sub.dateOfSubscription
             ? new Date(sub.dateOfSubscription).toLocaleDateString()
             : '',
-          description: 'Membership Subscription',
+          description: formData.professionalDetails.membershipCategory,
           amount: sub.paymentData.total,
           status: 'Paid',
           details: {
@@ -39,6 +39,8 @@ const Payments = () => {
       setPaymentRows([]);
     }
   }, []);
+
+  console.log('Payment==================>', paymentRows);
 
   const handleDownloadPDF = async () => {
     const canvas = await html2canvas(receiptRef.current);

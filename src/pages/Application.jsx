@@ -122,9 +122,6 @@ const Application = () => {
           otherIrishTradeUnion,
           otherScheme,
           memberStatus,
-          // nursingAdaptationProgramme,
-          // nurseType,
-          // nmbiNumber,
         } = formData.subscriptionDetails || {};
         if (!paymentType) return false;
 
@@ -133,11 +130,6 @@ const Application = () => {
           !formData.subscriptionDetails?.payrollNo
         )
           return false;
-
-        // if (nursingAdaptationProgramme === 'yes') {
-        //   if (!nurseType || !nmbiNumber) return false;
-        // }
-
         if (!memberStatus) return false;
 
         if (!otherIrishTradeUnion || !otherScheme) return false;
