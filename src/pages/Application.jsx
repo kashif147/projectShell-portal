@@ -9,6 +9,7 @@ import { useSelector } from 'react-redux';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { useNavigate } from 'react-router-dom';
+import { createPersonalDetailRequest } from '../api/application.api';
 
 const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx');
 
@@ -45,9 +46,52 @@ const Application = () => {
     localStorage.setItem('applicationCurrentStep', step);
   };
 
+  const createPersonalDetail = data => {
+    const personalInfo = {
+      personalInfo: {
+        title: data.title,
+        surname: data.surname,
+        forename: data.forename,
+        gender: data.gender,
+        dateOfBirth: data.dateOfBirth,
+        countryPrimaryQualification: data.countryPrimaryQualification,
+      },
+      contactInfo: {
+        preferredAddress: data.preferredAddress,
+        buildingOrHouse: data.addressLine1,
+        streetOrRoad: data.addressLine2,
+        areaOrTown: data.addressLine3,
+        countyCityOrPostCode: data.addressLine4,
+        country: data.country,
+        eircode: data.eircode,
+        preferredEmail: data.preferredEmail,
+        emailWork: data.workEmail ?? '',
+        emailPersonal: data.personalEmail ?? '',
+        mobile: data.mobileNo,
+        consentSMS: data.smsConsent,
+        consentEmail: data.emailConsent
+      }
+    }
+    createPersonalDetailRequest(personalInfo)
+      .then(res => {
+        if (res.status === 200) {
+          toast.success('Personal Detail added successfully');
+        } else {
+          toast.error(res.data.message ?? 'Unable to add personal detail');
+        }
+      })
+      .catch(() => toast.error('Something went wrong'));
+  };
+
+
+
   const handleNext = () => {
     setShowValidation(true);
     if (validateCurrentStep()) {
+      if (currentStep === 1) {
+        createPersonalDetail(formData.personalInfo)
+      }
+      console.log('step====>', currentStep);
       setCurrentStep(prev => {
         const nextStep = Math.min(prev + 1, steps.length);
         saveProgress(formData, nextStep);
