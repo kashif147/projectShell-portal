@@ -9,12 +9,12 @@ import {
 import { useApplication } from '../contexts/applicationContext';
 
 const Dashboard = () => {
-  // const { getPersonalDetail } = useApplication()
+  const { getPersonalDetail } = useApplication()
   const [hasInProgressApplication, setHasInProgressApplication] = useState(false);
 
-  // useEffect(() => {
-  //   getPersonalDetail()
-  // }, [])
+  useEffect(() => {
+    getPersonalDetail()
+  }, [])
 
   useEffect(() => {
     const savedData = localStorage.getItem('applicationFormData');

@@ -39,7 +39,7 @@ const Application = () => {
   useEffect(() => {
     getPersonalDetail()
   }, [])
-  console.log('personalDetail============>',personalDetail);
+  console.log('personalDetail============>', personalDetail);
   useEffect(() => {
     if (personalDetail) {
       setFormData(prev => ({
@@ -53,7 +53,7 @@ const Application = () => {
           dateOfBirth: personalDetail?.personalInfo?.dateOfBirth || '',
           countryPrimaryQualification: personalDetail?.personalInfo?.countryPrimaryQualification || '',
           personalEmail: personalDetail?.contactInfo?.personalEmail || '',
-          mobileNo: personalDetail?.contactInfo?.mobileNo || '',
+          mobileNo: personalDetail?.contactInfo?.mobileNumber || '',
           smsConsent: personalDetail?.contactInfo?.smsConsent ?? true,
           emailConsent: personalDetail?.contactInfo?.emailConsent ?? true,
           addressLine1: personalDetail?.contactInfo?.buildingOrHouse || '',
@@ -109,7 +109,6 @@ const Application = () => {
         consentEmail: data.emailConsent
       }
     }
-    console.log('PersonalInformation=======>', personalInfo);
     createPersonalDetailRequest(personalInfo)
       .then(res => {
         console.log('response=======>', res);

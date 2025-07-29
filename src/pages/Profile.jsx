@@ -4,30 +4,49 @@ import { UserOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import PersonalInformation from '../components/application/PersonalInformation';
 import Button from '../components/common/Button';
-
-const mapUserToPersonalInfo = user => ({
-  forename: user?.userFirstName || '',
-  surname: user?.userLastName || '',
-  personalEmail: user?.userEmail || '',
-  mobileNo: user?.userMobilePhone || '',
-  country: user?.country || 'Ireland',
-  smsConsent: user?.smsConsent ?? true,
-  emailConsent: user?.emailConsent ?? true,
-});
+import { useApplication } from '../contexts/applicationContext';
+import { updatePersonalDetailRequest } from '../api/application.api';
 
 const Profile = () => {
   const { user } = useSelector(state => state.auth);
+  const { personalDetail, getPersonalDetail } = useApplication()
   const [editMode, setEditMode] = useState(false);
-  const [personalInfo, setPersonalInfo] = useState(mapUserToPersonalInfo(user));
+  const [personalInfo, setPersonalInfo] = useState({});
   const [showValidation, setShowValidation] = useState(false);
 
+
   useEffect(() => {
-    const savedData = localStorage.getItem('applicationFormData');
-    if (savedData) {
-      const parsedData = JSON.parse(savedData);
-      setPersonalInfo(parsedData.personalInfo);
+    if (personalDetail) {
+      setPersonalInfo({
+        title: personalDetail?.personalInfo?.title || '',
+        surname: personalDetail?.personalInfo?.surname || '',
+        forename: personalDetail?.personalInfo?.forename || '',
+        gender: personalDetail?.personalInfo?.gender || '',
+        dateOfBirth: personalDetail?.personalInfo?.dateOfBirth || '',
+        countryPrimaryQualification: personalDetail?.personalInfo?.countryPrimaryQualification || '',
+        personalEmail: personalDetail?.contactInfo?.personalEmail || '',
+        mobileNo: personalDetail?.contactInfo?.mobileNumber || '',
+        smsConsent: personalDetail?.contactInfo?.smsConsent ?? true,
+        emailConsent: personalDetail?.contactInfo?.emailConsent ?? true,
+        addressLine1: personalDetail?.contactInfo?.buildingOrHouse || '',
+        addressLine2: personalDetail?.contactInfo?.streetOrRoad || '',
+        addressLine3: personalDetail?.contactInfo?.areaOrTown || '',
+        addressLine4: personalDetail?.contactInfo?.countyCityOrPostCode || '',
+        eircode: personalDetail?.contactInfo?.eircode || '',
+        preferredAddress: personalDetail?.contactInfo?.preferredAddress || '',
+        preferredEmail: personalDetail?.contactInfo?.preferredEmail || '',
+        homeWorkTelNo: personalDetail?.contactInfo?.telephoneNumber || '',
+        country: personalDetail?.contactInfo?.country || '',
+      });
     }
-  }, []);
+  }, [personalDetail])
+  // useEffect(() => {
+  //   const savedData = localStorage.getItem('applicationFormData');
+  //   if (savedData) {
+  //     const parsedData = JSON.parse(savedData);
+  //     setPersonalInfo(parsedData.personalInfo);
+  //   }
+  // }, []);
 
   const handleEdit = () => {
     setEditMode(true);
@@ -39,16 +58,43 @@ const Profile = () => {
   };
 
   const handleSave = () => {
-    if (
-      !personalInfo.forename ||
-      !personalInfo.surname ||
-      !personalInfo.personalEmail
-    ) {
-      setShowValidation(true);
-      return;
+    const personalInfoData = {
+      personalInfo: {
+        title: personalInfo.title,
+        surname: personalInfo.surname,
+        forename: personalInfo.forename,
+        gender: personalInfo.gender,
+        dateOfBirth: personalInfo.dateOfBirth,
+        countryPrimaryQualification: personalInfo.countryPrimaryQualification ?? '',
+      },
+      contactInfo: {
+        preferredAddress: personalInfo.preferredAddress,
+        eircode: personalInfo.eircode ?? '',
+        buildingOrHouse: personalInfo.addressLine1,
+        streetOrRoad: personalInfo.addressLine2 ?? '',
+        areaOrTown: personalInfo.addressLine3 ?? '',
+        countyCityOrPostCode: personalInfo.addressLine4,
+        country: personalInfo.country ?? '',
+        mobileNumber: personalInfo.mobileNo,
+        telephoneNumber: personalInfo.homeWorkTelNo ?? '',
+        preferredEmail: personalInfo.preferredEmail,
+        personalEmail: personalInfo.personalEmail ?? '',
+        workEmail: personalInfo.workEmail ?? '',
+        consentSMS: personalInfo.smsConsent,
+        consentEmail: personalInfo.emailConsent
+      }
     }
-    setEditMode(false);
-    setShowValidation(false);
+    updatePersonalDetailRequest(personalInfoData)
+      .then(res => {
+        if (res.status === 200) {
+          getPersonalDetail()
+          toast.success('Personal Detail update successfully');
+        } else {
+          toast.error(res.data.message ?? 'Unable to update personal detail');
+        }
+      })
+      .catch(() => toast.error('Something went wrong'));
+
   };
 
   return (
@@ -74,22 +120,22 @@ const Profile = () => {
       </Col>
       <Col xs={24} md={16}>
         <Card title="Personal Information">
-         {/* // editMode ? ( */}
-            <>
-              <PersonalInformation
-                formData={personalInfo}
-                onFormDataChange={setPersonalInfo}
-                showValidation={showValidation}
-              />
-              <div className="flex gap-2 mt-4">
-                <Button type="primary" onClick={handleSave}>
-                  Save
-                </Button>
-                <Button type="default" onClick={handleCancel}>
-                  Cancel
-                </Button>
-              </div>
-            </>
+          {/* // editMode ? ( */}
+          <>
+            <PersonalInformation
+              formData={personalInfo}
+              onFormDataChange={setPersonalInfo}
+              showValidation={showValidation}
+            />
+            <div className="flex gap-2 mt-4">
+              <Button type="primary" onClick={handleSave}>
+                Save
+              </Button>
+              <Button type="default" onClick={handleCancel}>
+                Cancel
+              </Button>
+            </div>
+          </>
           {/* // ) : (
           //   <Descriptions layout="vertical">
           //     <Descriptions.Item label="Full Name">
