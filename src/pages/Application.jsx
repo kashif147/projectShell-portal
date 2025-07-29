@@ -10,12 +10,14 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { useNavigate } from 'react-router-dom';
 import { createPersonalDetailRequest } from '../api/application.api';
+import { useApplication } from '../contexts/applicationContext';
 
 const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx');
 
 const Application = () => {
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
+  const { personalDetail, getPersonalDetail } = useApplication()
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -33,6 +35,40 @@ const Application = () => {
     subscriptionDetails: {},
   });
   const [showValidation, setShowValidation] = useState(false);
+
+  useEffect(() => {
+    getPersonalDetail()
+  }, [])
+  console.log('personalDetail============>',personalDetail);
+  useEffect(() => {
+    if (personalDetail) {
+      setFormData(prev => ({
+        ...prev,
+        personalInfo: {
+          ...prev.personalInfo,
+          title: personalDetail?.personalInfo?.title || '',
+          surname: personalDetail?.personalInfo?.surname || '',
+          forename: personalDetail?.personalInfo?.forename || '',
+          gender: personalDetail?.personalInfo?.gender || '',
+          dateOfBirth: personalDetail?.personalInfo?.dateOfBirth || '',
+          countryPrimaryQualification: personalDetail?.personalInfo?.countryPrimaryQualification || '',
+          personalEmail: personalDetail?.contactInfo?.personalEmail || '',
+          mobileNo: personalDetail?.contactInfo?.mobileNo || '',
+          smsConsent: personalDetail?.contactInfo?.smsConsent ?? true,
+          emailConsent: personalDetail?.contactInfo?.emailConsent ?? true,
+          addressLine1: personalDetail?.contactInfo?.buildingOrHouse || '',
+          addressLine2: personalDetail?.contactInfo?.streetOrRoad || '',
+          addressLine3: personalDetail?.contactInfo?.areaOrTown || '',
+          addressLine4: personalDetail?.contactInfo?.countyCityOrPostCode || '',
+          eircode: personalDetail?.contactInfo?.eircode || '',
+          preferredAddress: personalDetail?.contactInfo?.preferredAddress || '',
+          preferredEmail: personalDetail?.contactInfo?.preferredEmail || '',
+          homeWorkTelNo: personalDetail?.contactInfo?.telephoneNumber || '',
+          country: personalDetail?.contactInfo?.country || '',
+        }
+      }));
+    }
+  }, [personalDetail])
 
   const steps = [
     { number: 1, title: 'Personal Information' },
@@ -54,26 +90,29 @@ const Application = () => {
         forename: data.forename,
         gender: data.gender,
         dateOfBirth: data.dateOfBirth,
-        countryPrimaryQualification: data.countryPrimaryQualification,
+        countryPrimaryQualification: data.countryPrimaryQualification ?? '',
       },
       contactInfo: {
         preferredAddress: data.preferredAddress,
+        eircode: data.eircode ?? '',
         buildingOrHouse: data.addressLine1,
-        streetOrRoad: data.addressLine2,
-        areaOrTown: data.addressLine3,
+        streetOrRoad: data.addressLine2 ?? '',
+        areaOrTown: data.addressLine3 ?? '',
         countyCityOrPostCode: data.addressLine4,
-        country: data.country,
-        eircode: data.eircode,
+        country: data.country ?? '',
+        mobileNumber: data.mobileNo,
+        telephoneNumber: data.homeWorkTelNo ?? '',
         preferredEmail: data.preferredEmail,
-        emailWork: data.workEmail ?? '',
-        emailPersonal: data.personalEmail ?? '',
-        mobile: data.mobileNo,
+        personalEmail: data.personalEmail ?? '',
+        workEmail: data.workEmail ?? '',
         consentSMS: data.smsConsent,
         consentEmail: data.emailConsent
       }
     }
+    console.log('PersonalInformation=======>', personalInfo);
     createPersonalDetailRequest(personalInfo)
       .then(res => {
+        console.log('response=======>', res);
         if (res.status === 200) {
           toast.success('Personal Detail added successfully');
         } else {
@@ -83,8 +122,6 @@ const Application = () => {
       .catch(() => toast.error('Something went wrong'));
   };
 
-
-
   const handleNext = () => {
     setShowValidation(true);
     if (validateCurrentStep()) {
@@ -92,11 +129,11 @@ const Application = () => {
         createPersonalDetail(formData.personalInfo)
       }
       console.log('step====>', currentStep);
-      setCurrentStep(prev => {
-        const nextStep = Math.min(prev + 1, steps.length);
-        saveProgress(formData, nextStep);
-        return nextStep;
-      });
+      // setCurrentStep(prev => {
+      //   const nextStep = Math.min(prev + 1, steps.length);
+      //   saveProgress(formData, nextStep);
+      //   return nextStep;
+      // });
       setShowValidation(false);
     }
   };

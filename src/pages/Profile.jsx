@@ -61,20 +61,20 @@ const Profile = () => {
               {user?.userFirstName || ''} {user?.userLastName || ''}
             </h2>
             <p className="text-gray-500">{user?.role}</p>
-            {!editMode && (
+            {/* {!editMode && (
               <Button
                 type="primary"
                 className="mt-4 w-full"
                 onClick={handleEdit}>
                 Edit Personal Information
               </Button>
-            )}
+            )} */}
           </div>
         </Card>
       </Col>
       <Col xs={24} md={16}>
         <Card title="Personal Information">
-          {editMode ? (
+         {/* // editMode ? ( */}
             <>
               <PersonalInformation
                 formData={personalInfo}
@@ -90,26 +90,26 @@ const Profile = () => {
                 </Button>
               </div>
             </>
-          ) : (
-            <Descriptions layout="vertical">
-              <Descriptions.Item label="Full Name">
-                {user?.userFirstName} {user?.userLastName}
-              </Descriptions.Item>
-              <Descriptions.Item label="Email">
-                {user?.userEmail}
-              </Descriptions.Item>
-              <Descriptions.Item label="Mobile No">
-                {user?.userMobilePhone}
-              </Descriptions.Item>
-              <Descriptions.Item label="Country">
-                {user?.country || 'Ireland'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Member Since">
-                {user?.memberSince}
-              </Descriptions.Item>
-              <Descriptions.Item label="Role">{user?.role}</Descriptions.Item>
-            </Descriptions>
-          )}
+          {/* // ) : (
+          //   <Descriptions layout="vertical">
+          //     <Descriptions.Item label="Full Name">
+          //       {user?.userFirstName} {user?.userLastName}
+          //     </Descriptions.Item>
+          //     <Descriptions.Item label="Email">
+          //       {user?.userEmail}
+          //     </Descriptions.Item>
+          //     <Descriptions.Item label="Mobile No">
+          //       {user?.userMobilePhone}
+          //     </Descriptions.Item>
+          //     <Descriptions.Item label="Country">
+          //       {user?.country || 'Ireland'}
+          //     </Descriptions.Item>
+          //     <Descriptions.Item label="Member Since">
+          //       {user?.memberSince}
+          //     </Descriptions.Item>
+          //     <Descriptions.Item label="Role">{user?.role}</Descriptions.Item>
+          //   </Descriptions>
+          // ) */}
         </Card>
       </Col>
     </Row>

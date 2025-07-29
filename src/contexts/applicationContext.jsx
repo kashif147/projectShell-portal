@@ -5,30 +5,30 @@ const ApplicationContext = createContext();
 
 export const ApplicationProvider = ({ children }) => {
   const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState(null);
-  const [pesonalDetail, setPersonalDetail] = useState({})
-
-  useEffect(() => {
-    getPersonalDetail();
-  }, []);
+  const [personalDetail, setPersonalDetail] = useState({})
 
   const getPersonalDetail = () => {
+    setLoading(true)
     fetchPersonalDetail()
       .then(res => {
         if (res.status === 200) {
-          console.log('response======>', res);
+          setLoading(false)
+          setPersonalDetail(res?.data?.data)
         } else {
+          setLoading(false)
           toast.error(res.data.message ?? 'Unable to get personal datail');
         }
       })
-      .catch(() => toast.error('Something went wrong'));
+      .catch(() => {
+        setLoading(false)
+        toast.error('Something went wrong')
+      });
   }
-
-
 
   const value = {
     loading,
-    error,
+    personalDetail,
+    getPersonalDetail
   };
 
   return (

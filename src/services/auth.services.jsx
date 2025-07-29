@@ -39,7 +39,10 @@ export const signInMicrosoft = data => {
           toast.error(res.data.errors[0] ?? 'Unable to Sign In');
         }
       })
-      .catch(() => toast.error('Something went wrong'));
+      .catch(() => {
+        toast.error('Something went wrong')
+        navigate('/')
+      });
   };
 };
 

@@ -39,7 +39,7 @@ const LandingPage = () => {
             onClick={handleLogin}
             className="w-full md:w-auto px-10 py-4 text-lg md:text-xl"
           >
-            Register Now
+            Apply Now
           </Button>
         </div>
       </div>

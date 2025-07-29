@@ -40,12 +40,12 @@ export const DatePicker = ({
 
   const validateAge = (dateString) => {
     if (disableAgeValidation) return 16;
-    
+
     const today = new Date();
     const birthDate = new Date(dateString);
     const age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    
+
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       return age - 1;
     }
@@ -59,7 +59,7 @@ export const DatePicker = ({
 
   const handleInputChange = (e) => {
     let value = e.target.value.replace(/\D/g, '');
-    
+
     if (value.length > 8) {
       value = value.slice(0, 8);
     }
@@ -77,11 +77,11 @@ export const DatePicker = ({
     if (formattedValue.length === 10) {
       const [day, month, year] = formattedValue.split('/');
       const date = new Date(`${year}-${month}-${day}`);
-      
+
       if (!isNaN(date.getTime())) {
         const isoDate = date.toISOString().split('T')[0];
         setDateValue(isoDate);
-        
+
         const age = validateAge(isoDate);
         if (age < 16 && !disableAgeValidation) {
           setError('You must be 16 years or older to proceed');
@@ -93,7 +93,7 @@ export const DatePicker = ({
           const event = {
             target: {
               name,
-              value: isoDate
+               value: dayjs(isoDate).format('DD/MM/YYYY')  // ← formatted return value
             }
           };
           onChange(event);
@@ -110,7 +110,7 @@ export const DatePicker = ({
       const isoDate = date.format('YYYY-MM-DD');
       setDateValue(isoDate);
       setDisplayValue(date.format('DD/MM/YYYY'));
-      
+
       const age = validateAge(isoDate);
       if (age < 16 && !disableAgeValidation) {
         setError('You must be 16 years or older to proceed');
@@ -122,7 +122,7 @@ export const DatePicker = ({
         const event = {
           target: {
             name,
-            value: isoDate
+            value: dayjs(isoDate).format('DD/MM/YYYY')  // ← formatted return value
           }
         };
         onChange(event);

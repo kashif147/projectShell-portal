@@ -6,9 +6,15 @@ import {
   CreditCardOutlined,
   FormOutlined,
 } from '@ant-design/icons';
+import { useApplication } from '../contexts/applicationContext';
 
 const Dashboard = () => {
+  // const { getPersonalDetail } = useApplication()
   const [hasInProgressApplication, setHasInProgressApplication] = useState(false);
+
+  // useEffect(() => {
+  //   getPersonalDetail()
+  // }, [])
 
   useEffect(() => {
     const savedData = localStorage.getItem('applicationFormData');
