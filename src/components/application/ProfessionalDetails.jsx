@@ -247,7 +247,7 @@ const ProfessionalDetails = ({
     onFormDataChange(newFormData);
   };
 
-   const handleNurseTypeChange = e => {
+  const handleNurseTypeChange = e => {
     onFormDataChange({
       ...formData,
       nurseType: e.target.value,
@@ -370,22 +370,22 @@ const ProfessionalDetails = ({
           showValidation={showValidation}
         />
       </div>
-      <Radio
-        label="Are you currently undertaking a nursing adaptation programme?"
-        name="nursingAdaptationProgramme"
-        value={formData?.nursingAdaptationProgramme || 'no'}
-        onChange={e =>
-          onFormDataChange({
-            ...formData,
-            nursingAdaptationProgramme: e.target.value,
-          })
-        }
-        options={[
-          { value: 'yes', label: 'Yes' },
-          { value: 'no', label: 'No' },
-        ]}
-      />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Radio
+          label="Are you currently undertaking a nursing adaptation programme?"
+          name="nursingAdaptationProgramme"
+          value={formData?.nursingAdaptationProgramme || 'no'}
+          onChange={e =>
+            onFormDataChange({
+              ...formData,
+              nursingAdaptationProgramme: e.target.value,
+            })
+          }
+          options={[
+            { value: 'yes', label: 'Yes' },
+            { value: 'no', label: 'No' },
+          ]}
+        />
         <Input
           disabled={formData?.nursingAdaptationProgramme !== 'yes'}
           required={formData?.nursingAdaptationProgramme === 'yes'}

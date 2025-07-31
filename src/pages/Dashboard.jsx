@@ -9,18 +9,12 @@ import {
 import { useApplication } from '../contexts/applicationContext';
 
 const Dashboard = () => {
-  const { getPersonalDetail } = useApplication()
-  const [hasInProgressApplication, setHasInProgressApplication] = useState(false);
+  const { getPersonalDetail, getProfessionalDetail, currentStep } = useApplication()
 
   useEffect(() => {
     getPersonalDetail()
+    getProfessionalDetail()
   }, [])
-
-  useEffect(() => {
-    const savedData = localStorage.getItem('applicationFormData');
-    const savedStep = localStorage.getItem('applicationCurrentStep');
-    setHasInProgressApplication(!!(savedData && savedStep));
-  }, []);
 
   return (
     <div>
@@ -34,7 +28,7 @@ const Dashboard = () => {
           description="Start or continue your membership application"
           icon={<FormOutlined />}
           link="/application"
-          buttonText={hasInProgressApplication ? 'Resume Application' : 'Start Application'}
+          buttonText={currentStep > 1 ? 'Resume Application' : 'Start Application'}
         />
         <DashboardCard
           title="My Profile"

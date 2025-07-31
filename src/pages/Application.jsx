@@ -9,16 +9,16 @@ import { useSelector } from 'react-redux';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { useNavigate } from 'react-router-dom';
-import { createPersonalDetailRequest } from '../api/application.api';
+import { createPersonalDetailRequest, createProfessionalDetailRequest } from '../api/application.api';
 import { useApplication } from '../contexts/applicationContext';
+import Spinner from '../components/common/Spinner';
 
 const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx');
 
 const Application = () => {
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
-  const { personalDetail, getPersonalDetail } = useApplication()
-  const [currentStep, setCurrentStep] = useState(1);
+  const { personalDetail, getPersonalDetail, loading, getProfessionalDetail, professionalDetail, setCurrentStep, currentStep } = useApplication()
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [formData, setFormData] = useState({
@@ -36,10 +36,6 @@ const Application = () => {
   });
   const [showValidation, setShowValidation] = useState(false);
 
-  useEffect(() => {
-    getPersonalDetail()
-  }, [])
-  console.log('personalDetail============>', personalDetail);
   useEffect(() => {
     if (personalDetail) {
       setFormData(prev => ({
@@ -69,6 +65,32 @@ const Application = () => {
       }));
     }
   }, [personalDetail])
+
+  useEffect(() => {
+    if (professionalDetail) {
+      setFormData(prev => ({
+        ...prev,
+        professionalDetails: {
+          ...prev.professionalDetails,
+          membershipCategory: professionalDetail?.professionalDetails?.membershipCategory,
+          workLocation: professionalDetail?.professionalDetails?.workLocation,
+          otherWorkLocation: professionalDetail?.professionalDetails?.otherWorkLocation ?? '',
+          grade: professionalDetail?.professionalDetails?.grade,
+          otherGrade: professionalDetail?.professionalDetails?.otherGrade ?? '',
+          nmbiNumber: professionalDetail?.professionalDetails?.nmbiNumber ?? '',
+          nurseType: professionalDetail?.professionalDetails?.nurseType ?? '',
+          nursingAdaptationProgramme: professionalDetail?.professionalDetails?.nursingAdaptationProgramme ? 'yes' : 'no',
+          region: professionalDetail?.professionalDetails?.region ?? '',
+          branch: professionalDetail?.professionalDetails?.branch ?? '',
+          pensionNo: professionalDetail?.professionalDetails?.pensionNo ?? '',
+          isRetired: professionalDetail?.professionalDetails?.isRetired ?? false,
+          retiredDate: professionalDetail?.professionalDetails?.retiredDate ?? '',
+          studyLocation: professionalDetail?.professionalDetails?.studyLocation ?? '',
+          graduationDate: professionalDetail?.professionalDetails?.graduationDate ?? '',
+        }
+      }));
+    }
+  }, [professionalDetail])
 
   const steps = [
     { number: 1, title: 'Personal Information' },
@@ -111,9 +133,43 @@ const Application = () => {
     }
     createPersonalDetailRequest(personalInfo)
       .then(res => {
-        console.log('response=======>', res);
+        if (res.status === 200) {
+          getPersonalDetail()
+          toast.success('Personal Detail added successfully');
+        } else {
+          toast.error(res.data.message ?? 'Unable to add personal detail');
+        }
+      })
+      .catch(() => toast.error('Something went wrong'));
+  };
+
+  const createProfessionalDetail = data => {
+    const professionalInfo =
+    {
+      ApplicationId: personalDetail?.ApplicationId,
+      professionalDetails: {
+        membershipCategory: data.membershipCategory,
+        workLocation: data.workLocation,
+        otherWorkLocation: data.otherWorkLocation ?? '',
+        grade: data.grade,
+        otherGrade: data.otherGrade ?? '',
+        nmbiNumber: data.nmbiNumber ?? '',
+        nurseType: data.nurseType ?? '',
+        nursingAdaptationProgramme: data?.nursingAdaptationProgramme === 'yes' ? true : false,
+        region: data.region ?? '',
+        branch: data.branch ?? '',
+        pensionNo: data?.pensionNo ?? '',
+        isRetired: data?.membershipCategory === 'retired_associate' ? true : false,
+        retiredDate: data?.retiredDate ?? '',
+        studyLocation: data?.studyLocation ?? '',
+        graduationDate: data?.graduationDate ?? '',
+      }
+    }
+    createProfessionalDetailRequest(professionalInfo)
+      .then(res => {
         if (res.status === 200) {
           toast.success('Personal Detail added successfully');
+          getProfessionalDetail()
         } else {
           toast.error(res.data.message ?? 'Unable to add personal detail');
         }
@@ -124,15 +180,23 @@ const Application = () => {
   const handleNext = () => {
     setShowValidation(true);
     if (validateCurrentStep()) {
-      if (currentStep === 1) {
-        createPersonalDetail(formData.personalInfo)
+      if (
+        currentStep === 1 && !personalDetail) {
+        createPersonalDetail(formData.personalInfo);
       }
+
+      if (
+        currentStep === 2 && !professionalDetail
+      ) {
+        createProfessionalDetail(formData.professionalDetails);
+      }
+
       console.log('step====>', currentStep);
-      // setCurrentStep(prev => {
-      //   const nextStep = Math.min(prev + 1, steps.length);
-      //   saveProgress(formData, nextStep);
-      //   return nextStep;
-      // });
+      setCurrentStep(prev => {
+        const nextStep = Math.min(prev + 1, steps.length);
+        // saveProgress(formData, nextStep);
+        return nextStep;
+      });
       setShowValidation(false);
     }
   };
@@ -140,7 +204,7 @@ const Application = () => {
   const handlePrevious = () => {
     setCurrentStep(prev => {
       const prevStep = Math.max(prev - 1, 1);
-      saveProgress(formData, prevStep);
+      // saveProgress(formData, prevStep);
       return prevStep;
     });
   };
@@ -148,7 +212,7 @@ const Application = () => {
   const handleFormDataChange = (stepName, data) => {
     setFormData(prev => {
       const newData = { ...prev, [stepName]: data };
-      saveProgress(newData, currentStep);
+      // saveProgress(newData, currentStep);
       return newData;
     });
   };
@@ -295,90 +359,88 @@ const Application = () => {
   };
 
   // Load progress on mount
-  useEffect(() => {
-    const savedData = localStorage.getItem('applicationFormData');
-    const savedStep = localStorage.getItem('applicationCurrentStep');
-    if (savedData) {
-      const parsedData = JSON.parse(savedData);
-      setFormData(parsedData);
-      if (savedStep) {
-        setCurrentStep(Number(savedStep));
-      } else {
-        setCurrentStep(getFirstIncompleteStep(parsedData));
-      }
-    }
-  }, []);
+  // useEffect(() => {
+  //   const savedData = localStorage.getItem('applicationFormData');
+  //   const savedStep = localStorage.getItem('applicationCurrentStep');
+  //   if (savedData) {
+  //     const parsedData = JSON.parse(savedData);
+  //     setFormData(parsedData);
+  //     if (savedStep) {
+  //       setCurrentStep(Number(savedStep));
+  //     } else {
+  //       setCurrentStep(getFirstIncompleteStep(parsedData));
+  //     }
+  //   }
+  // }, []);
 
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold mb-4">Application</h1>
-
-      {/* Stepper */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 sm:gap-0">
-        {steps.map(step => (
-          <div key={step.number} className="flex items-center w-full sm:w-auto">
-            <div className="flex items-center w-full sm:w-auto">
-              <div
-                className={`
+      {loading ? <Spinner /> : <>
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 sm:gap-0">
+          {steps.map(step => (
+            <div key={step.number} className="flex items-center w-full sm:w-auto">
+              <div className="flex items-center w-full sm:w-auto">
+                <div
+                  className={`
                 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
                 ${isSubmitted && step.number === 3
-                    ? 'bg-green-500 text-white'
-                    : currentStep === step.number
-                      ? 'bg-blue-500 text-white'
-                      : currentStep > step.number
-                        ? 'bg-green-500 text-white'
-                        : 'bg-gray-200'
-                  }
+                      ? 'bg-green-500 text-white'
+                      : currentStep === step.number
+                        ? 'bg-blue-500 text-white'
+                        : currentStep > step.number
+                          ? 'bg-green-500 text-white'
+                          : 'bg-gray-200'
+                    }
               `}>
-                {isSubmitted && step.number === 3
-                  ? '✓'
-                  : currentStep > step.number
+                  {isSubmitted && step.number === 3
                     ? '✓'
-                    : step.number}
+                    : currentStep > step.number
+                      ? '✓'
+                      : step.number}
+                </div>
+                <div className="ml-2">
+                  <p
+                    className={`text-sm whitespace-nowrap ${isSubmitted && step.number === 3
+                      ? 'text-green-500 font-semibold'
+                      : currentStep === step.number
+                        ? 'text-blue-500 font-semibold'
+                        : 'text-gray-500'
+                      }`}>
+                    {step.title}
+                  </p>
+                </div>
               </div>
-              <div className="ml-2">
-                <p
-                  className={`text-sm whitespace-nowrap ${isSubmitted && step.number === 3
-                    ? 'text-green-500 font-semibold'
-                    : currentStep === step.number
-                      ? 'text-blue-500 font-semibold'
-                      : 'text-gray-500'
-                    }`}>
-                  {step.title}
-                </p>
-              </div>
-            </div>
-            {step.number < steps.length && (
-              <div
-                className={`
+              {step.number < steps.length && (
+                <div
+                  className={`
                 hidden sm:block flex-grow mx-2 h-1 min-w-[16px]
                 ${(isSubmitted && step.number === 2) || currentStep > step.number ? 'bg-green-500' : 'bg-gray-200'}
               `}
-              />
-            )}
-          </div>
-        ))}
-      </div>
+                />
+              )}
+            </div>
+          ))}
+        </div>
 
-      {/* Step Content */}
-      <Card title={steps[currentStep - 1].title} className="p-4">
-        {renderStepContent()}
-      </Card>
+        <Card title={steps[currentStep - 1].title} className="p-4">
+          {renderStepContent()}
+        </Card>
 
-      {/* Navigation Buttons */}
-      <div className="flex justify-between mt-4">
-        <Button
-          onClick={handlePrevious}
-          disabled={currentStep === 1}
-          className={currentStep === 1 ? 'opacity-50 cursor-not-allowed' : ''}>
-          Previous
-        </Button>
-        <Button
-          type="primary"
-          onClick={currentStep === steps.length ? handleSubmit : handleNext}>
-          {currentStep === steps.length ? 'Submit' : 'Next'}
-        </Button>
-      </div>
+        <div className="flex justify-between mt-4">
+          <Button
+            onClick={handlePrevious}
+            disabled={currentStep === 1}
+            className={currentStep === 1 ? 'opacity-50 cursor-not-allowed' : ''}>
+            Previous
+          </Button>
+          <Button
+            type="primary"
+            onClick={currentStep === steps.length ? handleSubmit : handleNext}>
+            {currentStep === steps.length ? 'Submit' : 'Next'}
+          </Button>
+        </div>
+      </>}
 
       <Elements stripe={stripePromise}>
         <SubscriptionModal
