@@ -41,15 +41,15 @@ const SubscriptionDetails = ({
           showValidation={showValidation}
           placeholder="Select payment type"
           options={[
-            { value: 'deduction', label: 'Deduction at Source' },
-            { value: 'creditCard', label: 'Credit Card' },
+            { value: 'Payroll Deduction', label: 'Deduction at Source' },
+            { value: 'Card Payment', label: 'Credit Card' },
           ]}
         />
         <Input
           label="Payroll No"
           name="payrollNo"
-          required={formData?.paymentType === 'deduction'}
-          disabled={formData?.paymentType !== 'deduction'}
+          required={formData?.paymentType === 'Payroll Deduction'}
+          disabled={formData?.paymentType !== 'Payroll Deduction'}
           value={formData?.payrollNo || ''}
           onChange={handleInputChange}
           showValidation={showValidation}

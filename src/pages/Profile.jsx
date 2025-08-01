@@ -6,11 +6,13 @@ import PersonalInformation from '../components/application/PersonalInformation';
 import Button from '../components/common/Button';
 import { useApplication } from '../contexts/applicationContext';
 import { updatePersonalDetailRequest } from '../api/application.api';
+import Spinner from '../components/common/Spinner';
 
 const Profile = () => {
   const { user } = useSelector(state => state.auth);
   const { personalDetail, getPersonalDetail } = useApplication()
   const [editMode, setEditMode] = useState(false);
+  const [loading, setLoading] = React.useState(false);
   const [personalInfo, setPersonalInfo] = useState({});
   const [showValidation, setShowValidation] = useState(false);
 
@@ -58,6 +60,7 @@ const Profile = () => {
   };
 
   const handleSave = () => {
+    setLoading(true)
     const personalInfoData = {
       personalInfo: {
         title: personalInfo.title,
@@ -88,12 +91,17 @@ const Profile = () => {
       .then(res => {
         if (res.status === 200) {
           getPersonalDetail()
+          setLoading(false)
           toast.success('Personal Detail update successfully');
         } else {
+          setLoading(false)
           toast.error(res.data.message ?? 'Unable to update personal detail');
         }
       })
-      .catch(() => toast.error('Something went wrong'));
+      .catch(() => {
+        setLoading(false)
+        toast.error('Something went wrong')
+      });
 
   };
 
@@ -118,25 +126,27 @@ const Profile = () => {
           </div>
         </Card>
       </Col>
-      <Col xs={24} md={16}>
-        <Card title="Personal Information">
-          {/* // editMode ? ( */}
-          <>
-            <PersonalInformation
-              formData={personalInfo}
-              onFormDataChange={setPersonalInfo}
-              showValidation={showValidation}
-            />
-            <div className="flex gap-2 mt-4">
-              <Button type="primary" onClick={handleSave}>
-                Save
-              </Button>
-              <Button type="default" onClick={handleCancel}>
-                Cancel
-              </Button>
-            </div>
-          </>
-          {/* // ) : (
+      {loading ? <Spinner /> : (
+
+        <Col xs={24} md={16}>
+          <Card title="Personal Information">
+            {/* // editMode ? ( */}
+            <>
+              <PersonalInformation
+                formData={personalInfo}
+                onFormDataChange={setPersonalInfo}
+                showValidation={showValidation}
+              />
+              <div className="flex gap-2 mt-4">
+                <Button type="primary" onClick={handleSave}>
+                  Save
+                </Button>
+                <Button type="default" onClick={handleCancel}>
+                  Cancel
+                </Button>
+              </div>
+            </>
+            {/* // ) : (
           //   <Descriptions layout="vertical">
           //     <Descriptions.Item label="Full Name">
           //       {user?.userFirstName} {user?.userLastName}
@@ -156,8 +166,9 @@ const Profile = () => {
           //     <Descriptions.Item label="Role">{user?.role}</Descriptions.Item>
           //   </Descriptions>
           // ) */}
-        </Card>
-      </Col>
+          </Card>
+        </Col>
+      )}
     </Row>
   );
 };

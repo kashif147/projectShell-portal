@@ -9,11 +9,12 @@ import {
 import { useApplication } from '../contexts/applicationContext';
 
 const Dashboard = () => {
-  const { getPersonalDetail, getProfessionalDetail, currentStep } = useApplication()
+  const { getPersonalDetail, getProfessionalDetail, currentStep, getSubscriptionDetail } = useApplication()
 
   useEffect(() => {
     getPersonalDetail()
     getProfessionalDetail()
+    getSubscriptionDetail()
   }, [])
 
   return (

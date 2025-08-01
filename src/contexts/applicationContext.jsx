@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { fetchPersonalDetail, fetchProfessionalDetail } from '../api/application.api';
+import { fetchPersonalDetail, fetchProfessionalDetail, fetchSubscriptionDetail } from '../api/application.api';
 
 const ApplicationContext = createContext();
 
@@ -7,6 +7,7 @@ export const ApplicationProvider = ({ children }) => {
   const [loading, setLoading] = React.useState(false);
   const [personalDetail, setPersonalDetail] = useState(null)
   const [professionalDetail, setProfessionalDetail] = useState(null)
+  const [subscriptionDetail, setSubscriptionDetail] = useState(null)
   const [currentStep, setCurrentStep] = useState(1);
 
   const getPersonalDetail = () => {
@@ -42,6 +43,22 @@ export const ApplicationProvider = ({ children }) => {
       });
   }
 
+  const getSubscriptionDetail = () => {
+    fetchSubscriptionDetail()
+      .then(res => {
+        console.log('response==========>', res);
+        if (res.status === 200) {
+          setSubscriptionDetail(res?.data?.data)
+        } else {
+          setLoading(false)
+          toast.error(res.data.message ?? 'Unable to get subscription datail');
+        }
+      })
+      .catch(() => {
+        toast.error('Something went wrong')
+      });
+  }
+
   useEffect(() => {
     if (personalDetail && professionalDetail) {
       setCurrentStep(3);
@@ -58,8 +75,10 @@ export const ApplicationProvider = ({ children }) => {
     currentStep,
     setCurrentStep,
     professionalDetail,
+    subscriptionDetail,
     getPersonalDetail,
     getProfessionalDetail,
+    getSubscriptionDetail,
   };
 
   return (

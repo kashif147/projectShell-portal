@@ -33,17 +33,17 @@ export const deleteProfessionalDetailRequest = () => {
 };
 
 export const fetchSubscriptionDetail = () => {
-  return application_request.get('/subscriptions');
+  return application_request.get('/subscription-details');
 };
 
 export const createSubscriptionDetailRequest = data => {
-  return application_request.post('/subscriptions', data);
+  return application_request.post('/subscription-details', data);
 };
 
 export const updateSubscriptionDetailRequest = data => {
-  return application_request.put('/subscriptions', data);
+  return application_request.put('/subscription-details', data);
 };
 
 export const deleteSubscriptionDetailRequest = () => {
-  return application_request.put('/subscriptions');
+  return application_request.put('/subscription-details');
 };

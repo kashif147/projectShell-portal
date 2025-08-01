@@ -9,7 +9,7 @@ import { useSelector } from 'react-redux';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { useNavigate } from 'react-router-dom';
-import { createPersonalDetailRequest, createProfessionalDetailRequest } from '../api/application.api';
+import { createPersonalDetailRequest, createProfessionalDetailRequest, createSubscriptionDetailRequest } from '../api/application.api';
 import { useApplication } from '../contexts/applicationContext';
 import Spinner from '../components/common/Spinner';
 
@@ -18,7 +18,7 @@ const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx');
 const Application = () => {
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
-  const { personalDetail, getPersonalDetail, loading, getProfessionalDetail, professionalDetail, setCurrentStep, currentStep } = useApplication()
+  const { personalDetail, getPersonalDetail, loading, getProfessionalDetail, professionalDetail, subscriptionDetail, getSubscriptionDetail, setCurrentStep, currentStep } = useApplication()
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [formData, setFormData] = useState({
@@ -61,6 +61,7 @@ const Application = () => {
           preferredEmail: personalDetail?.contactInfo?.preferredEmail || '',
           homeWorkTelNo: personalDetail?.contactInfo?.telephoneNumber || '',
           country: personalDetail?.contactInfo?.country || '',
+          workEmail: personalDetail?.contactInfo?.workEmail || ''
         }
       }));
     }
@@ -91,6 +92,36 @@ const Application = () => {
       }));
     }
   }, [professionalDetail])
+
+  useEffect(() => {
+    if (subscriptionDetail) {
+      setIsSubmitted(true);
+      setFormData(prev => ({
+        ...prev,
+        subscriptionDetails: {
+          ...prev.subscriptionDetails,
+          paymentType: subscriptionDetail?.subscriptionDetails?.paymentType,
+          payrollNo: subscriptionDetail?.subscriptionDetails?.payrollNo ?? '',
+          memberStatus: subscriptionDetail?.subscriptionDetails?.membershipStatus ?? '',
+          otherIrishTradeUnion: subscriptionDetail?.subscriptionDetails?.otherIrishTradeUnion ? 'yes' : 'no',
+          otherScheme: subscriptionDetail?.subscriptionDetails?.otherScheme ? 'yes' : 'no',
+          recuritedBy: subscriptionDetail?.subscriptionDetails?.recuritedBy ?? '',
+          recuritedByMembershipNo: subscriptionDetail?.subscriptionDetails?.recuritedByMembershipNo ?? '',
+          primarySection: subscriptionDetail?.subscriptionDetails?.primarySection,
+          otherPrimarySection: subscriptionDetail?.subscriptionDetails?.otherPrimarySection ?? '',
+          secondarySection: subscriptionDetail?.subscriptionDetails?.secondarySection,
+          otherSecondarySection: subscriptionDetail?.subscriptionDetails?.otherSecondarySection ?? '',
+          incomeProtectionScheme: subscriptionDetail?.subscriptionDetails?.incomeProtectionScheme ?? false,
+          inmoRewards: subscriptionDetail?.subscriptionDetails?.inmoRewards ?? false,
+          valueAddedServices: subscriptionDetail?.subscriptionDetails?.valueAddedServices ?? false,
+          termsAndConditions: subscriptionDetail?.subscriptionDetails?.termsAndConditions ?? false,
+          membershipCategory: subscriptionDetail?.subscriptionDetails?.membershipCategory,
+          dateJoined: subscriptionDetail?.subscriptionDetails?.dateJoined,
+          paymentFrequency: subscriptionDetail?.subscriptionDetails?.paymentFrequency
+        }
+      }));
+    }
+  }, [subscriptionDetail])
 
   const steps = [
     { number: 1, title: 'Personal Information' },
@@ -168,10 +199,48 @@ const Application = () => {
     createProfessionalDetailRequest(professionalInfo)
       .then(res => {
         if (res.status === 200) {
-          toast.success('Personal Detail added successfully');
+          toast.success('Professional Detail added successfully');
           getProfessionalDetail()
         } else {
-          toast.error(res.data.message ?? 'Unable to add personal detail');
+          toast.error(res.data.message ?? 'Unable to add professional detail');
+        }
+      })
+      .catch(() => toast.error('Something went wrong'));
+  };
+
+  const createSubscriptionDetail = data => {
+    const subsriptionInfo =
+    {
+      ApplicationId: personalDetail?.ApplicationId,
+      subscriptionDetails: {
+        paymentType: data?.paymentType,
+        payrollNo: data?.payrollNo ?? '',
+        membershipStatus: data?.memberStatus ?? '',
+        otherIrishTradeUnion: data?.otherIrishTradeUnion ? true : false,
+        otherScheme: data?.otherScheme ? true : false,
+        recuritedBy: data?.recuritedBy ?? '',
+        recuritedByMembershipNo: data?.recuritedByMembershipNo ?? '',
+        primarySection: data?.primarySection,
+        otherPrimarySection: data?.otherPrimarySection ?? '',
+        secondarySection: data?.secondarySection,
+        otherSecondarySection: data?.otherSecondarySection ?? '',
+        incomeProtectionScheme: data?.incomeProtectionScheme ?? false,
+        inmoRewards: data?.inmoRewards ?? false,
+        valueAddedServices: data?.valueAddedServices ?? false,
+        termsAndConditions: data?.termsAndConditions ?? false,
+        membershipCategory: "Full Member",
+        dateJoined: "15/01/2025",
+        paymentFrequency: "Monthly"
+      }
+    }
+    createSubscriptionDetailRequest(subsriptionInfo)
+      .then(res => {
+        console.log('response', res);
+        if (res.status === 200) {
+          toast.success('Subscription Detail added successfully');
+          getSubscriptionDetail()
+        } else {
+          toast.error(res.data.message ?? 'Unable to add subscription detail');
         }
       })
       .catch(() => toast.error('Something went wrong'));
@@ -291,12 +360,18 @@ const Application = () => {
   const handleSubmit = () => {
     setShowValidation(true);
     if (validateCurrentStep()) {
+      if (
+        currentStep === 3 && !personalDetail
+      ) {
+        createSubscriptionDetail(formData.subscriptionDetails);
+      } else {
+        setIsModalVisible(true);
+        // setIsSubmitted(true);
+      }
       // Here you would typically send the form data to your backend
-      console.log('Form submitted:', formData);
-      // localStorage.removeItem('applicationFormData');
-      // localStorage.removeItem('applicationCurrentStep');
-      setIsSubmitted(true);
-      setIsModalVisible(true);
+      // console.log('Form submitted:', formData);
+      // // localStorage.removeItem('applicationFormData');
+      // // localStorage.removeItem('applicationCurrentStep');
     }
   };
 
