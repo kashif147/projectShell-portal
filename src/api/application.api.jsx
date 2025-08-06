@@ -8,8 +8,8 @@ export const createPersonalDetailRequest = data => {
   return application_request.post('/personal-details', data);
 };
 
-export const updatePersonalDetailRequest = data => {
-  return application_request.put('/personal-details', data);
+export const updatePersonalDetailRequest = (id, data) => {
+  return application_request.put(`/personal-details/${id}`, data);
 };
 
 export const deletePersonalDetailRequest = () => {
@@ -24,8 +24,8 @@ export const createProfessionalDetailRequest = (id, data) => {
   return application_request.post(`/professional-details/${id}`, data);
 };
 
-export const updateProfessionalDetailRequest = data => {
-  return application_request.put('/professional-details', data);
+export const updateProfessionalDetailRequest = (id, data) => {
+  return application_request.put(`/professional-details/${id}`, data);
 };
 
 export const deleteProfessionalDetailRequest = () => {
@@ -40,8 +40,8 @@ export const createSubscriptionDetailRequest = (id, data) => {
   return application_request.post(`/subscription-details/${id}`, data);
 };
 
-export const updateSubscriptionDetailRequest = data => {
-  return application_request.put('/subscription-details', data);
+export const updateSubscriptionDetailRequest = (id, data) => {
+  return application_request.put(`/subscription-details/${id}`, data);
 };
 
 export const deleteSubscriptionDetailRequest = () => {

@@ -9,7 +9,7 @@ import { useSelector } from 'react-redux';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { useNavigate } from 'react-router-dom';
-import { createPersonalDetailRequest, createProfessionalDetailRequest, createSubscriptionDetailRequest } from '../api/application.api';
+import { createPersonalDetailRequest, createProfessionalDetailRequest, createSubscriptionDetailRequest, updatePersonalDetailRequest, updateProfessionalDetailRequest, updateSubscriptionDetailRequest } from '../api/application.api';
 import { useApplication } from '../contexts/applicationContext';
 import Spinner from '../components/common/Spinner';
 
@@ -192,6 +192,61 @@ const Application = () => {
       .catch(() => toast.error('Something went wrong'));
   };
 
+  const updatePersonalDetail = (data) => {
+    const personalInfo = {};
+
+    const personalFields = {
+      title: data.title,
+      surname: data.surname,
+      forename: data.forename,
+      gender: data.gender,
+      dateOfBirth: '1999-08-04T07:00:00.000Z',
+      countryPrimaryQualification: data.countryPrimaryQualification,
+    };
+
+    personalInfo.personalInfo = {};
+    Object.entries(personalFields).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        personalInfo.personalInfo[key] = value;
+      }
+    });
+
+    const contactFields = {
+      preferredAddress: data.preferredAddress,
+      eircode: data.eircode,
+      buildingOrHouse: data.addressLine1,
+      streetOrRoad: data.addressLine2,
+      areaOrTown: data.addressLine3,
+      countyCityOrPostCode: data.addressLine4,
+      country: data.country,
+      mobileNumber: data.mobileNo,
+      telephoneNumber: data.homeWorkTelNo,
+      preferredEmail: data.preferredEmail,
+      personalEmail: data.personalEmail,
+      workEmail: data.workEmail,
+      consentSMS: data.smsConsent,
+      consentEmail: data.emailConsent,
+    };
+
+    personalInfo.contactInfo = {};
+    Object.entries(contactFields).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        personalInfo.contactInfo[key] = value;
+      }
+    });
+
+    updatePersonalDetailRequest(personalDetail?.ApplicationId, personalInfo)
+      .then(res => {
+        if (res.status === 200) {
+          getPersonalDetail();
+          toast.success('Personal Detail update successfully');
+        } else {
+          toast.error(res.data.message ?? 'Unable to update personal detail');
+        }
+      })
+      .catch(() => toast.error('Something went wrong'));
+  };
+
   const createProfessionalDetail = (data) => {
     const professionalFields = {
       membershipCategory: data.membershipCategory,
@@ -226,6 +281,45 @@ const Application = () => {
           getProfessionalDetail();
         } else {
           toast.error(res.data.message ?? 'Unable to add professional detail');
+        }
+      })
+      .catch(() => toast.error('Something went wrong'));
+  };
+
+  const updateProfessionalDetail = (data) => {
+    const professionalFields = {
+      membershipCategory: data.membershipCategory,
+      workLocation: data.workLocation,
+      otherWorkLocation: data.otherWorkLocation,
+      grade: data.grade,
+      otherGrade: data.otherGrade,
+      nmbiNumber: data.nmbiNumber,
+      nurseType: data.nurseType,
+      nursingAdaptationProgramme: data?.nursingAdaptationProgramme === 'yes',
+      region: data.region,
+      branch: data.branch,
+      pensionNo: data.pensionNo,
+      isRetired: data?.membershipCategory === 'retired_associate',
+      retiredDate: data.retiredDate,
+      studyLocation: data.studyLocation,
+      graduationDate: data.graduationDate,
+    };
+
+    const professionalInfo = { professionalDetails: {} };
+
+    Object.entries(professionalFields).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        professionalInfo.professionalDetails[key] = value;
+      }
+    });
+
+    updateProfessionalDetailRequest(personalDetail?.ApplicationId, professionalInfo)
+      .then((res) => {
+        if (res.status === 200) {
+          toast.success('Professional Detail update successfully');
+          getProfessionalDetail();
+        } else {
+          toast.error(res.data.message ?? 'Unable to update professional detail');
         }
       })
       .catch(() => toast.error('Something went wrong'));
@@ -283,6 +377,58 @@ const Application = () => {
       .catch(() => toast.error('Something went wrong'));
   };
 
+  const updateSubscriptionDetail = (data) => {
+    const defaultFields = {
+      membershipCategory: professionalDetail?.professionalDetails?.membershipCategory,
+      // dateJoined: "15/01/2025",
+      // paymentFrequency: "Monthly",
+    };
+
+    const subscriptionFields = {
+      paymentType: data?.paymentType,
+      payrollNo: data?.payrollNo,
+      membershipStatus: data?.memberStatus,
+      otherIrishTradeUnion: data?.otherIrishTradeUnion === true,
+      otherScheme: data?.otherScheme === true,
+      recuritedBy: data?.recuritedBy,
+      recuritedByMembershipNo: data?.recuritedByMembershipNo,
+      primarySection: data?.primarySection,
+      otherPrimarySection: data?.otherPrimarySection,
+      secondarySection: data?.secondarySection,
+      otherSecondarySection: data?.otherSecondarySection,
+      incomeProtectionScheme: data?.incomeProtectionScheme === true,
+      inmoRewards: data?.inmoRewards === true,
+      valueAddedServices: data?.valueAddedServices === true,
+      termsAndConditions: data?.termsAndConditions === true,
+      ...defaultFields,
+    };
+
+    const subscriptionDetails = {};
+    Object.entries(subscriptionFields).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        subscriptionDetails[key] = value;
+      }
+    });
+
+    const subscriptionInfo = {
+      subscriptionDetails,
+    };
+
+    console.log('subscription=========>', data);
+
+    updateSubscriptionDetailRequest(personalDetail?.ApplicationId, subscriptionInfo)
+      .then((res) => {
+        console.log('response', res);
+        if (res.status === 200) {
+          toast.success('Subscription Detail update successfully');
+          getSubscriptionDetail();
+        } else {
+          toast.error(res.data.message ?? 'Unable to update subscription detail');
+        }
+      })
+      .catch(() => toast.error('Something went wrong'));
+  };
+
 
   const handleNext = () => {
     setShowValidation(true);
@@ -296,6 +442,17 @@ const Application = () => {
         currentStep === 2 && !professionalDetail
       ) {
         createProfessionalDetail(formData.professionalDetails);
+      }
+
+      if (
+        currentStep === 1 && personalDetail) {
+        updatePersonalDetail(formData.personalInfo);
+      }
+
+      if (
+        currentStep === 2 && professionalDetail
+      ) {
+        updateProfessionalDetail(formData.professionalDetails);
       }
 
       console.log('step====>', currentStep);
@@ -402,9 +559,9 @@ const Application = () => {
         currentStep === 3 && !subscriptionDetail
       ) {
         createSubscriptionDetail(formData.subscriptionDetails);
-      } else {
+      } else if(currentStep === 3 && subscriptionDetail){
+        updateSubscriptionDetail(formData.subscriptionDetails);
         setIsModalVisible(true);
-        // setIsSubmitted(true);
       }
       // Here you would typically send the form data to your backend
       // console.log('Form submitted:', formData);

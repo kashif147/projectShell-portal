@@ -9,7 +9,7 @@ import {
 import { useApplication } from '../contexts/applicationContext';
 
 const Dashboard = () => {
-  const { getPersonalDetail, getProfessionalDetail, currentStep, getSubscriptionDetail } = useApplication()
+  const { getPersonalDetail, getPro, currentStep, getSubscriptionDetail } = useApplication()
 
   useEffect(() => {
     getPersonalDetail()
@@ -28,6 +28,7 @@ const Dashboard = () => {
           icon={<FormOutlined />}
           link="/application"
           buttonText={currentStep > 1 ? 'Resume Application' : 'Start Application'}
+          disabled={currentStep === 3}
         />
         <DashboardCard
           title="My Profile"
