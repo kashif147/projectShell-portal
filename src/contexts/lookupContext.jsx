@@ -12,7 +12,7 @@ const getAllLookups = async () => {
     }
     const response = await axios.get(`${LOOKUP_URL}/lookup`, {
       headers: {
-        Authorization: `Bearer ${headers.token}`,
+        Authorization: headers.token,
         'Content-Type': 'application/json',
       },
     });

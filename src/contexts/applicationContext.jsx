@@ -29,7 +29,7 @@ export const ApplicationProvider = ({ children }) => {
   }
 
   const getProfessionalDetail = () => {
-    fetchProfessionalDetail()
+    fetchProfessionalDetail(personalDetail?.ApplicationId)
       .then(res => {
         if (res.status === 200) {
           setProfessionalDetail(res?.data?.data)
@@ -44,9 +44,8 @@ export const ApplicationProvider = ({ children }) => {
   }
 
   const getSubscriptionDetail = () => {
-    fetchSubscriptionDetail()
+    fetchSubscriptionDetail(personalDetail?.ApplicationId)
       .then(res => {
-        console.log('response==========>', res);
         if (res.status === 200) {
           setSubscriptionDetail(res?.data?.data)
         } else {
@@ -68,6 +67,11 @@ export const ApplicationProvider = ({ children }) => {
       setCurrentStep(1);
     }
   }, [personalDetail, professionalDetail]);
+
+  useEffect(() => {
+    getProfessionalDetail()
+    getSubscriptionDetail()
+  }, [personalDetail])
 
   const value = {
     loading,

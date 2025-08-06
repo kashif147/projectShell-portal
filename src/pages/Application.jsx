@@ -135,37 +135,55 @@ const Application = () => {
     localStorage.setItem('applicationCurrentStep', step);
   };
 
-  const createPersonalDetail = data => {
-    const personalInfo = {
-      personalInfo: {
-        title: data.title,
-        surname: data.surname,
-        forename: data.forename,
-        gender: data.gender,
-        dateOfBirth: data.dateOfBirth,
-        countryPrimaryQualification: data.countryPrimaryQualification ?? '',
-      },
-      contactInfo: {
-        preferredAddress: data.preferredAddress,
-        eircode: data.eircode ?? '',
-        buildingOrHouse: data.addressLine1,
-        streetOrRoad: data.addressLine2 ?? '',
-        areaOrTown: data.addressLine3 ?? '',
-        countyCityOrPostCode: data.addressLine4,
-        country: data.country ?? '',
-        mobileNumber: data.mobileNo,
-        telephoneNumber: data.homeWorkTelNo ?? '',
-        preferredEmail: data.preferredEmail,
-        personalEmail: data.personalEmail ?? '',
-        workEmail: data.workEmail ?? '',
-        consentSMS: data.smsConsent,
-        consentEmail: data.emailConsent
+  const createPersonalDetail = (data) => {
+    const personalInfo = {};
+
+    // Build personalInfo.personalInfo
+    const personalFields = {
+      title: data.title,
+      surname: data.surname,
+      forename: data.forename,
+      gender: data.gender,
+      dateOfBirth: '1999-08-04T07:00:00.000Z',
+      countryPrimaryQualification: data.countryPrimaryQualification,
+    };
+
+    personalInfo.personalInfo = {};
+    Object.entries(personalFields).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        personalInfo.personalInfo[key] = value;
       }
-    }
+    });
+
+    // Build personalInfo.contactInfo
+    const contactFields = {
+      preferredAddress: data.preferredAddress,
+      eircode: data.eircode,
+      buildingOrHouse: data.addressLine1,
+      streetOrRoad: data.addressLine2,
+      areaOrTown: data.addressLine3,
+      countyCityOrPostCode: data.addressLine4,
+      country: data.country,
+      mobileNumber: data.mobileNo,
+      telephoneNumber: data.homeWorkTelNo,
+      preferredEmail: data.preferredEmail,
+      personalEmail: data.personalEmail,
+      workEmail: data.workEmail,
+      consentSMS: data.smsConsent,
+      consentEmail: data.emailConsent,
+    };
+
+    personalInfo.contactInfo = {};
+    Object.entries(contactFields).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        personalInfo.contactInfo[key] = value;
+      }
+    });
+
     createPersonalDetailRequest(personalInfo)
       .then(res => {
         if (res.status === 200) {
-          getPersonalDetail()
+          getPersonalDetail();
           toast.success('Personal Detail added successfully');
         } else {
           toast.error(res.data.message ?? 'Unable to add personal detail');
@@ -174,33 +192,38 @@ const Application = () => {
       .catch(() => toast.error('Something went wrong'));
   };
 
-  const createProfessionalDetail = data => {
-    const professionalInfo =
-    {
-      ApplicationId: personalDetail?.ApplicationId,
-      professionalDetails: {
-        membershipCategory: data.membershipCategory,
-        workLocation: data.workLocation,
-        otherWorkLocation: data.otherWorkLocation ?? '',
-        grade: data.grade,
-        otherGrade: data.otherGrade ?? '',
-        nmbiNumber: data.nmbiNumber ?? '',
-        nurseType: data.nurseType ?? '',
-        nursingAdaptationProgramme: data?.nursingAdaptationProgramme === 'yes' ? true : false,
-        region: data.region ?? '',
-        branch: data.branch ?? '',
-        pensionNo: data?.pensionNo ?? '',
-        isRetired: data?.membershipCategory === 'retired_associate' ? true : false,
-        retiredDate: data?.retiredDate ?? '',
-        studyLocation: data?.studyLocation ?? '',
-        graduationDate: data?.graduationDate ?? '',
+  const createProfessionalDetail = (data) => {
+    const professionalFields = {
+      membershipCategory: data.membershipCategory,
+      workLocation: data.workLocation,
+      otherWorkLocation: data.otherWorkLocation,
+      grade: data.grade,
+      otherGrade: data.otherGrade,
+      nmbiNumber: data.nmbiNumber,
+      nurseType: data.nurseType,
+      nursingAdaptationProgramme: data?.nursingAdaptationProgramme === 'yes',
+      region: data.region,
+      branch: data.branch,
+      pensionNo: data.pensionNo,
+      isRetired: data?.membershipCategory === 'retired_associate',
+      retiredDate: data.retiredDate,
+      studyLocation: data.studyLocation,
+      graduationDate: data.graduationDate,
+    };
+
+    const professionalInfo = { professionalDetails: {} };
+
+    Object.entries(professionalFields).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        professionalInfo.professionalDetails[key] = value;
       }
-    }
-    createProfessionalDetailRequest(professionalInfo)
-      .then(res => {
+    });
+
+    createProfessionalDetailRequest(personalDetail?.ApplicationId, professionalInfo)
+      .then((res) => {
         if (res.status === 200) {
           toast.success('Professional Detail added successfully');
-          getProfessionalDetail()
+          getProfessionalDetail();
         } else {
           toast.error(res.data.message ?? 'Unable to add professional detail');
         }
@@ -208,43 +231,58 @@ const Application = () => {
       .catch(() => toast.error('Something went wrong'));
   };
 
-  const createSubscriptionDetail = data => {
-    const subsriptionInfo =
-    {
-      ApplicationId: personalDetail?.ApplicationId,
-      subscriptionDetails: {
-        paymentType: data?.paymentType,
-        payrollNo: data?.payrollNo ?? '',
-        membershipStatus: data?.memberStatus ?? '',
-        otherIrishTradeUnion: data?.otherIrishTradeUnion ? true : false,
-        otherScheme: data?.otherScheme ? true : false,
-        recuritedBy: data?.recuritedBy ?? '',
-        recuritedByMembershipNo: data?.recuritedByMembershipNo ?? '',
-        primarySection: data?.primarySection,
-        otherPrimarySection: data?.otherPrimarySection ?? '',
-        secondarySection: data?.secondarySection,
-        otherSecondarySection: data?.otherSecondarySection ?? '',
-        incomeProtectionScheme: data?.incomeProtectionScheme ?? false,
-        inmoRewards: data?.inmoRewards ?? false,
-        valueAddedServices: data?.valueAddedServices ?? false,
-        termsAndConditions: data?.termsAndConditions ?? false,
-        membershipCategory: "Full Member",
-        dateJoined: "15/01/2025",
-        paymentFrequency: "Monthly"
+  const createSubscriptionDetail = (data) => {
+    const defaultFields = {
+      membershipCategory: professionalDetail?.professionalDetails?.membershipCategory,
+      // dateJoined: "15/01/2025",
+      // paymentFrequency: "Monthly",
+    };
+
+    const subscriptionFields = {
+      paymentType: data?.paymentType,
+      payrollNo: data?.payrollNo,
+      membershipStatus: data?.memberStatus,
+      otherIrishTradeUnion: data?.otherIrishTradeUnion === true,
+      otherScheme: data?.otherScheme === true,
+      recuritedBy: data?.recuritedBy,
+      recuritedByMembershipNo: data?.recuritedByMembershipNo,
+      primarySection: data?.primarySection,
+      otherPrimarySection: data?.otherPrimarySection,
+      secondarySection: data?.secondarySection,
+      otherSecondarySection: data?.otherSecondarySection,
+      incomeProtectionScheme: data?.incomeProtectionScheme === true,
+      inmoRewards: data?.inmoRewards === true,
+      valueAddedServices: data?.valueAddedServices === true,
+      termsAndConditions: data?.termsAndConditions === true,
+      ...defaultFields,
+    };
+
+    const subscriptionDetails = {};
+    Object.entries(subscriptionFields).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        subscriptionDetails[key] = value;
       }
-    }
-    createSubscriptionDetailRequest(subsriptionInfo)
-      .then(res => {
+    });
+
+    const subscriptionInfo = {
+      subscriptionDetails,
+    };
+
+    console.log('subscription=========>', data);
+
+    createSubscriptionDetailRequest(personalDetail?.ApplicationId, subscriptionInfo)
+      .then((res) => {
         console.log('response', res);
         if (res.status === 200) {
           toast.success('Subscription Detail added successfully');
-          getSubscriptionDetail()
+          getSubscriptionDetail();
         } else {
           toast.error(res.data.message ?? 'Unable to add subscription detail');
         }
       })
       .catch(() => toast.error('Something went wrong'));
   };
+
 
   const handleNext = () => {
     setShowValidation(true);
@@ -361,7 +399,7 @@ const Application = () => {
     setShowValidation(true);
     if (validateCurrentStep()) {
       if (
-        currentStep === 3 && !personalDetail
+        currentStep === 3 && !subscriptionDetail
       ) {
         createSubscriptionDetail(formData.subscriptionDetails);
       } else {
@@ -380,20 +418,23 @@ const Application = () => {
   };
 
   const handleSubscriptionSuccess = (paymentData) => {
+    // if (validateCurrentStep()) {
+    createSubscriptionDetail({ ...formData.subscriptionDetails, paymentData });
     setIsModalVisible(false);
-    const updatedSubscriptionDetails = {
-      ...formData.subscriptionDetails,
-      paymentData,
-      dateOfSubscription: new Date().toISOString(),
-    };
-    const updatedFormData = {
-      ...formData,
-      subscriptionDetails: updatedSubscriptionDetails,
-    };
-    setFormData(updatedFormData);
-    saveProgress(updatedFormData, currentStep);
-    console.log('Form submitted:', updatedFormData);
-    navigate('/');
+    // }
+    // const updatedSubscriptionDetails = {
+    //   ...formData.subscriptionDetails,
+    //   paymentData,
+    //   // dateOfSubscription: new Date().toISOString(),
+    // };
+    // const updatedFormData = {
+    //   ...formData,
+    //   subscriptionDetails: updatedSubscriptionDetails,
+    // };
+    // setFormData(updatedFormData);
+    // saveProgress(updatedFormData, currentStep);
+    // console.log('Form submitted:', su);
+    // navigate('/');
   };
 
   const renderStepContent = () => {

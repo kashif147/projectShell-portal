@@ -13,8 +13,6 @@ const Dashboard = () => {
 
   useEffect(() => {
     getPersonalDetail()
-    getProfessionalDetail()
-    getSubscriptionDetail()
   }, [])
 
   return (

@@ -4,34 +4,30 @@ import Button from '../components/common/Button';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import Receipt from '../components/Receipt';
+import { useApplication } from '../contexts/applicationContext';
 
 const Payments = () => {
+  const { subscriptionDetail,personalDetail,professionalDetail } = useApplication()
   const [paymentRows, setPaymentRows] = useState([]);
   const [receiptData, setReceiptData] = useState(null);
   const [receiptVisible, setReceiptVisible] = useState(false);
   const receiptRef = useRef();
 
   useEffect(() => {
-    const formData = JSON.parse(localStorage.getItem('applicationFormData'));
     if (
-      formData &&
-      formData.subscriptionDetails &&
-      formData.subscriptionDetails.paymentData
+      subscriptionDetail
     ) {
-      const sub = formData.subscriptionDetails;
       setPaymentRows([
         {
           key: 1,
-          date: sub.dateOfSubscription
-            ? new Date(sub.dateOfSubscription).toLocaleDateString()
-            : '',
-          description: formData.professionalDetails.membershipCategory,
-          amount: sub.paymentData.total,
+          date: new Date('2025-08-06T14:55:00.000Z').toLocaleDateString(),
+          description: professionalDetail?.professionalDetails?.membershipCategory,
+          amount: '92',
           status: 'Paid',
           details: {
-            ...formData.personalInfo,
-            ...formData.professionalDetails,
-            ...sub,
+            ...personalDetail?.personalInfo,
+            ...personalDetail?.contactInfo,
+            ...professionalDetail?.professionalDetails,
           },
         },
       ]);
