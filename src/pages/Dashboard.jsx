@@ -9,11 +9,17 @@ import {
 import { useApplication } from '../contexts/applicationContext';
 
 const Dashboard = () => {
-  const { getPersonalDetail, getPro, currentStep, getSubscriptionDetail } = useApplication()
+  const { getPersonalDetail, currentStep } = useApplication();
 
   useEffect(() => {
-    getPersonalDetail()
-  }, [])
+    getPersonalDetail();
+  }, []);
+
+  const stepToButtonText = {
+    1: 'Start Application',
+    2: 'Resume Application',
+    3: 'Application Completed',
+  };
 
   return (
     <div>
@@ -27,7 +33,7 @@ const Dashboard = () => {
           description="Start or continue your membership application"
           icon={<FormOutlined />}
           link="/application"
-          buttonText={currentStep > 1 ? 'Resume Application' : 'Start Application'}
+          buttonText={stepToButtonText[currentStep] || 'Continue'}
           disabled={currentStep === 3}
         />
         <DashboardCard

@@ -1,77 +1,91 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { fetchPersonalDetail, fetchProfessionalDetail, fetchSubscriptionDetail } from '../api/application.api';
+import {
+  fetchPersonalDetail,
+  fetchProfessionalDetail,
+  fetchSubscriptionDetail,
+} from '../api/application.api';
 
 const ApplicationContext = createContext();
 
 export const ApplicationProvider = ({ children }) => {
   const [loading, setLoading] = React.useState(false);
-  const [personalDetail, setPersonalDetail] = useState(null)
-  const [professionalDetail, setProfessionalDetail] = useState(null)
-  const [subscriptionDetail, setSubscriptionDetail] = useState(null)
+  const [personalDetail, setPersonalDetail] = useState(null);
+  const [professionalDetail, setProfessionalDetail] = useState(null);
+  const [subscriptionDetail, setSubscriptionDetail] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
 
   const getPersonalDetail = () => {
-    setLoading(true)
+    setLoading(true);
     fetchPersonalDetail()
       .then(res => {
         if (res.status === 200) {
-          setLoading(false)
-          setPersonalDetail(res?.data?.data)
+          setPersonalDetail(res?.data?.data);
+          setLoading(false);
         } else {
-          setLoading(false)
+          setLoading(false);
           toast.error(res.data.message ?? 'Unable to get personal datail');
         }
       })
       .catch(() => {
-        setLoading(false)
-        toast.error('Something went wrong')
+        setLoading(false);
+        toast.error('Something went wrong');
       });
-  }
+  };
 
   const getProfessionalDetail = () => {
+    setLoading(true);
     fetchProfessionalDetail(personalDetail?.ApplicationId)
       .then(res => {
         if (res.status === 200) {
-          setProfessionalDetail(res?.data?.data)
+          setProfessionalDetail(res?.data?.data);
+          setLoading(false);
         } else {
-          setLoading(false)
+          setLoading(false);
           toast.error(res.data.message ?? 'Unable to get professional datail');
         }
       })
       .catch(() => {
-        toast.error('Something went wrong')
+        setLoading(false);
+        toast.error('Something went wrong');
       });
-  }
+  };
 
   const getSubscriptionDetail = () => {
+    setLoading(true);
     fetchSubscriptionDetail(personalDetail?.ApplicationId)
       .then(res => {
         if (res.status === 200) {
-          setSubscriptionDetail(res?.data?.data)
+          setSubscriptionDetail(res?.data?.data);
+          setLoading(false);
         } else {
-          setLoading(false)
+          setLoading(false);
           toast.error(res.data.message ?? 'Unable to get subscription datail');
         }
       })
       .catch(() => {
-        toast.error('Something went wrong')
+        setLoading(false);
+        toast.error('Something went wrong');
       });
-  }
+  };
 
   useEffect(() => {
-    if (personalDetail && professionalDetail) {
-      setCurrentStep(3);
-    } else if (personalDetail) {
-      setCurrentStep(2);
-    } else {
-      setCurrentStep(1);
+    if (personalDetail?.ApplicationId) {
+      getProfessionalDetail();
+      getSubscriptionDetail();
     }
-  }, [personalDetail, professionalDetail]);
+  }, [personalDetail]);
 
   useEffect(() => {
-    getProfessionalDetail()
-    getSubscriptionDetail()
-  }, [personalDetail])
+    if (!personalDetail) {
+      setCurrentStep(1);
+    } else if (personalDetail && !professionalDetail) {
+      setCurrentStep(2);
+    } else if (personalDetail && professionalDetail && !subscriptionDetail) {
+      setCurrentStep(3);
+    } else if (personalDetail && professionalDetail && subscriptionDetail) {
+      setCurrentStep(3);
+    }
+  }, [personalDetail, professionalDetail, subscriptionDetail]);
 
   const value = {
     loading,
@@ -86,7 +100,9 @@ export const ApplicationProvider = ({ children }) => {
   };
 
   return (
-    <ApplicationContext.Provider value={value}>{children}</ApplicationContext.Provider>
+    <ApplicationContext.Provider value={value}>
+      {children}
+    </ApplicationContext.Provider>
   );
 };
 

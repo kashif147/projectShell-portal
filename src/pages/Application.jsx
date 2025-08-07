@@ -9,7 +9,14 @@ import { useSelector } from 'react-redux';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { useNavigate } from 'react-router-dom';
-import { createPersonalDetailRequest, createProfessionalDetailRequest, createSubscriptionDetailRequest, updatePersonalDetailRequest, updateProfessionalDetailRequest, updateSubscriptionDetailRequest } from '../api/application.api';
+import {
+  createPersonalDetailRequest,
+  createProfessionalDetailRequest,
+  createSubscriptionDetailRequest,
+  updatePersonalDetailRequest,
+  updateProfessionalDetailRequest,
+  updateSubscriptionDetailRequest,
+} from '../api/application.api';
 import { useApplication } from '../contexts/applicationContext';
 import Spinner from '../components/common/Spinner';
 
@@ -18,9 +25,20 @@ const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx');
 const Application = () => {
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
-  const { personalDetail, getPersonalDetail, loading, getProfessionalDetail, professionalDetail, subscriptionDetail, getSubscriptionDetail, setCurrentStep, currentStep } = useApplication()
+  const {
+    personalDetail,
+    getPersonalDetail,
+    loading,
+    getProfessionalDetail,
+    professionalDetail,
+    subscriptionDetail,
+    getSubscriptionDetail,
+    setCurrentStep,
+    currentStep,
+  } = useApplication();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
   const [formData, setFormData] = useState({
     personalInfo: {
       forename: user?.userFirstName || '',
@@ -34,7 +52,6 @@ const Application = () => {
     professionalDetails: {},
     subscriptionDetails: {},
   });
-  const [showValidation, setShowValidation] = useState(false);
 
   useEffect(() => {
     if (personalDetail) {
@@ -47,7 +64,8 @@ const Application = () => {
           forename: personalDetail?.personalInfo?.forename || '',
           gender: personalDetail?.personalInfo?.gender || '',
           dateOfBirth: personalDetail?.personalInfo?.dateOfBirth || '',
-          countryPrimaryQualification: personalDetail?.personalInfo?.countryPrimaryQualification || '',
+          countryPrimaryQualification:
+            personalDetail?.personalInfo?.countryPrimaryQualification || '',
           personalEmail: personalDetail?.contactInfo?.personalEmail || '',
           mobileNo: personalDetail?.contactInfo?.mobileNumber || '',
           consent: personalDetail?.contactInfo?.consent ?? true,
@@ -60,11 +78,11 @@ const Application = () => {
           preferredEmail: personalDetail?.contactInfo?.preferredEmail || '',
           homeWorkTelNo: personalDetail?.contactInfo?.telephoneNumber || '',
           country: personalDetail?.contactInfo?.country || '',
-          workEmail: personalDetail?.contactInfo?.workEmail || ''
-        }
+          workEmail: personalDetail?.contactInfo?.workEmail || '',
+        },
       }));
     }
-  }, [personalDetail])
+  }, [personalDetail]);
 
   useEffect(() => {
     if (professionalDetail) {
@@ -72,25 +90,34 @@ const Application = () => {
         ...prev,
         professionalDetails: {
           ...prev.professionalDetails,
-          membershipCategory: professionalDetail?.professionalDetails?.membershipCategory,
+          membershipCategory:
+            professionalDetail?.professionalDetails?.membershipCategory,
           workLocation: professionalDetail?.professionalDetails?.workLocation,
-          otherWorkLocation: professionalDetail?.professionalDetails?.otherWorkLocation ?? '',
+          otherWorkLocation:
+            professionalDetail?.professionalDetails?.otherWorkLocation ?? '',
           grade: professionalDetail?.professionalDetails?.grade,
           otherGrade: professionalDetail?.professionalDetails?.otherGrade ?? '',
           nmbiNumber: professionalDetail?.professionalDetails?.nmbiNumber ?? '',
           nurseType: professionalDetail?.professionalDetails?.nurseType ?? '',
-          nursingAdaptationProgramme: professionalDetail?.professionalDetails?.nursingAdaptationProgramme ? 'yes' : 'no',
+          nursingAdaptationProgramme: professionalDetail?.professionalDetails
+            ?.nursingAdaptationProgramme
+            ? 'yes'
+            : 'no',
           region: professionalDetail?.professionalDetails?.region ?? '',
           branch: professionalDetail?.professionalDetails?.branch ?? '',
           pensionNo: professionalDetail?.professionalDetails?.pensionNo ?? '',
-          isRetired: professionalDetail?.professionalDetails?.isRetired ?? false,
-          retiredDate: professionalDetail?.professionalDetails?.retiredDate ?? '',
-          studyLocation: professionalDetail?.professionalDetails?.studyLocation ?? '',
-          graduationDate: professionalDetail?.professionalDetails?.graduationDate ?? '',
-        }
+          isRetired:
+            professionalDetail?.professionalDetails?.isRetired ?? false,
+          retiredDate:
+            professionalDetail?.professionalDetails?.retiredDate ?? '',
+          studyLocation:
+            professionalDetail?.professionalDetails?.studyLocation ?? '',
+          graduationDate:
+            professionalDetail?.professionalDetails?.graduationDate ?? '',
+        },
       }));
     }
-  }, [professionalDetail])
+  }, [professionalDetail]);
 
   useEffect(() => {
     if (subscriptionDetail) {
@@ -101,26 +128,49 @@ const Application = () => {
           ...prev.subscriptionDetails,
           paymentType: subscriptionDetail?.subscriptionDetails?.paymentType,
           payrollNo: subscriptionDetail?.subscriptionDetails?.payrollNo ?? '',
-          memberStatus: subscriptionDetail?.subscriptionDetails?.membershipStatus ?? '',
-          otherIrishTradeUnion: subscriptionDetail?.subscriptionDetails?.otherIrishTradeUnion ? 'yes' : 'no',
-          otherScheme: subscriptionDetail?.subscriptionDetails?.otherScheme ? 'yes' : 'no',
-          recuritedBy: subscriptionDetail?.subscriptionDetails?.recuritedBy ?? '',
-          recuritedByMembershipNo: subscriptionDetail?.subscriptionDetails?.recuritedByMembershipNo ?? '',
-          primarySection: subscriptionDetail?.subscriptionDetails?.primarySection,
-          otherPrimarySection: subscriptionDetail?.subscriptionDetails?.otherPrimarySection ?? '',
-          secondarySection: subscriptionDetail?.subscriptionDetails?.secondarySection,
-          otherSecondarySection: subscriptionDetail?.subscriptionDetails?.otherSecondarySection ?? '',
-          incomeProtectionScheme: subscriptionDetail?.subscriptionDetails?.incomeProtectionScheme ?? false,
-          inmoRewards: subscriptionDetail?.subscriptionDetails?.inmoRewards ?? false,
-          valueAddedServices: subscriptionDetail?.subscriptionDetails?.valueAddedServices ?? false,
-          termsAndConditions: subscriptionDetail?.subscriptionDetails?.termsAndConditions ?? false,
-          membershipCategory: subscriptionDetail?.subscriptionDetails?.membershipCategory,
+          memberStatus:
+            subscriptionDetail?.subscriptionDetails?.membershipStatus ?? '',
+          otherIrishTradeUnion: subscriptionDetail?.subscriptionDetails
+            ?.otherIrishTradeUnion
+            ? 'yes'
+            : 'no',
+          otherScheme: subscriptionDetail?.subscriptionDetails?.otherScheme
+            ? 'yes'
+            : 'no',
+          recuritedBy:
+            subscriptionDetail?.subscriptionDetails?.recuritedBy ?? '',
+          recuritedByMembershipNo:
+            subscriptionDetail?.subscriptionDetails?.recuritedByMembershipNo ??
+            '',
+          primarySection:
+            subscriptionDetail?.subscriptionDetails?.primarySection,
+          otherPrimarySection:
+            subscriptionDetail?.subscriptionDetails?.otherPrimarySection ?? '',
+          secondarySection:
+            subscriptionDetail?.subscriptionDetails?.secondarySection,
+          otherSecondarySection:
+            subscriptionDetail?.subscriptionDetails?.otherSecondarySection ??
+            '',
+          incomeProtectionScheme:
+            subscriptionDetail?.subscriptionDetails?.incomeProtectionScheme ??
+            false,
+          inmoRewards:
+            subscriptionDetail?.subscriptionDetails?.inmoRewards ?? false,
+          valueAddedServices:
+            subscriptionDetail?.subscriptionDetails?.valueAddedServices ??
+            false,
+          termsAndConditions:
+            subscriptionDetail?.subscriptionDetails?.termsAndConditions ??
+            false,
+          membershipCategory:
+            subscriptionDetail?.subscriptionDetails?.membershipCategory,
           dateJoined: subscriptionDetail?.subscriptionDetails?.dateJoined,
-          paymentFrequency: subscriptionDetail?.subscriptionDetails?.paymentFrequency
-        }
+          paymentFrequency:
+            subscriptionDetail?.subscriptionDetails?.paymentFrequency,
+        },
       }));
     }
-  }, [subscriptionDetail])
+  }, [subscriptionDetail]);
 
   const steps = [
     { number: 1, title: 'Personal Information' },
@@ -128,13 +178,7 @@ const Application = () => {
     { number: 3, title: 'Subscription Details' },
   ];
 
-  // Helper to save progress
-  const saveProgress = (data, step) => {
-    localStorage.setItem('applicationFormData', JSON.stringify(data));
-    localStorage.setItem('applicationCurrentStep', step);
-  };
-
-  const createPersonalDetail = (data) => {
+  const createPersonalDetail = data => {
     const personalInfo = {};
 
     // Build personalInfo.personalInfo
@@ -190,7 +234,7 @@ const Application = () => {
       .catch(() => toast.error('Something went wrong'));
   };
 
-  const updatePersonalDetail = (data) => {
+  const updatePersonalDetail = data => {
     const personalInfo = {};
 
     const personalFields = {
@@ -222,8 +266,7 @@ const Application = () => {
       preferredEmail: data.preferredEmail,
       personalEmail: data.personalEmail,
       workEmail: data.workEmail,
-      consentSMS: data.smsConsent,
-      consentEmail: data.emailConsent,
+      consent: data.consent,
     };
 
     personalInfo.contactInfo = {};
@@ -245,7 +288,7 @@ const Application = () => {
       .catch(() => toast.error('Something went wrong'));
   };
 
-  const createProfessionalDetail = (data) => {
+  const createProfessionalDetail = data => {
     const professionalFields = {
       membershipCategory: data.membershipCategory,
       workLocation: data.workLocation,
@@ -272,8 +315,11 @@ const Application = () => {
       }
     });
 
-    createProfessionalDetailRequest(personalDetail?.ApplicationId, professionalInfo)
-      .then((res) => {
+    createProfessionalDetailRequest(
+      personalDetail?.ApplicationId,
+      professionalInfo,
+    )
+      .then(res => {
         if (res.status === 200) {
           toast.success('Professional Detail added successfully');
           getProfessionalDetail();
@@ -284,7 +330,7 @@ const Application = () => {
       .catch(() => toast.error('Something went wrong'));
   };
 
-  const updateProfessionalDetail = (data) => {
+  const updateProfessionalDetail = data => {
     const professionalFields = {
       membershipCategory: data.membershipCategory,
       workLocation: data.workLocation,
@@ -311,21 +357,27 @@ const Application = () => {
       }
     });
 
-    updateProfessionalDetailRequest(personalDetail?.ApplicationId, professionalInfo)
-      .then((res) => {
+    updateProfessionalDetailRequest(
+      personalDetail?.ApplicationId,
+      professionalInfo,
+    )
+      .then(res => {
         if (res.status === 200) {
           toast.success('Professional Detail update successfully');
           getProfessionalDetail();
         } else {
-          toast.error(res.data.message ?? 'Unable to update professional detail');
+          toast.error(
+            res.data.message ?? 'Unable to update professional detail',
+          );
         }
       })
       .catch(() => toast.error('Something went wrong'));
   };
 
-  const createSubscriptionDetail = (data) => {
+  const createSubscriptionDetail = data => {
     const defaultFields = {
-      membershipCategory: professionalDetail?.professionalDetails?.membershipCategory,
+      membershipCategory:
+        professionalDetail?.professionalDetails?.membershipCategory,
       // dateJoined: "15/01/2025",
       // paymentFrequency: "Monthly",
     };
@@ -362,8 +414,11 @@ const Application = () => {
 
     console.log('subscription=========>', data);
 
-    createSubscriptionDetailRequest(personalDetail?.ApplicationId, subscriptionInfo)
-      .then((res) => {
+    createSubscriptionDetailRequest(
+      personalDetail?.ApplicationId,
+      subscriptionInfo,
+    )
+      .then(res => {
         console.log('response', res);
         if (res.status === 200) {
           toast.success('Subscription Detail added successfully');
@@ -375,9 +430,10 @@ const Application = () => {
       .catch(() => toast.error('Something went wrong'));
   };
 
-  const updateSubscriptionDetail = (data) => {
+  const updateSubscriptionDetail = data => {
     const defaultFields = {
-      membershipCategory: professionalDetail?.professionalDetails?.membershipCategory,
+      membershipCategory:
+        professionalDetail?.professionalDetails?.membershipCategory,
       // dateJoined: "15/01/2025",
       // paymentFrequency: "Monthly",
     };
@@ -414,49 +470,50 @@ const Application = () => {
 
     console.log('subscription=========>', data);
 
-    updateSubscriptionDetailRequest(personalDetail?.ApplicationId, subscriptionInfo)
-      .then((res) => {
+    updateSubscriptionDetailRequest(
+      personalDetail?.ApplicationId,
+      subscriptionInfo,
+    )
+      .then(res => {
         console.log('response', res);
         if (res.status === 200) {
           toast.success('Subscription Detail update successfully');
           getSubscriptionDetail();
         } else {
-          toast.error(res.data.message ?? 'Unable to update subscription detail');
+          toast.error(
+            res.data.message ?? 'Unable to update subscription detail',
+          );
         }
       })
       .catch(() => toast.error('Something went wrong'));
   };
 
-
   const handleNext = () => {
     setShowValidation(true);
     if (validateCurrentStep()) {
-      if (
-        currentStep === 1 && !personalDetail) {
-        createPersonalDetail(formData.personalInfo);
+      if (currentStep === 1) {
+        if (!personalDetail) {
+          createPersonalDetail(formData.personalInfo);
+        } else {
+          updatePersonalDetail(formData.personalInfo);
+        }
       }
-
-      if (
-        currentStep === 2 && !professionalDetail
-      ) {
-        createProfessionalDetail(formData.professionalDetails);
+      if (currentStep === 2) {
+        if (!professionalDetail) {
+          createProfessionalDetail(formData.professionalDetails);
+        } else {
+          updateProfessionalDetail(formData.professionalDetails);
+        }
       }
-
-      if (
-        currentStep === 1 && personalDetail) {
-        updatePersonalDetail(formData.personalInfo);
+      if (currentStep === 3) {
+        if (!subscriptionDetail) {
+          createSubscriptionDetail(formData.subscriptionDetails);
+        } else {
+          updateSubscriptionDetail(formData.subscriptionDetails);
+        }
       }
-
-      if (
-        currentStep === 2 && professionalDetail
-      ) {
-        updateProfessionalDetail(formData.professionalDetails);
-      }
-
-      console.log('step====>', currentStep);
       setCurrentStep(prev => {
         const nextStep = Math.min(prev + 1, steps.length);
-        // saveProgress(formData, nextStep);
         return nextStep;
       });
       setShowValidation(false);
@@ -510,8 +567,14 @@ const Application = () => {
         }
         break;
       case 2:
-        const { workLocation, grade, membershipCategory, nursingAdaptationProgramme, nurseType, nmbiNumber, } =
-          formData.professionalDetails || {};
+        const {
+          workLocation,
+          grade,
+          membershipCategory,
+          nursingAdaptationProgramme,
+          nurseType,
+          nmbiNumber,
+        } = formData.professionalDetails || {};
         if (!grade || !workLocation || !membershipCategory) {
           return false;
         }
@@ -553,11 +616,9 @@ const Application = () => {
   const handleSubmit = () => {
     setShowValidation(true);
     if (validateCurrentStep()) {
-      if (
-        currentStep === 3 && !subscriptionDetail
-      ) {
+      if (currentStep === 3 && !subscriptionDetail) {
         createSubscriptionDetail(formData.subscriptionDetails);
-      } else if(currentStep === 3 && subscriptionDetail){
+      } else if (currentStep === 3 && subscriptionDetail) {
         updateSubscriptionDetail(formData.subscriptionDetails);
         setIsModalVisible(true);
       }
@@ -572,7 +633,7 @@ const Application = () => {
     setIsModalVisible(false);
   };
 
-  const handleSubscriptionSuccess = (paymentData) => {
+  const handleSubscriptionSuccess = paymentData => {
     // if (validateCurrentStep()) {
     createSubscriptionDetail({ ...formData.subscriptionDetails, paymentData });
     setIsModalVisible(false);
@@ -647,71 +708,79 @@ const Application = () => {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold mb-4">Application</h1>
-      {loading ? <Spinner /> : <>
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 sm:gap-0">
-          {steps.map(step => (
-            <div key={step.number} className="flex items-center w-full sm:w-auto">
-              <div className="flex items-center w-full sm:w-auto">
-                <div
-                  className={`
+      {loading ? (
+        <Spinner />
+      ) : (
+        <>
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 sm:gap-0">
+            {steps.map(step => (
+              <div
+                key={step.number}
+                className="flex items-center w-full sm:w-auto">
+                <div className="flex items-center w-full sm:w-auto">
+                  <div
+                    className={`
                 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
-                ${isSubmitted && step.number === 3
-                      ? 'bg-green-500 text-white'
-                      : currentStep === step.number
-                        ? 'bg-blue-500 text-white'
-                        : currentStep > step.number
-                          ? 'bg-green-500 text-white'
-                          : 'bg-gray-200'
-                    }
+                ${
+                  isSubmitted && step.number === 3
+                    ? 'bg-green-500 text-white'
+                    : currentStep === step.number
+                      ? 'bg-blue-500 text-white'
+                      : currentStep > step.number
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-200'
+                }
               `}>
-                  {isSubmitted && step.number === 3
-                    ? '✓'
-                    : currentStep > step.number
+                    {isSubmitted && step.number === 3
                       ? '✓'
-                      : step.number}
-                </div>
-                <div className="ml-2">
-                  <p
-                    className={`text-sm whitespace-nowrap ${isSubmitted && step.number === 3
-                      ? 'text-green-500 font-semibold'
-                      : currentStep === step.number
-                        ? 'text-blue-500 font-semibold'
-                        : 'text-gray-500'
+                      : currentStep > step.number
+                        ? '✓'
+                        : step.number}
+                  </div>
+                  <div className="ml-2">
+                    <p
+                      className={`text-sm whitespace-nowrap ${
+                        isSubmitted && step.number === 3
+                          ? 'text-green-500 font-semibold'
+                          : currentStep === step.number
+                            ? 'text-blue-500 font-semibold'
+                            : 'text-gray-500'
                       }`}>
-                    {step.title}
-                  </p>
+                      {step.title}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              {step.number < steps.length && (
-                <div
-                  className={`
+                {step.number < steps.length && (
+                  <div
+                    className={`
                 hidden sm:block flex-grow mx-2 h-1 min-w-[16px]
                 ${(isSubmitted && step.number === 2) || currentStep > step.number ? 'bg-green-500' : 'bg-gray-200'}
               `}
-                />
-              )}
-            </div>
-          ))}
-        </div>
+                  />
+                )}
+              </div>
+            ))}
+          </div>
 
-        <Card title={steps[currentStep - 1].title} className="p-4">
-          {renderStepContent()}
-        </Card>
+          <Card title={steps[currentStep - 1].title} className="p-4">
+            {renderStepContent()}
+          </Card>
 
-        <div className="flex justify-between mt-4">
-          <Button
-            onClick={handlePrevious}
-            disabled={currentStep === 1}
-            className={currentStep === 1 ? 'opacity-50 cursor-not-allowed' : ''}>
-            Previous
-          </Button>
-          <Button
-            type="primary"
-            onClick={currentStep === steps.length ? handleSubmit : handleNext}>
-            {currentStep === steps.length ? 'Submit' : 'Next'}
-          </Button>
-        </div>
-      </>}
+          <div className="flex justify-between mt-4">
+            <Button
+              onClick={handlePrevious}
+              disabled={currentStep === 1}
+              className={
+                currentStep === 1 ? 'opacity-50 cursor-not-allowed' : ''
+              }>
+              Previous
+            </Button>
+            <Button type="primary" onClick={handleNext}>
+              {currentStep === steps.length ? 'Submit' : 'Next'}
+            </Button>
+          </div>
+        </>
+      )}
 
       <Elements stripe={stripePromise}>
         <SubscriptionModal
