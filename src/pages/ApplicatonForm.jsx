@@ -22,7 +22,7 @@ import Spinner from '../components/common/Spinner';
 
 const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx');
 
-const Application = () => {
+const ApplicationForm = () => {
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
   const {
@@ -689,8 +689,91 @@ const Application = () => {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold mb-4">Application</h1>
+      {loading ? (
+        <Spinner />
+      ) : (
+        <>
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 sm:gap-0">
+            {steps.map(step => (
+              <div
+                key={step.number}
+                className="flex items-center w-full sm:w-auto">
+                <div className="flex items-center w-full sm:w-auto">
+                  <div
+                    className={`
+                w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
+                ${
+                  isSubmitted && step.number === 3
+                    ? 'bg-green-500 text-white'
+                    : currentStep === step.number
+                      ? 'bg-blue-500 text-white'
+                      : currentStep > step.number
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-200'
+                }
+              `}>
+                    {isSubmitted && step.number === 3
+                      ? '✓'
+                      : currentStep > step.number
+                        ? '✓'
+                        : step.number}
+                  </div>
+                  <div className="ml-2">
+                    <p
+                      className={`text-sm whitespace-nowrap ${
+                        isSubmitted && step.number === 3
+                          ? 'text-green-500 font-semibold'
+                          : currentStep === step.number
+                            ? 'text-blue-500 font-semibold'
+                            : 'text-gray-500'
+                      }`}>
+                      {step.title}
+                    </p>
+                  </div>
+                </div>
+                {step.number < steps.length && (
+                  <div
+                    className={`
+                hidden sm:block flex-grow mx-2 h-1 min-w-[16px]
+                ${(isSubmitted && step.number === 2) || currentStep > step.number ? 'bg-green-500' : 'bg-gray-200'}
+              `}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+
+          <Card title={steps[currentStep - 1].title} className="p-4">
+            {renderStepContent()}
+          </Card>
+
+          <div className="flex justify-between mt-4">
+            <Button
+              onClick={handlePrevious}
+              disabled={currentStep === 1}
+              className={
+                currentStep === 1 ? 'opacity-50 cursor-not-allowed' : ''
+              }>
+              Previous
+            </Button>
+            <Button type="primary" onClick={handleNext}>
+              {currentStep === steps.length ? 'Submit' : 'Next'}
+            </Button>
+          </div>
+        </>
+      )}
+
+      <Elements stripe={stripePromise}>
+        <SubscriptionModal
+          isVisible={isModalVisible}
+          onClose={handleModalClose}
+          onSuccess={handleSubscriptionSuccess}
+          formData={formData}
+          membershipCategory={formData.professionalDetails.membershipCategory}
+        />
+      </Elements>
     </div>
   );
 };
 
-export default Application;
+export default ApplicationForm;

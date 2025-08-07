@@ -11,6 +11,7 @@ import Resources from '../pages/Resources';
 import LandingPage from '../pages/landingPage';
 import Application from '../pages/Application';
 import Dashboard from '../pages/Dashboard';
+import ApplicationForm from '../pages/ApplicatonForm';
 
 export const publicRoutes = [
   {
@@ -39,6 +40,10 @@ export const privateRoutes = [
       {
         path: 'subscriptions',
         element: <Subscriptions />,
+      },
+      {
+        path: 'applicationForm',
+        element: <ApplicationForm />,
       },
       {
         path: 'application',
