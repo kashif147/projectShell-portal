@@ -50,8 +50,7 @@ const Application = () => {
           countryPrimaryQualification: personalDetail?.personalInfo?.countryPrimaryQualification || '',
           personalEmail: personalDetail?.contactInfo?.personalEmail || '',
           mobileNo: personalDetail?.contactInfo?.mobileNumber || '',
-          smsConsent: personalDetail?.contactInfo?.smsConsent ?? true,
-          emailConsent: personalDetail?.contactInfo?.emailConsent ?? true,
+          consent: personalDetail?.contactInfo?.consent ?? true,
           addressLine1: personalDetail?.contactInfo?.buildingOrHouse || '',
           addressLine2: personalDetail?.contactInfo?.streetOrRoad || '',
           addressLine3: personalDetail?.contactInfo?.areaOrTown || '',
@@ -169,8 +168,7 @@ const Application = () => {
       preferredEmail: data.preferredEmail,
       personalEmail: data.personalEmail,
       workEmail: data.workEmail,
-      consentSMS: data.smsConsent,
-      consentEmail: data.emailConsent,
+      consent: data.consent,
     };
 
     personalInfo.contactInfo = {};

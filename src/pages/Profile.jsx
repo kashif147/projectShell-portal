@@ -11,7 +11,6 @@ import Spinner from '../components/common/Spinner';
 const Profile = () => {
   const { user } = useSelector(state => state.auth);
   const { personalDetail, getPersonalDetail } = useApplication()
-  const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = React.useState(false);
   const [personalInfo, setPersonalInfo] = useState({});
   const [showValidation, setShowValidation] = useState(false);
@@ -24,12 +23,12 @@ const Profile = () => {
         surname: personalDetail?.personalInfo?.surname || '',
         forename: personalDetail?.personalInfo?.forename || '',
         gender: personalDetail?.personalInfo?.gender || '',
-        dateOfBirth: personalDetail?.personalInfo?.dateOfBirth || '',
+        dateOfBirth: '1999-08-04T07:00:00.000Z',
+        // dateOfBirth: personalDetail?.personalInfo?.dateOfBirth || '',
         countryPrimaryQualification: personalDetail?.personalInfo?.countryPrimaryQualification || '',
         personalEmail: personalDetail?.contactInfo?.personalEmail || '',
         mobileNo: personalDetail?.contactInfo?.mobileNumber || '',
-        smsConsent: personalDetail?.contactInfo?.smsConsent ?? true,
-        emailConsent: personalDetail?.contactInfo?.emailConsent ?? true,
+        consent: personalDetail?.contactInfo?.consent ?? true,
         addressLine1: personalDetail?.contactInfo?.buildingOrHouse || '',
         addressLine2: personalDetail?.contactInfo?.streetOrRoad || '',
         addressLine3: personalDetail?.contactInfo?.areaOrTown || '',
@@ -42,55 +41,59 @@ const Profile = () => {
       });
     }
   }, [personalDetail])
-  // useEffect(() => {
-  //   const savedData = localStorage.getItem('applicationFormData');
-  //   if (savedData) {
-  //     const parsedData = JSON.parse(savedData);
-  //     setPersonalInfo(parsedData.personalInfo);
-  //   }
-  // }, []);
-
-  const handleEdit = () => {
-    setEditMode(true);
-  };
 
   const handleCancel = () => {
-    setEditMode(false);
     setShowValidation(false);
   };
 
-  const handleSave = () => {
+  const updatePersonalDetail = () => {
     setLoading(true)
-    const personalInfoData = {
-      personalInfo: {
-        title: personalInfo.title,
-        surname: personalInfo.surname,
-        forename: personalInfo.forename,
-        gender: personalInfo.gender,
-        dateOfBirth: personalInfo.dateOfBirth,
-        countryPrimaryQualification: personalInfo.countryPrimaryQualification ?? '',
-      },
-      contactInfo: {
-        preferredAddress: personalInfo.preferredAddress,
-        eircode: personalInfo.eircode ?? '',
-        buildingOrHouse: personalInfo.addressLine1,
-        streetOrRoad: personalInfo.addressLine2 ?? '',
-        areaOrTown: personalInfo.addressLine3 ?? '',
-        countyCityOrPostCode: personalInfo.addressLine4,
-        country: personalInfo.country ?? '',
-        mobileNumber: personalInfo.mobileNo,
-        telephoneNumber: personalInfo.homeWorkTelNo ?? '',
-        preferredEmail: personalInfo.preferredEmail,
-        personalEmail: personalInfo.personalEmail ?? '',
-        workEmail: personalInfo.workEmail ?? '',
-        consentSMS: personalInfo.smsConsent,
-        consentEmail: personalInfo.emailConsent
+    const personalInfoData = {};
+
+    const personalFields = {
+      title: personalInfo.title,
+      surname: personalInfo.surname,
+      forename: personalInfo.forename,
+      gender: personalInfo.gender,
+      // dateOfBirth: personalInfo.dateOfBirth,
+      dateOfBirth: '1999-08-04T07:00:00.000Z',
+      countryPrimaryQualification: personalInfo.countryPrimaryQualification ?? '',
+    };
+
+    personalInfoData.personalInfo = {};
+    Object.entries(personalFields).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        personalInfoData.personalInfo[key] = value;
       }
-    }
-    updatePersonalDetailRequest(personalInfoData)
+    });
+
+    const contactFields = {
+      preferredAddress: personalInfo.preferredAddress,
+      eircode: personalInfo.eircode ?? '',
+      buildingOrHouse: personalInfo.addressLine1,
+      streetOrRoad: personalInfo.addressLine2 ?? '',
+      areaOrTown: personalInfo.addressLine3 ?? '',
+      countyCityOrPostCode: personalInfo.addressLine4,
+      country: personalInfo.country ?? '',
+      mobileNumber: personalInfo.mobileNo,
+      telephoneNumber: personalInfo.homeWorkTelNo ?? '',
+      preferredEmail: personalInfo.preferredEmail,
+      personalEmail: personalInfo.personalEmail ?? '',
+      workEmail: personalInfo.workEmail ?? '',
+      consent: personalInfo.consent,
+    };
+
+    personalInfoData.contactInfo = {};
+    Object.entries(contactFields).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        personalInfoData.contactInfo[key] = value;
+      }
+    });
+
+    updatePersonalDetailRequest(personalDetail?.ApplicationId, personalInfoData)
       .then(res => {
         if (res.status === 200) {
-          getPersonalDetail()
+          getPersonalDetail();
           setLoading(false)
           toast.success('Personal Detail update successfully');
         } else {
@@ -102,8 +105,8 @@ const Profile = () => {
         setLoading(false)
         toast.error('Something went wrong')
       });
-
   };
+
 
   return (
     <Row gutter={[16, 16]}>
@@ -115,57 +118,25 @@ const Profile = () => {
               {user?.userFirstName || ''} {user?.userLastName || ''}
             </h2>
             <p className="text-gray-500">{user?.role}</p>
-            {/* {!editMode && (
-              <Button
-                type="primary"
-                className="mt-4 w-full"
-                onClick={handleEdit}>
-                Edit Personal Information
-              </Button>
-            )} */}
           </div>
         </Card>
       </Col>
       {loading ? <Spinner /> : (
-
         <Col xs={24} md={16}>
           <Card title="Personal Information">
-            {/* // editMode ? ( */}
-            <>
-              <PersonalInformation
-                formData={personalInfo}
-                onFormDataChange={setPersonalInfo}
-                showValidation={showValidation}
-              />
-              <div className="flex gap-2 mt-4">
-                <Button type="primary" onClick={handleSave}>
-                  Save
-                </Button>
-                <Button type="default" onClick={handleCancel}>
-                  Cancel
-                </Button>
-              </div>
-            </>
-            {/* // ) : (
-          //   <Descriptions layout="vertical">
-          //     <Descriptions.Item label="Full Name">
-          //       {user?.userFirstName} {user?.userLastName}
-          //     </Descriptions.Item>
-          //     <Descriptions.Item label="Email">
-          //       {user?.userEmail}
-          //     </Descriptions.Item>
-          //     <Descriptions.Item label="Mobile No">
-          //       {user?.userMobilePhone}
-          //     </Descriptions.Item>
-          //     <Descriptions.Item label="Country">
-          //       {user?.country || 'Ireland'}
-          //     </Descriptions.Item>
-          //     <Descriptions.Item label="Member Since">
-          //       {user?.memberSince}
-          //     </Descriptions.Item>
-          //     <Descriptions.Item label="Role">{user?.role}</Descriptions.Item>
-          //   </Descriptions>
-          // ) */}
+            <PersonalInformation
+              formData={personalInfo}
+              onFormDataChange={setPersonalInfo}
+              showValidation={showValidation}
+            />
+            <div className="flex gap-2 mt-4">
+              <Button type="primary" onClick={updatePersonalDetail}>
+                Save
+              </Button>
+              <Button type="default" onClick={handleCancel}>
+                Cancel
+              </Button>
+            </div>
           </Card>
         </Col>
       )}

@@ -156,7 +156,21 @@ const PersonalInformation = ({
           placeholder="Select country of primary qualification"
         />
       </div>
-      <h3 className="text-lg font-semibold mb-4">Correspondence Details</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <h3 className="text-lg font-semibold mb-4">Correspondence Details</h3>
+        <div className="flex justify-end">
+          <Checkbox
+            label={
+              <span className="font-medium text-sm">
+                Consent to receive Correspondence from INMO
+              </span>
+            }
+            name="consent"
+            checked={formData?.consent}
+            onChange={handleInputChange}
+          />
+        </div>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="relative">
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -231,31 +245,15 @@ const PersonalInformation = ({
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="relative">
-          <div className="flex items-center justify-between mb-1">
-            <label className="block text-sm font-medium text-gray-700">
-              Mobile No
-            </label>
-            <Checkbox
-              label={
-                <span className="font-medium text-sm">
-                  Consent to receive SMS Alerts
-                </span>
-              }
-              name="smsConsent"
-              checked={formData?.smsConsent}
-              onChange={handleInputChange}
-            />
-          </div>
-          <Input
-            name="mobileNo"
-            required
-            placeholder="Enter your mobile number"
-            value={formData?.mobileNo || ''}
-            onChange={handleInputChange}
-            showValidation={showValidation}
-          />
-        </div>
+        <Input
+          label='Mobile No'
+          name="mobileNo"
+          required
+          placeholder="Enter your mobile number"
+          value={formData?.mobileNo || ''}
+          onChange={handleInputChange}
+          showValidation={showValidation}
+        />
         <Input
           label="Home / Work Tel Number"
           name="homeWorkTelNo"
@@ -265,34 +263,18 @@ const PersonalInformation = ({
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="relative">
-          <div className="flex items-center justify-between mb-1">
-            <label className="block text-sm font-medium text-gray-700">
-              Preferred Email
-            </label>
-            <Checkbox
-              label={
-                <span className="font-medium text-sm">
-                  Consent to receive Email Alerts
-                </span>
-              }
-              name="emailConsent"
-              checked={formData?.emailConsent}
-              onChange={handleInputChange}
-            />
-          </div>
-          <Select
-            name="preferredEmail"
-            required
-            showValidation={showValidation}
-            value={formData?.preferredEmail}
-            onChange={handleInputChange}
-            options={[
-              { value: 'work', label: 'Work' },
-              { value: 'personal', label: 'Personal' },
-            ]}
-          />
-        </div>
+        <Select
+          label="Preferred Email"
+          name="preferredEmail"
+          required
+          showValidation={showValidation}
+          value={formData?.preferredEmail}
+          onChange={handleInputChange}
+          options={[
+            { value: 'work', label: 'Work' },
+            { value: 'personal', label: 'Personal' },
+          ]}
+        />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input
