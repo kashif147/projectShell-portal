@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, Table, Tag, Modal } from 'antd';
 import Button from '../components/common/Button';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-import Receipt from '../components/Receipt';
+import Receipt, { ReceiptPDF } from '../components/Receipt';
+import { PDFDownloadLink } from '@react-pdf/renderer';
 import { useApplication } from '../contexts/applicationContext';
 
 const Payments = () => {
@@ -98,13 +97,20 @@ const Payments = () => {
         open={receiptVisible}
         onCancel={() => setReceiptVisible(false)}
         footer={[
-          <Button key="download" onClick={handleDownloadPDF}>
-            Download as PDF
-          </Button>,
+          <PDFDownloadLink
+            key="download"
+            document={<ReceiptPDF data={receiptData} />}
+            fileName="receipt.pdf"
+          >
+            {({ loading }) => (
+              <Button>{loading ? 'Preparing PDF...' : 'Download as PDF'}</Button>
+            )}
+          </PDFDownloadLink>,
         ]}
         title="Payment Receipt"
-        width={650}>
-        {receiptData && <Receipt ref={receiptRef} data={receiptData} />}
+        width={650}
+      >
+        {receiptData && <Receipt data={receiptData} />}
       </Modal>
     </Card>
   );
