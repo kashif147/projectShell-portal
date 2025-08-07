@@ -134,4 +134,56 @@ export const ReceiptPDF = ({ data }) => (
   </Document>
 );
 
+export const ApplicationPDF = ({ application }) => (
+  <Document>
+    <Page size={{ width: 600, height: 842 }} style={styles.page}>
+      <View style={styles.header}>
+        <Text style={{ fontSize: 22, marginBottom: 10 }}>Membership Application Details</Text>
+        {application.id && (
+          <Text style={{ fontSize: 14, marginBottom: 4, color: '#1a3a5d' }}>
+            Application ID: {application.id}
+          </Text>
+        )}
+        {application.personalDetail?.ApplicationId && (
+          <Text style={{ fontSize: 13, marginBottom: 16, color: '#3a3a3a' }}>
+            Personal Detail Application ID: {application.personalDetail.ApplicationId}
+          </Text>
+        )}
+      </View>
+      <View style={{ marginBottom: 18 }}>
+        <Text style={[styles.bold, { fontSize: 16, marginBottom: 6 }]}>Personal Information</Text>
+        {Object.entries(application.personalDetail?.personalInfo || {}).map(([key, value]) => (
+          <Text key={key} style={{ marginBottom: 2 }}>
+            <Text style={styles.bold}>{key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}: </Text>{String(value)}
+          </Text>
+        ))}
+        {Object.entries(application.personalDetail?.contactInfo || {}).map(([key, value]) => (
+          <Text key={key} style={{ marginBottom: 2 }}>
+            <Text style={styles.bold}>{key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}: </Text>{String(value)}
+          </Text>
+        ))}
+      </View>
+      <View style={{ marginBottom: 18 }}>
+        <Text style={[styles.bold, { fontSize: 16, marginBottom: 6 }]}>Professional Information</Text>
+        {Object.entries(application.professionalDetail?.professionalDetails || {}).map(([key, value]) => (
+          <Text key={key} style={{ marginBottom: 2 }}>
+            <Text style={styles.bold}>{key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}: </Text>{String(value)}
+          </Text>
+        ))}
+      </View>
+      <View style={{ marginBottom: 18 }}>
+        <Text style={[styles.bold, { fontSize: 16, marginBottom: 6 }]}>Subscription Information</Text>
+        {Object.entries(application.subscriptionDetail?.subscriptionDetails || {}).map(([key, value]) => (
+          <Text key={key} style={{ marginBottom: 2 }}>
+            <Text style={styles.bold}>{key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}: </Text>{String(value)}
+          </Text>
+        ))}
+      </View>
+      <View style={{ marginTop: 32 }}>
+        <Text style={styles.bold}>Authorized Signature:</Text> ___________________________
+      </View>
+    </Page>
+  </Document>
+);
+
 export default Receipt; 
