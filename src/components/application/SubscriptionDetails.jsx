@@ -23,10 +23,22 @@ const SubscriptionDetails = ({
 }) => {
   const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
-    onFormDataChange({
-      ...formData,
-      [name]: type === 'checkbox' ? checked : value,
-    });
+    if (
+      name === 'paymentType' &&
+      formData?.paymentType === 'Payroll Deduction' &&
+      value === 'Card Payment'
+    ) {
+      onFormDataChange({
+        ...formData,
+        [name]: value,
+        payrollNo: '',
+      });
+    } else {
+      onFormDataChange({
+        ...formData,
+        [name]: type === 'checkbox' ? checked : value,
+      });
+    }
   };
 
   return (

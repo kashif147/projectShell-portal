@@ -40,7 +40,7 @@ const PersonalInformation = ({
       const placeId = place.place_id;
 
       const service = new window.google.maps.places.PlacesService(
-        document.createElement('div')
+        document.createElement('div'),
       );
 
       const request = {
@@ -62,9 +62,9 @@ const PersonalInformation = ({
           const streetNumber = getComponent('street_number');
           const route = getComponent('route');
           const sublocality = getComponent('sublocality') || '';
-          const town = getComponent('locality') || getComponent('postal_town') || '';
-          const county =
-            getComponent('administrative_area_level_1') || '';
+          const town =
+            getComponent('locality') || getComponent('postal_town') || '';
+          const county = getComponent('administrative_area_level_1') || '';
           const postalCode = getComponent('postal_code');
 
           const addressLine1 = `${streetNumber} ${route}`.trim();
@@ -86,11 +86,8 @@ const PersonalInformation = ({
     }
   };
 
-
-
   return (
     <div className="space-y-6">
-      {/* <h3 className="text-lg font-semibold mb-4">Personal Information</h3> */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Select
           label="Title"
@@ -156,20 +153,18 @@ const PersonalInformation = ({
           placeholder="Select country of primary qualification"
         />
       </div>
+      <h3 className="text-lg font-semibold">Correspondence Details</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <h3 className="text-lg font-semibold mb-4">Correspondence Details</h3>
-        <div className="flex justify-end">
-          <Checkbox
-            label={
-              <span className="font-medium text-sm">
-                Consent to receive Correspondence from INMO
-              </span>
-            }
-            name="consent"
-            checked={formData?.consent}
-            onChange={handleInputChange}
-          />
-        </div>
+        <Checkbox
+          label={
+            <span className="font-medium text-sm">
+              Consent to receive Correspondence from INMO
+            </span>
+          }
+          name="consent"
+          checked={formData?.consent}
+          onChange={handleInputChange}
+        />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="relative">
@@ -246,7 +241,7 @@ const PersonalInformation = ({
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input
-          label='Mobile No'
+          label="Mobile No"
           name="mobileNo"
           required
           placeholder="Enter your mobile number"

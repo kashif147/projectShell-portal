@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from 'antd';
+import { toast } from 'react-toastify';
 import PersonalInformation from '../components/application/PersonalInformation';
 import ProfessionalDetails from '../components/application/ProfessionalDetails';
 import SubscriptionDetails from '../components/application/SubscriptionDetails';
@@ -181,7 +182,6 @@ const ApplicationForm = () => {
   const createPersonalDetail = data => {
     const personalInfo = {};
 
-    // Build personalInfo.personalInfo
     const personalFields = {
       title: data.title,
       surname: data.surname,
@@ -198,7 +198,6 @@ const ApplicationForm = () => {
       }
     });
 
-    // Build personalInfo.contactInfo
     const contactFields = {
       preferredAddress: data.preferredAddress,
       eircode: data.eircode,
@@ -226,12 +225,17 @@ const ApplicationForm = () => {
       .then(res => {
         if (res.status === 200) {
           getPersonalDetail();
-          toast.success('Personal Detail added successfully');
+          setCurrentStep(prev => {
+            const nextStep = Math.min(prev + 1, steps.length);
+            return nextStep;
+          });
         } else {
           toast.error(res.data.message ?? 'Unable to add personal detail');
         }
       })
-      .catch(() => toast.error('Something went wrong'));
+      .catch(() => {
+        toast.error('Something went wrong');
+      });
   };
 
   const updatePersonalDetail = data => {
@@ -280,12 +284,17 @@ const ApplicationForm = () => {
       .then(res => {
         if (res.status === 200) {
           getPersonalDetail();
-          toast.success('Personal Detail update successfully');
+          setCurrentStep(prev => {
+            const nextStep = Math.min(prev + 1, steps.length);
+            return nextStep;
+          });
         } else {
           toast.error(res.data.message ?? 'Unable to update personal detail');
         }
       })
-      .catch(() => toast.error('Something went wrong'));
+      .catch(() => {
+        toast.error('Something went wrong');
+      });
   };
 
   const createProfessionalDetail = data => {
@@ -321,13 +330,18 @@ const ApplicationForm = () => {
     )
       .then(res => {
         if (res.status === 200) {
-          toast.success('Professional Detail added successfully');
           getProfessionalDetail();
+          setCurrentStep(prev => {
+            const nextStep = Math.min(prev + 1, steps.length);
+            return nextStep;
+          });
         } else {
           toast.error(res.data.message ?? 'Unable to add professional detail');
         }
       })
-      .catch(() => toast.error('Something went wrong'));
+      .catch(() => {
+        toast.error('Something went wrong');
+      });
   };
 
   const updateProfessionalDetail = data => {
@@ -363,15 +377,20 @@ const ApplicationForm = () => {
     )
       .then(res => {
         if (res.status === 200) {
-          toast.success('Professional Detail update successfully');
           getProfessionalDetail();
+          setCurrentStep(prev => {
+            const nextStep = Math.min(prev + 1, steps.length);
+            return nextStep;
+          });
         } else {
           toast.error(
             res.data.message ?? 'Unable to update professional detail',
           );
         }
       })
-      .catch(() => toast.error('Something went wrong'));
+      .catch(() => {
+        toast.error('Something went wrong');
+      });
   };
 
   const createSubscriptionDetail = data => {
@@ -411,9 +430,6 @@ const ApplicationForm = () => {
     const subscriptionInfo = {
       subscriptionDetails,
     };
-
-    console.log('subscription=========>', data);
-
     createSubscriptionDetailRequest(
       personalDetail?.ApplicationId,
       subscriptionInfo,
@@ -421,13 +437,20 @@ const ApplicationForm = () => {
       .then(res => {
         console.log('response', res);
         if (res.status === 200) {
-          toast.success('Subscription Detail added successfully');
+          toast.success('Application submitted successfully');
           getSubscriptionDetail();
+          setCurrentStep(prev => {
+            const nextStep = Math.min(prev + 1, steps.length);
+            return nextStep;
+          });
+          navigate('/');
         } else {
           toast.error(res.data.message ?? 'Unable to add subscription detail');
         }
       })
-      .catch(() => toast.error('Something went wrong'));
+      .catch(() => {
+        toast.error('Something went wrong');
+      });
   };
 
   const updateSubscriptionDetail = data => {
@@ -467,25 +490,28 @@ const ApplicationForm = () => {
     const subscriptionInfo = {
       subscriptionDetails,
     };
-
-    console.log('subscription=========>', data);
-
     updateSubscriptionDetailRequest(
       personalDetail?.ApplicationId,
       subscriptionInfo,
     )
       .then(res => {
-        console.log('response========>', res);
         if (res.status === 200) {
-          toast.success('Subscription Detail update successfully');
+          toast.success('Application update successfully');
           getSubscriptionDetail();
+          setCurrentStep(prev => {
+            const nextStep = Math.min(prev + 1, steps.length);
+            return nextStep;
+          });
+          navigate('/');
         } else {
           toast.error(
             res.data.message ?? 'Unable to update subscription detail',
           );
         }
       })
-      .catch(() => toast.error('Something went wrong'));
+      .catch(() => {
+        toast.error('Something went wrong');
+      });
   };
 
   const handleNext = () => {
@@ -523,10 +549,7 @@ const ApplicationForm = () => {
       ) {
         setIsModalVisible(true);
       }
-      setCurrentStep(prev => {
-        const nextStep = Math.min(prev + 1, steps.length);
-        return nextStep;
-      });
+      // Remove automatic step increment - it will be handled by API success callbacks
       setShowValidation(false);
     }
   };
@@ -641,7 +664,7 @@ const ApplicationForm = () => {
       }
       setIsModalVisible(false);
     }
-    navigate('/');
+    // navigate('/');
   };
 
   const renderStepContent = () => {

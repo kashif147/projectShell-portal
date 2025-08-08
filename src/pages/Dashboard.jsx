@@ -9,12 +9,30 @@ import {
 import { useApplication } from '../contexts/applicationContext';
 
 const Dashboard = () => {
-  const { getPersonalDetail, currentStep, subscriptionDetail } =
-    useApplication();
+  const {
+    getPersonalDetail,
+    currentStep,
+    subscriptionDetail,
+    setCurrentStep,
+    personalDetail,
+    professionalDetail,
+  } = useApplication();
 
   useEffect(() => {
     getPersonalDetail();
   }, []);
+
+  useEffect(() => {
+    if (!personalDetail) {
+      setCurrentStep(1);
+    } else if (personalDetail && !professionalDetail) {
+      setCurrentStep(2);
+    } else if (personalDetail && professionalDetail && !subscriptionDetail) {
+      setCurrentStep(3);
+    } else if (personalDetail && professionalDetail && subscriptionDetail) {
+      setCurrentStep(3);
+    }
+  }, [personalDetail, professionalDetail, subscriptionDetail]);
 
   const stepToButtonText = {
     1: 'Start Application',
