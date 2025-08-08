@@ -10,13 +10,13 @@ import {
 import Button from '../common/Button';
 
 const membershipPrices = {
-  general: { full: 299.0, monthly: 99.67 },
-  postgraduate_student: { full: 299.0, monthly: 99.67 },
-  short_term_relief: { full: 228.0, monthly: 76.0 },
-  private_nursing_home: { full: 288.0, monthly: 96.0 },
-  affiliate_members: { full: 116.0, monthly: 38.67 },
-  lecturing: { full: 116.0, monthly: 38.67 },
-  associate: { full: 75.0, monthly: 25.0 },
+  general: { full: 299.0, monthly: 74.75 },
+  postgraduate_student: { full: 299.0, monthly: 74.75 },
+  short_term_relief: { full: 228.0, monthly: 57.00 },
+  private_nursing_home: { full: 288.0, monthly: 72.00 },
+  affiliate_members: { full: 116.0, monthly: 29.00 },
+  lecturing: { full: 116.0, monthly: 29.00 },
+  associate: { full: 75.0, monthly: 18.75 },
   retired_associate: { full: 25.0, monthly: 25.0 },
   undergraduate_student: { full: 0.0, monthly: 0.0 },
 };
@@ -32,16 +32,31 @@ const SubscriptionModal = ({
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('card');
+
+  // Set payment method based on formData
+  const initialPaymentMethod =
+    formData?.subscriptionDetails?.paymentType === 'Payroll Deduction'
+      ? 'bank'
+      : 'card';
+  const [paymentMethod, setPaymentMethod] = useState(initialPaymentMethod);
 
   const priceInfo = membershipPrices[membershipCategory] || {
     full: 0,
     monthly: 0,
   };
 
-  const defaultEmail = formData?.personalInfo?.preferredEmail === 'work'
-    ? formData?.personalInfo?.workEmail
-    : formData?.personalInfo?.personalEmail;
+  const getDisplayPrice = () => {
+    if (formData?.subscriptionDetails?.paymentType === 'Card Payment') {
+      return priceInfo.full;
+    } else {
+      return priceInfo.monthly;
+    }
+  };
+
+  const defaultEmail =
+    formData?.personalInfo?.preferredEmail === 'work'
+      ? formData?.personalInfo?.workEmail
+      : formData?.personalInfo?.personalEmail;
 
   const handleSubmit = async values => {
     if (!stripe || !elements) {
@@ -68,7 +83,10 @@ const SubscriptionModal = ({
       onSuccess({
         paymentMethod,
         total: priceInfo.monthly,
-        paymentDetails: paymentMethod === 'card' ? values : { bankDetails: values.bankDetails }
+        paymentDetails:
+          paymentMethod === 'card'
+            ? values
+            : { bankDetails: values.bankDetails },
       });
     } catch (error) {
       console.error('Payment error:', error);
@@ -124,15 +142,12 @@ const SubscriptionModal = ({
           </div>
         </div>
         <div className="text-right">
-          <div className="text-xs text-gray-500">Annual Fee</div>
-          <div className="text-lg font-bold text-blue-700">
-            €{priceInfo.full.toFixed(2)}
-          </div>
           <div className="text-xs text-gray-500">
-            Monthly:{' '}
-            <span className="font-semibold text-blue-600">
-              €{priceInfo.monthly.toFixed(2)}
-            </span>
+            Price
+            {/* {formData?.subscriptionDetails?.paymentType === 'Card Payment' ? 'Full Price' : 'Monthly Price'} */}
+          </div>
+          <div className="text-lg font-bold text-blue-700">
+            €{getDisplayPrice().toFixed(2)}
           </div>
         </div>
       </div>
@@ -145,9 +160,10 @@ const SubscriptionModal = ({
         size="small"
         initialValues={{
           email: defaultEmail,
-          name: formData?.personalInfo?.forename && formData?.personalInfo?.surname
-            ? `${formData.personalInfo.forename} ${formData.personalInfo.surname}`
-            : undefined
+          name:
+            formData?.personalInfo?.forename && formData?.personalInfo?.surname
+              ? `${formData.personalInfo.forename} ${formData.personalInfo.surname}`
+              : undefined,
         }}>
         <div className="bg-gray-50 p-3 rounded-lg mb-4">
           <Form.Item
@@ -160,16 +176,28 @@ const SubscriptionModal = ({
                 </Tooltip>
               </span>
             }
-            initialValue="card">
+            initialValue={initialPaymentMethod}>
             <Radio.Group onChange={e => setPaymentMethod(e.target.value)}>
               <Space direction="vertical" className="w-full">
-                <Radio value="card" className="w-full">
+                <Radio
+                  value="card"
+                  className="w-full"
+                  disabled={
+                    formData?.subscriptionDetails?.paymentType ===
+                    'Payroll Deduction'
+                  }>
                   <div className="flex items-center">
                     <CreditCardOutlined className="mr-2" />
                     <span>Credit/Debit Card</span>
                   </div>
                 </Radio>
-                <Radio value="bank" className="w-full">
+                <Radio
+                  value="bank"
+                  className="w-full"
+                  disabled={
+                    formData?.subscriptionDetails?.paymentType ===
+                    'Card Payment'
+                  }>
                   <div className="flex items-center">
                     <BankOutlined className="mr-2" />
                     <span>Bank Transfer</span>
@@ -189,7 +217,10 @@ const SubscriptionModal = ({
                 rules={[
                   { required: true, message: 'Please enter the name on card' },
                 ]}>
-                <Input placeholder={`${formData?.personalInfo?.forename} ${formData?.personalInfo?.surname}`} className="h-8" />
+                <Input
+                  placeholder={`${formData?.personalInfo?.forename} ${formData?.personalInfo?.surname}`}
+                  className="h-8"
+                />
               </Form.Item>
 
               <Form.Item
@@ -231,11 +262,13 @@ const SubscriptionModal = ({
             <p className="text-base font-semibold text-gray-800">
               Total Amount:{' '}
               <span className="text-blue-600">
-                €{priceInfo.monthly.toFixed(2)}
+                €{getDisplayPrice().toFixed(2)}
               </span>
             </p>
             <p className="text-xs text-gray-500">
-              Billed monthly • Cancel anytime
+              {formData?.subscriptionDetails?.paymentType === 'Card Payment'
+                ? 'Billed once via card'
+                : 'Billed three month via payroll deduction'}
             </p>
           </div>
           <Space size="small">
@@ -247,7 +280,7 @@ const SubscriptionModal = ({
               htmlType="submit"
               loading={loading}
               className="px-6"
-              disabled={priceInfo.monthly === 0}>
+              disabled={getDisplayPrice() === 0}>
               Subscribe Now
             </Button>
           </Space>

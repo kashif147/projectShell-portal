@@ -101,9 +101,97 @@ h1, h2, h3, h4, h5, h6,
   font-family: var(--font-inter);
 }
 
-.ant-tabs-tab {
-  font-family: var(--font-inter);
+/* Application Table Styles */
+.application-table {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.application-table .ant-table-thead > tr > th {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+  border: none;
+  padding: 16px 12px;
+}
+
+.application-table .ant-table-tbody > tr > td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  transition: all 0.2s ease;
+}
+
+.application-table .ant-table-tbody > tr:hover > td {
+  background-color: #f8fafc;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.application-table .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+/* Application View Modal Styles */
+.application-view-modal .ant-modal-content {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.application-view-modal .ant-modal-header {
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 24px 24px 16px;
+}
+
+.application-view-modal .ant-modal-title {
+  color: #1f2937;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.application-view-modal .ant-modal-close {
+  color: #1f2937;
+}
+
+.application-view-modal .ant-modal-close:hover {
+  color: #374151;
+  background-color: #f3f4f6;
+  border-radius: 50%;
+}
+
+/* Card hover effects */
+.ant-card {
+  transition: all 0.3s ease;
+}
+
+.ant-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Tag styles */
+.ant-tag {
+  border-radius: 6px;
   font-weight: 500;
+  padding: 4px 8px;
+}
+
+/* Avatar styles */
+.ant-avatar {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Button hover effects */
+.ant-btn {
+  transition: all 0.2s ease;
+  border-radius: 8px;
+}
+
+.ant-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 /* Layout Styles */

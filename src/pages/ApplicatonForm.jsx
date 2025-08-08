@@ -475,7 +475,7 @@ const ApplicationForm = () => {
       subscriptionInfo,
     )
       .then(res => {
-        console.log('response', res);
+        console.log('response========>', res);
         if (res.status === 200) {
           toast.success('Subscription Detail update successfully');
           getSubscriptionDetail();
@@ -505,12 +505,23 @@ const ApplicationForm = () => {
           updateProfessionalDetail(formData.professionalDetails);
         }
       }
-      if (currentStep === 3) {
+      if (
+        currentStep === 3 &&
+        professionalDetail?.professionalDetails?.membershipCategory ===
+          'undergraduate_student'
+      ) {
         if (!subscriptionDetail) {
           createSubscriptionDetail(formData.subscriptionDetails);
         } else {
           updateSubscriptionDetail(formData.subscriptionDetails);
         }
+      }
+      if (
+        currentStep === 3 &&
+        professionalDetail?.professionalDetails?.membershipCategory !==
+          'undergraduate_student'
+      ) {
+        setIsModalVisible(true);
       }
       setCurrentStep(prev => {
         const nextStep = Math.min(prev + 1, steps.length);
@@ -611,42 +622,26 @@ const ApplicationForm = () => {
     return true;
   };
 
-  const handleSubmit = () => {
-    setShowValidation(true);
-    if (validateCurrentStep()) {
-      if (currentStep === 3 && !subscriptionDetail) {
-        createSubscriptionDetail(formData.subscriptionDetails);
-      } else if (currentStep === 3 && subscriptionDetail) {
-        updateSubscriptionDetail(formData.subscriptionDetails);
-        setIsModalVisible(true);
-      }
-      // Here you would typically send the form data to your backend
-      // console.log('Form submitted:', formData);
-    }
-  };
-
   const handleModalClose = () => {
     setIsModalVisible(false);
   };
 
   const handleSubscriptionSuccess = paymentData => {
-    // if (validateCurrentStep()) {
-    createSubscriptionDetail({ ...formData.subscriptionDetails, paymentData });
-    setIsModalVisible(false);
-    // }
-    // const updatedSubscriptionDetails = {
-    //   ...formData.subscriptionDetails,
-    //   paymentData,
-    //   // dateOfSubscription: new Date().toISOString(),
-    // };
-    // const updatedFormData = {
-    //   ...formData,
-    //   subscriptionDetails: updatedSubscriptionDetails,
-    // };
-    // setFormData(updatedFormData);
-    // saveProgress(updatedFormData, currentStep);
-    // console.log('Form submitted:', su);
-    // navigate('/');
+    if (validateCurrentStep()) {
+      if (
+        currentStep === 3 &&
+        professionalDetail?.professionalDetails?.membershipCategory !==
+          'undergraduate_student'
+      ) {
+        if (!subscriptionDetail) {
+          createSubscriptionDetail(formData.subscriptionDetails);
+        } else {
+          updateSubscriptionDetail(formData.subscriptionDetails);
+        }
+      }
+      setIsModalVisible(false);
+    }
+    navigate('/');
   };
 
   const renderStepContent = () => {
