@@ -37,7 +37,6 @@ export const LookupProvider = ({ children }) => {
     try {
       setLoading(true);
       const result = await getAllLookups();
-      console.log('result============>', result);
       if (result) {
         const genderData = result.filter(
           item => item.lookuptypeId?.lookuptype === 'Gender',

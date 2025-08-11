@@ -12,7 +12,6 @@ export const validation = () => {
     try {
       const res = getHeaders();
       const user = getUser()
-      console.log(user);
       if (res?.token && user?.user) {
         dispatch(setSignedIn(true));
         dispatch(setUser(JSON.parse(user?.user)));

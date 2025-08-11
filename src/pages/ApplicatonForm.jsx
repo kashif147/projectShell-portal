@@ -21,7 +21,7 @@ import {
 import { useApplication } from '../contexts/applicationContext';
 import Spinner from '../components/common/Spinner';
 
-const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx');
+const stripePromise = loadStripe('pk_test_51Rut8HQeJh5X1hcfNrG7yUZjkR9F3jURKHAiz5UCpJiOjaHjfx43ZimY7nJvLT3EvgrUtIMq1nrgwMgo5js7TOL1006raA9kpv');
 
 const ApplicationForm = () => {
   const navigate = useNavigate();

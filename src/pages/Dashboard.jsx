@@ -53,7 +53,7 @@ const Dashboard = () => {
           icon={<FormOutlined />}
           link="/applicationForm"
           buttonText={stepToButtonText[currentStep] || 'Continue'}
-          disabled={currentStep === 3 && subscriptionDetail}
+          // disabled={currentStep === 3 && subscriptionDetail}
         />
         <DashboardCard
           title="My Profile"
