@@ -6,21 +6,21 @@ import { PDFDownloadLink } from '@react-pdf/renderer';
 import { useApplication } from '../contexts/applicationContext';
 
 const Payments = () => {
-  const { subscriptionDetail,personalDetail,professionalDetail } = useApplication()
+  const { subscriptionDetail, personalDetail, professionalDetail } =
+    useApplication();
   const [paymentRows, setPaymentRows] = useState([]);
   const [receiptData, setReceiptData] = useState(null);
   const [receiptVisible, setReceiptVisible] = useState(false);
   const receiptRef = useRef();
 
   useEffect(() => {
-    if (
-      subscriptionDetail
-    ) {
+    if (subscriptionDetail) {
       setPaymentRows([
         {
           key: 1,
           date: new Date('2025-08-06T14:55:00.000Z').toLocaleDateString(),
-          description: professionalDetail?.professionalDetails?.membershipCategory,
+          description:
+            professionalDetail?.professionalDetails?.membershipCategory,
           amount: '92',
           status: 'Paid',
           details: {
@@ -59,6 +59,8 @@ const Payments = () => {
       title: 'Description',
       dataIndex: 'description',
       key: 'description',
+      render: description =>
+        description.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
     },
     {
       title: 'Amount',
@@ -100,16 +102,16 @@ const Payments = () => {
           <PDFDownloadLink
             key="download"
             document={<ReceiptPDF data={receiptData} />}
-            fileName="receipt.pdf"
-          >
+            fileName="receipt.pdf">
             {({ loading }) => (
-              <Button>{loading ? 'Preparing PDF...' : 'Download as PDF'}</Button>
+              <Button>
+                {loading ? 'Preparing PDF...' : 'Download as PDF'}
+              </Button>
             )}
           </PDFDownloadLink>,
         ]}
         title="Payment Receipt"
-        width={650}
-      >
+        width={650}>
         {receiptData && <Receipt data={receiptData} />}
       </Modal>
     </Card>

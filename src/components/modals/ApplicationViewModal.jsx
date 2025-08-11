@@ -137,12 +137,9 @@ const ApplicationViewModal = ({ isVisible, onClose, application }) => {
     <Modal
       title={
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-1 text-gray-800">
+          <h2 className="text-2xl font-bold my-1 text-gray-800">
             Application Details
           </h2>
-          <p className="text-sm text-gray-500">
-            Application ID: {application.id || 'N/A'}
-          </p>
         </div>
       }
       open={isVisible}

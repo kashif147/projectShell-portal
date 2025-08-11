@@ -22,6 +22,8 @@ const Dashboard = () => {
     getPersonalDetail();
   }, []);
 
+  console.log('Application ID', personalDetail?.ApplicationId);
+
   useEffect(() => {
     if (!personalDetail) {
       setCurrentStep(1);
@@ -48,7 +50,7 @@ const Dashboard = () => {
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <DashboardCard
-          title="Let's get started"
+          title="Application"
           description="Start or continue your membership application"
           icon={<FormOutlined />}
           link="/applicationForm"
@@ -57,21 +59,24 @@ const Dashboard = () => {
         />
         <DashboardCard
           title="My Profile"
+          buttonText={'View My Profile'}
           description="View and update your profile information"
           icon={<UserOutlined />}
           link="/profile"
         />
         <DashboardCard
           title="Events"
+          buttonText={'View Events'}
           description="Browse and register for upcoming events"
           icon={<CalendarOutlined />}
           link="/events"
         />
         <DashboardCard
           title="Payments"
+          buttonText={'Pay Now'}
           description="Manage your payments and subscriptions"
           icon={<CreditCardOutlined />}
-          link="/payments"
+          link={currentStep === 3 && subscriptionDetail ? '/applicationForm' : '/'}
         />
       </div>
     </div>

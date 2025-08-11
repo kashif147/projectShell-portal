@@ -61,6 +61,8 @@ const ApplicationForm = () => {
     subscriptionDetails: {},
   });
 
+  console.log('Application ID', personalDetail?.ApplicationId);
+
   useEffect(() => {
     if (personalDetail) {
       setFormData(prev => ({
