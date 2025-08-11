@@ -25,6 +25,7 @@ const SubscriptionModal = ({
   isVisible,
   onClose,
   onSuccess,
+  onFailure,
   formData,
   membershipCategory,
 }) => {
@@ -60,6 +61,7 @@ const SubscriptionModal = ({
 
   const handleSubmit = async values => {
     if (!stripe || !elements) {
+      onFailure?.('Stripe is not initialised yet. Please try again in a moment.');
       return;
     }
     setLoading(true);
@@ -90,6 +92,7 @@ const SubscriptionModal = ({
       });
     } catch (error) {
       console.error('Payment error:', error);
+      onFailure?.(error?.message || 'Payment failed.');
     } finally {
       setLoading(false);
     }

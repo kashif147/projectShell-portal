@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import PersonalInformation from '../components/application/PersonalInformation';
 import ProfessionalDetails from '../components/application/ProfessionalDetails';
 import SubscriptionDetails from '../components/application/SubscriptionDetails';
-import { SubscriptionModal } from '../components/modals';
+import { SubscriptionModal, PaymentStatusModal } from '../components/modals';
 import Button from '../components/common/Button';
 import { useSelector } from 'react-redux';
 import { loadStripe } from '@stripe/stripe-js';
@@ -21,7 +21,9 @@ import {
 import { useApplication } from '../contexts/applicationContext';
 import Spinner from '../components/common/Spinner';
 
-const stripePromise = loadStripe('pk_test_51Rut8HQeJh5X1hcfNrG7yUZjkR9F3jURKHAiz5UCpJiOjaHjfx43ZimY7nJvLT3EvgrUtIMq1nrgwMgo5js7TOL1006raA9kpv');
+const stripePromise = loadStripe(
+  'pk_test_51Rut8HQeJh5X1hcfNrG7yUZjkR9F3jURKHAiz5UCpJiOjaHjfx43ZimY7nJvLT3EvgrUtIMq1nrgwMgo5js7TOL1006raA9kpv',
+);
 
 const ApplicationForm = () => {
   const navigate = useNavigate();
@@ -39,6 +41,11 @@ const ApplicationForm = () => {
   } = useApplication();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [statusModal, setStatusModal] = useState({
+    open: false,
+    status: 'success',
+    message: '',
+  });
   const [showValidation, setShowValidation] = useState(false);
   const [formData, setFormData] = useState({
     personalInfo: {
@@ -437,13 +444,17 @@ const ApplicationForm = () => {
       .then(res => {
         console.log('response', res);
         if (res.status === 200) {
-          toast.success('Application submitted successfully');
           getSubscriptionDetail();
           setCurrentStep(prev => {
             const nextStep = Math.min(prev + 1, steps.length);
             return nextStep;
           });
-          navigate('/');
+          setStatusModal({ open: true, status: 'success', message: '' });
+          setTimeout(() => {
+            setStatusModal({ open: false, status: 'success', message: '' });
+            navigate('/');
+          }, 3000);
+          toast.success('Application submitted successfully');
         } else {
           toast.error(res.data.message ?? 'Unable to add subscription detail');
         }
@@ -496,13 +507,17 @@ const ApplicationForm = () => {
     )
       .then(res => {
         if (res.status === 200) {
-          toast.success('Application update successfully');
           getSubscriptionDetail();
           setCurrentStep(prev => {
             const nextStep = Math.min(prev + 1, steps.length);
             return nextStep;
           });
-          navigate('/');
+          setStatusModal({ open: true, status: 'success', message: '' });
+          setTimeout(() => {
+            setStatusModal({ open: false, status: 'success', message: '' });
+            navigate('/');
+          }, 3000);
+          toast.success('Application update successfully');
         } else {
           toast.error(
             res.data.message ?? 'Unable to update subscription detail',
@@ -664,7 +679,15 @@ const ApplicationForm = () => {
       }
       setIsModalVisible(false);
     }
-    // navigate('/');
+  };
+
+  const handleSubscriptionFailure = errorMessage => {
+    setIsModalVisible(false);
+    setStatusModal({ open: true, status: 'error', message: errorMessage });
+    setTimeout(() => {
+      setStatusModal({ open: false, status: 'error', message: '' });
+      // navigate('/');
+    }, 2500);
   };
 
   const renderStepContent = () => {
@@ -786,10 +809,22 @@ const ApplicationForm = () => {
           isVisible={isModalVisible}
           onClose={handleModalClose}
           onSuccess={handleSubscriptionSuccess}
+          onFailure={handleSubscriptionFailure}
           formData={formData}
           membershipCategory={formData.professionalDetails.membershipCategory}
         />
       </Elements>
+
+      <PaymentStatusModal
+        open={statusModal.open}
+        status={statusModal.status}
+        subTitle={statusModal.message}
+        onClose={() => setStatusModal(prev => ({ ...prev, open: false }))}
+        onPrimary={() => {
+          setStatusModal(prev => ({ ...prev, open: false }));
+          navigate('/');
+        }}
+      />
     </div>
   );
 };
