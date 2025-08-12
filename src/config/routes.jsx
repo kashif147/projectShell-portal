@@ -12,6 +12,8 @@ import LandingPage from '../pages/landingPage';
 import Application from '../pages/Application';
 import Dashboard from '../pages/Dashboard';
 import ApplicationForm from '../pages/ApplicatonForm';
+import Membership from '../pages/Membership';
+import WorkLocation from '../pages/WorkLocation';
 
 export const publicRoutes = [
   {
@@ -72,6 +74,14 @@ export const privateRoutes = [
       {
         path: 'resources',
         element: <Resources />,
+      },
+      {
+        path: 'membership',
+        element: <Membership />,
+      },
+      {
+        path: 'work-location',
+        element: <WorkLocation />,
       },
     ],
   },

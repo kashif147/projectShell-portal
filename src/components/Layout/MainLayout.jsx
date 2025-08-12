@@ -17,6 +17,8 @@ const routeTitleMap = {
   '/queries': 'Queries',
   '/voting': 'Voting',
   '/resources': 'Resources',
+  '/membership': 'Membership',
+  '/work-location': 'Work Location',
 };
 
 const MainLayout = () => {

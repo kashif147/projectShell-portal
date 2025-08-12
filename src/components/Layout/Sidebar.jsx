@@ -11,6 +11,8 @@ import {
   FileOutlined,
   BookOutlined,
   FormOutlined,
+  AppstoreOutlined,
+  EnvironmentOutlined,
 } from '@ant-design/icons';
 
 const Sidebar = ({ collapsed }) => {
@@ -34,14 +36,24 @@ const Sidebar = ({ collapsed }) => {
       label: 'My Profile',
     },
     {
-      key: '/subscriptions',
-      icon: <CreditCardOutlined />,
-      label: 'Subscriptions',
-    },
-    {
       key: '/payments',
       icon: <CreditCardOutlined />,
       label: 'Payments',
+    },
+    {
+      key: '/membership',
+      icon: <AppstoreOutlined />,
+      label: 'Membership',
+    },
+    {
+      key: '/work-location',
+      icon: <EnvironmentOutlined />,
+      label: 'Work Location',
+    },
+    {
+      key: '/subscriptions',
+      icon: <CreditCardOutlined />,
+      label: 'Subscriptions',
     },
     {
       key: '/events',
@@ -73,7 +85,8 @@ const Sidebar = ({ collapsed }) => {
   return (
     <div>
       <div className={`${collapsed ? 'p-4' : 'p-4'} text-white`}>
-        <h1 className={`${collapsed ? 'text-center text-xl' : 'text-xl'} font-bold`}>
+        <h1
+          className={`${collapsed ? 'text-center text-xl' : 'text-xl'} font-bold`}>
           {collapsed ? 'MP' : 'MEMBERS PORTAL'}
         </h1>
       </div>
@@ -89,4 +102,4 @@ const Sidebar = ({ collapsed }) => {
   );
 };
 
-export default Sidebar; 
+export default Sidebar;
