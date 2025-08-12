@@ -17,7 +17,7 @@ const routeTitleMap = {
   '/queries': 'Queries',
   '/voting': 'Voting',
   '/resources': 'Resources',
-  '/membership': 'Membership',
+  '/membership': 'Membership of Category',
   '/work-location': 'Work Location',
 };
 

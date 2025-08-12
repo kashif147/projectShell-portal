@@ -43,12 +43,12 @@ const Sidebar = ({ collapsed }) => {
     {
       key: '/membership',
       icon: <AppstoreOutlined />,
-      label: 'Membership',
+      label: 'Change of Category',
     },
     {
       key: '/work-location',
       icon: <EnvironmentOutlined />,
-      label: 'Work Location',
+      label: 'Transfer Request',
     },
     {
       key: '/subscriptions',

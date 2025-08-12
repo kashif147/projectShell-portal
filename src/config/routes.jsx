@@ -10,6 +10,7 @@ import Voting from '../pages/Voting';
 import Resources from '../pages/Resources';
 import LandingPage from '../pages/landingPage';
 import Application from '../pages/Application';
+import ApplicationDetail from '../pages/ApplicationDetail';
 import Dashboard from '../pages/Dashboard';
 import ApplicationForm from '../pages/ApplicatonForm';
 import Membership from '../pages/Membership';
@@ -50,6 +51,10 @@ export const privateRoutes = [
       {
         path: 'application',
         element: <Application />,
+      },
+      {
+        path: 'application/detail',
+        element: <ApplicationDetail />,
       },
       {
         path: 'payments',

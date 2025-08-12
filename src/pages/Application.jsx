@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Table, Empty, Tag, Card } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import Button from '../components/common/Button';
 import { useApplication } from '../contexts/applicationContext';
-import { ApplicationViewModal } from '../components/modals';
 
 const Application = () => {
   const { personalDetail, professionalDetail, subscriptionDetail } =
     useApplication();
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedApplication, setSelectedApplication] = useState(null);
+  const navigate = useNavigate();
 
   const formatToDDMMYYYY = value => {
     if (!value) return 'N/A';
@@ -40,13 +39,7 @@ const Application = () => {
     : null;
 
   const handleViewApplication = record => {
-    setSelectedApplication(record);
-    setIsModalVisible(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalVisible(false);
-    setSelectedApplication(null);
+    navigate('/application/detail', { state: { application: record } });
   };
 
   const getStatusColor = status => {
@@ -70,9 +63,7 @@ const Application = () => {
           record.professionalDetail?.professionalDetails?.membershipCategory ||
           '';
         return category ? (
-          <span className="text-gray-700">
-            {category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-          </span>
+          <span className="text-gray-700">{category}</span>
         ) : (
           <span className="text-gray-400">N/A</span>
         );
@@ -97,9 +88,7 @@ const Application = () => {
         const status =
           record.subscriptionDetail?.subscriptionDetails?.memberStatus || '';
         return status ? (
-          <span className="text-gray-700">
-            {status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-          </span>
+          <span className="text-gray-700">{status}</span>
         ) : (
           <span className="text-gray-400">N/A</span>
         );
@@ -139,11 +128,7 @@ const Application = () => {
           />
         )}
 
-        <ApplicationViewModal
-          isVisible={isModalVisible}
-          onClose={handleCloseModal}
-          application={selectedApplication}
-        />
+
       </div>
     </Card>
   );
