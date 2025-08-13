@@ -38,37 +38,43 @@ export const DatePicker = ({
     ${isEmpty ? 'text-red-600' : 'text-gray-700'}
   `;
 
- const validateAge = (dateString) => {
-  if (disableAgeValidation) return 16;
+  const validateAge = (dateString) => {
+    if (disableAgeValidation) return 16;
 
-  // Use dayjs to parse consistently
-  const birthDate = dayjs(dateString, ["YYYY-MM-DD", "DD/MM/YYYY"], true);
-  if (!birthDate.isValid()) return 0;
+    // Use dayjs to parse consistently
+    const birthDate = dayjs(dateString, ["YYYY-MM-DD", "DD/MM/YYYY"], true);
+    if (!birthDate.isValid()) return 0;
 
-  const today = dayjs();
-  let age = today.year() - birthDate.year();
+    const today = dayjs();
+    let age = today.year() - birthDate.year();
 
-  if (
-    today.month() < birthDate.month() ||
-    (today.month() === birthDate.month() && today.date() < birthDate.date())
-  ) {
-    age--;
-  }
-  return age;
-};
-
-useEffect(() => {
-  if (value) {
-    const parsed = dayjs(value, ["YYYY-MM-DD", "DD/MM/YYYY"], true);
-    if (parsed.isValid()) {
-      setDateValue(parsed.format("YYYY-MM-DD"));
-      setDisplayValue(parsed.format("DD/MM/YYYY"));
-    } else {
-      setDateValue("");
-      setDisplayValue("");
+    if (
+      today.month() < birthDate.month() ||
+      (today.month() === birthDate.month() && today.date() < birthDate.date())
+    ) {
+      age--;
     }
-  }
-}, [value]);
+    return age;
+  };
+
+  useEffect(() => {
+    if (value) {
+      // Allow ISO with time, ISO date only, and DD/MM/YYYY
+      const parsed = dayjs(value, [
+        "YYYY-MM-DDTHH:mm:ss.SSSZ",
+        "YYYY-MM-DD",
+        "DD/MM/YYYY"
+      ], false); // strict = false to accept variations
+
+      if (parsed.isValid()) {
+        setDateValue(parsed.format("YYYY-MM-DD")); // internal ISO
+        setDisplayValue(parsed.format("DD/MM/YYYY")); // shown to user
+      } else {
+        setDateValue("");
+        setDisplayValue("");
+      }
+    }
+  }, [value]);
 
   const handleInputChange = (e) => {
     let value = e.target.value.replace(/\D/g, "");
@@ -141,13 +147,6 @@ useEffect(() => {
     }
     setIsCalendarOpen(false);
   };
-
-  // useEffect(() => {
-  //   if (value) {
-  //     setDateValue(value);
-  //     setDisplayValue(formatDate(value));
-  //   }
-  // }, [value]);
 
   return (
     <div className="flex flex-col">

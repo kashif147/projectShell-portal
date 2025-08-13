@@ -20,6 +20,7 @@ import {
 } from '../api/application.api';
 import { useApplication } from '../contexts/applicationContext';
 import Spinner from '../components/common/Spinner';
+import { isDataFormat } from '../helpers/date.helper';
 
 const stripePromise = loadStripe(
   'pk_test_51Rut8HQeJh5X1hcfNrG7yUZjkR9F3jURKHAiz5UCpJiOjaHjfx43ZimY7nJvLT3EvgrUtIMq1nrgwMgo5js7TOL1006raA9kpv',
@@ -195,7 +196,7 @@ const ApplicationForm = () => {
       surname: data.surname,
       forename: data.forename,
       gender: data.gender,
-      dateOfBirth: data.dateOfBirth,
+      dateOfBirth: isDataFormat(data.dateOfBirth),
       countryPrimaryQualification: data.countryPrimaryQualification,
     };
 
@@ -254,7 +255,7 @@ const ApplicationForm = () => {
       surname: data.surname,
       forename: data.forename,
       gender: data.gender,
-      dateOfBirth: '1999-08-04T07:00:00.000Z',
+      dateOfBirth: isDataFormat(data.dateOfBirth),
       countryPrimaryQualification: data.countryPrimaryQualification,
     };
 
@@ -288,8 +289,8 @@ const ApplicationForm = () => {
       }
     });
 
-    console.log('DATA====================>', data);
-    console.log('PERSONAL INFORMATION=========>', personalInfo);
+    // console.log('DATA====================>', data);
+    // console.log('PERSONAL INFORMATION=========>', personalInfo);
 
     // updatePersonalDetailRequest(personalDetail?.ApplicationId, personalInfo)
     //   .then(res => {
@@ -307,7 +308,7 @@ const ApplicationForm = () => {
     //     toast.error('Something went wrong');
     //   });
   };
-
+  console.log('FORM DATA============>',formData);
   const createProfessionalDetail = data => {
     const professionalFields = {
       membershipCategory: data.membershipCategory,
@@ -765,10 +766,10 @@ const ApplicationForm = () => {
                   <div className="ml-2">
                     <p
                       className={`text-sm whitespace-nowrap ${isSubmitted && step.number === 3
-                          ? 'text-green-500 font-semibold'
-                          : currentStep === step.number
-                            ? 'text-blue-500 font-semibold'
-                            : 'text-gray-500'
+                        ? 'text-green-500 font-semibold'
+                        : currentStep === step.number
+                          ? 'text-blue-500 font-semibold'
+                          : 'text-gray-500'
                         }`}>
                       {step.title}
                     </p>
