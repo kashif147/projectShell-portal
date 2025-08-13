@@ -195,7 +195,7 @@ const ApplicationForm = () => {
       surname: data.surname,
       forename: data.forename,
       gender: data.gender,
-      dateOfBirth: '1999-08-04T07:00:00.000Z',
+      dateOfBirth: data.dateOfBirth,
       countryPrimaryQualification: data.countryPrimaryQualification,
     };
 
@@ -288,21 +288,24 @@ const ApplicationForm = () => {
       }
     });
 
-    updatePersonalDetailRequest(personalDetail?.ApplicationId, personalInfo)
-      .then(res => {
-        if (res.status === 200) {
-          getPersonalDetail();
-          setCurrentStep(prev => {
-            const nextStep = Math.min(prev + 1, steps.length);
-            return nextStep;
-          });
-        } else {
-          toast.error(res.data.message ?? 'Unable to update personal detail');
-        }
-      })
-      .catch(() => {
-        toast.error('Something went wrong');
-      });
+    console.log('DATA====================>', data);
+    console.log('PERSONAL INFORMATION=========>', personalInfo);
+
+    // updatePersonalDetailRequest(personalDetail?.ApplicationId, personalInfo)
+    //   .then(res => {
+    //     if (res.status === 200) {
+    //       getPersonalDetail();
+    //       setCurrentStep(prev => {
+    //         const nextStep = Math.min(prev + 1, steps.length);
+    //         return nextStep;
+    //       });
+    //     } else {
+    //       toast.error(res.data.message ?? 'Unable to update personal detail');
+    //     }
+    //   })
+    //   .catch(() => {
+    //     toast.error('Something went wrong');
+    //   });
   };
 
   const createProfessionalDetail = data => {
@@ -550,7 +553,7 @@ const ApplicationForm = () => {
       if (
         currentStep === 3 &&
         professionalDetail?.professionalDetails?.membershipCategory ===
-          'undergraduate_student'
+        'undergraduate_student'
       ) {
         if (!subscriptionDetail) {
           createSubscriptionDetail(formData.subscriptionDetails);
@@ -561,7 +564,7 @@ const ApplicationForm = () => {
       if (
         currentStep === 3 &&
         professionalDetail?.professionalDetails?.membershipCategory !==
-          'undergraduate_student'
+        'undergraduate_student'
       ) {
         setIsModalVisible(true);
       }
@@ -670,7 +673,7 @@ const ApplicationForm = () => {
       if (
         currentStep === 3 &&
         professionalDetail?.professionalDetails?.membershipCategory !==
-          'undergraduate_student'
+        'undergraduate_student'
       ) {
         if (!subscriptionDetail) {
           createSubscriptionDetail(formData.subscriptionDetails);
@@ -744,15 +747,14 @@ const ApplicationForm = () => {
                   <div
                     className={`
                 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
-                ${
-                  isSubmitted && step.number === 3
-                    ? 'bg-green-500 text-white'
-                    : currentStep === step.number
-                      ? 'bg-blue-500 text-white'
-                      : currentStep > step.number
+                ${isSubmitted && step.number === 3
                         ? 'bg-green-500 text-white'
-                        : 'bg-gray-200'
-                }
+                        : currentStep === step.number
+                          ? 'bg-blue-500 text-white'
+                          : currentStep > step.number
+                            ? 'bg-green-500 text-white'
+                            : 'bg-gray-200'
+                      }
               `}>
                     {isSubmitted && step.number === 3
                       ? '✓'
@@ -762,13 +764,12 @@ const ApplicationForm = () => {
                   </div>
                   <div className="ml-2">
                     <p
-                      className={`text-sm whitespace-nowrap ${
-                        isSubmitted && step.number === 3
+                      className={`text-sm whitespace-nowrap ${isSubmitted && step.number === 3
                           ? 'text-green-500 font-semibold'
                           : currentStep === step.number
                             ? 'text-blue-500 font-semibold'
                             : 'text-gray-500'
-                      }`}>
+                        }`}>
                       {step.title}
                     </p>
                   </div>

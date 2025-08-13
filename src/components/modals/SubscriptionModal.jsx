@@ -131,7 +131,12 @@ const SubscriptionModal = ({
       width={window.innerWidth <= 768 ? '95%' : '500px'}
       centered
       className="subscription-modal"
-      bodyStyle={{ padding: '16px' }}>
+      styles={{
+        body: {
+          padding: '16px',
+        },
+      }}
+    >
       <div className="mb-4 p-3 rounded-lg border border-blue-100 bg-blue-50 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
         <div className="flex items-center gap-2">
           <CheckCircleOutlined className="text-blue-500 text-xl" />

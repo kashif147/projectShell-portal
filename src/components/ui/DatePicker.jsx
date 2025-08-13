@@ -38,109 +38,116 @@ export const DatePicker = ({
     ${isEmpty ? 'text-red-600' : 'text-gray-700'}
   `;
 
-  const validateAge = (dateString) => {
-    if (disableAgeValidation) return 16;
+ const validateAge = (dateString) => {
+  if (disableAgeValidation) return 16;
 
-    const today = new Date();
-    const birthDate = new Date(dateString);
-    const age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
+  // Use dayjs to parse consistently
+  const birthDate = dayjs(dateString, ["YYYY-MM-DD", "DD/MM/YYYY"], true);
+  if (!birthDate.isValid()) return 0;
 
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      return age - 1;
+  const today = dayjs();
+  let age = today.year() - birthDate.year();
+
+  if (
+    today.month() < birthDate.month() ||
+    (today.month() === birthDate.month() && today.date() < birthDate.date())
+  ) {
+    age--;
+  }
+  return age;
+};
+
+useEffect(() => {
+  if (value) {
+    const parsed = dayjs(value, ["YYYY-MM-DD", "DD/MM/YYYY"], true);
+    if (parsed.isValid()) {
+      setDateValue(parsed.format("YYYY-MM-DD"));
+      setDisplayValue(parsed.format("DD/MM/YYYY"));
+    } else {
+      setDateValue("");
+      setDisplayValue("");
     }
-    return age;
-  };
-
-  const formatDate = (date) => {
-    if (!date) return '';
-    return dayjs(date).format('DD/MM/YYYY');
-  };
+  }
+}, [value]);
 
   const handleInputChange = (e) => {
-    let value = e.target.value.replace(/\D/g, '');
+    let value = e.target.value.replace(/\D/g, "");
 
-    if (value.length > 8) {
-      value = value.slice(0, 8);
-    }
+    if (value.length > 8) value = value.slice(0, 8);
 
-    let formattedValue = '';
+    let formattedValue = "";
     for (let i = 0; i < value.length; i++) {
-      if (i === 2 || i === 4) {
-        formattedValue += '/';
-      }
+      if (i === 2 || i === 4) formattedValue += "/";
       formattedValue += value[i];
     }
 
     setDisplayValue(formattedValue);
 
     if (formattedValue.length === 10) {
-      const [day, month, year] = formattedValue.split('/');
-      const date = new Date(`${year}-${month}-${day}`);
-
-      if (!isNaN(date.getTime())) {
-        const isoDate = date.toISOString().split('T')[0];
+      const parsedDate = dayjs(formattedValue, "DD/MM/YYYY", true); // strict mode
+      if (parsedDate.isValid()) {
+        const isoDate = parsedDate.format("YYYY-MM-DD");
         setDateValue(isoDate);
 
         const age = validateAge(isoDate);
         if (age < 16 && !disableAgeValidation) {
-          setError('You must be 16 years or older to proceed');
+          setError("You must be 16 years or older to proceed");
         } else {
-          setError('');
+          setError("");
         }
 
         if (onChange) {
-          const event = {
+          onChange({
             target: {
               name,
-               value: dayjs(isoDate).format('DD/MM/YYYY')  // ← formatted return value
-            }
-          };
-          onChange(event);
+              value: parsedDate.format("DD/MM/YYYY"),
+            },
+          });
         }
+      } else {
+        setError("Invalid Date");
       }
     } else {
-      setDateValue('');
-      setError('');
+      setDateValue("");
+      setError("");
     }
   };
 
   const handleCalendarChange = (date) => {
     if (date) {
-      const isoDate = date.format('YYYY-MM-DD');
+      const isoDate = date.format("YYYY-MM-DD");
       setDateValue(isoDate);
-      setDisplayValue(date.format('DD/MM/YYYY'));
+      setDisplayValue(date.format("DD/MM/YYYY"));
 
       const age = validateAge(isoDate);
       if (age < 16 && !disableAgeValidation) {
-        setError('You must be 16 years or older to proceed');
+        setError("You must be 16 years or older to proceed");
       } else {
-        setError('');
+        setError("");
       }
 
       if (onChange) {
-        const event = {
+        onChange({
           target: {
             name,
-            value: dayjs(isoDate).format('DD/MM/YYYY')  // ← formatted return value
-          }
-        };
-        onChange(event);
+            value: date.format("DD/MM/YYYY"),
+          },
+        });
       }
     } else {
-      setDateValue('');
-      setDisplayValue('');
-      setError('');
+      setDateValue("");
+      setDisplayValue("");
+      setError("");
     }
     setIsCalendarOpen(false);
   };
 
-  useEffect(() => {
-    if (value) {
-      setDateValue(value);
-      setDisplayValue(formatDate(value));
-    }
-  }, [value]);
+  // useEffect(() => {
+  //   if (value) {
+  //     setDateValue(value);
+  //     setDisplayValue(formatDate(value));
+  //   }
+  // }, [value]);
 
   return (
     <div className="flex flex-col">

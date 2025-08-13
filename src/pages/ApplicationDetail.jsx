@@ -95,11 +95,15 @@ const ApplicationDetail = () => {
           </div>
         }
         className="mb-3 shadow-sm border-0 bg-white"
-        headStyle={{
-          borderBottom: '1px solid #f3f4f6',
-          padding: '10px 14px',
+        styles={{
+          header: {
+            borderBottom: '1px solid #f3f4f6',
+            padding: '10px 14px',
+          },
+          body: {
+            padding: '10px 14px',
+          },
         }}
-        bodyStyle={{ padding: '10px 14px' }}
       >
         <Row gutter={[12, 8]}>
           {nonNullData.map(([key, value]) => (
