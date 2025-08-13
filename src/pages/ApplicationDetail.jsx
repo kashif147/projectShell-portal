@@ -6,10 +6,6 @@ import {
   IdcardOutlined,
   CreditCardOutlined,
   ArrowLeftOutlined,
-  CalendarOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  CloseCircleOutlined,
 } from '@ant-design/icons';
 import { formatToDDMMYYYY } from '../helpers/date.helper';
 
@@ -32,30 +28,8 @@ const ApplicationDetail = () => {
     );
   }
 
-  const { personalDetail, professionalDetail, subscriptionDetail } = application;
-
-  const getStatusIcon = (status) => {
-    const statusIcons = {
-      Active: <CheckCircleOutlined className="text-green-500" />,
-      Pending: <ClockCircleOutlined className="text-orange-500" />,
-      Inactive: <CloseCircleOutlined className="text-red-500" />,
-      Approved: <CheckCircleOutlined className="text-blue-500" />,
-      Rejected: <CloseCircleOutlined className="text-red-500" />,
-    };
-    return statusIcons[status] || <ClockCircleOutlined className="text-gray-500" />;
-  };
-
-  const getStatusColor = (status) => {
-    const statusColors = {
-      Active: 'green',
-      Pending: 'orange',
-      Inactive: 'red',
-      Approved: 'blue',
-      Rejected: 'red',
-    };
-    return statusColors[status] || 'default';
-  };
-
+  const { personalDetail, professionalDetail, subscriptionDetail } =
+    application;
 
   const renderSection = (title, data, icon, color = 'blue') => {
     if (!data || Object.keys(data).length === 0) return null;
@@ -75,9 +49,13 @@ const ApplicationDetail = () => {
         title={
           <div className="flex items-center gap-2">
             <div className={`p-1 rounded-md bg-${color}-100`}>
-              {React.cloneElement(icon, { className: `text-${color}-500 text-sm` })}
+              {React.cloneElement(icon, {
+                className: `text-${color}-500 text-sm`,
+              })}
             </div>
-            <span className="text-base font-semibold text-gray-800">{title}</span>
+            <span className="text-base font-semibold text-gray-800">
+              {title}
+            </span>
           </div>
         }
         className="mb-3 shadow-sm border-0 bg-white"
@@ -89,8 +67,7 @@ const ApplicationDetail = () => {
           body: {
             padding: '10px 14px',
           },
-        }}
-      >
+        }}>
         <Row gutter={[12, 8]}>
           {nonNullData.map(([key, value]) => (
             <Col xs={24} sm={12} lg={8} key={key}>
@@ -104,8 +81,7 @@ const ApplicationDetail = () => {
                   {typeof value === 'boolean' ? (
                     <Tag
                       color={value ? 'green' : 'red'}
-                      className="text-[10px] px-1 py-0 h-auto"
-                    >
+                      className="text-[10px] px-1 py-0 h-auto">
                       {value ? 'Yes' : 'No'}
                     </Tag>
                   ) : typeof value === 'string' && value.includes('_') ? (
@@ -124,29 +100,19 @@ const ApplicationDetail = () => {
         </Row>
       </Card>
     );
-
   };
 
   const formatPersonalInfo = () => {
     const personalInfo = personalDetail?.personalInfo || {};
     const contactInfo = personalDetail?.contactInfo || {};
-    const dataOfBirth = formatToDDMMYYYY(personalDetail?.personalInfo?.dataOfBirth) || 'N/A';
 
-    return { ...personalInfo, ...contactInfo, 'Date Of Birth': dataOfBirth };
+    return { ...personalInfo, ...contactInfo };
   };
 
   const formatProfessionalInfo = () => {
     const professionalInfo = professionalDetail?.professionalDetails || {};
-    const status = subscriptionDetail?.subscriptionDetails?.memberStatus || 'Pending';
-    const submissionDate = subscriptionDetail?.subscriptionDetails?.submissionDate;
-    const membershipCategory = professionalDetail?.professionalDetails?.membershipCategory || 'N/A';
-
-    // Add summary data to professional info
     return {
       ...professionalInfo,
-      'Application Status': status,
-      // 'Submission Date': submissionDate ? formatToDDMMYYYY(submissionDate) : 'N/A',
-      'Membership Category': membershipCategory,
     };
   };
 
@@ -187,21 +153,21 @@ const ApplicationDetail = () => {
               'Personal Information',
               formatPersonalInfo(),
               <UserOutlined />,
-              'blue'
+              'blue',
             )}
 
             {renderSection(
               'Professional Information',
               formatProfessionalInfo(),
               <IdcardOutlined />,
-              'green'
+              'green',
             )}
 
             {renderSection(
               'Subscription Information',
               formatSubscriptionInfo(),
               <CreditCardOutlined />,
-              'purple'
+              'purple',
             )}
           </div>
         ) : (
@@ -213,17 +179,6 @@ const ApplicationDetail = () => {
             />
           </Card>
         )}
-
-        {/* Footer Actions */}
-        <div className="mt-6 text-center">
-          <Button
-            type="primary"
-            size="middle"
-            onClick={() => navigate('/application')}
-            className="bg-blue-600 hover:bg-blue-700 border-blue-600 px-6 py-2 h-auto text-sm">
-            Back to Applications
-          </Button>
-        </div>
       </div>
     </div>
   );
