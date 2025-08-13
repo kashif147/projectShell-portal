@@ -289,26 +289,22 @@ const ApplicationForm = () => {
       }
     });
 
-    // console.log('DATA====================>', data);
-    // console.log('PERSONAL INFORMATION=========>', personalInfo);
-
-    // updatePersonalDetailRequest(personalDetail?.ApplicationId, personalInfo)
-    //   .then(res => {
-    //     if (res.status === 200) {
-    //       getPersonalDetail();
-    //       setCurrentStep(prev => {
-    //         const nextStep = Math.min(prev + 1, steps.length);
-    //         return nextStep;
-    //       });
-    //     } else {
-    //       toast.error(res.data.message ?? 'Unable to update personal detail');
-    //     }
-    //   })
-    //   .catch(() => {
-    //     toast.error('Something went wrong');
-    //   });
+    updatePersonalDetailRequest(personalDetail?.ApplicationId, personalInfo)
+      .then(res => {
+        if (res.status === 200) {
+          getPersonalDetail();
+          setCurrentStep(prev => {
+            const nextStep = Math.min(prev + 1, steps.length);
+            return nextStep;
+          });
+        } else {
+          toast.error(res.data.message ?? 'Unable to update personal detail');
+        }
+      })
+      .catch(() => {
+        toast.error('Something went wrong');
+      });
   };
-  console.log('FORM DATA============>',formData);
   const createProfessionalDetail = data => {
     const professionalFields = {
       membershipCategory: data.membershipCategory,
@@ -323,9 +319,9 @@ const ApplicationForm = () => {
       branch: data.branch,
       pensionNo: data.pensionNo,
       isRetired: data?.membershipCategory === 'retired_associate',
-      retiredDate: data.retiredDate,
+      retiredDate: data.retiredDate && isDataFormat(data.retiredDate),
       studyLocation: data.studyLocation,
-      graduationDate: data.graduationDate,
+      graduationDate: data.graduationDate && isDataFormat(data.graduationDate),
     };
 
     const professionalInfo = { professionalDetails: {} };
@@ -370,9 +366,9 @@ const ApplicationForm = () => {
       branch: data.branch,
       pensionNo: data.pensionNo,
       isRetired: data?.membershipCategory === 'retired_associate',
-      retiredDate: data.retiredDate,
+      retiredDate: data.retiredDate && isDataFormat(data.retiredDate),
       studyLocation: data.studyLocation,
-      graduationDate: data.graduationDate,
+      graduationDate: data.graduationDate && isDataFormat(data.graduationDate),
     };
 
     const professionalInfo = { professionalDetails: {} };

@@ -116,6 +116,14 @@ export const DatePicker = ({
     } else {
       setDateValue("");
       setError("");
+      if (onChange) {
+        onChange({
+          target: {
+            name,
+            value: "",
+          },
+        });
+      }
     }
   };
 

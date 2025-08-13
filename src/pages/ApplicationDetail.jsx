@@ -11,6 +11,7 @@ import {
   ClockCircleOutlined,
   CloseCircleOutlined,
 } from '@ant-design/icons';
+import { formatToDDMMYYYY } from '../helpers/date.helper';
 
 const ApplicationDetail = () => {
   const navigate = useNavigate();
@@ -55,21 +56,6 @@ const ApplicationDetail = () => {
     return statusColors[status] || 'default';
   };
 
-  const formatToDDMMYYYY = value => {
-    if (!value) return 'N/A';
-    if (
-      typeof value === 'string' &&
-      /^(\d{2})\/(\d{2})\/(\d{4})$/.test(value)
-    ) {
-      return value;
-    }
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return 'N/A';
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
-  };
 
   const renderSection = (title, data, icon, color = 'blue') => {
     if (!data || Object.keys(data).length === 0) return null;
@@ -144,7 +130,9 @@ const ApplicationDetail = () => {
   const formatPersonalInfo = () => {
     const personalInfo = personalDetail?.personalInfo || {};
     const contactInfo = personalDetail?.contactInfo || {};
-    return { ...personalInfo, ...contactInfo };
+    const dataOfBirth = formatToDDMMYYYY(personalDetail?.personalInfo?.dataOfBirth) || 'N/A';
+
+    return { ...personalInfo, ...contactInfo, 'Date Of Birth': dataOfBirth };
   };
 
   const formatProfessionalInfo = () => {
@@ -157,7 +145,7 @@ const ApplicationDetail = () => {
     return {
       ...professionalInfo,
       'Application Status': status,
-      'Submission Date': submissionDate ? formatToDDMMYYYY(submissionDate) : 'N/A',
+      // 'Submission Date': submissionDate ? formatToDDMMYYYY(submissionDate) : 'N/A',
       'Membership Category': membershipCategory,
     };
   };

@@ -15,3 +15,8 @@ export const isDataFormat = (dateStr) => {
   // Invalid date
   return null;
 }
+
+export const formatToDDMMYYYY = (dateString) => {
+  const date = moment(dateString, moment.ISO_8601, true);
+  return date.isValid() ? date.format('DD/MM/YYYY') : null;
+}

@@ -1,9 +1,37 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Table, Tag, Modal } from 'antd';
 import Button from '../components/common/Button';
 import Receipt, { ReceiptPDF } from '../components/Receipt';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { useApplication } from '../contexts/applicationContext';
+import { formatToDDMMYYYY } from '../helpers/date.helper';
+
+const membershipCategoryOptions = [
+  { value: 'general', label: 'General (all grades)' },
+  { value: 'postgraduate_student', label: 'Postgraduate Student' },
+  {
+    value: 'short_term_relief',
+    label: 'Short-term/ Relief (under 15 hrs/wk average)',
+  },
+  { value: 'private_nursing_home', label: 'Private nursing home' },
+  {
+    value: 'affiliate_non_practicing',
+    label: 'Affiliate members (non-practicing)',
+  },
+  {
+    value: 'lecturing',
+    label: 'Lecturing (employed in universities and IT institutes)',
+  },
+  {
+    value: 'associate',
+    label: 'Associate (not currently employed as a nurse/midwife)',
+  },
+  { value: 'retired_associate', label: 'Retired Associate' },
+  {
+    value: 'undergraduate_student',
+    label: 'Undergraduate Student',
+  },
+];
 
 const Payments = () => {
   const { subscriptionDetail, personalDetail, professionalDetail } =
@@ -11,14 +39,13 @@ const Payments = () => {
   const [paymentRows, setPaymentRows] = useState([]);
   const [receiptData, setReceiptData] = useState(null);
   const [receiptVisible, setReceiptVisible] = useState(false);
-  const receiptRef = useRef();
 
   useEffect(() => {
     if (subscriptionDetail) {
       setPaymentRows([
         {
           key: 1,
-          date: new Date('2025-08-06T14:55:00.000Z').toLocaleDateString(),
+          date: formatToDDMMYYYY(subscriptionDetail?.subscriptionDetails?.submissionDate),
           description:
             professionalDetail?.professionalDetails?.membershipCategory,
           amount: '92',
@@ -37,16 +64,9 @@ const Payments = () => {
 
   console.log('Payment==================>', paymentRows);
 
-  const handleDownloadPDF = async () => {
-    const canvas = await html2canvas(receiptRef.current);
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'pt',
-      format: [canvas.width, canvas.height],
-    });
-    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-    pdf.save('receipt.pdf');
+  const getMembershipCategoryLabel = (value) => {
+    const option = membershipCategoryOptions.find(opt => opt.value === value);
+    return option ? option.label : value || 'N/A';
   };
 
   const columns = [
@@ -60,7 +80,8 @@ const Payments = () => {
       dataIndex: 'description',
       key: 'description',
       render: description =>
-        description.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        getMembershipCategoryLabel(description)
+      ,
     },
     {
       title: 'Amount',

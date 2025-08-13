@@ -299,7 +299,7 @@ const Dashboard = () => {
           link="/applicationForm"
           onPress={() => navigate("/applicationForm")}
           buttonText={stepToButtonText[currentStep] || 'Continue'}
-          // disabled={currentStep === 3 && subscriptionDetail}
+          disabled={currentStep === 3 && subscriptionDetail}
         />
         <DashboardCard
           title="My Profile"

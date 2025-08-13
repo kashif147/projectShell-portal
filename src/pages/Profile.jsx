@@ -7,6 +7,7 @@ import Button from '../components/common/Button';
 import { useApplication } from '../contexts/applicationContext';
 import { updatePersonalDetailRequest } from '../api/application.api';
 import Spinner from '../components/common/Spinner';
+import { isDataFormat } from '../helpers/date.helper';
 
 const Profile = () => {
   const { user } = useSelector(state => state.auth);
@@ -23,8 +24,7 @@ const Profile = () => {
         surname: personalDetail?.personalInfo?.surname || '',
         forename: personalDetail?.personalInfo?.forename || '',
         gender: personalDetail?.personalInfo?.gender || '',
-        dateOfBirth: '1999-08-04T07:00:00.000Z',
-        // dateOfBirth: personalDetail?.personalInfo?.dateOfBirth || '',
+        dateOfBirth: personalDetail?.personalInfo?.dateOfBirth || '',
         countryPrimaryQualification: personalDetail?.personalInfo?.countryPrimaryQualification || '',
         personalEmail: personalDetail?.contactInfo?.personalEmail || '',
         mobileNo: personalDetail?.contactInfo?.mobileNumber || '',
@@ -55,8 +55,7 @@ const Profile = () => {
       surname: personalInfo.surname,
       forename: personalInfo.forename,
       gender: personalInfo.gender,
-      // dateOfBirth: personalInfo.dateOfBirth,
-      dateOfBirth: '1999-08-04T07:00:00.000Z',
+      dateOfBirth: personalInfo.dateOfBirth && isDataFormat(personalInfo.dateOfBirth),
       countryPrimaryQualification: personalInfo.countryPrimaryQualification ?? '',
     };
 

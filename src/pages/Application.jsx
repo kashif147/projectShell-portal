@@ -4,53 +4,60 @@ import { EyeOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/common/Button';
 import { useApplication } from '../contexts/applicationContext';
+import { formatToDDMMYYYY } from '../helpers/date.helper';
+
+const membershipCategoryOptions = [
+  { value: 'general', label: 'General (all grades)' },
+  { value: 'postgraduate_student', label: 'Postgraduate Student' },
+  {
+    value: 'short_term_relief',
+    label: 'Short-term/ Relief (under 15 hrs/wk average)',
+  },
+  { value: 'private_nursing_home', label: 'Private nursing home' },
+  {
+    value: 'affiliate_non_practicing',
+    label: 'Affiliate members (non-practicing)',
+  },
+  {
+    value: 'lecturing',
+    label: 'Lecturing (employed in universities and IT institutes)',
+  },
+  {
+    value: 'associate',
+    label: 'Associate (not currently employed as a nurse/midwife)',
+  },
+  { value: 'retired_associate', label: 'Retired Associate' },
+  {
+    value: 'undergraduate_student',
+    label: 'Undergraduate Student',
+  },
+];
 
 const Application = () => {
   const { personalDetail, professionalDetail, subscriptionDetail } =
     useApplication();
   const navigate = useNavigate();
 
-  const formatToDDMMYYYY = value => {
-    if (!value) return 'N/A';
-    if (
-      typeof value === 'string' &&
-      /^(\d{2})\/(\d{2})\/(\d{4})$/.test(value)
-    ) {
-      return value; // already dd/mm/yyyy
-    }
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return 'N/A';
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
-  };
 
   const hasData = personalDetail || professionalDetail || subscriptionDetail;
   const application = hasData
     ? {
-        id: personalDetail?.ApplicationId,
-        submissionDate:
-          subscriptionDetail?.subscriptionDetails?.submissionDate || null,
-        personalDetail,
-        professionalDetail,
-        subscriptionDetail,
-      }
+      id: personalDetail?.ApplicationId,
+      submissionDate:
+        subscriptionDetail?.subscriptionDetails?.submissionDate || null,
+      personalDetail,
+      professionalDetail,
+      subscriptionDetail,
+    }
     : null;
 
   const handleViewApplication = record => {
     navigate('/application/detail', { state: { application: record } });
   };
 
-  const getStatusColor = status => {
-    const statusColors = {
-      Active: 'green',
-      Pending: 'orange',
-      Inactive: 'red',
-      Approved: 'blue',
-      Rejected: 'red',
-    };
-    return statusColors[status] || 'default';
+  const getMembershipCategoryLabel = (value) => {
+    const option = membershipCategoryOptions.find(opt => opt.value === value);
+    return option ? option.label : value || 'N/A';
   };
 
   const columns = [
@@ -63,7 +70,10 @@ const Application = () => {
           record.professionalDetail?.professionalDetails?.membershipCategory ||
           '';
         return category ? (
-          <span className="text-gray-700">{category}</span>
+          <span className="text-gray-700">
+            {getMembershipCategoryLabel(category)
+            }
+          </span>
         ) : (
           <span className="text-gray-400">N/A</span>
         );
