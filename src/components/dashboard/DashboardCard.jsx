@@ -1,15 +1,13 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 
 const DashboardCard = ({
   description,
   icon,
-  link,
   title,
   buttonText,
+  onPress,
   disabled = false,
 }) => {
-  const navigate = useNavigate();
 
   return (
     <div
@@ -22,7 +20,7 @@ const DashboardCard = ({
         {description}
       </p>
       <button
-        onClick={() => navigate(link)}
+        onClick={() => onPress && onPress()}
         className={`px-4 sm:px-6 py-2 rounded-md transition-colors w-full sm:w-auto mt-auto ${disabled ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
         disabled={disabled}>
         {buttonText}

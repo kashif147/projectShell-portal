@@ -12,7 +12,7 @@ const PaymentStatusModal = ({
 }) => {
   const isSuccess = status === 'success';
 
-  const resolvedTitle = title || (isSuccess ? 'Thanks for your order' : 'Payment failed');
+  const resolvedTitle = title || (isSuccess ? 'Thanks for membership' : 'Payment failed');
   const resolvedSubTitle =
     subTitle ||
     (isSuccess

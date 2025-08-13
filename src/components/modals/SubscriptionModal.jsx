@@ -284,7 +284,7 @@ const SubscriptionModal = ({
               loading={loading}
               className="px-6"
               disabled={getDisplayPrice() === 0}>
-              Subscribe Now
+              Pay Now
             </Button>
           </Space>
         </div>

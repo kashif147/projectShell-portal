@@ -88,30 +88,34 @@ const ApplicationDetail = () => {
       <Card
         title={
           <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-md bg-${color}-100`}>
-              {React.cloneElement(icon, { className: `text-${color}-500 text-base` })}
+            <div className={`p-1 rounded-md bg-${color}-100`}>
+              {React.cloneElement(icon, { className: `text-${color}-500 text-sm` })}
             </div>
-            <span className="text-lg font-semibold text-gray-800">{title}</span>
+            <span className="text-base font-semibold text-gray-800">{title}</span>
           </div>
         }
-        className="mb-4 shadow-md border-0 bg-white"
+        className="mb-3 shadow-sm border-0 bg-white"
         headStyle={{
           borderBottom: '1px solid #f3f4f6',
-          padding: '16px 20px 12px 20px',
+          padding: '10px 14px',
         }}
-        bodyStyle={{ padding: '16px' }}>
-        <Row gutter={[16, 12]}>
+        bodyStyle={{ padding: '10px 14px' }}
+      >
+        <Row gutter={[12, 8]}>
           {nonNullData.map(([key, value]) => (
             <Col xs={24} sm={12} lg={8} key={key}>
-              <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 hover:shadow-sm transition-all duration-200 hover:bg-gray-100">
-                <div className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">
+              <div className="bg-gray-50 p-2 rounded-md border border-gray-100 hover:shadow-sm hover:bg-gray-100 transition-all">
+                <div className="text-[10px] font-medium text-gray-600 uppercase tracking-wide mb-0.5">
                   {key
                     .replace(/([A-Z])/g, ' $1')
                     .replace(/^./, s => s.toUpperCase())}
                 </div>
-                <div className="text-sm font-medium text-gray-800">
+                <div className="text-xs font-medium text-gray-800">
                   {typeof value === 'boolean' ? (
-                    <Tag color={value ? 'green' : 'red'} className="text-xs px-2 py-0.5">
+                    <Tag
+                      color={value ? 'green' : 'red'}
+                      className="text-[10px] px-1 py-0 h-auto"
+                    >
                       {value ? 'Yes' : 'No'}
                     </Tag>
                   ) : typeof value === 'string' && value.includes('_') ? (
@@ -130,6 +134,7 @@ const ApplicationDetail = () => {
         </Row>
       </Card>
     );
+
   };
 
   const formatPersonalInfo = () => {
@@ -143,7 +148,7 @@ const ApplicationDetail = () => {
     const status = subscriptionDetail?.subscriptionDetails?.memberStatus || 'Pending';
     const submissionDate = subscriptionDetail?.subscriptionDetails?.submissionDate;
     const membershipCategory = professionalDetail?.professionalDetails?.membershipCategory || 'N/A';
-    
+
     // Add summary data to professional info
     return {
       ...professionalInfo,
