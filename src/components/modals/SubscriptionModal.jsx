@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { Modal, Form, Input, Radio, Space, Divider, Tooltip } from 'antd';
+import {
+  Modal,
+  Form,
+  Input,
+  Radio,
+  Space,
+  Divider,
+  Tooltip,
+  InputNumber,
+} from 'antd';
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import {
   CheckCircleOutlined,
@@ -9,13 +18,40 @@ import {
 } from '@ant-design/icons';
 import Button from '../common/Button';
 
+const membershipCategoryOptions = [
+  { value: 'general', label: 'General (all grades)' },
+  { value: 'postgraduate_student', label: 'Postgraduate Student' },
+  {
+    value: 'short_term_relief',
+    label: 'Short-term/ Relief (under 15 hrs/wk average)',
+  },
+  { value: 'private_nursing_home', label: 'Private nursing home' },
+  {
+    value: 'affiliate_non_practicing',
+    label: 'Affiliate members (non-practicing)',
+  },
+  {
+    value: 'lecturing',
+    label: 'Lecturing (employed in universities and IT institutes)',
+  },
+  {
+    value: 'associate',
+    label: 'Associate (not currently employed as a nurse/midwife)',
+  },
+  { value: 'retired_associate', label: 'Retired Associate' },
+  {
+    value: 'undergraduate_student',
+    label: 'Undergraduate Student',
+  },
+];
+
 const membershipPrices = {
   general: { full: 299.0, monthly: 74.75 },
   postgraduate_student: { full: 299.0, monthly: 74.75 },
-  short_term_relief: { full: 228.0, monthly: 57.00 },
-  private_nursing_home: { full: 288.0, monthly: 72.00 },
-  affiliate_members: { full: 116.0, monthly: 29.00 },
-  lecturing: { full: 116.0, monthly: 29.00 },
+  short_term_relief: { full: 228.0, monthly: 57.0 },
+  private_nursing_home: { full: 288.0, monthly: 72.0 },
+  affiliate_members: { full: 116.0, monthly: 29.0 },
+  lecturing: { full: 116.0, monthly: 29.0 },
   associate: { full: 75.0, monthly: 18.75 },
   retired_associate: { full: 25.0, monthly: 25.0 },
   undergraduate_student: { full: 0.0, monthly: 0.0 },
@@ -33,6 +69,8 @@ const SubscriptionModal = ({
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
+  const [customPrice, setCustomPrice] = useState(null);
+  const [showCustomPrice, setShowCustomPrice] = useState(false);
 
   // Set payment method based on formData
   const initialPaymentMethod =
@@ -46,12 +84,39 @@ const SubscriptionModal = ({
     monthly: 0,
   };
 
+  const getMembershipCategoryLabel = value => {
+    const option = membershipCategoryOptions.find(opt => opt.value === value);
+    return option ? option.label : value || 'N/A';
+  };
+
   const getDisplayPrice = () => {
+    if (customPrice !== null && showCustomPrice) {
+      return customPrice;
+    }
     if (formData?.subscriptionDetails?.paymentType === 'Card Payment') {
       return priceInfo.full;
     } else {
       return priceInfo.monthly;
     }
+  };
+
+  const handleCustomPriceChange = value => {
+    setCustomPrice(value);
+  };
+
+  const validateCustomPrice = value => {
+    if (value === null || value === undefined) return;
+
+    const minPrice = priceInfo.full / 12;
+    const maxPrice = priceInfo.full;
+
+    if (value < minPrice) {
+      return Promise.reject(`Price must be at least €${minPrice.toFixed(2)}`);
+    }
+    if (value > maxPrice) {
+      return Promise.reject(`Price cannot exceed €${maxPrice.toFixed(2)}`);
+    }
+    return Promise.resolve();
   };
 
   const defaultEmail =
@@ -61,7 +126,9 @@ const SubscriptionModal = ({
 
   const handleSubmit = async values => {
     if (!stripe || !elements) {
-      onFailure?.('Stripe is not initialised yet. Please try again in a moment.');
+      onFailure?.(
+        'Stripe is not initialised yet. Please try again in a moment.',
+      );
       return;
     }
     setLoading(true);
@@ -84,11 +151,12 @@ const SubscriptionModal = ({
       await new Promise(resolve => setTimeout(resolve, 1000));
       onSuccess({
         paymentMethod,
-        total: priceInfo.monthly,
+        total: getDisplayPrice(),
         paymentDetails:
           paymentMethod === 'card'
             ? values
             : { bankDetails: values.bankDetails },
+        customPrice: showCustomPrice ? customPrice : null,
       });
     } catch (error) {
       console.error('Payment error:', error);
@@ -135,8 +203,7 @@ const SubscriptionModal = ({
         body: {
           padding: '16px',
         },
-      }}
-    >
+      }}>
       <div className="mb-4 p-3 rounded-lg border border-blue-100 bg-blue-50 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
         <div className="flex items-center gap-2">
           <CheckCircleOutlined className="text-blue-500 text-xl" />
@@ -145,7 +212,7 @@ const SubscriptionModal = ({
               Membership Category
             </div>
             <div className="text-base font-bold text-blue-700">
-              {membershipCategory || 'N/A'}
+              {getMembershipCategoryLabel(membershipCategory) || 'N/A'}
             </div>
           </div>
         </div>
@@ -214,6 +281,54 @@ const SubscriptionModal = ({
               </Space>
             </Radio.Group>
           </Form.Item>
+
+          {/* Custom Price Section */}
+          <div className="mt-4 pt-3 border-t border-gray-200">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">
+                Custom Price
+              </span>
+              <Radio
+                checked={showCustomPrice}
+                onChange={e => {
+                  setShowCustomPrice(e.target.checked);
+                  if (!e.target.checked) {
+                    setCustomPrice(null);
+                    form.setFieldsValue({ customPrice: null });
+                  }
+                }}>
+                Enable Custom Price
+              </Radio>
+            </div>
+
+            {showCustomPrice && (
+              <div className="space-y-2">
+                <div className="text-xs text-gray-500">
+                  Enter a custom price between €
+                  {(priceInfo.full / 12).toFixed(2)} and €
+                  {priceInfo.full.toFixed(2)}
+                </div>
+                <Form.Item
+                  name="customPrice"
+                  rules={[
+                    { required: true, message: 'Please enter custom price' },
+                    { validator: validateCustomPrice },
+                  ]}>
+                  <InputNumber
+                    placeholder={`€${(priceInfo.full / 12).toFixed(2)} - €${priceInfo.full.toFixed(2)}`}
+                    className="w-full"
+                    min={priceInfo.full / 12}
+                    max={priceInfo.full}
+                    step={0.01}
+                    precision={2}
+                    prefix="€"
+                    onChange={handleCustomPriceChange}
+                    style={{ height: '32px' }}
+                  />
+                </Form.Item>
+              </div>
+            )}
+          </div>
         </div>
 
         {paymentMethod === 'card' && (
