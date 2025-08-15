@@ -70,7 +70,6 @@ const SubscriptionModal = ({
   const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [customPrice, setCustomPrice] = useState(null);
-  const [showCustomPrice, setShowCustomPrice] = useState(false);
 
   // Set payment method based on formData
   const initialPaymentMethod =
@@ -89,8 +88,16 @@ const SubscriptionModal = ({
     return option ? option.label : value || 'N/A';
   };
 
+  const getActualDisplayPrice = () => {
+    if (formData?.subscriptionDetails?.paymentType === 'Card Payment') {
+      return priceInfo.full;
+    } else {
+      return priceInfo.monthly;
+    }
+  };
+
   const getDisplayPrice = () => {
-    if (customPrice !== null && showCustomPrice) {
+    if (customPrice !== null) {
       return customPrice;
     }
     if (formData?.subscriptionDetails?.paymentType === 'Card Payment') {
@@ -102,6 +109,10 @@ const SubscriptionModal = ({
 
   const handleCustomPriceChange = value => {
     setCustomPrice(value);
+    // Trigger validation immediately
+    if (value !== null && value !== undefined) {
+      form.validateFields(['customPrice']);
+    }
   };
 
   const validateCustomPrice = value => {
@@ -114,9 +125,21 @@ const SubscriptionModal = ({
       return Promise.reject(`Price must be at least €${minPrice.toFixed(2)}`);
     }
     if (value > maxPrice) {
-      return Promise.reject(`Price cannot exceed €${maxPrice.toFixed(2)}`);
+      return Promise.reject(`Price not in range. Cannot exceed €${maxPrice.toFixed(2)}`);
     }
     return Promise.resolve();
+  };
+
+  const isCustomPriceValid = () => {
+    if (customPrice === null) return true; // No custom price entered, use default
+    const minPrice = priceInfo.full / 12;
+    const maxPrice = priceInfo.full;
+    return customPrice >= minPrice && customPrice <= maxPrice;
+  };
+
+  const isFormValid = () => {
+    if (getDisplayPrice() === 0) return false;
+    return isCustomPriceValid();
   };
 
   const defaultEmail =
@@ -156,7 +179,7 @@ const SubscriptionModal = ({
           paymentMethod === 'card'
             ? values
             : { bankDetails: values.bankDetails },
-        customPrice: showCustomPrice ? customPrice : null,
+        customPrice: customPrice,
       });
     } catch (error) {
       console.error('Payment error:', error);
@@ -222,7 +245,7 @@ const SubscriptionModal = ({
             {/* {formData?.subscriptionDetails?.paymentType === 'Card Payment' ? 'Full Price' : 'Monthly Price'} */}
           </div>
           <div className="text-lg font-bold text-blue-700">
-            €{getDisplayPrice().toFixed(2)}
+            €{getActualDisplayPrice().toFixed(2)}
           </div>
         </div>
       </div>
@@ -288,46 +311,30 @@ const SubscriptionModal = ({
               <span className="text-sm font-medium text-gray-700">
                 Custom Price
               </span>
-              <Radio
-                checked={showCustomPrice}
-                onChange={e => {
-                  setShowCustomPrice(e.target.checked);
-                  if (!e.target.checked) {
-                    setCustomPrice(null);
-                    form.setFieldsValue({ customPrice: null });
-                  }
-                }}>
-                Enable Custom Price
-              </Radio>
             </div>
-
-            {showCustomPrice && (
-              <div className="space-y-2">
-                <div className="text-xs text-gray-500">
-                  Enter a custom price between €
-                  {(priceInfo.full / 12).toFixed(2)} and €
-                  {priceInfo.full.toFixed(2)}
-                </div>
-                <Form.Item
-                  name="customPrice"
-                  rules={[
-                    { required: true, message: 'Please enter custom price' },
-                    { validator: validateCustomPrice },
-                  ]}>
-                  <InputNumber
-                    placeholder={`€${(priceInfo.full / 12).toFixed(2)} - €${priceInfo.full.toFixed(2)}`}
-                    className="w-full"
-                    min={priceInfo.full / 12}
-                    max={priceInfo.full}
-                    step={0.01}
-                    precision={2}
-                    prefix="€"
-                    onChange={handleCustomPriceChange}
-                    style={{ height: '32px' }}
-                  />
-                </Form.Item>
-              </div>
-            )}
+            
+            <div className="space-y-2">
+              <Form.Item
+                name="customPrice"
+                rules={[
+                  { required: true, message: 'Please enter custom price' },
+                  { validator: validateCustomPrice },
+                ]}
+                validateTrigger={['onChange', 'onBlur']}>
+                <InputNumber
+                  placeholder="Enter custom price"
+                  className="w-full"
+                  min={priceInfo.full / 12}
+                  max={priceInfo.full}
+                  step={0.01}
+                  precision={2}
+                  prefix="€"
+                  onChange={handleCustomPriceChange}
+                  onBlur={() => form.validateFields(['customPrice'])}
+                  style={{ height: '32px' }}
+                />
+              </Form.Item>
+            </div>
           </div>
         </div>
 
@@ -403,7 +410,7 @@ const SubscriptionModal = ({
               htmlType="submit"
               loading={loading}
               className="px-6"
-              disabled={getDisplayPrice() === 0}>
+              disabled={!isFormValid()}>
               Pay Now
             </Button>
           </Space>
