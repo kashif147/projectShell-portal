@@ -4,6 +4,9 @@ import { useApplication } from '../contexts/applicationContext';
 import { updateProfessionalDetailRequest } from '../api/application.api';
 import { toast } from 'react-toastify';
 import Select from '../components/ui/Select';
+import { Input } from '../components/ui/Input';
+import { DatePicker } from '../components/ui/DatePicker';
+import { Checkbox } from '../components/ui/Checkbox';
 import Button from '../components/common/Button';
 
 const membershipCategoryOptions = [
@@ -34,20 +37,43 @@ const membershipCategoryOptions = [
 ];
 
 const Membership = () => {
-  const { personalDetail, professionalDetail, getProfessionalDetail } = useApplication();
-  const [form, setForm] = useState({ membershipCategory: '' });
+  const { personalDetail, professionalDetail, getProfessionalDetail } =
+    useApplication();
+  const [form, setForm] = useState({
+    membershipCategory: '',
+    studyLocation: '',
+    graduationDate: '',
+    retiredDate: '',
+    pensionNo: '',
+    isRetired: false,
+  });
   const existing = professionalDetail?.professionalDetails || {};
 
   useEffect(() => {
     setForm({
       membershipCategory: existing.membershipCategory || '',
+      studyLocation: existing.studyLocation || '',
+      graduationDate: existing.graduationDate || '',
+      retiredDate: existing.retiredDate || '',
+      pensionNo: existing.pensionNo || '',
+      isRetired:
+        existing.isRetired ||
+        existing.membershipCategory === 'retired_associate',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [professionalDetail]);
 
-  const onChange = e => {
-    const { name, value } = e.target;
+  const handleDateChange = (name, value) => {
+    console.log('Date change:', name, value);
     setForm({ ...form, [name]: value });
+  };
+
+  const handleInputChange = e => {
+    const { name, value, type, checked } = e.target;
+    setForm({
+      ...form,
+      [name]: type === 'checkbox' ? checked : value,
+    });
   };
 
   const onSubmit = () => {
@@ -56,10 +82,15 @@ const Membership = () => {
       return;
     }
 
-    const payload = { 
+    const payload = {
       professionalDetails: {
-        membershipCategory: form.membershipCategory
-      }
+        membershipCategory: form.membershipCategory,
+        studyLocation: form.studyLocation,
+        graduationDate: form.graduationDate,
+        retiredDate: form.retiredDate,
+        pensionNo: form.pensionNo,
+        isRetired: form.isRetired,
+      },
     };
 
     // updateProfessionalDetailRequest(personalDetail?.ApplicationId, payload)
@@ -74,7 +105,7 @@ const Membership = () => {
     //   .catch(() => toast.error('Something went wrong'));
   };
 
-  const getMembershipCategoryLabel = (value) => {
+  const getMembershipCategoryLabel = value => {
     const option = membershipCategoryOptions.find(opt => opt.value === value);
     return option ? option.label : value || 'N/A';
   };
@@ -103,15 +134,62 @@ const Membership = () => {
             label="Membership Category"
             name="membershipCategory"
             value={form.membershipCategory}
-            onChange={onChange}
+            onChange={handleInputChange}
             required
             tooltip="Please select the membership category most appropriate to yourselves. Some category selections will require you to contact our Membership team."
             placeholder="Select membership category"
             options={membershipCategoryOptions}
           />
-          
+
+          {/* Undergraduate Student Fields */}
+          {form.membershipCategory === 'undergraduate_student' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Select
+                label="Study Location"
+                name="studyLocation"
+                value={form.studyLocation}
+                onChange={handleInputChange}
+                placeholder="Select study location"
+                options={[
+                  { value: 'location1', label: 'Location 1' },
+                  { value: 'location2', label: 'Location 2' },
+                  { value: 'location3', label: 'Location 3' },
+                ]}
+              />
+              <DatePicker
+                label="Graduation Date"
+                name="graduationDate"
+                value={form.graduationDate}
+                onChange={handleInputChange}
+                disableAgeValidation
+              />
+            </div>
+          )}
+
+          {/* Retired Associate Fields */}
+          {form.membershipCategory === 'retired_associate' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <DatePicker
+                  label="Retired Date"
+                  name="retiredDate"
+                  value={form.retiredDate}
+                  onChange={handleInputChange}
+                  disableAgeValidation
+                />
+                <Input
+                  label="Pension No"
+                  name="pensionNo"
+                  value={form.pensionNo}
+                  onChange={handleInputChange}
+                  placeholder="Enter your pension number"
+                />
+              </div>
+            </div>
+          )}
+
           <Divider className="my-2" />
-          
+
           <Space>
             <Button type="primary" onClick={onSubmit}>
               Update Membership Category
@@ -124,5 +202,3 @@ const Membership = () => {
 };
 
 export default Membership;
-
-
