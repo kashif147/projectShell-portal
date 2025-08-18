@@ -1,9 +1,7 @@
 import React, { useMemo, useRef } from 'react';
-import { Card, List, Button, Tag, Space } from 'antd';
+import { Card, List, Button, Tag, Space, Empty } from 'antd';
 import { FileOutlined, DownloadOutlined, LinkOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useApplication } from '../contexts/applicationContext';
-import { generateMembershipCardPDF } from '../components/pdf/membershipCard';
-import { generateRuleBookPDF } from '../components/pdf/ruleBook';
 
 const membershipCategoryLabels = {
   general: 'General (all grades)',
@@ -19,15 +17,23 @@ const membershipCategoryLabels = {
 
 const Resources = () => {
   const { personalDetail, professionalDetail } = useApplication();
-  const membershipCategory = professionalDetail?.professionalDetails?.membershipCategory || 'general';
-  const memberName = `${personalDetail?.personalInfo?.forename ?? ''} ${personalDetail?.personalInfo?.surname ?? ''}`.trim() || 'Member';
-  const membershipNumber = personalDetail?.ApplicationId || 'N/A';
-  const branch = professionalDetail?.professionalDetails?.branch || 'N/A';
-  const section = professionalDetail?.professionalDetails?.section || 'N/A';
+  const hasApplication = Boolean(personalDetail && professionalDetail);
+
+  const membershipCategory = hasApplication
+    ? professionalDetail?.professionalDetails?.membershipCategory || 'general'
+    : '';
+  const memberName = hasApplication
+    ? `${personalDetail?.personalInfo?.forename ?? ''} ${personalDetail?.personalInfo?.surname ?? ''}`.trim()
+    : '';
+  const membershipNumber = hasApplication ? personalDetail?.ApplicationId || '' : '';
+  const branch = hasApplication ? professionalDetail?.professionalDetails?.branch || '' : '';
+  const section = hasApplication ? professionalDetail?.professionalDetails?.section || '' : '';
 
   const cardRef = useRef(null);
 
   const educationalResources = useMemo(() => {
+    if (!hasApplication) return [];
+
     const base = [
       {
         id: 'rb',
@@ -59,25 +65,34 @@ const Resources = () => {
     };
 
     return [...base, ...(byCategory[membershipCategory] || [])];
-  }, [membershipCategory]);
+  }, [hasApplication, membershipCategory]);
 
   const handleDownloadMembershipCard = async () => {
-    await generateMembershipCardPDF({
-      categoryLabel: membershipCategoryLabels[membershipCategory] || membershipCategory,
-      memberName,
-      membershipNumber: membershipNumber?.toString(),
-      branch,
-      section,
-    });
+    if (!hasApplication) return;
+    try {
+      const mod = await import('../components/pdf/membershipCard');
+      await mod.generateMembershipCardPDF({
+        categoryLabel: membershipCategoryLabels[membershipCategory] || membershipCategory,
+        memberName,
+        membershipNumber: membershipNumber?.toString(),
+        branch,
+        section,
+      });
+    } catch {}
   };
 
-  const handleDownloadRuleBook = () => {
-    generateRuleBookPDF({
-      categoryLabel: membershipCategoryLabels[membershipCategory] || membershipCategory,
-    });
+  const handleDownloadRuleBook = async () => {
+    if (!hasApplication) return;
+    try {
+      const mod = await import('../components/pdf/ruleBook');
+      mod.generateRuleBookPDF({
+        categoryLabel: membershipCategoryLabels[membershipCategory] || membershipCategory,
+      });
+    } catch {}
   };
 
   const handleResourceAction = item => {
+    if (!hasApplication) return;
     if (item.action === 'download-rule-book') {
       handleDownloadRuleBook();
       return;
@@ -90,42 +105,45 @@ const Resources = () => {
       window.open(item.url, '_blank');
       return;
     }
-    // For demo PDFs, reuse rule book generator with a different filename/content
-    generateRuleBookPDF({ categoryLabel: item.title, fileName: `${item.title.replace(/\s+/g, '-').toLowerCase()}.pdf` });
   };
 
   return (
     <div className="space-y-6">
       <Card title="Membership Card">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div ref={cardRef} id="membership-card" className="border rounded-lg p-4 w-full md:w-2/3 bg-white">
-            <div className="text-center mb-2">
-              <div className="text-xl font-bold">MEMBERSHIP CARD</div>
-              <div className="text-sm text-gray-500">{membershipCategoryLabels[membershipCategory] || membershipCategory}</div>
+        {!hasApplication ? (
+          <Empty description="No application data" />
+        ) : (
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div ref={cardRef} id="membership-card" className="border rounded-lg p-4 w-full md:w-2/3 bg-white">
+              <div className="text-center mb-2">
+                <div className="text-xl font-bold">MEMBERSHIP CARD</div>
+                <div className="text-sm text-gray-500">{membershipCategoryLabels[membershipCategory] || membershipCategory}</div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                <div className="font-semibold text-gray-600">Name</div>
+                <div className="text-gray-800">{memberName}</div>
+                <div className="font-semibold text-gray-600">Membership Number</div>
+                <div className="text-gray-800">{membershipNumber}</div>
+                <div className="font-semibold text-gray-600">Branch</div>
+                <div className="text-gray-800">{branch}</div>
+                <div className="font-semibold text-gray-600">Section</div>
+                <div className="text-gray-800">{section}</div>
+              </div>
+              <div className="mt-4 text-right text-xs text-gray-500">Digital Card Preview</div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-              <div className="font-semibold text-gray-600">Name</div>
-              <div className="text-gray-800">{memberName || 'N/A'}</div>
-              <div className="font-semibold text-gray-600">Membership Number</div>
-              <div className="text-gray-800">{membershipNumber}</div>
-              <div className="font-semibold text-gray-600">Branch</div>
-              <div className="text-gray-800">{branch}</div>
-              <div className="font-semibold text-gray-600">Section</div>
-              <div className="text-gray-800">{section}</div>
-            </div>
-            <div className="mt-4 text-right text-xs text-gray-500">Digital Card Preview</div>
+            <Space>
+              <Button type="primary" icon={<DownloadOutlined />} onClick={handleDownloadMembershipCard}>
+                Download PDF
+              </Button>
+            </Space>
           </div>
-          <Space>
-            <Button type="primary" icon={<DownloadOutlined />} onClick={handleDownloadMembershipCard}>
-              Download PDF
-            </Button>
-          </Space>
-        </div>
+        )}
       </Card>
 
       <Card title="Resources Library">
         <List
           dataSource={educationalResources}
+          locale={{ emptyText: <Empty description="No resources" /> }}
           renderItem={item => (
             <List.Item
               actions={[
