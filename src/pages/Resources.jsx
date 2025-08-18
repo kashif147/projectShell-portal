@@ -2,8 +2,8 @@ import React, { useMemo, useRef } from 'react';
 import { Card, List, Button, Tag, Space } from 'antd';
 import { FileOutlined, DownloadOutlined, LinkOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useApplication } from '../contexts/applicationContext';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { generateMembershipCardPDF } from '../components/pdf/membershipCard';
+import { generateRuleBookPDF } from '../components/pdf/ruleBook';
 
 const membershipCategoryLabels = {
   general: 'General (all grades)',
@@ -41,7 +41,7 @@ const Resources = () => {
     const byCategory = {
       general: [
         { id: 'g1', title: 'Clinical Safety Best Practices', type: 'PDF', category: 'Guidelines', action: 'download-pdf' },
-        { id: 'g2', title: 'Professional Webinar: Patient Advocacy', type: 'Video', category: 'Webinar', url: 'https://youtu.be/dQw4w9WgXcQ' },
+        { id: 'g2', title: 'Professional Webinar: Patient Advocacy', type: 'Video', category: 'Webinar', url: 'https://example.com/webinar' },
         { id: 'g3', title: 'Continuing Education Portal', type: 'Link', category: 'CPD', url: 'https://example.com/education' },
       ],
       postgraduate_student: [
@@ -54,7 +54,7 @@ const Resources = () => {
       ],
       undergraduate_student: [
         { id: 'u1', title: 'Clinical Placement Handbook', type: 'PDF', category: 'Handbook' },
-        { id: 'u2', title: 'Medication Administration (Video)', type: 'Video', category: 'Skills', url: 'https://youtu.be/dQw4w9WgXcQ' },
+        { id: 'u2', title: 'Medication Administration (Video)', type: 'Video', category: 'Skills', url: 'https://example.com/video' },
       ],
     };
 
@@ -62,22 +62,19 @@ const Resources = () => {
   }, [membershipCategory]);
 
   const handleDownloadMembershipCard = async () => {
-    if (!cardRef.current) return;
-    const canvas = await html2canvas(cardRef.current, { scale: 2, backgroundColor: '#ffffff' });
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: [canvas.width, canvas.height] });
-    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-    pdf.save('membership-card.pdf');
+    await generateMembershipCardPDF({
+      categoryLabel: membershipCategoryLabels[membershipCategory] || membershipCategory,
+      memberName,
+      membershipNumber: membershipNumber?.toString(),
+      branch,
+      section,
+    });
   };
 
   const handleDownloadRuleBook = () => {
-    const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
-    pdf.setFontSize(16);
-    pdf.text('Membership Rule Book', 40, 50);
-    pdf.setFontSize(12);
-    pdf.text(`Category: ${membershipCategoryLabels[membershipCategory] || membershipCategory}`, 40, 80);
-    pdf.text('This is a placeholder Rule Book tailored to your membership category.', 40, 110, { maxWidth: 520 });
-    pdf.save('rule-book.pdf');
+    generateRuleBookPDF({
+      categoryLabel: membershipCategoryLabels[membershipCategory] || membershipCategory,
+    });
   };
 
   const handleResourceAction = item => {
@@ -93,13 +90,8 @@ const Resources = () => {
       window.open(item.url, '_blank');
       return;
     }
-    // Fallback: generate a simple PDF for demo documents
-    const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
-    pdf.setFontSize(14);
-    pdf.text(item.title, 40, 60);
-    pdf.text(`Category: ${item.category}`, 40, 90);
-    pdf.text('Document content goes here.', 40, 120);
-    pdf.save(`${item.title.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+    // For demo PDFs, reuse rule book generator with a different filename/content
+    generateRuleBookPDF({ categoryLabel: item.title, fileName: `${item.title.replace(/\s+/g, '-').toLowerCase()}.pdf` });
   };
 
   return (
