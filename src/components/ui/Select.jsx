@@ -1,5 +1,8 @@
 import React from 'react';
-import { ExclamationCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import {
+  ExclamationCircleOutlined,
+  InfoCircleOutlined,
+} from '@ant-design/icons';
 import { Tooltip, Select as AntSelect } from 'antd';
 
 export const Select = ({
@@ -12,6 +15,7 @@ export const Select = ({
   value = '',
   showValidation = false,
   tooltip,
+  labelExtra,
   isSearchable = false,
   onChange,
   ...props
@@ -32,14 +36,14 @@ export const Select = ({
   // Determine the actual value to use
   const actualValue = value || defaultValue || '';
 
-  const handleChange = (newValue) => {
+  const handleChange = newValue => {
     if (onChange) {
       // Create a synthetic event to match the native select's event structure
       const event = {
         target: {
           name,
-          value: newValue
-        }
+          value: newValue,
+        },
       };
       onChange(event);
     }
@@ -57,6 +61,9 @@ export const Select = ({
                   <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 cursor-help" />
                 </Tooltip>
               )}
+              {labelExtra && (
+                <span className="ml-2 text-xs text-gray-500">{labelExtra}</span>
+              )}
               {isEmpty && (
                 <span className="ml-1 text-xs text-red-500">(Required)</span>
               )}
@@ -73,11 +80,12 @@ export const Select = ({
             optionFilterProp="children"
             filterOption={(input, option) => {
               if (!option || !option.children) return false;
-              return option.children.toLowerCase().includes(input.toLowerCase());
+              return option.children
+                .toLowerCase()
+                .includes(input.toLowerCase());
             }}
             onChange={handleChange}
-            {...props}
-          >
+            {...props}>
             {options.map(option => (
               <AntSelect.Option key={option.value} value={option.value}>
                 {option.label}
@@ -104,6 +112,9 @@ export const Select = ({
               <Tooltip title={tooltip}>
                 <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 cursor-help" />
               </Tooltip>
+            )}
+            {labelExtra && (
+              <span className="ml-2 text-xs text-gray-500">{labelExtra}</span>
             )}
             {isEmpty && (
               <span className="ml-1 text-xs text-red-500">(Required)</span>

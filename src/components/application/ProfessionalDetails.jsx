@@ -69,152 +69,230 @@ const workLocations = [
 
 // Mapping of work locations to their branches and regions
 const workLocationDetails = {
-  '24 Hour Care Services': { branch: 'Meath', region: 'Dublin North East' },
+  '24 Hour Care Services': {
+    branch: 'Meath',
+    region: 'Dublin North East',
+    iro: 'John Murphy',
+  },
   '24 Hour Care Services (Mid-West)': {
     branch: 'Clare',
     region: 'Mid-West, West and North West',
+    iro: 'Sarah O’Brien',
   },
   '24 Hour Care Services (North West)': {
     branch: 'Sligo',
     region: 'Mid-West, West and North West',
+    iro: 'Michael Gallagher',
   },
   'BLANCHARDSTOWN INSTITUTE OF TECHNOLOGY': {
     branch: 'Dublin Northern Branch',
     region: 'Dublin Mid Leinster',
+    iro: 'Emma Byrne',
   },
   'CAREDOC (CORK)': {
     branch: 'Cork Vol/Private Branch',
     region: 'South - South East',
+    iro: 'Patrick O’Sullivan',
   },
   'DUBLIN INSTITUTE OF TECHNOLOGY': {
     branch: 'Dublin South West Branch',
     region: 'Dublin Mid Leinster',
+    iro: 'Aoife Kelly',
   },
   'GLENDALE NURSING HOME (TULLOW)': {
     branch: 'Carlow',
     region: 'South - South East',
+    iro: 'Brian Doyle',
   },
-  'HOME INSTEAD (WESTERN REGION)': { branch: 'Roscommon', region: 'West' },
+  'HOME INSTEAD (WESTERN REGION)': {
+    branch: 'Roscommon',
+    region: 'West',
+    iro: 'Fiona McDonagh',
+  },
   'LETTERKENNY INSTITUTE OF TECHNOLOGY': {
     branch: 'Letterkenny',
     region: 'Letterkenny',
+    iro: 'Seán Doherty',
   },
   'LIMERICK INSTITUTE OF TECHNOLOGY': {
     branch: 'Limerick',
     region: 'Limerick',
+    iro: 'Niamh Ryan',
   },
-  'SLIGO INSTITUTE OF TECHNOLOGY': { branch: 'Sligo', region: 'Sligo' },
+  'SLIGO INSTITUTE OF TECHNOLOGY': {
+    branch: 'Sligo',
+    region: 'Sligo',
+    iro: 'Conor Walsh',
+  },
   'ST JOSEPHS HOSPITAL- MOUNT DESERT': {
     branch: 'Cork Vol/Private Branch',
     region: 'South - South East',
+    iro: 'Mary O’Leary',
   },
   'TALLAGHT INSTITUTE OF TECHNOLOGY': {
     branch: 'Dublin South West Branch',
     region: 'Dublin Mid Leinster',
+    iro: 'Kevin Nolan',
   },
-  'Atu (Letterkenny)': { branch: 'Letterkenny', region: 'Letterkenny' },
+  'Atu (Letterkenny)': {
+    branch: 'Letterkenny',
+    region: 'Letterkenny',
+    iro: 'Claire McBride',
+  },
   'Regional Centre Of Nursing & Midwifery Education': {
     branch: 'Offaly',
     region: 'Mid Leinster',
+    iro: 'Tomás Flynn',
   },
-  'Newtown School': { branch: 'Waterford', region: 'South - South East' },
+  'Newtown School': {
+    branch: 'Waterford',
+    region: 'South - South East',
+    iro: 'Ciara Hayes',
+  },
   'Tipperary Education & Training Board': {
     branch: 'Tipperary-North-Mwhb',
     region: 'Mid-West, West and North West',
+    iro: 'Shane Kennedy',
   },
   'National University Ireland Galway': {
     branch: 'Galway',
     region: 'Mid-West, West and North West',
+    iro: 'Eimear Burke',
   },
   'South East Technological University (Setu)': {
     branch: 'Carlow',
     region: 'South - South East',
+    iro: 'Paul Fitzgerald',
   },
   'Tud (Tallaght)': {
     branch: 'Dublin South West Branch',
     region: 'Dublin Mid Leinster',
+    iro: 'Deirdre Roche',
   },
   'College Of Anaesthetists': {
     branch: 'Dublin South West Branch',
     region: 'Dublin Mid Leinster',
+    iro: 'Liam Byrne',
   },
   'Tud (Blanchardstown)': {
     branch: 'Dublin Northern Branch',
     region: 'Dublin North East',
+    iro: 'Siobhán Kavanagh',
   },
   'Gmit (Galway)': {
     branch: 'Galway',
     region: 'Mid-West, West and North West',
+    iro: 'Cathal Moran',
   },
   'Cork University College': {
     branch: 'Cork Vol/Private Branch',
     region: 'South - South East',
+    iro: 'Anna McCarthy',
   },
   'Mtu (Cork)': {
     branch: 'Cork Vol/Private Branch',
     region: 'South - South East',
+    iro: 'Ronan Hayes',
   },
-  Student: { branch: 'Student', region: 'Student' },
+  Student: {
+    branch: 'Student',
+    region: 'Student',
+    iro: 'Generic Student Rep',
+  },
   'St Columbas College (Dublin)': {
     branch: 'Dublin East Coast Branch',
     region: 'Dublin Mid Leinster',
+    iro: 'Eoin Brady',
   },
-  'Setu (Waterford)': { branch: 'Waterford', region: 'South - South East' },
+  'Setu (Waterford)': {
+    branch: 'Waterford',
+    region: 'South - South East',
+    iro: 'Laura Keane',
+  },
   'Nui Galway': {
     branch: 'Galway City',
     region: 'Mid-West, West and North West',
+    iro: 'Mark Healy',
   },
   'Roscrea College': {
     branch: 'Tipperary-North-Mwhb',
     region: 'Mid-West, West and North West',
+    iro: 'Orla Quinn',
   },
   'Dun Laoghaire Institute Of Art & Design': {
     branch: 'Dunlaoghaire',
     region: 'Dublin Mid Leinster',
+    iro: 'James O’Connor',
   },
-  'Mtu (Kerry)': { branch: 'Kerry', region: 'South - South East' },
+  'Mtu (Kerry)': {
+    branch: 'Kerry',
+    region: 'South - South East',
+    iro: 'Aisling Daly',
+  },
   'Tus (Limerick)': {
     branch: 'Limerick',
     region: 'Mid-West, West and North West',
+    iro: 'Padraig O’Neill',
   },
   'Dundalk Institute Of Technology (Dkit)': {
     branch: 'Dundalk',
     region: 'Dublin North East',
+    iro: 'Colm Reilly',
   },
-  'Atu (Sligo)': { branch: 'Sligo', region: 'Mid-West, West and North West' },
+  'Atu (Sligo)': {
+    branch: 'Sligo',
+    region: 'Mid-West, West and North West',
+    iro: 'Gráinne McGowan',
+  },
   'Tud (Bolton Street)': {
     branch: 'Dublin South West Branch',
     region: 'Dublin Mid Leinster',
+    iro: 'Brendan Casey',
   },
   'Dublin City University': {
     branch: 'Dublin Northern Branch',
     region: 'Dublin North East',
+    iro: 'Rachel Dwyer',
   },
   'National University Ireland Maynooth': {
     branch: 'Kildare/Naas',
     region: 'Dublin Mid Leinster',
+    iro: 'Stephen Ward',
   },
   'University College Dublin': {
     branch: 'Dublin East Coast Branch',
     region: 'Dublin Mid Leinster',
+    iro: 'Louise Byrne',
   },
-  'Limerick University': { branch: 'Limerick', region: 'Limerick' },
+  'Limerick University': {
+    branch: 'Limerick',
+    region: 'Limerick',
+    iro: 'Declan O’Donnell',
+  },
   'Trinity College': {
     branch: 'Dublin East Coast Branch',
     region: 'Dublin Mid Leinster',
+    iro: 'Jennifer McMahon',
   },
-  'St Angelas College (Sligo)': { branch: 'Sligo', region: 'Sligo' },
+  'St Angelas College (Sligo)': {
+    branch: 'Sligo',
+    region: 'Sligo',
+    iro: 'Alan Sheridan',
+  },
   'Royal College Of Surgeons': {
     branch: 'Dublin East Coast Branch',
     region: 'Dublin North East',
+    iro: 'Caroline Byrne',
   },
   'Tus (Technological University Of The Shannon)': {
     branch: 'Athlone',
     region: 'Dublin North East',
+    iro: 'Gerry Flanagan',
   },
   "Galway Mayo Institute Of Tech(C'Bar)": {
     branch: 'Castlebar',
     region: 'Mid-West, West and North West',
+    iro: 'Donna Corcoran',
   },
 };
 
@@ -328,6 +406,11 @@ const ProfessionalDetails = ({
           value={formData?.workLocation || ''}
           onChange={handleInputChange}
           showValidation={showValidation}
+          labelExtra={
+            formData?.workLocation && workLocationDetails[formData.workLocation]
+              ? `IRO: ${workLocationDetails[formData.workLocation].iro}`
+              : ''
+          }
           placeholder="Select work location"
           options={[
             ...workLocations.map(loc => ({ value: loc, label: loc })),
