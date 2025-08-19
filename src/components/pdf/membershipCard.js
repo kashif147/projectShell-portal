@@ -15,7 +15,14 @@ export async function generateMembershipCardPDF({
 }) {
 	const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [86, 54] });
 	const dims = { w: 86, h: 54 };
+
+	// Front side
 	await drawFrontSide(pdf, dims, { categoryLabel, memberName, membershipNumber, branch, section });
+
+	// Back side
+	pdf.addPage([86, 54], 'landscape');
+	drawBackSide(pdf, dims);
+
 	pdf.save(fileName);
 }
 
@@ -55,14 +62,15 @@ async function drawFrontSide(pdf, dims, data) {
 	pdf.setFontSize(7.5);
 	pdf.text('MEMBERSHIP CARD', w / 2, 24, { align: 'center' });
 
-	// Details
-	const labelYStart = 31;
-	const lineGap = 6.0; // generous spacing between rows
+	// Details (single column: NAME, MEMBERSHIP NUMBER, BRANCH, SECTION)
+	const labelYStart = 30;
+	const lineGap = 4.8; // compact to fit 4 rows comfortably
 	const labelX = 5;
-	const valueX = 35; // values pushed right for clear separation
+	const valueX = 35;
 
 	const drawRow = (label, value, row) => {
 		const y = labelYStart + lineGap * row;
+		const normalized = value && String(value).trim() ? String(value) : 'N/A';
 		pdf.setTextColor(...accentBlue);
 		pdf.setFont('helvetica', 'bold');
 		pdf.setFontSize(5.5);
@@ -70,7 +78,7 @@ async function drawFrontSide(pdf, dims, data) {
 		pdf.setTextColor(20, 20, 20);
 		pdf.setFont('helvetica', 'normal');
 		pdf.setFontSize(6);
-		pdf.text((value ?? 'N/A').toString(), valueX, y);
+		pdf.text(normalized, valueX, y);
 	};
 
 	drawRow('NAME', memberName, 0);
@@ -82,16 +90,84 @@ async function drawFrontSide(pdf, dims, data) {
 	pdf.setTextColor(...accentBlue);
 	pdf.setFont('helvetica', 'bold');
 	pdf.setFontSize(6);
-	pdf.text('SIGNATURE', 5, h - 6);
+	const signatureTextY = h - 6; // keep label comfortably above the bottom but visible
+	pdf.text('SIGNATURE', 5, signatureTextY);
 	pdf.setDrawColor(170, 170, 170);
 	pdf.setLineWidth(0.4);
-	pdf.line(30, h - 6.5, w - 8, h - 6.5);
-	try {
-		const img = new Image();
-		img.src = logo;
-		await new Promise(res => { img.onload = res; img.onerror = res; });
-		pdf.addImage(img, 'PNG', w / 2 - 7, h - 11.5, 14, 7);
-	} catch {}
+	const signatureLineY = h - 4; // place the signing line near the bottom border
+	pdf.line(30, signatureLineY, w - 8, signatureLineY);
+	// Intentionally avoid adding a watermark logo near the signature area to prevent any overlap
 }
 
+
+function drawBackSide(pdf, dims) {
+	const { w, h } = dims;
+	const borderColor = [233, 30, 99]; // pink
+	const headerBlue = [33, 76, 140]; // deep blue similar to front
+	const textBlue = [30, 64, 175];
+
+	// Border
+	pdf.setDrawColor(...borderColor);
+	pdf.setLineWidth(0.6);
+	pdf.roundedRect(2, 2, w - 4, h - 4, 3, 3);
+
+	const startX = 6;
+	let y = 9;
+
+	const writeLabelValue = (label, value) => {
+		pdf.setFont('helvetica', 'bold');
+		pdf.setTextColor(...textBlue);
+		pdf.setFontSize(6.5);
+		pdf.text(label, startX, y);
+		pdf.setFont('helvetica', 'normal');
+		pdf.setTextColor(25, 25, 25);
+		pdf.setFontSize(6.5);
+		pdf.text(`: ${value}`, startX + 26, y);
+		y += 5.2;
+	};
+
+	const writeEmail = email => {
+		pdf.setFont('helvetica', 'normal');
+		pdf.setTextColor(25, 25, 25);
+		pdf.setFontSize(6);
+		pdf.text(`Email: ${email}`, startX, y);
+		y += 5.2;
+	};
+
+	// Heading row spacing slightly larger at the top
+	pdf.setFont('helvetica', 'bold');
+	pdf.setTextColor(...headerBlue);
+	pdf.setFontSize(8);
+	pdf.text('Contact', startX, y - 2.5);
+
+	// Offices
+	writeLabelValue('Head Office', '01 664 0600');
+	writeEmail('inmo@inmo.ie');
+
+	writeLabelValue('Cork', '021 470 3000');
+	writeEmail('inmocork@inmo.ie');
+
+	writeLabelValue('Limerick', '061 308999');
+	writeEmail('inmolimerick@inmo.ie');
+
+	writeLabelValue('Galway', '091 581818');
+	writeEmail('inmogalway@inmo.ie');
+
+	// Websites (centered)
+	const sitesY = h - 14.5;
+	pdf.setFont('helvetica', 'normal');
+	pdf.setTextColor(...headerBlue);
+	pdf.setFontSize(6);
+	pdf.text('www.inmo.ie    www.nurse2nurse.ie', w / 2, sitesY, { align: 'center' });
+	pdf.text('www.inmoprofessional.ie', w / 2, sitesY + 4.5, { align: 'center' });
+
+	// Simple social placeholders (three small squares) bottom-left
+	const iconY = h - 8;
+	let iconX = 10;
+	pdf.setFillColor(...headerBlue);
+	for (let i = 0; i < 3; i += 1) {
+		pdf.rect(iconX, iconY, 3.5, 3.5, 'F');
+		iconX += 6;
+	}
+}
 

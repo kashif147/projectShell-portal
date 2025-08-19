@@ -39,7 +39,7 @@ const Resources = () => {
         id: 'rb',
         title: 'Rule Book',
         type: 'PDF',
-        category: 'Governance',
+        category: 'Links',
         action: 'download-rule-book',
       },
     ];
