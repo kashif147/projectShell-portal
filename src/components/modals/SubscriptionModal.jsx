@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Modal,
   Form,
@@ -82,6 +82,14 @@ const SubscriptionModal = ({
     full: 0,
     monthly: 0,
   };
+
+  useEffect(() => {
+    if (isVisible) {
+      const defaultPrice = getActualDisplayPrice();
+      setCustomPrice(defaultPrice);
+      form.setFieldsValue({ customPrice: defaultPrice.toFixed(2) });
+    }
+  }, [isVisible]);
 
   const getMembershipCategoryLabel = value => {
     const option = membershipCategoryOptions.find(opt => opt.value === value);
@@ -312,7 +320,7 @@ const SubscriptionModal = ({
                 Custom Price
               </span>
             </div>
-            
+
             <div className="space-y-2">
               <Form.Item
                 name="customPrice"

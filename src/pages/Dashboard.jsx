@@ -232,7 +232,7 @@ const Dashboard = () => {
           setTimeout(() => {
             setStatusModal({ open: false, status: 'success', message: '' });
           }, 3000);
-          toast.success('Application update successfully');
+          // toast.success('Application update successfully');
         } else {
           toast.error(
             res.data.message ?? 'Unable to update subscription detail',
