@@ -11,7 +11,7 @@ export const microSoftUrlRedirect = async () => {
   authUrl.searchParams.append("client_id", "e9460e2d-29d1-4711-be7e-e1e92d1370ef");
   authUrl.searchParams.append("nonce", "defaultNonce");
   authUrl.searchParams.append("redirect_uri", "http://localhost:3000");
-  authUrl.searchParams.append("scope", "openid profile offline_access");
+  authUrl.searchParams.append("scope", "openid offline_access");
   authUrl.searchParams.append("response_type", "code");
   authUrl.searchParams.append("prompt", "login");
   authUrl.searchParams.append("code_challenge", code_challenge);

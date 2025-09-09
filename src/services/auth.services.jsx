@@ -40,7 +40,7 @@ export const signInMicrosoft = data => {
       })
       .catch(() => {
         toast.error('Something went wrong')
-        navigate('/')
+        // navigate('/')
       });
   };
 };
