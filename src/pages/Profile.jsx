@@ -116,7 +116,7 @@ const Profile = () => {
             <h2 className="mt-4 text-xl font-bold">
               {user?.userFirstName || ''} {user?.userLastName || ''}
             </h2>
-            <p className="text-gray-500">{user?.role}</p>
+            <p className="text-gray-500">{user?.role ?? 'Non Member'}</p>
           </div>
         </Card>
       </Col>

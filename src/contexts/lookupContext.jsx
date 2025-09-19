@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect } from 'react';
 import axios from 'axios';
-import { LOOKUP_URL } from '../constants/api';
+import { BASE_URL } from '../constants/api';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { getHeaders } from '../helpers/auth.helper';
 
@@ -10,9 +10,9 @@ const getAllLookups = async () => {
     if (!headers.token) {
       throw new Error('No token found');
     }
-    const response = await axios.get(`${LOOKUP_URL}/lookup`, {
+    const response = await axios.get(`${BASE_URL}/lookup`, {
       headers: {
-        Authorization: headers.token,
+        Authorization: `Bearer ${headers.token}`,
         'Content-Type': 'application/json',
       },
     });

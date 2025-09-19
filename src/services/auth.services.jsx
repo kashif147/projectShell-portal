@@ -24,6 +24,27 @@ export const validation = () => {
   };
 };
 
+export const getMemberRule = () => {
+  const res = getHeaders();
+  if (res?.token) {
+    const cleanToken = res.token.replace(/^Bearer\s+/i, '');
+    createPolicyEvaluationRequest({
+      token: cleanToken,
+      resource: 'user',
+      action: 'read',
+      context: {
+        userId: '6888b5dc60c798b097e86c91',
+      },
+    })
+      .then(res => {
+        console.log('res=============>', res);
+      })
+      .catch(err => {
+        console.log('err=============>', err);
+      });
+  }
+};
+
 export const signInMicrosoft = data => {
   return dispatch => {
     signInMicrosoftRequest(data)

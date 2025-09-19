@@ -9,7 +9,7 @@ application_request.interceptors.request.use(
   config => {
     const headers = getHeaders();
     console.log('Headers======>',headers.token);
-    config.headers['Authorization'] = headers.token;
+    config.headers['Authorization'] = `Bearer ${headers.token}`;
     config.headers['Content-Type'] = 'application/json';
 
     config.baseURL = PORTAL_URL;

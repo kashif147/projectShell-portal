@@ -14,7 +14,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { publicRoutes, privateRoutes } from './config/routes';
 import './assets/theme/index.css';
-import { signInMicrosoft, validation } from './services/auth.services';
+import { getMemberRule, signInMicrosoft, validation } from './services/auth.services';
 import './config/globals.js';
 import { ErrorPage } from './pages/errorPage';
 import { getVerifier } from './helpers/verifier.helper.js';
@@ -63,6 +63,7 @@ const App = () => {
           dispatch(signInMicrosoft(data));
         } else {
           dispatch(validation());
+          // getMemberRule()
         }
       } catch (error) {
         toast.error('Authentication failed');
