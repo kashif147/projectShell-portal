@@ -3,7 +3,7 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
 import { DatePicker } from '../ui/DatePicker';
-import { countries } from '../../constants/countries';
+// Dynamic countries from lookup context will replace static constants
 import { useLookup } from '../../contexts/lookupContext';
 import { useJsApiLoader, StandaloneSearchBox } from '@react-google-maps/api';
 
@@ -15,7 +15,18 @@ const PersonalInformation = ({
   showValidation = false,
 }) => {
   const inputRef = useRef(null);
-  const { genderLookups, titleLookups } = useLookup();
+  const { genderLookups, titleLookups, countryLookups, fetchCountryLookups } = useLookup();
+
+  React.useEffect(() => {
+    if (!countryLookups || countryLookups.length === 0) {
+      fetchCountryLookups?.();
+    }
+  }, []);
+
+  const countryOptions = (countryLookups || []).map(c => ({
+    value: c?.code,
+    label: c?.displayname || c?.name || c?.code,
+  }));
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: 'AIzaSyCJYpj8WV5Rzof7O3jGhW9XabD0J4Yqe1o',
@@ -148,7 +159,7 @@ const PersonalInformation = ({
           name="countryPrimaryQualification"
           value={formData?.countryPrimaryQualification || ''}
           onChange={handleInputChange}
-          options={countries}
+          options={countryOptions}
           isSearchable
           placeholder="Select country of primary qualification"
         />
@@ -234,7 +245,7 @@ const PersonalInformation = ({
           name="country"
           value={formData?.country || 'IE'}
           onChange={handleInputChange}
-          options={countries}
+          options={countryOptions}
           isSearchable
           placeholder="Search for a country..."
         />

@@ -8,7 +8,7 @@ const request = axios.create();
 request.interceptors.request.use(
   config => {
     const headers = getHeaders();
-    config.headers['Authorization'] = headers.token;
+    config.headers['Authorization'] = `Bearer ${headers.token}`;
     config.headers['Content-Type'] = 'application/json';
 
     config.baseURL = BASE_URL;

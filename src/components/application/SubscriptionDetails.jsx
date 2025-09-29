@@ -3,6 +3,7 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
 import { Radio } from '../ui/Radio';
+import { useLookup } from '../../contexts/lookupContext';
 
 const nurseTypeOptions = [
   { value: 'general', label: 'General Nurse' },
@@ -21,6 +22,16 @@ const SubscriptionDetails = ({
   onFormDataChange,
   showValidation = false,
 }) => {
+  const { primarySectionLookups, secondarySectionLookups } = useLookup();
+
+  const primaryOptions = (primarySectionLookups || []).map(l => ({
+    value: l?.DisplayName || l?.lookupname,
+    label: l?.DisplayName || l?.lookupname,
+  }));
+  const secondaryOptions = (secondarySectionLookups || []).map(l => ({
+    value: l?.DisplayName || l?.lookupname,
+    label: l?.DisplayName || l?.lookupname,
+  }));
   const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
     if (
@@ -160,14 +171,7 @@ const SubscriptionDetails = ({
           onChange={handleInputChange}
           showValidation={showValidation}
           placeholder="Select primary section"
-          options={[
-            { value: 'section1', label: 'Section 1' },
-            { value: 'section2', label: 'Section 2' },
-            { value: 'section3', label: 'Section 3' },
-            { value: 'section4', label: 'Section 4' },
-            { value: 'section5', label: 'Section 5' },
-            { value: 'other', label: 'Other' },
-          ]}
+          options={[...primaryOptions, { value: 'other', label: 'Other' }]}
         />
         <Input
           label="Other Primary Section"
@@ -187,14 +191,7 @@ const SubscriptionDetails = ({
           value={formData?.secondarySection || ''}
           onChange={handleInputChange}
           placeholder="Select secondary section"
-          options={[
-            { value: 'section1', label: 'Section 1' },
-            { value: 'section2', label: 'Section 2' },
-            { value: 'section3', label: 'Section 3' },
-            { value: 'section4', label: 'Section 4' },
-            { value: 'section5', label: 'Section 5' },
-            { value: 'other', label: 'Other' },
-          ]}
+          options={[...secondaryOptions, { value: 'other', label: 'Other' }]}
         />
         <Input
           label="Other Secondary Section"

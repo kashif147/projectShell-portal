@@ -1,5 +1,5 @@
 const DOMAIN = 'userserviceshell-aqf6f0b8fqgmagch.canadacentral-01.azurewebsites.net';
-const BASE_URL = `https://${DOMAIN}`;
+const BASE_URL = `https://${DOMAIN}/api`;
 const LOOKUP_URL = `https://projectshellapi-c0hqhbdwaaahbcab.northeurope-01.azurewebsites.net`;
 const PORTAL_URL = `https://testportal-dabravg2h3hfbke9.canadacentral-01.azurewebsites.net`;
 

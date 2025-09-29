@@ -27,6 +27,7 @@ const Dashboard = () => {
     personalDetail,
     professionalDetail,
     getSubscriptionDetail,
+    loading
   } = useApplication();
   const { user } = useSelector(state => state.auth);
   const navigate = useNavigate();
@@ -299,7 +300,7 @@ const Dashboard = () => {
           link="/applicationForm"
           onPress={() => navigate("/applicationForm")}
           buttonText={stepToButtonText[currentStep] || 'Continue'}
-          disabled={currentStep === 3 && subscriptionDetail}
+          // disabled={currentStep === 3 && subscriptionDetail}
         />
         <DashboardCard
           title="My Profile"
