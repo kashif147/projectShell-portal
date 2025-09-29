@@ -10,7 +10,7 @@ import {
 import { ConfigProvider } from 'antd';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import store from './store/index';
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { publicRoutes, privateRoutes } from './config/routes';
 import './assets/theme/index.css';

@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 import { LOOKUP_URL } from '../constants/api';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { getHeaders } from '../helpers/auth.helper';
@@ -7,18 +8,34 @@ import { getHeaders } from '../helpers/auth.helper';
 const getAllLookups = async () => {
   try {
     const headers = getHeaders();
+    console.log('Lookup API Headers:', headers);
+    console.log('Lookup API URL:', `${LOOKUP_URL}/api/lookup`);
+    console.log('Raw token from localStorage:', localStorage.getItem('token'));
+
     if (!headers.token) {
       throw new Error('No token found');
     }
-    const response = await axios.get(`${LOOKUP_URL}/lookup`, {
+
+    const requestConfig = {
       headers: {
         Authorization: headers.token,
         'Content-Type': 'application/json',
       },
-    });
+    };
+
+    console.log('Request config:', requestConfig);
+
+    const response = await axios.get(`${LOOKUP_URL}/api/lookup`, requestConfig);
+
+    console.log('Lookup API Response:', response);
     return response.data;
   } catch (error) {
+    console.error('Lookup API Error:', error);
+    console.error('Error Response:', error.response);
+    console.error('Error Status:', error.response?.status);
+    console.error('Error Data:', error.response?.data);
     toast.error(error.response?.data?.message || 'Failed to fetch lookups');
+    throw error;
   }
 };
 
@@ -26,16 +43,17 @@ const LookupContext = createContext();
 
 export const LookupProvider = ({ children }) => {
   const { fetchLocal, saveLocal } = useLocalStorage();
-  const [lookups, setLookups] = React.useState([]);
-  const [cityLookups, setCityLookups] = React.useState([]);
-  const [genderLookups, setGenderLookups] = React.useState([]);
-  const [titleLookups, setTitleLookups] = React.useState([]);
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState(null);
+  const [lookups, setLookups] = useState([]);
+  const [cityLookups, setCityLookups] = useState([]);
+  const [genderLookups, setGenderLookups] = useState([]);
+  const [titleLookups, setTitleLookups] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const fetchLookups = async () => {
     try {
       setLoading(true);
+      setError(null);
       const result = await getAllLookups();
       if (result) {
         const genderData = result.filter(
@@ -52,9 +70,8 @@ export const LookupProvider = ({ children }) => {
         await saveLocal('titleLookups', titleData);
         setLookups(result);
       }
-
-      setError(null);
     } catch (err) {
+      console.error('fetchLookups error:', err);
       setError(err.message);
     } finally {
       setLoading(false);

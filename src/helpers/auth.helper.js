@@ -3,8 +3,9 @@ export const setHeaders = headers => {
 };
 
 export const getHeaders = () => {
+  const token = localStorage.getItem('token');
   return {
-    token: localStorage.getItem('token'),
+    token: token ? `Bearer ${token}` : null,
   };
 };
 

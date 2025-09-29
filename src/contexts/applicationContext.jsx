@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
 import {
   fetchPersonalDetail,
   fetchProfessionalDetail,
@@ -8,7 +9,7 @@ import {
 const ApplicationContext = createContext();
 
 export const ApplicationProvider = ({ children }) => {
-  const [loading, setLoading] = React.useState(false);
+  const [loading, setLoading] = useState(false);
   const [personalDetail, setPersonalDetail] = useState(null);
   const [professionalDetail, setProfessionalDetail] = useState(null);
   const [subscriptionDetail, setSubscriptionDetail] = useState(null);
