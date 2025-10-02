@@ -1,3 +1,4 @@
 import Logo from './logo.png';
+import Image1 from './login_img.jpg';
 
-export { Logo };
+export { Logo, Image1 };

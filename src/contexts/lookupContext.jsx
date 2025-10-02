@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { getHeaders } from '../helpers/auth.helper';
 import { fetchAllCountry, fetchAllLookupRequest, fetchLookupHierarchyByType } from '../api/lookup.api';
+import { fetchAllCategoryRequest } from '../api/category.api';
 
 const getAllLookups = async () => {
   try {
@@ -12,7 +13,7 @@ const getAllLookups = async () => {
     const response = await fetchAllLookupRequest();
     return response.data;
   } catch (error) {
-    toast.error(error.response?.data?.message || 'Failed to fetch lookups');
+    toast.error(error.response?.data?.message ?? 'Failed to fetch lookups');
   }
 };
 
@@ -21,7 +22,7 @@ const getAllCountry = async () => {
     const response = await fetchAllCountry();
     return response.data;
   } catch (error) {
-    toast.error(error.response?.data?.message || 'Failed to fetch country');
+    toast.error(error.response?.data?.message ?? 'Failed to fetch country');
   }
 };
 
@@ -37,6 +38,7 @@ export const LookupProvider = ({ children }) => {
   const [secondarySectionLookups, setSecondarySectionLookups] = React.useState([]);
   const [workLocationLookups, setWorkLocationLookups] = React.useState([]);
   const [countryLookups, setCountryLookups] = React.useState([]);
+  const [categoryLookups, setCategoryLookups] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
 
@@ -103,9 +105,29 @@ export const LookupProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await getAllCountry();
-      const results = response || [];
+      const results = response.data || [];
       await saveLocal('countries', results);
       setCountryLookups(results);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCategoryLookups = async () => {
+    try {
+      setLoading(true);
+      const headers = getHeaders();
+      if (!headers.token) {
+        throw new Error('No token found');
+      }
+      const response = await fetchAllCategoryRequest();
+      console.log('responseCategory==========>', response);
+      const results = response?.data?.data || [];
+      await saveLocal('categories', results);
+      setCategoryLookups(results);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -123,6 +145,7 @@ export const LookupProvider = ({ children }) => {
       const secondarySection = await fetchLocal('secondarySection');
       const workLocationLookups = await fetchLocal('workLocationLookups');
       const countryLookups = await fetchLocal('countries');
+      const categoryLookups = await fetchLocal('categories');
       setGenderLookups(genderLookups);
       setCityLookups(cityLookups);
       setTitleLookups(titleLookups);
@@ -130,6 +153,7 @@ export const LookupProvider = ({ children }) => {
       setSecondarySectionLookups(secondarySection);
       setWorkLocationLookups(workLocationLookups);
       setCountryLookups(countryLookups);
+      setCategoryLookups(categoryLookups);
     };
     fetchGenderLookups();
   }, [lookups]);
@@ -147,8 +171,15 @@ export const LookupProvider = ({ children }) => {
         await fetchCountryLookups();
       }
     };
+    const ensureCategories = async () => {
+      const cached = await fetchLocal('categories');
+      if (!cached || cached.length === 0) {
+        await fetchCategoryLookups();
+      }
+    };
     ensureWorkLocations();
     ensureCountries();
+    ensureCategories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -161,11 +192,13 @@ export const LookupProvider = ({ children }) => {
     secondarySectionLookups,
     workLocationLookups,
     countryLookups,
+    categoryLookups,
     loading,
     error,
     fetchLookups,
     fetchWorkLocationLookups,
     fetchCountryLookups,
+    fetchCategoryLookups,
   };
 
   return (

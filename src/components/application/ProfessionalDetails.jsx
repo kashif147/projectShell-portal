@@ -25,17 +25,26 @@ const ProfessionalDetails = ({
   onFormDataChange,
   showValidation = false,
 }) => {
-  const { workLocationLookups, fetchWorkLocationLookups } = useLookup();
+  const { workLocationLookups, fetchWorkLocationLookups, categoryLookups, fetchCategoryLookups } = useLookup();
 
   React.useEffect(() => {
     if (!workLocationLookups || workLocationLookups.length === 0) {
       fetchWorkLocationLookups?.();
+    }
+    if (!categoryLookups || categoryLookups.length === 0) {
+      fetchCategoryLookups?.();
     }
   }, []);
 
   const workLocationOptions = (workLocationLookups || []).map(item => {
     const name = item?.lookup?.DisplayName || item?.lookup?.lookupname || '';
     return { value: name, label: name };
+  });
+
+  const membershipCategoryOptions = (categoryLookups || []).map(item => {
+    const value = item?.id || item?._id || item?.code || item?.value || item?.name || item?.productType?.name;
+    const label = item?.name || item?.DisplayName || item?.label || item?.productType?.name || value;
+    return { value: String(value || ''), label: String(label || '') };
   });
 
   const branchOptions = Array.from(
@@ -99,32 +108,7 @@ const ProfessionalDetails = ({
           onChange={handleInputChange}
           showValidation={showValidation}
           placeholder="Select membership category"
-          options={[
-            { value: 'general', label: 'General (all grades)' },
-            { value: 'postgraduate_student', label: 'Postgraduate Student' },
-            {
-              value: 'short_term_relief',
-              label: 'Short-term/ Relief (under 15 hrs/wk average)',
-            },
-            { value: 'private_nursing_home', label: 'Private nursing home' },
-            {
-              value: 'affiliate_non_practicing',
-              label: 'Affiliate members (non-practicing)',
-            },
-            {
-              value: 'lecturing',
-              label: 'Lecturing (employed in universities and IT institutes)',
-            },
-            {
-              value: 'associate',
-              label: 'Associate (not currently employed as a nurse/midwife)',
-            },
-            { value: 'retired_associate', label: 'Retired Associate' },
-            {
-              value: 'undergraduate_student',
-              label: 'Undergraduate Student',
-            },
-          ]}
+          options={membershipCategoryOptions}
         />
       </div>
       {formData?.membershipCategory === 'undergraduate_student' && (

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Modal,
   Form,
@@ -17,45 +17,9 @@ import {
   BankOutlined,
 } from '@ant-design/icons';
 import Button from '../common/Button';
+import { fetchCategoryByCategoryId } from '../../api/category.api';
 
-const membershipCategoryOptions = [
-  { value: 'general', label: 'General (all grades)' },
-  { value: 'postgraduate_student', label: 'Postgraduate Student' },
-  {
-    value: 'short_term_relief',
-    label: 'Short-term/ Relief (under 15 hrs/wk average)',
-  },
-  { value: 'private_nursing_home', label: 'Private nursing home' },
-  {
-    value: 'affiliate_non_practicing',
-    label: 'Affiliate members (non-practicing)',
-  },
-  {
-    value: 'lecturing',
-    label: 'Lecturing (employed in universities and IT institutes)',
-  },
-  {
-    value: 'associate',
-    label: 'Associate (not currently employed as a nurse/midwife)',
-  },
-  { value: 'retired_associate', label: 'Retired Associate' },
-  {
-    value: 'undergraduate_student',
-    label: 'Undergraduate Student',
-  },
-];
-
-const membershipPrices = {
-  general: { full: 299.0, monthly: 74.75 },
-  postgraduate_student: { full: 299.0, monthly: 74.75 },
-  short_term_relief: { full: 228.0, monthly: 57.0 },
-  private_nursing_home: { full: 288.0, monthly: 72.0 },
-  affiliate_members: { full: 116.0, monthly: 29.0 },
-  lecturing: { full: 116.0, monthly: 29.0 },
-  associate: { full: 75.0, monthly: 18.75 },
-  retired_associate: { full: 25.0, monthly: 25.0 },
-  undergraduate_student: { full: 0.0, monthly: 0.0 },
-};
+// Prices will be derived dynamically from product currentPricing
 
 const SubscriptionModal = ({
   isVisible,
@@ -70,6 +34,8 @@ const SubscriptionModal = ({
   const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [customPrice, setCustomPrice] = useState(null);
+  const [product, setProduct] = useState(null);
+  const [productLoading, setProductLoading] = useState(false);
 
   // Set payment method based on formData
   const initialPaymentMethod =
@@ -78,9 +44,28 @@ const SubscriptionModal = ({
       : 'card';
   const [paymentMethod, setPaymentMethod] = useState(initialPaymentMethod);
 
-  const priceInfo = membershipPrices[membershipCategory] || {
-    full: 0,
-    monthly: 0,
+  const priceInfo = useMemo(() => {
+    const cents = product?.currentPricing?.price;
+    if (typeof cents === 'number' && !Number.isNaN(cents)) {
+      const full = cents / 100;
+      const monthly = full / 12;
+      return { full, monthly };
+    }
+    return { full: 0, monthly: 0 };
+  }, [product]);
+
+  const formatCurrency = (value) => {
+    const currency = (product?.currentPricing?.currency || 'EUR').toUpperCase();
+    try {
+      return new Intl.NumberFormat('en-IE', {
+        style: 'currency',
+        currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(value || 0);
+    } catch {
+      return `€${(value || 0).toFixed(2)}`;
+    }
   };
 
   useEffect(() => {
@@ -91,9 +76,26 @@ const SubscriptionModal = ({
     }
   }, [isVisible]);
 
-  const getMembershipCategoryLabel = value => {
-    const option = membershipCategoryOptions.find(opt => opt.value === value);
-    return option ? option.label : value || 'N/A';
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!membershipCategory) return;
+      setProductLoading(true);
+      try {
+        const res = await fetchCategoryByCategoryId(membershipCategory);
+        // API response can be { success, data } or direct data
+        const payload = res?.data?.data || res?.data;
+        setProduct(payload || null);
+      } catch (e) {
+        setProduct(null);
+      } finally {
+        setProductLoading(false);
+      }
+    };
+    fetchProduct();
+  }, [membershipCategory]);
+
+  const getMembershipCategoryLabel = () => {
+    return product?.name || 'N/A';
   };
 
   const getActualDisplayPrice = () => {
@@ -243,20 +245,27 @@ const SubscriptionModal = ({
               Membership Category
             </div>
             <div className="text-base font-bold text-blue-700">
-              {getMembershipCategoryLabel(membershipCategory) || 'N/A'}
+              {getMembershipCategoryLabel()}
             </div>
           </div>
         </div>
         <div className="text-right">
           <div className="text-xs text-gray-500">
-            Price
-            {/* {formData?.subscriptionDetails?.paymentType === 'Card Payment' ? 'Full Price' : 'Monthly Price'} */}
+            {formData?.subscriptionDetails?.paymentType === 'Card Payment'
+              ? 'Full Price'
+              : 'Monthly Price'}
           </div>
           <div className="text-lg font-bold text-blue-700">
-            €{getActualDisplayPrice().toFixed(2)}
+            {formatCurrency(getActualDisplayPrice())}
           </div>
         </div>
       </div>
+
+      {product?.description && (
+        <div className="mb-3 p-3 rounded-md bg-gray-50 border border-gray-100 text-sm text-gray-700">
+          {product.description}
+        </div>
+      )}
 
       <Form
         form={form}
@@ -400,7 +409,7 @@ const SubscriptionModal = ({
             <p className="text-base font-semibold text-gray-800">
               Total Amount:{' '}
               <span className="text-blue-600">
-                €{getDisplayPrice().toFixed(2)}
+                {formatCurrency(getDisplayPrice())}
               </span>
             </p>
             <p className="text-xs text-gray-500">

@@ -75,18 +75,6 @@ export const ApplicationProvider = ({ children }) => {
     }
   }, [personalDetail]);
 
-  // useEffect(() => {
-  //   if (!personalDetail) {
-  //     setCurrentStep(1);
-  //   } else if (personalDetail && !professionalDetail) {
-  //     setCurrentStep(2);
-  //   } else if (personalDetail && professionalDetail && !subscriptionDetail) {
-  //     setCurrentStep(3);
-  //   } else if (personalDetail && professionalDetail && subscriptionDetail) {
-  //     setCurrentStep(3);
-  //   }
-  // }, [personalDetail, professionalDetail, subscriptionDetail]);
-
   const value = {
     loading,
     personalDetail,
