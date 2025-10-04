@@ -18,6 +18,8 @@ import {
   updateProfessionalDetailRequest,
   updateSubscriptionDetailRequest,
 } from '../api/application.api';
+import { createPaymentIntentRequest } from '../api/payment.api';
+import { fetchCategoryByCategoryId } from '../api/category.api';
 import { useApplication } from '../contexts/applicationContext';
 import Spinner from '../components/common/Spinner';
 import { isDataFormat } from '../helpers/date.helper';
@@ -48,6 +50,8 @@ const ApplicationForm = () => {
     message: '',
   });
   const [showValidation, setShowValidation] = useState(false);
+  const [categoryData, setCategoryData] = useState(null);
+  const [paymentIntentCreated, setPaymentIntentCreated] = useState(false);
   const [formData, setFormData] = useState({
     personalInfo: {
       forename: user?.userFirstName || '',
@@ -65,6 +69,9 @@ const ApplicationForm = () => {
 
   useEffect(() => {
     if (personalDetail) {
+      // Reset payment intent state for new application
+      setPaymentIntentCreated(false);
+
       setFormData(prev => ({
         ...prev,
         personalInfo: {
@@ -126,8 +133,22 @@ const ApplicationForm = () => {
             professionalDetail?.professionalDetails?.graduationDate ?? '',
         },
       }));
+
+      // Fetch category data when professional details are available
+      const membershipCategory =
+        professionalDetail?.professionalDetails?.membershipCategory;
+      if (membershipCategory && !categoryData) {
+        fetchCategoryByCategoryId(membershipCategory)
+          .then(res => {
+            const payload = res?.data?.data || res?.data;
+            setCategoryData(payload);
+          })
+          .catch(error => {
+            console.error('Failed to fetch category data:', error);
+          });
+      }
     }
-  }, [professionalDetail]);
+  }, [professionalDetail, categoryData]);
 
   useEffect(() => {
     if (subscriptionDetail) {
@@ -401,133 +422,248 @@ const ApplicationForm = () => {
       });
   };
 
-  const createSubscriptionDetail = data => {
-    const defaultFields = {
-      membershipCategory:
-        professionalDetail?.professionalDetails?.membershipCategory,
-      // dateJoined: "15/01/2025",
-      // paymentFrequency: "Monthly",
-    };
-
-    const subscriptionFields = {
-      paymentType: data?.paymentType,
-      payrollNo: data?.payrollNo,
-      membershipStatus: data?.memberStatus,
-      otherIrishTradeUnion: data?.otherIrishTradeUnion === true,
-      otherScheme: data?.otherScheme === true,
-      recuritedBy: data?.recuritedBy,
-      recuritedByMembershipNo: data?.recuritedByMembershipNo,
-      primarySection: data?.primarySection,
-      otherPrimarySection: data?.otherPrimarySection,
-      secondarySection: data?.secondarySection,
-      otherSecondarySection: data?.otherSecondarySection,
-      incomeProtectionScheme: data?.incomeProtectionScheme === true,
-      inmoRewards: data?.inmoRewards === true,
-      valueAddedServices: data?.valueAddedServices === true,
-      termsAndConditions: data?.termsAndConditions === true,
-      ...defaultFields,
-    };
-
-    const subscriptionDetails = {};
-    Object.entries(subscriptionFields).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        subscriptionDetails[key] = value;
+  const createPaymentIntent = async () => {
+    try {
+      // Check if payment intent already created for this application
+      if (paymentIntentCreated) {
+        console.log(
+          'Payment intent already created for this application, skipping...',
+        );
+        return { success: true, message: 'Payment intent already exists' };
       }
-    });
 
-    const subscriptionInfo = {
-      subscriptionDetails,
-    };
-    createSubscriptionDetailRequest(
-      personalDetail?.ApplicationId,
-      subscriptionInfo,
-    )
-      .then(res => {
-        console.log('response', res);
-        if (res.status === 200) {
-          getSubscriptionDetail();
-          setCurrentStep(prev => {
-            const nextStep = Math.min(prev + 1, steps.length);
-            return nextStep;
-          });
-          setStatusModal({ open: true, status: 'success', message: '' });
-          setTimeout(() => {
-            setStatusModal({ open: false, status: 'success', message: '' });
-            navigate('/');
-          }, 3000);
-          toast.success('Application submitted successfully');
+      const amount = categoryData?.currentPricing?.price || 50000; // fallback amount in cents
+      const currency = categoryData?.currentPricing?.currency || 'EUR';
+      const applicationId = personalDetail?.ApplicationId;
+
+      if (!applicationId) {
+        throw new Error('Application ID not found');
+      }
+
+      const paymentData = {
+        purpose: 'subscriptionFee',
+        amount: amount,
+        currency: currency.toLowerCase(),
+        status: 'created',
+        applicationId: applicationId,
+      };
+
+      console.log('Creating payment intent with data:', paymentData);
+
+      const response = await createPaymentIntentRequest(paymentData);
+
+      console.log('Payment intent response:', response);
+
+      // Handle different response structures
+      if (response && (response.status === 200 || response.status === 201)) {
+        console.log('Payment intent created successfully:', response.data);
+        setPaymentIntentCreated(true);
+        return response.data;
+      } else if (response && response.data && response.data.success) {
+        console.log('Payment intent created successfully:', response.data);
+        setPaymentIntentCreated(true);
+        return response.data;
+      } else {
+        const errorMessage =
+          response?.data?.message ||
+          response?.message ||
+          'Failed to create payment intent';
+        throw new Error(errorMessage);
+      }
+    } catch (error) {
+      console.error('Payment intent creation failed:', error);
+
+      // Handle different error structures
+      let errorMessage = 'Failed to create payment intent';
+
+      if (error.response) {
+        // Server responded with error status
+        console.error('Server error response:', error.response);
+        console.error('Server error data:', error.response.data);
+
+        if (error.response.status === 409) {
+          // Handle conflict error (likely duplicate payment intent)
+          console.warn(
+            'Payment intent conflict - payment intent already exists for this application',
+          );
+          setPaymentIntentCreated(true);
+          // Don't throw error for 409 - treat as success since payment intent exists
+          return {
+            success: true,
+            message: 'Payment intent already exists',
+            existing: true,
+          };
         } else {
-          toast.error(res.data.message ?? 'Unable to add subscription detail');
+          errorMessage =
+            error.response.data?.message ||
+            error.response.statusText ||
+            errorMessage;
         }
-      })
-      .catch(() => {
-        toast.error('Something went wrong');
-      });
+      } else if (error.request) {
+        // Request was made but no response received
+        errorMessage = 'Network error - please check your connection';
+        console.error('Network error:', error.request);
+      } else if (error.message) {
+        // Other error
+        errorMessage = error.message;
+      }
+
+      toast.error(errorMessage);
+      throw error;
+    }
   };
 
-  const updateSubscriptionDetail = data => {
-    const defaultFields = {
-      membershipCategory:
-        professionalDetail?.professionalDetails?.membershipCategory,
-      // dateJoined: "15/01/2025",
-      // paymentFrequency: "Monthly",
-    };
-
-    const subscriptionFields = {
-      paymentType: data?.paymentType,
-      payrollNo: data?.payrollNo,
-      membershipStatus: data?.memberStatus,
-      otherIrishTradeUnion: data?.otherIrishTradeUnion === true,
-      otherScheme: data?.otherScheme === true,
-      recuritedBy: data?.recuritedBy,
-      recuritedByMembershipNo: data?.recuritedByMembershipNo,
-      primarySection: data?.primarySection,
-      otherPrimarySection: data?.otherPrimarySection,
-      secondarySection: data?.secondarySection,
-      otherSecondarySection: data?.otherSecondarySection,
-      incomeProtectionScheme: data?.incomeProtectionScheme === true,
-      inmoRewards: data?.inmoRewards === true,
-      valueAddedServices: data?.valueAddedServices === true,
-      termsAndConditions: data?.termsAndConditions === true,
-      ...defaultFields,
-    };
-
-    const subscriptionDetails = {};
-    Object.entries(subscriptionFields).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        subscriptionDetails[key] = value;
+  const createSubscriptionDetail = async data => {
+    try {
+      // Create payment intent first (with error handling to continue if it fails)
+      try {
+        await createPaymentIntent();
+      } catch (paymentError) {
+        console.warn(
+          'Payment intent creation failed, continuing with subscription creation:',
+          paymentError,
+        );
+        // Continue with subscription creation even if payment intent fails
       }
-    });
 
-    const subscriptionInfo = {
-      subscriptionDetails,
-    };
-    updateSubscriptionDetailRequest(
-      personalDetail?.ApplicationId,
-      subscriptionInfo,
-    )
-      .then(res => {
-        if (res.status === 200) {
-          getSubscriptionDetail();
-          setCurrentStep(prev => {
-            const nextStep = Math.min(prev + 1, steps.length);
-            return nextStep;
-          });
-          setStatusModal({ open: true, status: 'success', message: '' });
-          setTimeout(() => {
-            setStatusModal({ open: false, status: 'success', message: '' });
-            navigate('/');
-          }, 3000);
-          toast.success('Application update successfully');
-        } else {
-          toast.error(
-            res.data.message ?? 'Unable to update subscription detail',
-          );
+      const defaultFields = {
+        membershipCategory:
+          professionalDetail?.professionalDetails?.membershipCategory,
+        // dateJoined: "15/01/2025",
+        // paymentFrequency: "Monthly",
+      };
+
+      const subscriptionFields = {
+        paymentType: data?.paymentType,
+        payrollNo: data?.payrollNo,
+        membershipStatus: data?.memberStatus,
+        otherIrishTradeUnion: data?.otherIrishTradeUnion === true,
+        otherScheme: data?.otherScheme === true,
+        recuritedBy: data?.recuritedBy,
+        recuritedByMembershipNo: data?.recuritedByMembershipNo,
+        primarySection: data?.primarySection,
+        otherPrimarySection: data?.otherPrimarySection,
+        secondarySection: data?.secondarySection,
+        otherSecondarySection: data?.otherSecondarySection,
+        incomeProtectionScheme: data?.incomeProtectionScheme === true,
+        inmoRewards: data?.inmoRewards === true,
+        valueAddedServices: data?.valueAddedServices === true,
+        termsAndConditions: data?.termsAndConditions === true,
+        ...defaultFields,
+      };
+
+      const subscriptionDetails = {};
+      Object.entries(subscriptionFields).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          subscriptionDetails[key] = value;
         }
-      })
-      .catch(() => {
-        toast.error('Something went wrong');
       });
+
+      const subscriptionInfo = {
+        subscriptionDetails,
+      };
+
+      const res = await createSubscriptionDetailRequest(
+        personalDetail?.ApplicationId,
+        subscriptionInfo,
+      );
+
+      console.log('response', res);
+      if (res.status === 200) {
+        getSubscriptionDetail();
+        setCurrentStep(prev => {
+          const nextStep = Math.min(prev + 1, steps.length);
+          return nextStep;
+        });
+        setStatusModal({ open: true, status: 'success', message: '' });
+        setTimeout(() => {
+          setStatusModal({ open: false, status: 'success', message: '' });
+          navigate('/');
+        }, 3000);
+        toast.success('Application submitted successfully');
+      } else {
+        toast.error(res.data.message ?? 'Unable to add subscription detail');
+      }
+    } catch (error) {
+      console.error('Subscription creation failed:', error);
+      toast.error('Failed to process subscription. Please try again.');
+    }
+  };
+
+  const updateSubscriptionDetail = async data => {
+    try {
+      // Create payment intent first (with error handling to continue if it fails)
+      try {
+        await createPaymentIntent();
+      } catch (paymentError) {
+        console.warn(
+          'Payment intent creation failed, continuing with subscription update:',
+          paymentError,
+        );
+        // Continue with subscription update even if payment intent fails
+      }
+
+      const defaultFields = {
+        membershipCategory:
+          professionalDetail?.professionalDetails?.membershipCategory,
+        // dateJoined: "15/01/2025",
+        // paymentFrequency: "Monthly",
+      };
+
+      const subscriptionFields = {
+        paymentType: data?.paymentType,
+        payrollNo: data?.payrollNo,
+        membershipStatus: data?.memberStatus,
+        otherIrishTradeUnion: data?.otherIrishTradeUnion === true,
+        otherScheme: data?.otherScheme === true,
+        recuritedBy: data?.recuritedBy,
+        recuritedByMembershipNo: data?.recuritedByMembershipNo,
+        primarySection: data?.primarySection,
+        otherPrimarySection: data?.otherPrimarySection,
+        secondarySection: data?.secondarySection,
+        otherSecondarySection: data?.otherSecondarySection,
+        incomeProtectionScheme: data?.incomeProtectionScheme === true,
+        inmoRewards: data?.inmoRewards === true,
+        valueAddedServices: data?.valueAddedServices === true,
+        termsAndConditions: data?.termsAndConditions === true,
+        ...defaultFields,
+      };
+
+      const subscriptionDetails = {};
+      Object.entries(subscriptionFields).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          subscriptionDetails[key] = value;
+        }
+      });
+
+      const subscriptionInfo = {
+        subscriptionDetails,
+      };
+
+      const res = await updateSubscriptionDetailRequest(
+        personalDetail?.ApplicationId,
+        subscriptionInfo,
+      );
+
+      if (res.status === 200) {
+        getSubscriptionDetail();
+        setCurrentStep(prev => {
+          const nextStep = Math.min(prev + 1, steps.length);
+          return nextStep;
+        });
+        setStatusModal({ open: true, status: 'success', message: '' });
+        setTimeout(() => {
+          setStatusModal({ open: false, status: 'success', message: '' });
+          navigate('/');
+        }, 3000);
+        toast.success('Application update successfully');
+      } else {
+        toast.error(res.data.message ?? 'Unable to update subscription detail');
+      }
+    } catch (error) {
+      console.error('Subscription update failed:', error);
+      toast.error('Failed to update subscription. Please try again.');
+    }
   };
 
   const handleNext = () => {
@@ -550,7 +686,7 @@ const ApplicationForm = () => {
       if (
         currentStep === 3 &&
         professionalDetail?.professionalDetails?.membershipCategory ===
-        'undergraduate_student'
+          'undergraduate_student'
       ) {
         if (!subscriptionDetail) {
           createSubscriptionDetail(formData.subscriptionDetails);
@@ -561,7 +697,7 @@ const ApplicationForm = () => {
       if (
         currentStep === 3 &&
         professionalDetail?.professionalDetails?.membershipCategory !==
-        'undergraduate_student'
+          'undergraduate_student'
       ) {
         setIsModalVisible(true);
       }
@@ -665,17 +801,23 @@ const ApplicationForm = () => {
     setIsModalVisible(false);
   };
 
-  const handleSubscriptionSuccess = paymentData => {
+  const handleSubscriptionSuccess = async paymentData => {
     if (validateCurrentStep()) {
       if (
         currentStep === 3 &&
         professionalDetail?.professionalDetails?.membershipCategory !==
-        'undergraduate_student'
+          'undergraduate_student'
       ) {
-        if (!subscriptionDetail) {
-          createSubscriptionDetail(formData.subscriptionDetails);
-        } else {
-          updateSubscriptionDetail(formData.subscriptionDetails);
+        try {
+          if (!subscriptionDetail) {
+            await createSubscriptionDetail(formData.subscriptionDetails);
+          } else {
+            await updateSubscriptionDetail(formData.subscriptionDetails);
+          }
+        } catch (error) {
+          console.error('Subscription processing failed:', error);
+          // Error is already handled in the create/update functions
+          return;
         }
       }
       setIsModalVisible(false);
@@ -744,14 +886,15 @@ const ApplicationForm = () => {
                   <div
                     className={`
                 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
-                ${isSubmitted && step.number === 3
+                ${
+                  isSubmitted && step.number === 3
+                    ? 'bg-green-500 text-white'
+                    : currentStep === step.number
+                      ? 'bg-blue-500 text-white'
+                      : currentStep > step.number
                         ? 'bg-green-500 text-white'
-                        : currentStep === step.number
-                          ? 'bg-blue-500 text-white'
-                          : currentStep > step.number
-                            ? 'bg-green-500 text-white'
-                            : 'bg-gray-200'
-                      }
+                        : 'bg-gray-200'
+                }
               `}>
                     {isSubmitted && step.number === 3
                       ? '✓'
@@ -761,12 +904,13 @@ const ApplicationForm = () => {
                   </div>
                   <div className="ml-2">
                     <p
-                      className={`text-sm whitespace-nowrap ${isSubmitted && step.number === 3
-                        ? 'text-green-500 font-semibold'
-                        : currentStep === step.number
-                          ? 'text-blue-500 font-semibold'
-                          : 'text-gray-500'
-                        }`}>
+                      className={`text-sm whitespace-nowrap ${
+                        isSubmitted && step.number === 3
+                          ? 'text-green-500 font-semibold'
+                          : currentStep === step.number
+                            ? 'text-blue-500 font-semibold'
+                            : 'text-gray-500'
+                      }`}>
                       {step.title}
                     </p>
                   </div>
