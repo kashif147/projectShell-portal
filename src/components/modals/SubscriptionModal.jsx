@@ -1,3 +1,4 @@
+// src/components/modals/SubscriptionModal.jsx
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Modal,
@@ -9,7 +10,11 @@ import {
   Tooltip,
   InputNumber,
 } from 'antd';
-import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import {
+  useStripe,
+  useElements,
+  PaymentElement,
+} from '@stripe/react-stripe-js';
 import {
   CheckCircleOutlined,
   InfoCircleOutlined,
@@ -18,8 +23,6 @@ import {
 } from '@ant-design/icons';
 import Button from '../common/Button';
 import { fetchCategoryByCategoryId } from '../../api/category.api';
-
-// Prices will be derived dynamically from product currentPricing
 
 const SubscriptionModal = ({
   isVisible,
@@ -36,8 +39,9 @@ const SubscriptionModal = ({
   const [customPrice, setCustomPrice] = useState(null);
   const [product, setProduct] = useState(null);
   const [productLoading, setProductLoading] = useState(false);
+  const [isPaymentElementReady, setIsPaymentElementReady] = useState(false);
 
-  // Set payment method based on formData
+  // Set initial payment method
   const initialPaymentMethod =
     formData?.subscriptionDetails?.paymentType === 'Payroll Deduction'
       ? 'bank'
@@ -48,20 +52,18 @@ const SubscriptionModal = ({
     const cents = product?.currentPricing?.price;
     if (typeof cents === 'number' && !Number.isNaN(cents)) {
       const full = cents / 100;
-      const monthly = full / 12;
+      const monthly = full / 4;
       return { full, monthly };
     }
     return { full: 0, monthly: 0 };
   }, [product]);
 
-  const formatCurrency = (value) => {
+  const formatCurrency = value => {
     const currency = (product?.currentPricing?.currency || 'EUR').toUpperCase();
     try {
       return new Intl.NumberFormat('en-IE', {
         style: 'currency',
         currency,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
       }).format(value || 0);
     } catch {
       return `€${(value || 0).toFixed(2)}`;
@@ -69,20 +71,11 @@ const SubscriptionModal = ({
   };
 
   useEffect(() => {
-    if (isVisible) {
-      const defaultPrice = getActualDisplayPrice();
-      setCustomPrice(defaultPrice);
-      form.setFieldsValue({ customPrice: defaultPrice.toFixed(2) });
-    }
-  }, [isVisible]);
-
-  useEffect(() => {
     const fetchProduct = async () => {
       if (!membershipCategory) return;
       setProductLoading(true);
       try {
         const res = await fetchCategoryByCategoryId(membershipCategory);
-        // API response can be { success, data } or direct data
         const payload = res?.data?.data || res?.data;
         setProduct(payload || null);
       } catch (e) {
@@ -94,126 +87,54 @@ const SubscriptionModal = ({
     fetchProduct();
   }, [membershipCategory]);
 
-  const getMembershipCategoryLabel = () => {
-    return product?.name || 'N/A';
-  };
-
-  const getActualDisplayPrice = () => {
-    if (formData?.subscriptionDetails?.paymentType === 'Card Payment') {
-      return priceInfo.full;
-    } else {
-      return priceInfo.monthly;
-    }
-  };
-
   const getDisplayPrice = () => {
-    if (customPrice !== null) {
-      return customPrice;
-    }
-    if (formData?.subscriptionDetails?.paymentType === 'Card Payment') {
-      return priceInfo.full;
-    } else {
-      return priceInfo.monthly;
-    }
+    const defaultPrice =
+      formData?.subscriptionDetails?.paymentType === 'Card Payment'
+        ? priceInfo.full
+        : priceInfo.monthly;
+    return customPrice || defaultPrice;
   };
-
-  const handleCustomPriceChange = value => {
-    setCustomPrice(value);
-    // Trigger validation immediately
-    if (value !== null && value !== undefined) {
-      form.validateFields(['customPrice']);
-    }
-  };
-
-  const validateCustomPrice = value => {
-    if (value === null || value === undefined) return;
-
-    const minPrice = priceInfo.full / 12;
-    const maxPrice = priceInfo.full;
-
-    if (value < minPrice) {
-      return Promise.reject(`Price must be at least €${minPrice.toFixed(2)}`);
-    }
-    if (value > maxPrice) {
-      return Promise.reject(`Price not in range. Cannot exceed €${maxPrice.toFixed(2)}`);
-    }
-    return Promise.resolve();
-  };
-
-  const isCustomPriceValid = () => {
-    if (customPrice === null) return true; // No custom price entered, use default
-    const minPrice = priceInfo.full / 12;
-    const maxPrice = priceInfo.full;
-    return customPrice >= minPrice && customPrice <= maxPrice;
-  };
-
-  const isFormValid = () => {
-    if (getDisplayPrice() === 0) return false;
-    return isCustomPriceValid();
-  };
-
-  const defaultEmail =
-    formData?.personalInfo?.preferredEmail === 'work'
-      ? formData?.personalInfo?.workEmail
-      : formData?.personalInfo?.personalEmail;
 
   const handleSubmit = async values => {
     if (!stripe || !elements) {
-      onFailure?.(
-        'Stripe is not initialised yet. Please try again in a moment.',
-      );
+      onFailure?.('Stripe not initialized yet.');
       return;
     }
-    setLoading(true);
-    try {
-      if (paymentMethod === 'card') {
-        const { error, paymentMethod: stripePaymentMethod } =
-          await stripe.createPaymentMethod({
-            type: 'card',
-            card: elements.getElement(CardElement),
-            billing_details: {
-              name: values.name,
-              email: values.email,
-            },
-          });
-        if (error) {
-          throw new Error(error.message);
-        }
-        console.log('Payment Method:', stripePaymentMethod);
+
+    if (paymentMethod === 'card') {
+      setLoading(true);
+      try {
+        const responseConfirm = await stripe.confirmPayment({
+          elements,
+          confirmParams: {
+            return_url: `${window.location.origin}/payment-success`,
+          },
+          redirect: 'if_required',
+        });
+        
+        console.log('Element=====>',responseConfirm)
+        if (responseConfirm.error) throw new Error(responseConfirm.error.message);
+
+        onSuccess({
+          paymentMethod,
+          total: getDisplayPrice(),
+          paymentDetails: values,
+          customPrice,
+        });
+      } catch (err) {
+        console.error(err);
+        onFailure?.(err.message || 'Payment failed.');
+      } finally {
+        setLoading(false);
       }
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    } else {
       onSuccess({
         paymentMethod,
         total: getDisplayPrice(),
-        paymentDetails:
-          paymentMethod === 'card'
-            ? values
-            : { bankDetails: values.bankDetails },
-        customPrice: customPrice,
+        paymentDetails: { bankDetails: values.bankDetails },
+        customPrice,
       });
-    } catch (error) {
-      console.error('Payment error:', error);
-      onFailure?.(error?.message || 'Payment failed.');
-    } finally {
-      setLoading(false);
     }
-  };
-
-  const cardElementOptions = {
-    style: {
-      base: {
-        fontSize: '16px',
-        color: '#424770',
-        '::placeholder': {
-          color: '#aab7c4',
-        },
-        fontFamily: 'Inter, system-ui, sans-serif',
-      },
-      invalid: {
-        color: '#9e2146',
-      },
-    },
-    hidePostalCode: true,
   };
 
   return (
@@ -230,163 +151,59 @@ const SubscriptionModal = ({
       onCancel={onClose}
       footer={null}
       width={window.innerWidth <= 768 ? '95%' : '500px'}
-      centered
-      className="subscription-modal"
-      styles={{
-        body: {
-          padding: '16px',
-        },
-      }}>
-      <div className="mb-4 p-3 rounded-lg border border-blue-100 bg-blue-50 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <CheckCircleOutlined className="text-blue-500 text-xl" />
-          <div>
-            <div className="text-sm font-semibold text-blue-900">
-              Membership Category
-            </div>
-            <div className="text-base font-bold text-blue-700">
-              {getMembershipCategoryLabel()}
-            </div>
-          </div>
-        </div>
-        <div className="text-right">
-          <div className="text-xs text-gray-500">
-            {formData?.subscriptionDetails?.paymentType === 'Card Payment'
-              ? 'Full Price'
-              : 'Monthly Price'}
-          </div>
-          <div className="text-lg font-bold text-blue-700">
-            {formatCurrency(getActualDisplayPrice())}
-          </div>
-        </div>
-      </div>
-
-      {product?.description && (
-        <div className="mb-3 p-3 rounded-md bg-gray-50 border border-gray-100 text-sm text-gray-700">
-          {product.description}
-        </div>
-      )}
-
+      centered>
       <Form
         form={form}
         layout="vertical"
         onFinish={handleSubmit}
-        className="mt-4"
         size="small"
         initialValues={{
-          email: defaultEmail,
           name:
-            formData?.personalInfo?.forename && formData?.personalInfo?.surname
+            formData?.personalInfo?.forename &&
+            formData?.personalInfo?.surname
               ? `${formData.personalInfo.forename} ${formData.personalInfo.surname}`
-              : undefined,
+              : '',
+          email:
+            formData?.personalInfo?.preferredEmail === 'work'
+              ? formData?.personalInfo?.workEmail
+              : formData?.personalInfo?.personalEmail,
         }}>
-        <div className="bg-gray-50 p-3 rounded-lg mb-4">
-          <Form.Item
-            name="paymentMethod"
-            label={
-              <span className="text-sm font-medium">
-                Payment Method
-                <Tooltip title="Choose your preferred payment method">
-                  <InfoCircleOutlined className="ml-2 text-gray-400" />
-                </Tooltip>
-              </span>
-            }
-            initialValue={initialPaymentMethod}>
-            <Radio.Group onChange={e => setPaymentMethod(e.target.value)}>
-              <Space direction="vertical" className="w-full">
-                <Radio
-                  value="card"
-                  className="w-full"
-                  disabled={
-                    formData?.subscriptionDetails?.paymentType ===
-                    'Payroll Deduction'
-                  }>
-                  <div className="flex items-center">
-                    <CreditCardOutlined className="mr-2" />
-                    <span>Credit/Debit Card</span>
-                  </div>
-                </Radio>
-                <Radio
-                  value="bank"
-                  className="w-full"
-                  disabled={
-                    formData?.subscriptionDetails?.paymentType ===
-                    'Card Payment'
-                  }>
-                  <div className="flex items-center">
-                    <BankOutlined className="mr-2" />
-                    <span>Bank Transfer</span>
-                  </div>
-                </Radio>
-              </Space>
-            </Radio.Group>
-          </Form.Item>
-
-          {/* Custom Price Section */}
-          <div className="mt-4 pt-3 border-t border-gray-200">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">
-                Custom Price
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              <Form.Item
-                name="customPrice"
-                rules={[
-                  { required: true, message: 'Please enter custom price' },
-                  { validator: validateCustomPrice },
-                ]}
-                validateTrigger={['onChange', 'onBlur']}>
-                <InputNumber
-                  placeholder="Enter custom price"
-                  className="w-full"
-                  min={priceInfo.full / 12}
-                  max={priceInfo.full}
-                  step={0.01}
-                  precision={2}
-                  prefix="€"
-                  onChange={handleCustomPriceChange}
-                  onBlur={() => form.validateFields(['customPrice'])}
-                  style={{ height: '32px' }}
-                />
-              </Form.Item>
-            </div>
-          </div>
-        </div>
+        <Form.Item
+          name="paymentMethod"
+          label="Payment Method"
+          initialValue={initialPaymentMethod}>
+          <Radio.Group onChange={e => setPaymentMethod(e.target.value)}>
+            <Space direction="vertical" className="w-full">
+              <Radio value="card">
+                <CreditCardOutlined className="mr-2" /> Credit/Debit Card
+              </Radio>
+              <Radio value="bank">
+                <BankOutlined className="mr-2" /> Bank Transfer
+              </Radio>
+            </Space>
+          </Radio.Group>
+        </Form.Item>
 
         {paymentMethod === 'card' && (
-          <div className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Form.Item
-                name="name"
-                label="Name on Card"
-                rules={[
-                  { required: true, message: 'Please enter the name on card' },
-                ]}>
-                <Input
-                  placeholder={`${formData?.personalInfo?.forename} ${formData?.personalInfo?.surname}`}
-                  className="h-8"
-                />
-              </Form.Item>
+          <>
+            <Form.Item name="name" label="Name on Card" required>
+              <Input />
+            </Form.Item>
+            <Form.Item name="email" label="Email" required>
+              <Input type="email" />
+            </Form.Item>
 
-              <Form.Item
-                name="email"
-                label="Email"
-                rules={[
-                  { required: true, message: 'Please enter your email' },
-                  { type: 'email', message: 'Please enter a valid email' },
-                ]}>
-                <Input placeholder={defaultEmail} className="h-8" />
-              </Form.Item>
-            </div>
-
-            <Form.Item label="Card Details" required className="mb-3">
+            <Form.Item label="Card Details" required>
               <div className="p-3 border rounded-lg bg-white shadow-sm">
-                <CardElement options={cardElementOptions} />
+                <PaymentElement
+                  onReady={() => setIsPaymentElementReady(true)}
+                  onChange={e =>
+                    setIsPaymentElementReady(!e?.error && e?.complete)
+                  }
+                />
               </div>
             </Form.Item>
-          </div>
+          </>
         )}
 
         {paymentMethod === 'bank' && (
@@ -394,43 +211,24 @@ const SubscriptionModal = ({
             name="bankDetails"
             label="Bank Account Details"
             rules={[{ required: true, message: 'Please enter bank details' }]}>
-            <Input.TextArea
-              placeholder="Enter your bank account details"
-              rows={3}
-              className="rounded-lg"
-            />
+            <Input.TextArea rows={3} />
           </Form.Item>
         )}
 
-        <Divider className="my-4" />
-
-        <div className="flex flex-col md:flex-row justify-between items-center gap-3">
-          <div className="text-xs text-gray-600">
-            <p className="text-base font-semibold text-gray-800">
-              Total Amount:{' '}
-              <span className="text-blue-600">
-                {formatCurrency(getDisplayPrice())}
-              </span>
-            </p>
-            <p className="text-xs text-gray-500">
-              {formData?.subscriptionDetails?.paymentType === 'Card Payment'
-                ? 'Billed once via card'
-                : 'Billed three month via payroll deduction'}
+        <Divider />
+        <div className="flex justify-between items-center">
+          <div>
+            <p className="font-semibold">
+              Total: {formatCurrency(getDisplayPrice())}
             </p>
           </div>
-          <Space size="small">
-            <Button onClick={onClose} className="px-4">
-              Cancel
-            </Button>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={loading}
-              className="px-6"
-              disabled={!isFormValid()}>
-              Pay Now
-            </Button>
-          </Space>
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={loading}
+            disabled={paymentMethod === 'card' && !isPaymentElementReady}>
+            Pay Now
+          </Button>
         </div>
       </Form>
     </Modal>

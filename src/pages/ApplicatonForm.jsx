@@ -23,9 +23,10 @@ import { fetchCategoryByCategoryId } from '../api/category.api';
 import { useApplication } from '../contexts/applicationContext';
 import Spinner from '../components/common/Spinner';
 import { isDataFormat } from '../helpers/date.helper';
+import SubscriptionWrapper from '../components/modals/SubscriptionWrapper';
 
 const stripePromise = loadStripe(
-  'pk_test_51Rut8HQeJh5X1hcfNrG7yUZjkR9F3jURKHAiz5UCpJiOjaHjfx43ZimY7nJvLT3EvgrUtIMq1nrgwMgo5js7TOL1006raA9kpv',
+  'pk_test_51SBAG4FTlZb0wcbr19eI8nC5u62DfuaUWRVS51VTERBocxSM9JSEs4ubrW57hYTCAHK9d6jrarrT4SAViKFMqKjT00TrEr3PNV',
 );
 
 const ApplicationForm = () => {
@@ -440,19 +441,20 @@ const ApplicationForm = () => {
         throw new Error('Application ID not found');
       }
 
-      const paymentData = {
-        purpose: 'subscriptionFee',
-        amount: amount,
-        currency: currency.toLowerCase(),
-        status: 'created',
-        applicationId: applicationId,
-      };
+      // const paymentData = {
+      //   purpose: 'subscriptionFee',
+      //   amount: amount,
+      //   currency: currency.toLowerCase(),
+      //   // status: 'created',
+      //   description: 'Annual membership fees',
+      //   applicationId: applicationId,
+      // };
 
-      console.log('Creating payment intent with data:', paymentData);
+      // console.log('Creating payment intent with data:', paymentData);
 
-      const response = await createPaymentIntentRequest(paymentData);
+      // const response = await createPaymentIntentRequest(paymentData);
 
-      console.log('Payment intent response:', response);
+      // console.log('Payment intent response:', response);
 
       // Handle different response structures
       if (response && (response.status === 200 || response.status === 201)) {
@@ -517,7 +519,7 @@ const ApplicationForm = () => {
     try {
       // Create payment intent first (with error handling to continue if it fails)
       try {
-        await createPaymentIntent();
+        // await createPaymentIntent();
       } catch (paymentError) {
         console.warn(
           'Payment intent creation failed, continuing with subscription creation:',
@@ -593,15 +595,15 @@ const ApplicationForm = () => {
   const updateSubscriptionDetail = async data => {
     try {
       // Create payment intent first (with error handling to continue if it fails)
-      try {
-        await createPaymentIntent();
-      } catch (paymentError) {
-        console.warn(
-          'Payment intent creation failed, continuing with subscription update:',
-          paymentError,
-        );
-        // Continue with subscription update even if payment intent fails
-      }
+      // try {
+      //   await createPaymentIntent();
+      // } catch (paymentError) {
+      //   console.warn(
+      //     'Payment intent creation failed, continuing with subscription update:',
+      //     paymentError,
+      //   );
+      //   // Continue with subscription update even if payment intent fails
+      // }
 
       const defaultFields = {
         membershipCategory:
@@ -947,7 +949,7 @@ const ApplicationForm = () => {
         </>
       )}
 
-      <Elements stripe={stripePromise}>
+      {/* <Elements stripe={stripePromise}>
         <SubscriptionModal
           isVisible={isModalVisible}
           onClose={handleModalClose}
@@ -956,7 +958,16 @@ const ApplicationForm = () => {
           formData={formData}
           membershipCategory={formData.professionalDetails.membershipCategory}
         />
-      </Elements>
+      </Elements> */}
+
+      <SubscriptionWrapper
+        isVisible={isModalVisible}
+        onClose={handleModalClose}
+        onSuccess={handleSubscriptionSuccess}
+        onFailure={handleSubscriptionFailure}
+        formData={formData}
+        membershipCategory={formData.professionalDetails.membershipCategory}
+      />
 
       <PaymentStatusModal
         open={statusModal.open}
