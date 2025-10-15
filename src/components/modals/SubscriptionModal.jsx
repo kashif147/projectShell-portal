@@ -4,23 +4,15 @@ import {
   Modal,
   Form,
   Input,
-  Radio,
-  Space,
   Divider,
-  Tooltip,
-  InputNumber,
 } from 'antd';
 import {
   useStripe,
   useElements,
-  PaymentElement,
+  CardNumberElement,
+  CardExpiryElement,
+  CardCvcElement,
 } from '@stripe/react-stripe-js';
-import {
-  CheckCircleOutlined,
-  InfoCircleOutlined,
-  CreditCardOutlined,
-  BankOutlined,
-} from '@ant-design/icons';
 import Button from '../common/Button';
 import { fetchCategoryByCategoryId } from '../../api/category.api';
 
@@ -31,6 +23,7 @@ const SubscriptionModal = ({
   onFailure,
   formData,
   membershipCategory,
+  clientSecret,
 }) => {
   const [form] = Form.useForm();
   const stripe = useStripe();
@@ -39,14 +32,33 @@ const SubscriptionModal = ({
   const [customPrice, setCustomPrice] = useState(null);
   const [product, setProduct] = useState(null);
   const [productLoading, setProductLoading] = useState(false);
-  const [isPaymentElementReady, setIsPaymentElementReady] = useState(false);
+  const [cardComplete, setCardComplete] = useState({
+    cardNumber: false,
+    cardExpiry: false,
+    cardCvc: false,
+  });
 
-  // Set initial payment method
-  const initialPaymentMethod =
-    formData?.subscriptionDetails?.paymentType === 'Payroll Deduction'
-      ? 'bank'
-      : 'card';
-  const [paymentMethod, setPaymentMethod] = useState(initialPaymentMethod);
+  // Check if all card fields are complete
+  const isCardReady = cardComplete.cardNumber && cardComplete.cardExpiry && cardComplete.cardCvc;
+
+  // Stripe element styling options
+  const ELEMENT_OPTIONS = {
+    style: {
+      base: {
+        fontSize: '14px',
+        color: '#424770',
+        letterSpacing: '0.025em',
+        fontFamily: 'Source Code Pro, monospace',
+        '::placeholder': {
+          color: '#aab7c4',
+        },
+        padding: '10px 12px',
+      },
+      invalid: {
+        color: '#9e2146',
+      },
+    },
+  };
 
   const priceInfo = useMemo(() => {
     const cents = product?.currentPricing?.price;
@@ -101,39 +113,55 @@ const SubscriptionModal = ({
       return;
     }
 
-    if (paymentMethod === 'card') {
-      setLoading(true);
-      try {
-        const responseConfirm = await stripe.confirmPayment({
-          elements,
-          confirmParams: {
-            return_url: `${window.location.origin}/payment-success`,
-          },
-          redirect: 'if_required',
-        });
-        
-        console.log('Element=====>',responseConfirm)
-        if (responseConfirm.error) throw new Error(responseConfirm.error.message);
+    setLoading(true);
+    try {
+      // Create payment method with card element
+      const { error: methodError, paymentMethod: stripePaymentMethod } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: elements.getElement(CardNumberElement),
+        billing_details: {
+          name: values.name,
+          email: values.email,
+        },
+      });
 
-        onSuccess({
-          paymentMethod,
+      if (methodError) {
+        throw new Error(methodError.message);
+      }
+
+      console.log('Payment Method Created:', stripePaymentMethod);
+
+      // Confirm the payment with the payment method
+      const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
+        clientSecret,
+        {
+          payment_method: stripePaymentMethod.id,
+        }
+      );
+
+      if (confirmError) {
+        throw new Error(confirmError.message);
+      }
+
+      console.log('Payment Confirmation Response:', paymentIntent);
+
+      // Check if payment was successful
+      if (paymentIntent?.status === 'succeeded') {
+        onSuccess?.({
+          paymentMethod: 'card',
           total: getDisplayPrice(),
           paymentDetails: values,
           customPrice,
+          paymentIntent: paymentIntent,
         });
-      } catch (err) {
-        console.error(err);
-        onFailure?.(err.message || 'Payment failed.');
-      } finally {
-        setLoading(false);
+      } else {
+        throw new Error('Payment not completed');
       }
-    } else {
-      onSuccess({
-        paymentMethod,
-        total: getDisplayPrice(),
-        paymentDetails: { bankDetails: values.bankDetails },
-        customPrice,
-      });
+    } catch (err) {
+      console.error('Payment Error:', err);
+      onFailure?.(err.message || 'Payment failed.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -168,52 +196,72 @@ const SubscriptionModal = ({
               ? formData?.personalInfo?.workEmail
               : formData?.personalInfo?.personalEmail,
         }}>
-        <Form.Item
-          name="paymentMethod"
-          label="Payment Method"
-          initialValue={initialPaymentMethod}>
-          <Radio.Group onChange={e => setPaymentMethod(e.target.value)}>
-            <Space direction="vertical" className="w-full">
-              <Radio value="card">
-                <CreditCardOutlined className="mr-2" /> Credit/Debit Card
-              </Radio>
-              <Radio value="bank">
-                <BankOutlined className="mr-2" /> Bank Transfer
-              </Radio>
-            </Space>
-          </Radio.Group>
+        <Form.Item 
+          name="name" 
+          label="Name on Card" 
+          required
+          rules={[{ required: true, message: 'Please enter name on card' }]}>
+          <div className="p-3 border rounded-lg bg-white shadow-sm">
+            <Input 
+              bordered={false} 
+              placeholder="Enter name on card"
+              style={{ padding: 0 }}
+            />
+          </div>
+        </Form.Item>
+        
+        <Form.Item 
+          name="email" 
+          label="Email" 
+          required
+          rules={[
+            { required: true, message: 'Please enter email' },
+            { type: 'email', message: 'Please enter a valid email' }
+          ]}>
+          <div className="p-3 border rounded-lg bg-white shadow-sm">
+            <Input 
+              type="email" 
+              bordered={false} 
+              placeholder="Enter email address"
+              style={{ padding: 0 }}
+            />
+          </div>
         </Form.Item>
 
-        {paymentMethod === 'card' && (
-          <>
-            <Form.Item name="name" label="Name on Card" required>
-              <Input />
-            </Form.Item>
-            <Form.Item name="email" label="Email" required>
-              <Input type="email" />
-            </Form.Item>
+        <Form.Item label="Card Number" required>
+          <div className="p-3 border rounded-lg bg-white shadow-sm">
+            <CardNumberElement
+              options={ELEMENT_OPTIONS}
+              onChange={(e) => {
+                setCardComplete(prev => ({ ...prev, cardNumber: e.complete }));
+              }}
+            />
+          </div>
+        </Form.Item>
 
-            <Form.Item label="Card Details" required>
-              <div className="p-3 border rounded-lg bg-white shadow-sm">
-                <PaymentElement
-                  onReady={() => setIsPaymentElementReady(true)}
-                  onChange={e =>
-                    setIsPaymentElementReady(!e?.error && e?.complete)
-                  }
-                />
-              </div>
-            </Form.Item>
-          </>
-        )}
-
-        {paymentMethod === 'bank' && (
-          <Form.Item
-            name="bankDetails"
-            label="Bank Account Details"
-            rules={[{ required: true, message: 'Please enter bank details' }]}>
-            <Input.TextArea rows={3} />
+        <div className="grid grid-cols-2 gap-4">
+          <Form.Item label="Expiry Date" required>
+            <div className="p-3 border rounded-lg bg-white shadow-sm">
+              <CardExpiryElement
+                options={ELEMENT_OPTIONS}
+                onChange={(e) => {
+                  setCardComplete(prev => ({ ...prev, cardExpiry: e.complete }));
+                }}
+              />
+            </div>
           </Form.Item>
-        )}
+
+          <Form.Item label="Security Code" required>
+            <div className="p-3 border rounded-lg bg-white shadow-sm">
+              <CardCvcElement
+                options={ELEMENT_OPTIONS}
+                onChange={(e) => {
+                  setCardComplete(prev => ({ ...prev, cardCvc: e.complete }));
+                }}
+              />
+            </div>
+          </Form.Item>
+        </div>
 
         <Divider />
         <div className="flex justify-between items-center">
@@ -226,7 +274,7 @@ const SubscriptionModal = ({
             type="primary"
             htmlType="submit"
             loading={loading}
-            disabled={paymentMethod === 'card' && !isPaymentElementReady}>
+            disabled={!isCardReady}>
             Pay Now
           </Button>
         </div>

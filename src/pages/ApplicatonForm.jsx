@@ -53,6 +53,7 @@ const ApplicationForm = () => {
   const [showValidation, setShowValidation] = useState(false);
   const [categoryData, setCategoryData] = useState(null);
   const [paymentIntentCreated, setPaymentIntentCreated] = useState(false);
+  const [shouldShowModal, setShouldShowModal] = useState(false);
   const [formData, setFormData] = useState({
     personalInfo: {
       forename: user?.userFirstName || '',
@@ -204,6 +205,14 @@ const ApplicationForm = () => {
     }
   }, [subscriptionDetail]);
 
+  // Show modal after subscription detail is created/updated
+  useEffect(() => {
+    if (shouldShowModal) {
+      setIsModalVisible(true);
+      setShouldShowModal(false);
+    }
+  }, [shouldShowModal]);
+
   const steps = [
     { number: 1, title: 'Personal Information' },
     { number: 2, title: 'Professional Details' },
@@ -254,6 +263,7 @@ const ApplicationForm = () => {
 
     createPersonalDetailRequest(personalInfo)
       .then(res => {
+        console.log('personal response============>',res)
         if (res.status === 200) {
           getPersonalDetail();
           setCurrentStep(prev => {
@@ -423,111 +433,8 @@ const ApplicationForm = () => {
       });
   };
 
-  const createPaymentIntent = async () => {
-    try {
-      // Check if payment intent already created for this application
-      if (paymentIntentCreated) {
-        console.log(
-          'Payment intent already created for this application, skipping...',
-        );
-        return { success: true, message: 'Payment intent already exists' };
-      }
-
-      const amount = categoryData?.currentPricing?.price || 50000; // fallback amount in cents
-      const currency = categoryData?.currentPricing?.currency || 'EUR';
-      const applicationId = personalDetail?.ApplicationId;
-
-      if (!applicationId) {
-        throw new Error('Application ID not found');
-      }
-
-      // const paymentData = {
-      //   purpose: 'subscriptionFee',
-      //   amount: amount,
-      //   currency: currency.toLowerCase(),
-      //   // status: 'created',
-      //   description: 'Annual membership fees',
-      //   applicationId: applicationId,
-      // };
-
-      // console.log('Creating payment intent with data:', paymentData);
-
-      // const response = await createPaymentIntentRequest(paymentData);
-
-      // console.log('Payment intent response:', response);
-
-      // Handle different response structures
-      if (response && (response.status === 200 || response.status === 201)) {
-        console.log('Payment intent created successfully:', response.data);
-        setPaymentIntentCreated(true);
-        return response.data;
-      } else if (response && response.data && response.data.success) {
-        console.log('Payment intent created successfully:', response.data);
-        setPaymentIntentCreated(true);
-        return response.data;
-      } else {
-        const errorMessage =
-          response?.data?.message ||
-          response?.message ||
-          'Failed to create payment intent';
-        throw new Error(errorMessage);
-      }
-    } catch (error) {
-      console.error('Payment intent creation failed:', error);
-
-      // Handle different error structures
-      let errorMessage = 'Failed to create payment intent';
-
-      if (error.response) {
-        // Server responded with error status
-        console.error('Server error response:', error.response);
-        console.error('Server error data:', error.response.data);
-
-        if (error.response.status === 409) {
-          // Handle conflict error (likely duplicate payment intent)
-          console.warn(
-            'Payment intent conflict - payment intent already exists for this application',
-          );
-          setPaymentIntentCreated(true);
-          // Don't throw error for 409 - treat as success since payment intent exists
-          return {
-            success: true,
-            message: 'Payment intent already exists',
-            existing: true,
-          };
-        } else {
-          errorMessage =
-            error.response.data?.message ||
-            error.response.statusText ||
-            errorMessage;
-        }
-      } else if (error.request) {
-        // Request was made but no response received
-        errorMessage = 'Network error - please check your connection';
-        console.error('Network error:', error.request);
-      } else if (error.message) {
-        // Other error
-        errorMessage = error.message;
-      }
-
-      toast.error(errorMessage);
-      throw error;
-    }
-  };
-
   const createSubscriptionDetail = async data => {
     try {
-      // Create payment intent first (with error handling to continue if it fails)
-      try {
-        // await createPaymentIntent();
-      } catch (paymentError) {
-        console.warn(
-          'Payment intent creation failed, continuing with subscription creation:',
-          paymentError,
-        );
-        // Continue with subscription creation even if payment intent fails
-      }
-
       const defaultFields = {
         membershipCategory:
           professionalDetail?.professionalDetails?.membershipCategory,
@@ -577,12 +484,19 @@ const ApplicationForm = () => {
           const nextStep = Math.min(prev + 1, steps.length);
           return nextStep;
         });
-        setStatusModal({ open: true, status: 'success', message: '' });
-        setTimeout(() => {
-          setStatusModal({ open: false, status: 'success', message: '' });
-          navigate('/');
-        }, 3000);
-        toast.success('Application submitted successfully');
+        
+        // Check if undergraduate student - they don't need payment
+        if (professionalDetail?.professionalDetails?.membershipCategory === 'undergraduate_student') {
+          setIsSubmitted(true);
+          setStatusModal({ 
+            open: true, 
+            status: 'success', 
+            message: 'Application submitted successfully!' 
+          });
+        } else {
+          // Trigger payment modal for other categories
+          setShouldShowModal(true);
+        }
       } else {
         toast.error(res.data.message ?? 'Unable to add subscription detail');
       }
@@ -594,17 +508,6 @@ const ApplicationForm = () => {
 
   const updateSubscriptionDetail = async data => {
     try {
-      // Create payment intent first (with error handling to continue if it fails)
-      // try {
-      //   await createPaymentIntent();
-      // } catch (paymentError) {
-      //   console.warn(
-      //     'Payment intent creation failed, continuing with subscription update:',
-      //     paymentError,
-      //   );
-      //   // Continue with subscription update even if payment intent fails
-      // }
-
       const defaultFields = {
         membershipCategory:
           professionalDetail?.professionalDetails?.membershipCategory,
@@ -648,17 +551,25 @@ const ApplicationForm = () => {
       );
 
       if (res.status === 200) {
+        console.log('subscriptionDetail==========>', res);
         getSubscriptionDetail();
         setCurrentStep(prev => {
           const nextStep = Math.min(prev + 1, steps.length);
           return nextStep;
         });
-        setStatusModal({ open: true, status: 'success', message: '' });
-        setTimeout(() => {
-          setStatusModal({ open: false, status: 'success', message: '' });
-          navigate('/');
-        }, 3000);
-        toast.success('Application update successfully');
+        
+        // Check if undergraduate student - they don't need payment
+        if (professionalDetail?.professionalDetails?.membershipCategory === 'undergraduate_student') {
+          setIsSubmitted(true);
+          setStatusModal({ 
+            open: true, 
+            status: 'success', 
+            message: 'Application updated successfully!' 
+          });
+        } else {
+          // Trigger payment modal for other categories
+          setShouldShowModal(true);
+        }
       } else {
         toast.error(res.data.message ?? 'Unable to update subscription detail');
       }
@@ -685,23 +596,14 @@ const ApplicationForm = () => {
           updateProfessionalDetail(formData.professionalDetails);
         }
       }
-      if (
-        currentStep === 3 &&
-        professionalDetail?.professionalDetails?.membershipCategory ===
-          'undergraduate_student'
-      ) {
+      if (currentStep === 3) {
+        // Always create/update subscription detail first
         if (!subscriptionDetail) {
           createSubscriptionDetail(formData.subscriptionDetails);
         } else {
           updateSubscriptionDetail(formData.subscriptionDetails);
         }
-      }
-      if (
-        currentStep === 3 &&
-        professionalDetail?.professionalDetails?.membershipCategory !==
-          'undergraduate_student'
-      ) {
-        setIsModalVisible(true);
+        // Modal will be shown by useEffect after subscription is saved (via shouldShowModal)
       }
       // Remove automatic step increment - it will be handled by API success callbacks
       setShowValidation(false);
@@ -804,26 +706,20 @@ const ApplicationForm = () => {
   };
 
   const handleSubscriptionSuccess = async paymentData => {
-    if (validateCurrentStep()) {
-      if (
-        currentStep === 3 &&
-        professionalDetail?.professionalDetails?.membershipCategory !==
-          'undergraduate_student'
-      ) {
-        try {
-          if (!subscriptionDetail) {
-            await createSubscriptionDetail(formData.subscriptionDetails);
-          } else {
-            await updateSubscriptionDetail(formData.subscriptionDetails);
-          }
-        } catch (error) {
-          console.error('Subscription processing failed:', error);
-          // Error is already handled in the create/update functions
-          return;
-        }
-      }
-      setIsModalVisible(false);
-    }
+    console.log('Payment Success Data:', paymentData);
+    
+    // Close the payment modal
+    setIsModalVisible(false);
+    
+    // Show success status modal
+    setStatusModal({ 
+      open: true, 
+      status: 'success', 
+      message: 'Payment completed successfully!' 
+    });
+    
+    // Reset form state
+    setIsSubmitted(true);
   };
 
   const handleSubscriptionFailure = errorMessage => {
@@ -871,7 +767,7 @@ const ApplicationForm = () => {
         return null;
     }
   };
-
+  console.log('modal==========>', isModalVisible);
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold mb-4">Application</h1>
@@ -948,17 +844,6 @@ const ApplicationForm = () => {
           </div>
         </>
       )}
-
-      {/* <Elements stripe={stripePromise}>
-        <SubscriptionModal
-          isVisible={isModalVisible}
-          onClose={handleModalClose}
-          onSuccess={handleSubscriptionSuccess}
-          onFailure={handleSubscriptionFailure}
-          formData={formData}
-          membershipCategory={formData.professionalDetails.membershipCategory}
-        />
-      </Elements> */}
 
       <SubscriptionWrapper
         isVisible={isModalVisible}

@@ -12,7 +12,10 @@ import { PaymentStatusModal, SubscriptionModal } from '../components/modals';
 import { loadStripe } from '@stripe/stripe-js';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { updateSubscriptionDetailRequest } from '../api/application.api';
+import { 
+  updateSubscriptionDetailRequest, 
+  applicationConfirmationRequest 
+} from '../api/application.api';
 
 const stripePromise = loadStripe(
   'pk_test_51Rut8HQeJh5X1hcfNrG7yUZjkR9F3jURKHAiz5UCpJiOjaHjfx43ZimY7nJvLT3EvgrUtIMq1nrgwMgo5js7TOL1006raA9kpv',
@@ -37,6 +40,7 @@ const Dashboard = () => {
     status: 'success',
     message: '',
   });
+  const [isApplicationSubmitted, setIsApplicationSubmitted] = useState(false);
   const [formData, setFormData] = useState({
     personalInfo: {
       forename: user?.userFirstName || '',
@@ -173,6 +177,33 @@ const Dashboard = () => {
 
   console.log('Application ID', personalDetail?.ApplicationId);
 
+  // Check application status
+  useEffect(() => {
+    const checkApplicationStatus = async () => {
+      if (personalDetail?.ApplicationId) {
+        try {
+          const response = await applicationConfirmationRequest(personalDetail.ApplicationId);
+          console.log('Application Status Response:', response);
+          
+          if (response?.status === 200 || response?.data?.status === 'success') {
+            const applicationStatus = response?.data?.data?.applicationStatus || response?.data?.applicationStatus;
+            
+            if (applicationStatus === 'submitted') {
+              setIsApplicationSubmitted(true);
+            } else {
+              setIsApplicationSubmitted(false);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch application status:', error);
+          setIsApplicationSubmitted(false);
+        }
+      }
+    };
+
+    checkApplicationStatus();
+  }, [personalDetail?.ApplicationId]);
+
   useEffect(() => {
     if (!personalDetail) {
       setCurrentStep(1);
@@ -286,6 +317,14 @@ const Dashboard = () => {
     3: 'Application Completed',
   };
 
+  // Get button text based on application status
+  const getApplicationButtonText = () => {
+    if (isApplicationSubmitted) {
+      return 'Application Submitted';
+    }
+    return stepToButtonText[currentStep] || 'Continue';
+  };
+
   return (
     <div>
       <h1 className="text-3xl font-bold mb-2">Welcome to Members Portal</h1>
@@ -295,12 +334,16 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <DashboardCard
           title="Application"
-          description="Start or continue your membership application"
+          description={
+            isApplicationSubmitted 
+              ? "Your application has been successfully submitted" 
+              : "Start or continue your membership application"
+          }
           icon={<FormOutlined />}
           link="/applicationForm"
           onPress={() => navigate("/applicationForm")}
-          buttonText={stepToButtonText[currentStep] || 'Continue'}
-          // disabled={currentStep === 3 && subscriptionDetail}
+          buttonText={getApplicationButtonText()}
+          disabled={isApplicationSubmitted}
         />
         <DashboardCard
           title="My Profile"

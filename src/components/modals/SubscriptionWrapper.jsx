@@ -37,7 +37,7 @@ const SubscriptionWrapper = ({
         // ✅ Step 1: Fetch category details
         const categoryRes = await fetchCategoryByCategoryId(membershipCategory);
         const categoryData = categoryRes?.data?.data || categoryRes?.data;
-        console.log('CategoryData========>', categoryData);
+        // console.log('CategoryData========>', categoryData);
         const currentPricing = categoryData?.currentPricing || {};
 
         const amountInCents = currentPricing?.price; // Stripe expects amount in cents
@@ -46,7 +46,7 @@ const SubscriptionWrapper = ({
         if (!amountInCents) throw new Error('Invalid category price data');
 
         // ✅ Step 2: Prepare dynamic data
-        console.log('userDetail=======>', userDetail);
+        // console.log('userDetail=======>', userDetail);
         const applicationId = personalDetail?.ApplicationId;
         const userId = userDetail?.id || userDetail?._id;
         const tenantId = userDetail?.tenantId || userDetail?.userTenantId;
@@ -69,7 +69,8 @@ const SubscriptionWrapper = ({
         console.log('🧾 Creating Payment Intent with:', paymentData);
 
         const res = await createPaymentIntentRequest(paymentData);
-        console.log('response======>', res);
+        console.log('Payment Intent Response:', res);
+        
         const secret =
           res?.data?.data?.clientSecret ||
           res?.data?.client_secret ||
@@ -110,6 +111,7 @@ const SubscriptionWrapper = ({
         onFailure={onFailure}
         formData={formData}
         membershipCategory={membershipCategory}
+        clientSecret={clientSecret}
       />
     </Elements>
   );

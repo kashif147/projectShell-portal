@@ -47,3 +47,7 @@ export const updateSubscriptionDetailRequest = (id, data) => {
 export const deleteSubscriptionDetailRequest = () => {
   return application_request.put('/api/subscription-details');
 };
+
+export const applicationConfirmationRequest = (id) => {
+  return application_request.get(`/api/personal-details/${id}/status`);
+};
