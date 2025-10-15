@@ -8,17 +8,16 @@ import {
 } from '@ant-design/icons';
 import { useApplication } from '../contexts/applicationContext';
 import { Elements } from '@stripe/react-stripe-js';
-import { PaymentStatusModal, SubscriptionModal } from '../components/modals';
+import { PaymentStatusModal, DashboardPaymentModal } from '../components/modals';
 import { loadStripe } from '@stripe/stripe-js';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { 
-  updateSubscriptionDetailRequest, 
   applicationConfirmationRequest 
 } from '../api/application.api';
 
 const stripePromise = loadStripe(
-  'pk_test_51Rut8HQeJh5X1hcfNrG7yUZjkR9F3jURKHAiz5UCpJiOjaHjfx43ZimY7nJvLT3EvgrUtIMq1nrgwMgo5js7TOL1006raA9kpv',
+  'pk_test_51SBAG4FTlZb0wcbr19eI8nC5u62DfuaUWRVS51VTERBocxSM9JSEs4ubrW57hYTCAHK9d6jrarrT4SAViKFMqKjT00TrEr3PNV',
 );
 
 const Dashboard = () => {
@@ -216,79 +215,18 @@ const Dashboard = () => {
     }
   }, [personalDetail, professionalDetail, subscriptionDetail]);
 
-  const updateSubscriptionDetail = data => {
-    const defaultFields = {
-      membershipCategory:
-        professionalDetail?.professionalDetails?.membershipCategory,
-      // dateJoined: "15/01/2025",
-      // paymentFrequency: "Monthly",
-    };
-
-    const subscriptionFields = {
-      paymentType: data?.paymentType,
-      payrollNo: data?.payrollNo,
-      membershipStatus: data?.memberStatus,
-      otherIrishTradeUnion: data?.otherIrishTradeUnion === true,
-      otherScheme: data?.otherScheme === true,
-      recuritedBy: data?.recuritedBy,
-      recuritedByMembershipNo: data?.recuritedByMembershipNo,
-      primarySection: data?.primarySection,
-      otherPrimarySection: data?.otherPrimarySection,
-      secondarySection: data?.secondarySection,
-      otherSecondarySection: data?.otherSecondarySection,
-      incomeProtectionScheme: data?.incomeProtectionScheme === true,
-      inmoRewards: data?.inmoRewards === true,
-      valueAddedServices: data?.valueAddedServices === true,
-      termsAndConditions: data?.termsAndConditions === true,
-      ...defaultFields,
-    };
-
-    const subscriptionDetails = {};
-    Object.entries(subscriptionFields).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        subscriptionDetails[key] = value;
-      }
-    });
-
-    const subscriptionInfo = {
-      subscriptionDetails,
-    };
-    updateSubscriptionDetailRequest(
-      personalDetail?.ApplicationId,
-      subscriptionInfo,
-    )
-      .then(res => {
-        if (res.status === 200) {
-          getSubscriptionDetail();
-          setStatusModal({ open: true, status: 'success', message: '' });
-          setTimeout(() => {
-            setStatusModal({ open: false, status: 'success', message: '' });
-          }, 3000);
-          // toast.success('Application update successfully');
-        } else {
-          toast.error(
-            res.data.message ?? 'Unable to update subscription detail',
-          );
-        }
-      })
-      .catch(() => {
-        toast.error('Something went wrong');
-      });
-  };
-
   const handleModalClose = () => {
     setIsModalVisible(false);
   };
 
   const handleSubscriptionSuccess = paymentData => {
-    if (
-      currentStep === 3 &&
-      professionalDetail?.professionalDetails?.membershipCategory !==
-      'undergraduate_student'
-    ) {
-      updateSubscriptionDetail(formData.subscriptionDetails);
-      setIsModalVisible(false);
-    }
+    console.log('Payment Success from Dashboard:', paymentData);
+    setIsModalVisible(false);
+    setStatusModal({ 
+      open: true, 
+      status: 'success', 
+      message: 'Payment completed successfully!' 
+    });
   };
 
   const handleSubscriptionFailure = errorMessage => {
@@ -382,7 +320,7 @@ const Dashboard = () => {
       />
 
       <Elements stripe={stripePromise}>
-        <SubscriptionModal
+        <DashboardPaymentModal
           isVisible={isModalVisible}
           onClose={handleModalClose}
           onSuccess={handleSubscriptionSuccess}
