@@ -15,6 +15,8 @@ import {
 } from '@stripe/react-stripe-js';
 import Button from '../common/Button';
 import { fetchCategoryByCategoryId } from '../../api/category.api';
+import { useSelector } from 'react-redux';
+import Spinner from '../common/Spinner';
 
 const SubscriptionModal = ({
   isVisible,
@@ -37,6 +39,15 @@ const SubscriptionModal = ({
     cardExpiry: false,
     cardCvc: false,
   });
+
+  const { userDetail, user } = useSelector(state => state.auth);
+
+  // Debug: Log user data structure
+  useEffect(() => {
+    if (isVisible) {
+      console.log('User data from API (SubscriptionModal):', { user, userDetail });
+    }
+  }, [isVisible, user, userDetail]);
 
   // Check if all card fields are complete
   const isCardReady = cardComplete.cardNumber && cardComplete.cardExpiry && cardComplete.cardCvc;
@@ -107,9 +118,33 @@ const SubscriptionModal = ({
     return customPrice || defaultPrice;
   };
 
-  const handleSubmit = async values => {
+  const handlePayNow = async () => {
+    // Get user data for payment
+    const userData = user || userDetail;
+    const userName = userData?.userFirstName && userData?.userLastName
+      ? `${userData.userFirstName} ${userData.userLastName}`
+      : userData?.userName || 
+        (formData?.personalInfo?.forename && formData?.personalInfo?.surname
+          ? `${formData.personalInfo.forename} ${formData.personalInfo.surname}`
+          : '');
+    const userEmail = userData?.userEmail || userData?.email || 
+      (formData?.personalInfo?.preferredEmail === 'work'
+        ? formData?.personalInfo?.workEmail
+        : formData?.personalInfo?.personalEmail) || '';
+
+    // Validate user data
+    if (!userName || !userEmail) {
+      onFailure?.('User name and email are required');
+      return;
+    }
+
     if (!stripe || !elements) {
       onFailure?.('Stripe not initialized yet.');
+      return;
+    }
+
+    if (!isCardReady) {
+      onFailure?.('Please complete all card details');
       return;
     }
 
@@ -120,8 +155,8 @@ const SubscriptionModal = ({
         type: 'card',
         card: elements.getElement(CardNumberElement),
         billing_details: {
-          name: values.name,
-          email: values.email,
+          name: userName,
+          email: userEmail,
         },
       });
 
@@ -150,7 +185,10 @@ const SubscriptionModal = ({
         onSuccess?.({
           paymentMethod: 'card',
           total: getDisplayPrice(),
-          paymentDetails: values,
+          paymentDetails: {
+            name: userName,
+            email: userEmail,
+          },
           customPrice,
           paymentIntent: paymentIntent,
         });
@@ -178,55 +216,104 @@ const SubscriptionModal = ({
       open={isVisible}
       onCancel={onClose}
       footer={null}
-      width={window.innerWidth <= 768 ? '95%' : '500px'}
+      width={window.innerWidth <= 768 ? '95%' : '550px'}
       centered>
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleSubmit}
-        size="small"
-        initialValues={{
-          name:
-            formData?.personalInfo?.forename &&
-            formData?.personalInfo?.surname
-              ? `${formData.personalInfo.forename} ${formData.personalInfo.surname}`
-              : '',
-          email:
-            formData?.personalInfo?.preferredEmail === 'work'
-              ? formData?.personalInfo?.workEmail
-              : formData?.personalInfo?.personalEmail,
-        }}>
-        <Form.Item 
-          name="name" 
-          label="Name on Card" 
-          required
-          rules={[{ required: true, message: 'Please enter name on card' }]}>
-          <div className="p-3 border rounded-lg bg-white shadow-sm">
+      {productLoading ? (
+        <div className="text-center py-8">
+          <Spinner />
+          <p className="text-gray-500 mt-2">Loading payment details...</p>
+        </div>
+      ) : (
+        <Form
+          form={form}
+          layout="vertical"
+          size="small">
+          
+          {/* Membership Category Details */}
+          {product && (
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h3 className="font-semibold text-gray-800">
+                    {product?.name || 'Membership Category'}
+                  </h3>
+                  {product?.description && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      {product.description}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-blue-200">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Category Price:</span>
+                  <span className="font-semibold text-gray-800">
+                    {formatCurrency(getDisplayPrice())}
+                  </span>
+                </div>
+                {product?.currentPricing?.frequency && (
+                  <div className="flex justify-between text-sm mt-1">
+                    <span className="text-gray-600">Payment Frequency:</span>
+                    <span className="font-medium text-gray-800">
+                      {product.currentPricing.frequency}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Name on Card */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <span className="text-red-500">* </span>Name on Card
+            </label>
             <Input 
-              bordered={false} 
-              placeholder="Enter name on card"
-              style={{ padding: 0 }}
+              value={user?.userFirstName && user?.userLastName
+                ? `${user.userFirstName} ${user.userLastName}`
+                : userDetail?.userFirstName && userDetail?.userLastName
+                  ? `${userDetail.userFirstName} ${userDetail.userLastName}`
+                  : formData?.personalInfo?.forename && formData?.personalInfo?.surname
+                    ? `${formData.personalInfo.forename} ${formData.personalInfo.surname}`
+                    : user?.userName || userDetail?.userName || ''}
+              readOnly
+              size="large"
+              className="shadow-sm"
+              style={{ 
+                backgroundColor: '#f9fafb',
+                fontWeight: '500',
+                color: '#111827'
+              }}
             />
+            <p className="text-xs text-gray-500 mt-1">
+              ✓ Pre-filled from your profile
+            </p>
           </div>
-        </Form.Item>
-        
-        <Form.Item 
-          name="email" 
-          label="Email" 
-          required
-          rules={[
-            { required: true, message: 'Please enter email' },
-            { type: 'email', message: 'Please enter a valid email' }
-          ]}>
-          <div className="p-3 border rounded-lg bg-white shadow-sm">
+          
+          {/* Email */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <span className="text-red-500">* </span>Email
+            </label>
             <Input 
-              type="email" 
-              bordered={false} 
-              placeholder="Enter email address"
-              style={{ padding: 0 }}
+              type="email"
+              value={user?.userEmail || userDetail?.userEmail || user?.email || userDetail?.email || 
+                (formData?.personalInfo?.preferredEmail === 'work'
+                  ? formData?.personalInfo?.workEmail
+                  : formData?.personalInfo?.personalEmail) || ''}
+              readOnly
+              size="large"
+              className="shadow-sm"
+              style={{ 
+                backgroundColor: '#f9fafb',
+                fontWeight: '500',
+                color: '#111827'
+              }}
             />
+            <p className="text-xs text-gray-500 mt-1">
+              ✓ Pre-filled from your profile
+            </p>
           </div>
-        </Form.Item>
 
         <Form.Item label="Card Number" required>
           <div className="p-3 border rounded-lg bg-white shadow-sm">
@@ -263,22 +350,23 @@ const SubscriptionModal = ({
           </Form.Item>
         </div>
 
-        <Divider />
-        <div className="flex justify-between items-center">
-          <div>
-            <p className="font-semibold">
-              Total: {formatCurrency(getDisplayPrice())}
-            </p>
+          <Divider />
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-semibold">
+                Total: {formatCurrency(getDisplayPrice())}
+              </p>
+            </div>
+            <Button
+              type="primary"
+              onClick={handlePayNow}
+              loading={loading}
+              disabled={!isCardReady}>
+              Pay Now
+            </Button>
           </div>
-          <Button
-            type="primary"
-            htmlType="submit"
-            loading={loading}
-            disabled={!isCardReady}>
-            Pay Now
-          </Button>
-        </div>
-      </Form>
+        </Form>
+      )}
     </Modal>
   );
 };
