@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
-import { Layout, Avatar, Dropdown, Badge } from 'antd';
-import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, BellOutlined } from '@ant-design/icons';
+import React, { useEffect, useState } from 'react';
+import { Layout, Avatar, Dropdown, Badge, Input } from 'antd';
+import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, BellOutlined, SearchOutlined } from '@ant-design/icons';
 import Button from '../common/Button';
 import { useDispatch } from 'react-redux';
 import { signOut } from '../../services/auth.services';
@@ -13,6 +13,7 @@ const Header = ({ collapsed, setCollapsed, isMobile, setDrawerVisible, pageTitle
   const {fetchLookups} = useLookup();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchValue, setSearchValue] = useState('');
 
   useEffect(() => {
     fetchLookups();
@@ -35,6 +36,11 @@ const Header = ({ collapsed, setCollapsed, isMobile, setDrawerVisible, pageTitle
     }
   };
 
+  const handleSearch = (value) => {
+    console.log('Search:', value);
+    // Add your search logic here
+  };
+
   return (
     <Layout.Header
       style={{
@@ -46,11 +52,12 @@ const Header = ({ collapsed, setCollapsed, isMobile, setDrawerVisible, pageTitle
         position: 'sticky',
         top: 0,
         zIndex: 99,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
         height: '72px',
       }}
     >
-      <div className="flex items-center">
+      {/* Left Section - Menu Button, Title, and Search */}
+      <div className="flex items-center flex-1">
         <Button
           type="text"
           icon={isMobile ? <MenuUnfoldOutlined /> : (collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />)}
@@ -58,26 +65,53 @@ const Header = ({ collapsed, setCollapsed, isMobile, setDrawerVisible, pageTitle
           className="ml-[-24px] w-16 h-16"
         />
         <h1 className="header-title text-2xl ml-4 text-gray-800 tracking-tight">{pageTitle}</h1>
+        
+        {/* Search Bar */}
+        <div className="ml-8 hidden md:block" style={{ maxWidth: '300px', width: '100%' }}>
+          <Input
+            placeholder="Search..."
+            prefix={<SearchOutlined className="text-gray-400" />}
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            onPressEnter={() => handleSearch(searchValue)}
+            style={{
+              borderRadius: '8px',
+              backgroundColor: '#f5f5f5',
+              border: 'none',
+            }}
+            className="hover:bg-gray-100 transition-colors"
+          />
+        </div>
       </div>
 
-      <div className="flex items-center space-x-6">
-        <Badge count={2} size="small">
+      {/* Right Section - Notifications and User Profile */}
+      <div className="flex items-center space-x-4">
+        {/* Notification Bell */}
+        <Badge count={0} size="small">
           <Button
             type="text"
-            icon={<BellOutlined style={{ fontSize: '20px' }} />}
+            icon={<BellOutlined style={{ fontSize: '20px', color: '#52525b' }} />}
             className="hover:bg-gray-50 transition-colors"
           />
         </Badge>
+
+        {/* User Profile Dropdown */}
         <Dropdown menu={{ items, onClick: handleMenuClick }} placement="bottomRight">
-          <div className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity">
+          <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-lg px-3 py-2 transition-colors">
             <Avatar
               icon={<UserOutlined />}
               style={{
-                backgroundColor: '#1890ff',
-                boxShadow: '0 2px 4px rgba(24,144,255,0.2)'
+                backgroundColor: '#71717a',
+                width: '40px',
+                height: '40px',
               }}
             />
-            <span className="hidden sm:inline user-name text-gray-700">{user?.userFullName ?? 'John Doe'}</span>
+            <div className="hidden sm:flex flex-col items-start">
+              <span className="text-sm font-semibold text-gray-900">
+                {user?.userFirstName || 'Maria'}
+              </span>
+              <span className="text-xs text-gray-500">Member</span>
+            </div>
           </div>
         </Dropdown>
       </div>
