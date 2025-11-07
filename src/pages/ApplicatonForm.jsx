@@ -758,57 +758,62 @@ const ApplicationForm = () => {
         <Spinner />
       ) : (
         <>
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 sm:gap-0">
-            {steps.map(step => (
-              <div
-                key={step.number}
-                className="flex items-center w-full sm:w-auto">
-                <div className="flex items-center w-full sm:w-auto">
+          <div className="flex items-center mb-6 sm:mb-8 px-1 sm:px-8 md:px-12 lg:px-16 overflow-x-auto">
+            {steps.map((step, index) => (
+              <React.Fragment key={step.number}>
+                {/* Step Circle and Label */}
+                <div className="flex flex-col items-center relative flex-shrink-0">
                   <div
                     className={`
-                w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
-                ${
-                  isSubmitted && step.number === 3
-                    ? 'bg-green-500 text-white'
-                    : currentStep === step.number
-                      ? 'bg-blue-500 text-white'
-                      : currentStep > step.number
-                        ? 'bg-green-500 text-white'
-                        : 'bg-gray-200'
-                }
-              `}>
+                      w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-semibold text-sm sm:text-base
+                      ${
+                        isSubmitted && step.number === 3
+                          ? 'bg-green-500 text-white'
+                          : currentStep === step.number
+                            ? 'bg-blue-500 text-white'
+                            : currentStep > step.number
+                              ? 'bg-green-500 text-white'
+                              : 'bg-gray-300 text-gray-600'
+                      }
+                    `}>
                     {isSubmitted && step.number === 3
                       ? '✓'
                       : currentStep > step.number
                         ? '✓'
                         : step.number}
                   </div>
-                  <div className="ml-2">
-                    <p
-                      className={`text-sm whitespace-nowrap ${
-                        isSubmitted && step.number === 3
-                          ? 'text-green-500 font-semibold'
-                          : currentStep === step.number
-                            ? 'text-blue-500 font-semibold'
+                  <p
+                    className={`mt-1.5 sm:mt-2 text-[9px] xs:text-[10px] sm:text-xs md:text-sm font-medium text-center max-w-[70px] sm:max-w-none leading-tight sm:leading-normal ${
+                      isSubmitted && step.number === 3
+                        ? 'text-green-500'
+                        : currentStep === step.number
+                          ? 'text-blue-500'
+                          : currentStep > step.number
+                            ? 'text-green-500'
                             : 'text-gray-500'
-                      }`}>
-                      {step.title}
-                    </p>
-                  </div>
+                    }`}>
+                    {step.title}
+                  </p>
                 </div>
-                {step.number < steps.length && (
-                  <div
-                    className={`
-                hidden sm:block flex-grow mx-2 h-1 min-w-[16px]
-                ${(isSubmitted && step.number === 2) || currentStep > step.number ? 'bg-green-500' : 'bg-gray-200'}
-              `}
-                  />
+
+                {/* Connecting Line */}
+                {index < steps.length - 1 && (
+                  <div className="flex-1 mx-1 sm:mx-4 md:mx-6 lg:mx-8 min-w-[30px] sm:min-w-[80px] md:min-w-[100px]">
+                    <div
+                      className={`
+                        h-0.5 w-full
+                        ${(isSubmitted && step.number === 2) || currentStep > step.number 
+                          ? 'bg-green-500' 
+                          : 'bg-gray-300'}
+                      `}
+                    />
+                  </div>
                 )}
-              </div>
+              </React.Fragment>
             ))}
           </div>
 
-          <Card title={steps[currentStep - 1].title} className="p-4">
+          <Card className="p-4">
             {renderStepContent()}
           </Card>
 

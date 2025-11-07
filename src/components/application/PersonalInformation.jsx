@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
+import { Radio } from '../ui/Radio';
 import { DatePicker } from '../ui/DatePicker';
 // Dynamic countries from lookup context will replace static constants
 import { useLookup } from '../../contexts/lookupContext';
@@ -98,89 +99,129 @@ const PersonalInformation = ({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Select
-          label="Title"
-          name="title"
-          required
-          placeholder="Enter your title"
-          onChange={handleInputChange}
-          showValidation={showValidation}
-          value={formData?.title || ''}
-          options={titleLookups?.map(item => ({
-            value: item.lookupname,
-            label: item.lookupname,
-          }))}
-        />
+    <div className="space-y-8">
+      {/* Personal Information Section */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Personal Information</h2>
+        <p className="text-sm text-gray-600 mb-6">
+          Please provide your details as they appear on your official documents.
+        </p>
+        
+        {/* First row: Title, Forename(s), Surname */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <Select
+            label="Title"
+            name="title"
+            required
+            placeholder="Select..."
+            onChange={handleInputChange}
+            showValidation={showValidation}
+            value={formData?.title || ''}
+            options={titleLookups?.map(item => ({
+              value: item.lookupname,
+              label: item.lookupname,
+            }))}
+          />
+          <Input
+            label="Forename(s)"
+            name="forename"
+            required
+            placeholder="Enter your forename(s)"
+            value={formData?.forename || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+          />
+          <Input
+            label="Surname"
+            name="surname"
+            required
+            placeholder="Enter your surname"
+            value={formData?.surname || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+          />
+        </div>
+
+        {/* Second row: Gender, Date of Birth, Country */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Select
+            label="Gender"
+            name="gender"
+            required
+            placeholder="Select gender"
+            value={formData?.gender || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+            options={genderLookups?.map(item => ({
+              value: item.lookupname,
+              label: item.lookupname,
+            }))}
+          />
+          <DatePicker
+            label="Date of Birth"
+            name="dateOfBirth"
+            required
+            placeholder="mm/dd/yyyy"
+            value={formData?.dateOfBirth || ''}
+            onChange={handleInputChange}
+            max={new Date().toISOString().split('T')[0]}
+            showValidation={showValidation}
+          />
+          <Select
+            label="Country of Primary Qualification"
+            name="countryPrimaryQualification"
+            placeholder="Select country"
+            value={formData?.countryPrimaryQualification || ''}
+            onChange={handleInputChange}
+            options={countryOptions}
+            isSearchable
+          />
+        </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label="Surname"
-          name="surname"
-          required
-          placeholder="Enter your surname"
-          value={formData?.surname || ''}
-          onChange={handleInputChange}
-          showValidation={showValidation}
-        />
-        <Input
-          label="Forename"
-          name="forename"
-          required
-          placeholder="Enter your forename"
-          value={formData?.forename || ''}
-          onChange={handleInputChange}
-          showValidation={showValidation}
-        />
-        <Select
-          label="Gender"
-          name="gender"
-          required
-          value={formData?.gender || ''}
-          onChange={handleInputChange}
-          showValidation={showValidation}
-          options={genderLookups?.map(item => ({
-            value: item.lookupname,
-            label: item.lookupname,
-          }))}
-        />
-        <DatePicker
-          label="Date of Birth"
-          name="dateOfBirth"
-          required
-          value={formData?.dateOfBirth || ''}
-          onChange={handleInputChange}
-          max={new Date().toISOString().split('T')[0]}
-          showValidation={showValidation}
-        />
-        <Select
-          label="Country of Primary Qualification"
-          name="countryPrimaryQualification"
-          value={formData?.countryPrimaryQualification || ''}
-          onChange={handleInputChange}
-          options={countryOptions}
-          isSearchable
-          placeholder="Select country of primary qualification"
-        />
-      </div>
-      <h3 className="text-lg font-semibold">Correspondence Details</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Checkbox
-          label={
-            <span className="font-medium text-sm">
-              Consent to receive Correspondence from INMO
-            </span>
-          }
-          name="consent"
-          checked={formData?.consent}
-          onChange={handleInputChange}
-        />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Search by address or Eircode
+
+      {/* Correspondence Details Section */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Correspondence Details</h2>
+        <p className="text-sm text-gray-600 mb-6">
+          Let us know the best way to send you mail.
+        </p>
+
+        {/* Consent Checkbox */}
+        <div className="mb-6">
+          <Checkbox
+            label={
+              <div>
+                <span className="font-semibold text-gray-900">I consent to receive Correspondence</span>
+                <p className="text-xs text-gray-500 mt-1">
+                  Please tick this box if you would not like to receive correspondence from us to this address.
+                </p>
+              </div>
+            }
+            name="consent"
+            checked={formData?.consent}
+            onChange={handleInputChange}
+          />
+        </div>
+
+        {/* Preferred Address Radio */}
+        <div className="mb-6">
+          <Radio
+            label="Preferred address"
+            name="preferredAddress"
+            value={formData?.preferredAddress || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+            options={[
+              { value: 'home', label: 'Home' },
+              { value: 'personal', label: 'Personal' },
+            ]}
+          />
+        </div>
+
+        {/* Find your address */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Find your address
           </label>
           {isLoaded && (
             <StandaloneSearchBox
@@ -188,121 +229,137 @@ const PersonalInformation = ({
               onPlacesChanged={handlePlacesChanged}>
               <input
                 type="text"
-                placeholder="Enter Eircode (e.g., D01X4X0)"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Start typing your address or Eircode..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               />
             </StandaloneSearchBox>
           )}
+          <div className="mt-2 text-right">
+            <span className="text-sm text-blue-600 cursor-pointer hover:underline">
+              Or enter manually
+            </span>
+          </div>
         </div>
-        <Select
-          label="Preferred address"
-          name="preferredAddress"
-          required
-          showValidation={showValidation}
-          value={formData?.preferredAddress}
-          onChange={handleInputChange}
-          options={[
-            { value: 'home', label: 'Home' },
-            { value: 'work', label: 'Work' },
-          ]}
-        />
-        <Input
-          label="Address line 1 (Building or House)"
-          name="addressLine1"
-          required
-          value={formData?.addressLine1 || ''}
-          onChange={handleInputChange}
-          showValidation={showValidation}
-        />
-        <Input
-          label="Address line 2 (Street or Road)"
-          name="addressLine2"
-          value={formData?.addressLine2 || ''}
-          onChange={handleInputChange}
-        />
-        <Input
-          label="Address line 3 (Area or Town)"
-          name="addressLine3"
-          value={formData?.addressLine3 || ''}
-          onChange={handleInputChange}
-        />
-        <Input
-          label="Address line 4 (County, City or Postcode)"
-          name="addressLine4"
-          required
-          value={formData?.addressLine4 || ''}
-          onChange={handleInputChange}
-          showValidation={showValidation}
-        />
-        <Input
-          label="Eircode"
-          name="eircode"
-          value={formData?.eircode || ''}
-          onChange={handleInputChange}
-        />
-        <Select
-          label="Country"
-          name="country"
-          value={formData?.country || 'IE'}
-          onChange={handleInputChange}
-          options={countryOptions}
-          isSearchable
-          placeholder="Search for a country..."
-        />
+
+        {/* Address Fields - 2 columns */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            label="Address line 1 (Building or House)"
+            name="addressLine1"
+            required
+            placeholder="Enter building or house"
+            value={formData?.addressLine1 || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+          />
+          <Input
+            label="Address line 2 (Street or Road)"
+            name="addressLine2"
+            placeholder="Enter street or road"
+            value={formData?.addressLine2 || ''}
+            onChange={handleInputChange}
+          />
+          <Input
+            label="Town/City"
+            name="addressLine3"
+            placeholder="Enter town/city"
+            value={formData?.addressLine3 || ''}
+            onChange={handleInputChange}
+          />
+          <Input
+            label="County/State"
+            name="addressLine4"
+            required
+            placeholder="Enter county/state"
+            value={formData?.addressLine4 || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+          />
+          <Input
+            label="Eircode/Postcode"
+            name="eircode"
+            placeholder="Enter eircode/postcode"
+            value={formData?.eircode || ''}
+            onChange={handleInputChange}
+          />
+          <Select
+            label="Country"
+            name="country"
+            placeholder="Select country"
+            value={formData?.country || 'IE'}
+            onChange={handleInputChange}
+            options={countryOptions}
+            isSearchable
+          />
+        </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label="Mobile No"
-          name="mobileNo"
-          required
-          placeholder="Enter your mobile number"
-          value={formData?.mobileNo || ''}
-          onChange={handleInputChange}
-          showValidation={showValidation}
-        />
-        <Input
-          label="Home / Work Tel Number"
-          name="homeWorkTelNo"
-          placeholder="Enter your mobile number"
-          value={formData?.homeWorkTelNo || ''}
-          onChange={handleInputChange}
-        />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Select
-          label="Preferred Email"
-          name="preferredEmail"
-          required
-          showValidation={showValidation}
-          value={formData?.preferredEmail}
-          onChange={handleInputChange}
-          options={[
-            { value: 'work', label: 'Work' },
-            { value: 'personal', label: 'Personal' },
-          ]}
-        />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label="Personal Email"
-          name="personalEmail"
-          type="email"
-          required={formData?.preferredEmail === 'personal'}
-          placeholder="Enter your personal email"
-          value={formData?.personalEmail || ''}
-          onChange={handleInputChange}
-          showValidation={showValidation}
-        />
-        <Input
-          label="Work Email"
-          name="workEmail"
-          type="email"
-          required={formData?.preferredEmail === 'work'}
-          placeholder="Enter your work email"
-          value={formData?.workEmail || ''}
-          onChange={handleInputChange}
-          showValidation={showValidation}
-        />
+
+      {/* Contact Details Section */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Contact Details</h2>
+        <p className="text-sm text-gray-600 mb-6">
+          Provide your phone numbers and email addresses.
+        </p>
+
+        {/* Phone Numbers */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <Input
+            label="Mobile Number"
+            name="mobileNo"
+            required
+            placeholder="+353 8X XXX XXXX"
+            value={formData?.mobileNo || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+          />
+          <Input
+            label="Home / Work Tel Number (Optional)"
+            name="homeWorkTelNo"
+            placeholder="+353 8X XXX XXXX"
+            value={formData?.homeWorkTelNo || ''}
+            onChange={handleInputChange}
+          />
+        </div>
+
+        {/* Preferred Email Radio */}
+        <div className="mb-4">
+          <Radio
+            label="Preferred Email"
+            name="preferredEmail"
+            required
+            value={formData?.preferredEmail || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+            options={[
+              { value: 'personal', label: 'Personal' },
+              { value: 'work', label: 'Work' },
+            ]}
+          />
+        </div>
+
+        {/* Email Fields */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            label="Personal Email"
+            name="personalEmail"
+            type="email"
+            required={formData?.preferredEmail === 'personal'}
+            placeholder="you@example.com"
+            value={formData?.personalEmail || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+          />
+          <Input
+            label="Work Email (Optional)"
+            name="workEmail"
+            type="email"
+            required={formData?.preferredEmail === 'work'}
+            placeholder="you@example.com"
+            value={formData?.workEmail || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+          />
+        </div>
       </div>
     </div>
   );

@@ -360,7 +360,7 @@ const Dashboard = () => {
                 subtitle={isApplicationSubmitted ? 'Submitted' : getApplicationButtonText()}
                 icon={FormOutlined}
                 onClick={() => !isApplicationSubmitted && navigate("/applicationForm")}
-          disabled={isApplicationSubmitted}
+                disabled={isApplicationSubmitted}
                 colorScheme={isApplicationSubmitted ? 'green' : 'blue'}
         />
 
