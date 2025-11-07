@@ -53,128 +53,124 @@ const Dashboard = () => {
     subscriptionDetails: {},
   });
   useEffect(() => {
-    if (personalDetail) {
+    if (personalDetail?.ApplicationId) {
       setFormData(prev => ({
         ...prev,
         personalInfo: {
-          ...prev.personalInfo,
-          title: personalDetail?.personalInfo?.title || '',
-          surname: personalDetail?.personalInfo?.surname || '',
-          forename: personalDetail?.personalInfo?.forename || '',
-          gender: personalDetail?.personalInfo?.gender || '',
-          dateOfBirth: personalDetail?.personalInfo?.dateOfBirth || '',
+          title: personalDetail?.personalInfo?.title || prev.personalInfo.title || '',
+          surname: personalDetail?.personalInfo?.surname || prev.personalInfo.surname || user?.userLastName || '',
+          forename: personalDetail?.personalInfo?.forename || prev.personalInfo.forename || user?.userFirstName || '',
+          gender: personalDetail?.personalInfo?.gender || prev.personalInfo.gender || '',
+          dateOfBirth: personalDetail?.personalInfo?.dateOfBirth || prev.personalInfo.dateOfBirth || '',
           countryPrimaryQualification:
-            personalDetail?.personalInfo?.countryPrimaryQualification || '',
-          personalEmail: personalDetail?.contactInfo?.personalEmail || '',
-          mobileNo: personalDetail?.contactInfo?.mobileNumber || '',
-          consent: personalDetail?.contactInfo?.consent ?? true,
-          addressLine1: personalDetail?.contactInfo?.buildingOrHouse || '',
-          addressLine2: personalDetail?.contactInfo?.streetOrRoad || '',
-          addressLine3: personalDetail?.contactInfo?.areaOrTown || '',
-          addressLine4: personalDetail?.contactInfo?.countyCityOrPostCode || '',
-          eircode: personalDetail?.contactInfo?.eircode || '',
-          preferredAddress: personalDetail?.contactInfo?.preferredAddress || '',
-          preferredEmail: personalDetail?.contactInfo?.preferredEmail || '',
-          homeWorkTelNo: personalDetail?.contactInfo?.telephoneNumber || '',
-          country: personalDetail?.contactInfo?.country || '',
-          workEmail: personalDetail?.contactInfo?.workEmail || '',
+            personalDetail?.personalInfo?.countryPrimaryQualification || prev.personalInfo.countryPrimaryQualification || '',
+          personalEmail: personalDetail?.contactInfo?.personalEmail || prev.personalInfo.personalEmail || user?.userEmail || '',
+          mobileNo: personalDetail?.contactInfo?.mobileNumber || prev.personalInfo.mobileNo || user?.userMobilePhone || '',
+          consent: personalDetail?.contactInfo?.consent ?? prev.personalInfo.consent ?? true,
+          addressLine1: personalDetail?.contactInfo?.buildingOrHouse || prev.personalInfo.addressLine1 || '',
+          addressLine2: personalDetail?.contactInfo?.streetOrRoad || prev.personalInfo.addressLine2 || '',
+          addressLine3: personalDetail?.contactInfo?.areaOrTown || prev.personalInfo.addressLine3 || '',
+          addressLine4: personalDetail?.contactInfo?.countyCityOrPostCode || prev.personalInfo.addressLine4 || '',
+          eircode: personalDetail?.contactInfo?.eircode || prev.personalInfo.eircode || '',
+          preferredAddress: personalDetail?.contactInfo?.preferredAddress || prev.personalInfo.preferredAddress || '',
+          preferredEmail: personalDetail?.contactInfo?.preferredEmail || prev.personalInfo.preferredEmail || '',
+          homeWorkTelNo: personalDetail?.contactInfo?.telephoneNumber || prev.personalInfo.homeWorkTelNo || '',
+          country: personalDetail?.contactInfo?.country || prev.personalInfo.country || 'Ireland',
+          workEmail: personalDetail?.contactInfo?.workEmail || prev.personalInfo.workEmail || '',
         },
       }));
     }
-  }, [personalDetail]);
+  }, [personalDetail?.ApplicationId]);
 
   useEffect(() => {
-    if (professionalDetail) {
+    if (professionalDetail?.ApplicationId) {
       setFormData(prev => ({
         ...prev,
         professionalDetails: {
-          ...prev.professionalDetails,
           membershipCategory:
-            professionalDetail?.professionalDetails?.membershipCategory,
-          workLocation: professionalDetail?.professionalDetails?.workLocation,
+            professionalDetail?.professionalDetails?.membershipCategory || prev.professionalDetails.membershipCategory || '',
+          workLocation: professionalDetail?.professionalDetails?.workLocation || prev.professionalDetails.workLocation || '',
           otherWorkLocation:
-            professionalDetail?.professionalDetails?.otherWorkLocation ?? '',
-          grade: professionalDetail?.professionalDetails?.grade,
-          otherGrade: professionalDetail?.professionalDetails?.otherGrade ?? '',
-          nmbiNumber: professionalDetail?.professionalDetails?.nmbiNumber ?? '',
-          nurseType: professionalDetail?.professionalDetails?.nurseType ?? '',
+            professionalDetail?.professionalDetails?.otherWorkLocation ?? prev.professionalDetails.otherWorkLocation ?? '',
+          grade: professionalDetail?.professionalDetails?.grade || prev.professionalDetails.grade || '',
+          otherGrade: professionalDetail?.professionalDetails?.otherGrade ?? prev.professionalDetails.otherGrade ?? '',
+          nmbiNumber: professionalDetail?.professionalDetails?.nmbiNumber ?? prev.professionalDetails.nmbiNumber ?? '',
+          nurseType: professionalDetail?.professionalDetails?.nurseType ?? prev.professionalDetails.nurseType ?? '',
           nursingAdaptationProgramme: professionalDetail?.professionalDetails
             ?.nursingAdaptationProgramme
             ? 'yes'
-            : 'no',
-          region: professionalDetail?.professionalDetails?.region ?? '',
-          branch: professionalDetail?.professionalDetails?.branch ?? '',
-          pensionNo: professionalDetail?.professionalDetails?.pensionNo ?? '',
+            : prev.professionalDetails.nursingAdaptationProgramme || 'no',
+          region: professionalDetail?.professionalDetails?.region ?? prev.professionalDetails.region ?? '',
+          branch: professionalDetail?.professionalDetails?.branch ?? prev.professionalDetails.branch ?? '',
+          pensionNo: professionalDetail?.professionalDetails?.pensionNo ?? prev.professionalDetails.pensionNo ?? '',
           isRetired:
-            professionalDetail?.professionalDetails?.isRetired ?? false,
+            professionalDetail?.professionalDetails?.isRetired ?? prev.professionalDetails.isRetired ?? false,
           retiredDate:
-            professionalDetail?.professionalDetails?.retiredDate ?? '',
+            professionalDetail?.professionalDetails?.retiredDate ?? prev.professionalDetails.retiredDate ?? '',
           studyLocation:
-            professionalDetail?.professionalDetails?.studyLocation ?? '',
+            professionalDetail?.professionalDetails?.studyLocation ?? prev.professionalDetails.studyLocation ?? '',
           graduationDate:
-            professionalDetail?.professionalDetails?.graduationDate ?? '',
+            professionalDetail?.professionalDetails?.graduationDate ?? prev.professionalDetails.graduationDate ?? '',
         },
       }));
     }
-  }, [professionalDetail]);
+  }, [professionalDetail?.ApplicationId]);
 
   useEffect(() => {
-    if (subscriptionDetail) {
+    if (subscriptionDetail?.ApplicationId) {
       setFormData(prev => ({
         ...prev,
         subscriptionDetails: {
-          ...prev.subscriptionDetails,
-          paymentType: subscriptionDetail?.subscriptionDetails?.paymentType,
-          payrollNo: subscriptionDetail?.subscriptionDetails?.payrollNo ?? '',
+          paymentType: subscriptionDetail?.subscriptionDetails?.paymentType || prev.subscriptionDetails.paymentType || '',
+          payrollNo: subscriptionDetail?.subscriptionDetails?.payrollNo ?? prev.subscriptionDetails.payrollNo ?? '',
           memberStatus:
-            subscriptionDetail?.subscriptionDetails?.membershipStatus ?? '',
+            subscriptionDetail?.subscriptionDetails?.membershipStatus ?? prev.subscriptionDetails.memberStatus ?? '',
           otherIrishTradeUnion: subscriptionDetail?.subscriptionDetails
             ?.otherIrishTradeUnion
             ? 'yes'
-            : 'no',
+            : prev.subscriptionDetails.otherIrishTradeUnion || 'no',
           otherScheme: subscriptionDetail?.subscriptionDetails?.otherScheme
             ? 'yes'
-            : 'no',
+            : prev.subscriptionDetails.otherScheme || 'no',
           recuritedBy:
-            subscriptionDetail?.subscriptionDetails?.recuritedBy ?? '',
+            subscriptionDetail?.subscriptionDetails?.recuritedBy ?? prev.subscriptionDetails.recuritedBy ?? '',
           recuritedByMembershipNo:
             subscriptionDetail?.subscriptionDetails?.recuritedByMembershipNo ??
-            '',
+            prev.subscriptionDetails.recuritedByMembershipNo ?? '',
           primarySection:
-            subscriptionDetail?.subscriptionDetails?.primarySection,
+            subscriptionDetail?.subscriptionDetails?.primarySection || prev.subscriptionDetails.primarySection || '',
           otherPrimarySection:
-            subscriptionDetail?.subscriptionDetails?.otherPrimarySection ?? '',
+            subscriptionDetail?.subscriptionDetails?.otherPrimarySection ?? prev.subscriptionDetails.otherPrimarySection ?? '',
           secondarySection:
-            subscriptionDetail?.subscriptionDetails?.secondarySection,
+            subscriptionDetail?.subscriptionDetails?.secondarySection || prev.subscriptionDetails.secondarySection || '',
           otherSecondarySection:
             subscriptionDetail?.subscriptionDetails?.otherSecondarySection ??
-            '',
+            prev.subscriptionDetails.otherSecondarySection ?? '',
           incomeProtectionScheme:
             subscriptionDetail?.subscriptionDetails?.incomeProtectionScheme ??
-            false,
+            prev.subscriptionDetails.incomeProtectionScheme ?? false,
           inmoRewards:
-            subscriptionDetail?.subscriptionDetails?.inmoRewards ?? false,
+            subscriptionDetail?.subscriptionDetails?.inmoRewards ?? prev.subscriptionDetails.inmoRewards ?? false,
           valueAddedServices:
             subscriptionDetail?.subscriptionDetails?.valueAddedServices ??
-            false,
+            prev.subscriptionDetails.valueAddedServices ?? false,
           termsAndConditions:
             subscriptionDetail?.subscriptionDetails?.termsAndConditions ??
-            false,
+            prev.subscriptionDetails.termsAndConditions ?? false,
           membershipCategory:
-            subscriptionDetail?.subscriptionDetails?.membershipCategory,
-          dateJoined: subscriptionDetail?.subscriptionDetails?.dateJoined,
+            subscriptionDetail?.subscriptionDetails?.membershipCategory || prev.subscriptionDetails.membershipCategory || '',
+          dateJoined: subscriptionDetail?.subscriptionDetails?.dateJoined || prev.subscriptionDetails.dateJoined || '',
           paymentFrequency:
-            subscriptionDetail?.subscriptionDetails?.paymentFrequency,
+            subscriptionDetail?.subscriptionDetails?.paymentFrequency || prev.subscriptionDetails.paymentFrequency || '',
         },
       }));
     }
-  }, [subscriptionDetail]);
+  }, [subscriptionDetail?.ApplicationId]);
 
+  // Fetch personal detail on mount
   useEffect(() => {
     getPersonalDetail();
   }, []);
-
-  console.log('Application ID', personalDetail?.ApplicationId);
 
   // Check application status
   useEffect(() => {
@@ -203,17 +199,18 @@ const Dashboard = () => {
     checkApplicationStatus();
   }, [personalDetail?.ApplicationId]);
 
+  // Update current step based on application progress
   useEffect(() => {
-    if (!personalDetail) {
+    if (!personalDetail?.ApplicationId) {
       setCurrentStep(1);
-    } else if (personalDetail && !professionalDetail) {
+    } else if (personalDetail?.ApplicationId && !professionalDetail?.ApplicationId) {
       setCurrentStep(2);
-    } else if (personalDetail && professionalDetail && !subscriptionDetail) {
+    } else if (personalDetail?.ApplicationId && professionalDetail?.ApplicationId && !subscriptionDetail?.ApplicationId) {
       setCurrentStep(3);
-    } else if (personalDetail && professionalDetail && subscriptionDetail) {
+    } else if (personalDetail?.ApplicationId && professionalDetail?.ApplicationId && subscriptionDetail?.ApplicationId) {
       setCurrentStep(3);
     }
-  }, [personalDetail, professionalDetail, subscriptionDetail]);
+  }, [personalDetail?.ApplicationId, professionalDetail?.ApplicationId, subscriptionDetail?.ApplicationId]);
 
   const handleModalClose = () => {
     setIsModalVisible(false);

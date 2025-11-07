@@ -32,48 +32,55 @@ export const ApplicationProvider = ({ children }) => {
       });
   };
 
-  const getProfessionalDetail = () => {
+  const getProfessionalDetail = (applicationId) => {
+    const appId = applicationId || personalDetail?.ApplicationId;
+    if (!appId) return;
+    
     setLoading(true);
-    fetchProfessionalDetail(personalDetail?.ApplicationId)
+    fetchProfessionalDetail(appId)
       .then(res => {
         if (res.status === 200) {
           setProfessionalDetail(res?.data?.data);
           setLoading(false);
         } else {
           setLoading(false);
-          toast.error(res.data.message ?? 'Unable to get professional datail');
         }
       })
       .catch(() => {
         setLoading(false);
-        toast.error('Something went wrong');
       });
   };
 
-  const getSubscriptionDetail = () => {
+  const getSubscriptionDetail = (applicationId) => {
+    const appId = applicationId || personalDetail?.ApplicationId;
+    if (!appId) return;
+    
     setLoading(true);
-    fetchSubscriptionDetail(personalDetail?.ApplicationId)
+    fetchSubscriptionDetail(appId)
       .then(res => {
         if (res.status === 200) {
           setSubscriptionDetail(res?.data?.data);
           setLoading(false);
         } else {
           setLoading(false);
-          toast.error(res.data.message ?? 'Unable to get subscription datail');
         }
       })
       .catch(() => {
         setLoading(false);
-        toast.error('Something went wrong');
       });
   };
 
   useEffect(() => {
     if (personalDetail?.ApplicationId) {
-      getProfessionalDetail();
-      getSubscriptionDetail();
+      // Only fetch if we don't already have the data
+      if (!professionalDetail) {
+        getProfessionalDetail(personalDetail.ApplicationId);
+      }
+      if (!subscriptionDetail) {
+        getSubscriptionDetail(personalDetail.ApplicationId);
+      }
     }
-  }, [personalDetail]);
+  }, [personalDetail?.ApplicationId]);
 
   const value = {
     loading,

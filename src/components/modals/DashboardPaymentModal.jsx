@@ -156,7 +156,7 @@ const DashboardPaymentModal = ({
         amount: amountInCents,
         currency,
         metadata: {
-          applicationId,
+          memberId:applicationId,
           description: 'Membership payment from dashboard',
           tenantId,
           userId,
