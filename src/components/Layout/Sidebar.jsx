@@ -83,21 +83,62 @@ const Sidebar = ({ collapsed }) => {
   ];
 
   return (
-    <div>
-      <div className={`${collapsed ? 'p-4' : 'p-4'} text-white`}>
-        <h1
-          className={`${collapsed ? 'text-center text-xl' : 'text-xl'} font-bold`}>
-          {collapsed ? 'MP' : 'MEMBERS PORTAL'}
-        </h1>
+    <div className="h-full bg-white flex flex-col">
+      <div className={`${collapsed ? 'p-4' : 'p-6'} text-center border-b border-gray-200`}>
+        {!collapsed && (
+          <>
+            <h1 className="text-xl font-bold text-gray-900">Member Portal</h1>
+            <p className="text-sm text-gray-500 mt-1">organization.com</p>
+          </>
+        )}
+        {collapsed && <h1 className="text-xl font-bold text-gray-900">MP</h1>}
       </div>
-      <Menu
-        theme="dark"
-        mode="inline"
-        selectedKeys={[location.pathname]}
-        style={{ background: '#0A1929' }}
-        onClick={({ key }) => navigate(key)}
-        items={menuItems}
-      />
+      <div className="flex-1 overflow-y-auto">
+        <Menu
+          mode="inline"
+          selectedKeys={[location.pathname]}
+          style={{ 
+            background: 'white',
+            border: 'none',
+            color: '#1f2937'
+          }}
+          className="sidebar-menu"
+          onClick={({ key }) => navigate(key)}
+          items={menuItems}
+        />
+      </div>
+      <div className="border-t border-gray-200 p-4">
+        <div 
+          className="flex items-center gap-3 cursor-pointer hover:text-blue-600 transition-colors"
+          onClick={() => navigate('/help')}
+        >
+          <QuestionCircleOutlined className="text-lg" />
+          {!collapsed && <span className="font-medium">Help Center</span>}
+        </div>
+      </div>
+      <style jsx="true">{`
+        .sidebar-menu .ant-menu-item {
+          color: #1f2937 !important;
+          font-weight: 500;
+          margin: 4px 8px;
+          border-radius: 8px;
+          padding-left: 16px !important;
+        }
+        .sidebar-menu .ant-menu-item-selected {
+          background-color: #dbeafe !important;
+          color: #2563eb !important;
+        }
+        .sidebar-menu .ant-menu-item-selected .ant-menu-item-icon {
+          color: #2563eb !important;
+        }
+        .sidebar-menu .ant-menu-item:hover {
+          background-color: #f3f4f6 !important;
+          color: #1f2937 !important;
+        }
+        .sidebar-menu .ant-menu-item-icon {
+          color: #1f2937 !important;
+        }
+      `}</style>
     </div>
   );
 };
