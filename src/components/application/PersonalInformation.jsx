@@ -99,13 +99,22 @@ const PersonalInformation = ({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Personal Information Section */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Personal Information</h2>
-        <p className="text-sm text-gray-600 mb-6">
-          Please provide your details as they appear on your official documents.
-        </p>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-300">
+        <div className="flex items-start gap-3 mb-6">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Personal Information</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Please provide your details as they appear on your official documents.
+            </p>
+          </div>
+        </div>
         
         {/* First row: Title, Forename(s), Surname */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -180,14 +189,23 @@ const PersonalInformation = ({
       </div>
 
       {/* Correspondence Details Section */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Correspondence Details</h2>
-        <p className="text-sm text-gray-600 mb-6">
-          Let us know the best way to send you mail.
-        </p>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-300">
+        <div className="flex items-start gap-3 mb-6">
+          <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-lg shadow-green-500/30">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Correspondence Details</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Let us know the best way to send you mail.
+            </p>
+          </div>
+        </div>
 
         {/* Consent Checkbox */}
-        <div className="mb-6">
+        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
           <Checkbox
             label={
               <div>
@@ -221,7 +239,12 @@ const PersonalInformation = ({
         {/* Find your address */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Find your address
+            <span className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              Find your address
+            </span>
           </label>
           {isLoaded && (
             <StandaloneSearchBox
@@ -230,12 +253,12 @@ const PersonalInformation = ({
               <input
                 type="text"
                 placeholder="Start typing your address or Eircode..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
             </StandaloneSearchBox>
           )}
           <div className="mt-2 text-right">
-            <span className="text-sm text-blue-600 cursor-pointer hover:underline">
+            <span className="text-sm text-blue-600 cursor-pointer hover:text-blue-700 hover:underline font-medium">
               Or enter manually
             </span>
           </div>
@@ -295,11 +318,20 @@ const PersonalInformation = ({
       </div>
 
       {/* Contact Details Section */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Contact Details</h2>
-        <p className="text-sm text-gray-600 mb-6">
-          Provide your phone numbers and email addresses.
-        </p>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-300">
+        <div className="flex items-start gap-3 mb-6">
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/30">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Contact Details</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Provide your phone numbers and email addresses.
+            </p>
+          </div>
+        </div>
 
         {/* Phone Numbers */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">

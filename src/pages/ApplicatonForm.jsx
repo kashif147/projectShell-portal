@@ -345,7 +345,7 @@ const ApplicationForm = () => {
       region: data.region,
       branch: data.branch,
       pensionNo: data.pensionNo,
-      isRetired: data?.membershipCategory === 'retired_associate',
+      isRetired: data?.membershipCategory === 'MEM-RET',
       retiredDate: data.retiredDate && isDataFormat(data.retiredDate),
       studyLocation: data.studyLocation,
       graduationDate: data.graduationDate && isDataFormat(data.graduationDate),
@@ -390,7 +390,7 @@ const ApplicationForm = () => {
       region: data.region,
       branch: data.branch,
       pensionNo: data.pensionNo,
-      isRetired: data?.membershipCategory === 'retired_associate',
+      isRetired: data?.membershipCategory === 'MEM-RET',
       retiredDate: data.retiredDate && isDataFormat(data.retiredDate),
       studyLocation: data.studyLocation,
       graduationDate: data.graduationDate && isDataFormat(data.graduationDate),
@@ -473,7 +473,7 @@ const ApplicationForm = () => {
         getSubscriptionDetail(personalDetail?.ApplicationId);
         
         // Check if undergraduate student - they don't need payment
-        if (professionalDetail?.professionalDetails?.membershipCategory === 'undergraduate_student') {
+        if (professionalDetail?.professionalDetails?.membershipCategory === 'MEM-UG') {
           setIsSubmitted(true);
           setStatusModal({ 
             open: true, 
@@ -542,7 +542,7 @@ const ApplicationForm = () => {
         getSubscriptionDetail(personalDetail?.ApplicationId);
         
         // Check if undergraduate student - they don't need payment
-        if (professionalDetail?.professionalDetails?.membershipCategory === 'undergraduate_student') {
+        if (professionalDetail?.professionalDetails?.membershipCategory === 'MEM-UG') {
           setIsSubmitted(true);
           setStatusModal({ 
             open: true, 
@@ -817,17 +817,22 @@ const ApplicationForm = () => {
             {renderStepContent()}
           </Card>
 
-          <div className="flex justify-between mt-4">
-            <Button
-              onClick={handlePrevious}
-              disabled={currentStep === 1}
-              className={
-                currentStep === 1 ? 'opacity-50 cursor-not-allowed' : ''
-              }>
-              Previous
-            </Button>
-            <Button type="primary" onClick={handleNext}>
-              {currentStep === steps.length ? 'Submit' : 'Next'}
+          <div className="flex justify-end items-center gap-3 mt-6 flex-wrap">
+            {currentStep > 1 && (
+              <Button
+                onClick={handlePrevious}
+                className="min-w-[120px]">
+                Previous
+              </Button>
+            )}
+            <Button 
+              type="primary" 
+              onClick={handleNext}
+              className="min-w-[180px]">
+              {currentStep === steps.length 
+                ? 'Submit Application' 
+                : `Next: ${steps[currentStep]?.title || 'Next'}`
+              }
             </Button>
           </div>
         </>

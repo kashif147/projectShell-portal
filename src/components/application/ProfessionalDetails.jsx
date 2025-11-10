@@ -40,9 +40,14 @@ const ProfessionalDetails = ({
   });
 
   const membershipCategoryOptions = (categoryLookups || []).map(item => {
-    const value = item?.id || item?._id || item?.code || item?.value || item?.name || item?.productType?.name;
-    const label = item?.name || item?.DisplayName || item?.label || item?.productType?.name || value;
-    return { value: String(value || ''), label: String(label || '') };
+    // Use a consistent identifier for the category
+    const code = item?.code || item?.productType?.code || item?.name || item?.id;
+    const label = item?.name || item?.DisplayName || item?.label || item?.productType?.name || code;
+    return { 
+      value: String(code || ''), 
+      label: String(label || ''),
+      rawItem: item // Keep reference to original item
+    };
   });
 
   const branchOptions = Array.from(
@@ -93,17 +98,47 @@ const ProfessionalDetails = ({
       nurseType: e.target.value,
     });
   };
-
+  // Helper function to check category type based on actual codes
+  const isCategoryType = (categoryType) => {
+    if (!formData?.membershipCategory) return false;
+    const selectedValue = String(formData.membershipCategory).toUpperCase();
+    
+    // Map category types to their actual codes
+    const categoryCodeMap = {
+      'undergraduate_student': 'MEM-UG',
+      'retired_associate': 'MEM-RET',
+      'postgraduate_student': 'MEM-PG',
+      'general': 'MEM-GEN',
+      'private_nursing_home': 'MEM-PNH',
+      'short_term_relief': 'MEM-STR',
+      'associate': 'MEM-ASS',
+      'affiliate': 'MEM-AFF',
+      'lecturing': 'MEM-LEC',
+    };
+    
+    const targetCode = categoryCodeMap[categoryType];
+    return targetCode ? selectedValue === targetCode : false;
+  };
+  
   return (
-    <div className="space-y-8">
-      {/* Professional Information Section */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Professional Information</h2>
-        <p className="text-sm text-gray-600 mb-6">
-          Please provide your professional details and work information.
-        </p>
+    <div className="space-y-6">
+      {/* Membership Category Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-300">
+        <div className="flex items-start gap-3 mb-6">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Membership Category</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Select the membership category most appropriate for you.
+            </p>
+          </div>
+        </div>
 
-        {/* Membership Category */}
+        {/* Membership Category Selection */}
         <div className="mb-6">
           <Select
             label="Membership Category"
@@ -119,31 +154,94 @@ const ProfessionalDetails = ({
         </div>
 
         {/* Student Information - Conditionally shown */}
-        {formData?.membershipCategory === 'undergraduate_student' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <Select
-              label="Study Location"
-              name="studyLocation"
-              disabled={formData?.membershipCategory !== 'undergraduate_student'}
-              value={formData?.studyLocation || ''}
-              onChange={handleInputChange}
-              placeholder="Select study location"
-              options={[
-                { value: 'location1', label: 'Location 1' },
-                { value: 'location2', label: 'Location 2' },
-                { value: 'location3', label: 'Location 3' },
-              ]}
-            />
-            <DatePicker
-              label="Graduation Date"
-              disabled={formData?.membershipCategory !== 'undergraduate_student'}
-              name="graduationDate"
-              value={formData?.graduationDate || ''}
-              onChange={handleInputChange}
-              disableAgeValidation
-            />
+        {isCategoryType('undergraduate_student') && (
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              Student Information
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Select
+                label="Study Location"
+                name="studyLocation"
+                value={formData?.studyLocation || ''}
+                onChange={handleInputChange}
+                placeholder="Select study location"
+                options={[
+                  { value: 'location1', label: 'Location 1' },
+                  { value: 'location2', label: 'Location 2' },
+                  { value: 'location3', label: 'Location 3' },
+                ]}
+              />
+              <DatePicker
+                label="Graduation Date"
+                name="graduationDate"
+                value={formData?.graduationDate || ''}
+                onChange={handleInputChange}
+                disableAgeValidation
+              />
+            </div>
           </div>
         )}
+
+        {/* Retired Associate Information - Conditionally shown */}
+        {isCategoryType('retired_associate') && (
+          <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Retirement Information
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Retired Date
+                  </label>
+                  <Checkbox
+                    label={<span className="font-medium text-gray-700">Retired</span>}
+                    name="isRetired"
+                    checked={formData?.isRetired || isCategoryType('retired_associate')}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <DatePicker
+                  name="retiredDate"
+                  value={formData?.retiredDate || ''}
+                  onChange={handleInputChange}
+                  disableAgeValidation
+                />
+              </div>
+              <Input
+                label="Pension No"
+                name="pensionNo"
+                value={formData?.pensionNo || ''}
+                onChange={handleInputChange}
+                placeholder="Enter your pension number"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Work Details Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-300">
+        <div className="flex items-start gap-3 mb-6">
+          <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-lg shadow-green-500/30">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Work Details</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Provide your work location and professional grade.
+            </p>
+          </div>
+        </div>
 
         {/* Work Location */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -151,7 +249,7 @@ const ProfessionalDetails = ({
             label="Work Location"
             tooltip="Select your primary work location. If your location is not listed, choose 'Other' and specify it below."
             name="workLocation"
-            required={formData?.membershipCategory !== 'undergraduate_student'}
+            required={!isCategoryType('undergraduate_student')}
             value={formData?.workLocation || ''}
             onChange={handleInputChange}
             showValidation={showValidation}
@@ -197,6 +295,54 @@ const ProfessionalDetails = ({
           />
         </div>
 
+        {/* Grade */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Select
+            label="Grade"
+            tooltip="Select your current grade. If your grade is not listed, choose 'Other' and specify it below."
+            name="grade"
+            required
+            value={formData?.grade || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+            placeholder="Select grade"
+            options={[
+              { value: 'junior', label: 'Junior' },
+              { value: 'senior', label: 'Senior' },
+              { value: 'lead', label: 'Lead' },
+              { value: 'manager', label: 'Manager' },
+              { value: 'other', label: 'Other' },
+            ]}
+          />
+          <Input
+            label="Other Grade"
+            name="otherGrade"
+            required={formData?.grade === 'other'}
+            disabled={formData?.grade !== 'other'}
+            value={formData?.otherGrade || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+            placeholder="Enter your other grade"
+          />
+        </div>
+      </div>
+
+      {/* Nursing Adaptation Programme Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-300">
+        <div className="flex items-start gap-3 mb-6">
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/30">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Nursing Programme</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Details about your nursing adaptation programme.
+            </p>
+          </div>
+        </div>
+
         {/* Nursing Adaptation Programme */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Radio
@@ -227,7 +373,7 @@ const ProfessionalDetails = ({
         </div>
 
         {/* Nurse Type */}
-        <div className="mb-6">
+        <div>
           <Radio
             label="Please tick one of the following"
             name="nurseType"
@@ -237,78 +383,6 @@ const ProfessionalDetails = ({
             onChange={handleNurseTypeChange}
             showValidation={showValidation}
             options={nurseTypeOptions}
-          />
-        </div>
-
-        {/* Grade */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <Select
-            label="Grade"
-            tooltip="Select your current grade. If your grade is not listed, choose 'Other' and specify it below."
-            name="grade"
-            required
-            value={formData?.grade || ''}
-            onChange={handleInputChange}
-            showValidation={showValidation}
-            placeholder="Select grade"
-            options={[
-              { value: 'junior', label: 'Junior' },
-              { value: 'senior', label: 'Senior' },
-              { value: 'lead', label: 'Lead' },
-              { value: 'manager', label: 'Manager' },
-              { value: 'other', label: 'Other' },
-            ]}
-          />
-          <Input
-            label="Other Grade"
-            name="otherGrade"
-            required={formData?.grade === 'other'}
-            disabled={formData?.grade !== 'other'}
-            value={formData?.otherGrade || ''}
-            onChange={handleInputChange}
-            showValidation={showValidation}
-            placeholder="Enter your other grade"
-          />
-        </div>
-
-        {/* Retired Information */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-gray-700">
-                Retired Date
-              </label>
-              <Checkbox
-                label={<span className="font-medium text-gray-700">Retired</span>}
-                name="isRetired"
-                checked={
-                  formData?.isRetired ||
-                  formData?.membershipCategory === 'retired_associate'
-                }
-                onChange={handleInputChange}
-              />
-            </div>
-            <DatePicker
-              disabled={
-                !formData?.isRetired &&
-                formData?.membershipCategory !== 'retired_associate'
-              }
-              name="retiredDate"
-              value={formData?.retiredDate || ''}
-              onChange={handleInputChange}
-              disableAgeValidation
-            />
-          </div>
-          <Input
-            label="Pension No"
-            name="pensionNo"
-            disabled={
-              !formData?.isRetired &&
-              formData?.membershipCategory !== 'retired_associate'
-            }
-            value={formData?.pensionNo || ''}
-            onChange={handleInputChange}
-            placeholder="Enter your pension number"
           />
         </div>
       </div>
