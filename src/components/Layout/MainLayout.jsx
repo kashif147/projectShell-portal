@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Drawer, theme } from 'antd';
+import { Layout, theme, Drawer } from 'antd';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -47,17 +47,21 @@ const MainLayout = () => {
 
   const renderSidebar = () => {
     if (isMobile) {
+      // Return bottom navigation bar for mobile + drawer for full menu
       return (
-        <Drawer
-          placement="left"
-          onClose={() => setDrawerVisible(false)}
-          open={drawerVisible}
-          width={250}
-          bodyStyle={{ padding: 0, background: '#0A1929' }}
-          headerStyle={{ display: 'none' }}
-        >
-          <Sidebar collapsed={false} />
-        </Drawer>
+        <>
+          <Drawer
+            placement="left"
+            onClose={() => setDrawerVisible(false)}
+            open={drawerVisible}
+            width={280}
+            bodyStyle={{ padding: 0, background: 'white' }}
+            headerStyle={{ display: 'none' }}
+          >
+            <Sidebar collapsed={false} />
+          </Drawer>
+          <Sidebar isMobile={true} />
+        </>
       );
     }
 
@@ -68,7 +72,7 @@ const MainLayout = () => {
         collapsed={collapsed}
         breakpoint="lg"
         style={{
-          background: '#0A1929',
+          background: 'white',
           minHeight: '100vh',
           position: 'fixed',
           left: 0,
@@ -102,9 +106,10 @@ const MainLayout = () => {
           style={{
             margin: '12px 12px',
             padding: 24,
+            paddingBottom: isMobile ? 80 : 24,
             background: colorBgContainer,
             borderRadius: borderRadiusLG,
-            minHeight: 'calc(100vh - 112px)',
+            minHeight: isMobile ? 'calc(100vh - 112px - 64px)' : 'calc(100vh - 112px)',
           }}
         >
           <Outlet />
