@@ -24,62 +24,62 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
   const menuItems = [
     {
       key: '/',
-      icon: <DashboardOutlined />,
+      icon: <DashboardOutlined style={{ color: '#3b82f6' }} />,
       label: 'Dashboard',
     },
     {
       key: '/application',
-      icon: <FormOutlined />,
+      icon: <FormOutlined style={{ color: '#8b5cf6' }} />,
       label: 'Application',
     },
     {
       key: '/profile',
-      icon: <UserOutlined />,
+      icon: <UserOutlined style={{ color: '#06b6d4' }} />,
       label: 'My Profile',
     },
     {
       key: '/payments',
-      icon: <CreditCardOutlined />,
+      icon: <CreditCardOutlined style={{ color: '#10b981' }} />,
       label: 'Payments',
     },
     {
       key: '/membership',
-      icon: <AppstoreOutlined />,
+      icon: <AppstoreOutlined style={{ color: '#f59e0b' }} />,
       label: 'Change of Category',
     },
     {
       key: '/work-location',
-      icon: <EnvironmentOutlined />,
+      icon: <EnvironmentOutlined style={{ color: '#ef4444' }} />,
       label: 'Transfer Request',
     },
     {
       key: '/subscriptions',
-      icon: <CreditCardOutlined />,
+      icon: <CreditCardOutlined style={{ color: '#84cc16' }} />,
       label: 'Subscriptions',
     },
     {
       key: '/events',
-      icon: <CalendarOutlined />,
+      icon: <CalendarOutlined style={{ color: '#ec4899' }} />,
       label: 'Events & CPD',
     },
     {
       key: '/communications',
-      icon: <MessageOutlined />,
+      icon: <MessageOutlined style={{ color: '#14b8a6' }} />,
       label: 'Communications',
     },
     {
       key: '/queries',
-      icon: <QuestionCircleOutlined />,
+      icon: <QuestionCircleOutlined style={{ color: '#f97316' }} />,
       label: 'Queries & Cases',
     },
     {
       key: '/voting',
-      icon: <FileOutlined />,
+      icon: <FileOutlined style={{ color: '#6366f1' }} />,
       label: 'Voting',
     },
     {
       key: '/resources',
-      icon: <BookOutlined />,
+      icon: <BookOutlined style={{ color: '#a855f7' }} />,
       label: 'Resources',
     },
   ];
@@ -90,21 +90,25 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
       key: '/',
       icon: <DashboardOutlined />,
       label: 'Dashboard',
+      color: '#3b82f6',
     },
     {
       key: '/profile',
       icon: <UserOutlined />,
       label: 'Profile',
+      color: '#06b6d4',
     },
     {
       key: '/events',
       icon: <CalendarOutlined />,
       label: 'Events',
+      color: '#ec4899',
     },
     {
       key: '/payments',
       icon: <CreditCardOutlined />,
       label: 'Payments',
+      color: '#10b981',
     },
   ];
 
@@ -114,41 +118,49 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
       key: '/application',
       icon: <FormOutlined />,
       label: 'Application',
+      color: '#8b5cf6',
     },
     {
       key: '/membership',
       icon: <AppstoreOutlined />,
       label: 'Change of Category',
+      color: '#f59e0b',
     },
     {
       key: '/work-location',
       icon: <EnvironmentOutlined />,
       label: 'Transfer Request',
+      color: '#ef4444',
     },
     {
       key: '/subscriptions',
       icon: <CreditCardOutlined />,
       label: 'Subscriptions',
+      color: '#84cc16',
     },
     {
       key: '/communications',
       icon: <MessageOutlined />,
       label: 'Communications',
+      color: '#14b8a6',
     },
     {
       key: '/queries',
       icon: <QuestionCircleOutlined />,
       label: 'Queries & Cases',
+      color: '#f97316',
     },
     {
       key: '/voting',
       icon: <FileOutlined />,
       label: 'Voting',
+      color: '#6366f1',
     },
     {
       key: '/resources',
       icon: <BookOutlined />,
       label: 'Resources',
+      color: '#a855f7',
     },
   ];
 
@@ -164,22 +176,27 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
                 <button
                   key={item.key}
                   onClick={() => navigate(item.key)}
-                  className={`flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 ${
-                    isActive ? 'text-blue-600' : 'text-gray-600'
-                  }`}
+                  className="flex flex-col items-center justify-center flex-1 h-full transition-all duration-200"
                 >
-                  <div className={`text-xl mb-1 transition-transform duration-200 ${
-                    isActive ? 'scale-110' : ''
-                  }`}>
+                  <div 
+                    className={`text-xl mb-1 transition-transform duration-200 ${
+                      isActive ? 'scale-110' : ''
+                    }`}
+                    style={{ color: isActive ? item.color : '#6b7280' }}
+                  >
                     {item.icon}
                   </div>
-                  <span className={`text-xs font-medium ${
-                    isActive ? 'text-blue-600' : 'text-gray-600'
-                  }`}>
+                  <span 
+                    className="text-xs font-medium"
+                    style={{ color: isActive ? item.color : '#6b7280' }}
+                  >
                     {item.label}
                   </span>
                   {isActive && (
-                    <div className="absolute top-0 w-12 h-1 bg-blue-600 rounded-b-full" />
+                    <div 
+                      className="absolute top-0 w-12 h-1 rounded-b-full" 
+                      style={{ backgroundColor: item.color }}
+                    />
                   )}
                 </button>
               );
@@ -223,16 +240,26 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
                     navigate(item.key);
                     setMoreMenuVisible(false);
                   }}
-                  className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-200 ${
+                  className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-200 border-2 ${
                     isActive 
-                      ? 'bg-blue-50 text-blue-600 border-2 border-blue-200' 
-                      : 'bg-gray-50 text-gray-700 border-2 border-transparent hover:bg-gray-100'
+                      ? 'bg-opacity-10 border-opacity-30' 
+                      : 'bg-gray-50 text-gray-700 border-transparent hover:bg-gray-100'
                   }`}
+                  style={isActive ? {
+                    backgroundColor: `${item.color}20`,
+                    borderColor: `${item.color}50`
+                  } : {}}
                 >
-                  <div className={`text-3xl mb-2 ${isActive ? 'text-blue-600' : 'text-gray-600'}`}>
+                  <div 
+                    className="text-3xl mb-2"
+                    style={{ color: isActive ? item.color : '#6b7280' }}
+                  >
                     {item.icon}
                   </div>
-                  <span className="text-xs font-medium text-center leading-tight">
+                  <span 
+                    className="text-xs font-medium text-center leading-tight"
+                    style={{ color: isActive ? item.color : '#374151' }}
+                  >
                     {item.label}
                   </span>
                 </button>
@@ -287,18 +314,15 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
           padding-left: 16px !important;
         }
         .sidebar-menu .ant-menu-item-selected {
-          background-color: #dbeafe !important;
-          color: #2563eb !important;
-        }
-        .sidebar-menu .ant-menu-item-selected .ant-menu-item-icon {
-          color: #2563eb !important;
+          background-color: #f0f9ff !important;
+          color: #1f2937 !important;
         }
         .sidebar-menu .ant-menu-item:hover {
           background-color: #f3f4f6 !important;
           color: #1f2937 !important;
         }
         .sidebar-menu .ant-menu-item-icon {
-          color: #1f2937 !important;
+          font-size: 18px !important;
         }
       `}</style>
     </div>

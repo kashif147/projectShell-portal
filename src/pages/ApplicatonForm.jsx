@@ -744,6 +744,7 @@ const ApplicationForm = () => {
               handleFormDataChange('subscriptionDetails', data)
             }
             showValidation={showValidation}
+            categoryData={categoryData}
           />
         );
       default:
@@ -813,16 +814,16 @@ const ApplicationForm = () => {
             ))}
           </div>
 
-          <Card className="p-4">
+          {/* <Card className="p-4"> */}
             {renderStepContent()}
-          </Card>
+          {/* </Card> */}
 
           <div className="flex justify-end items-center gap-3 mt-6 flex-wrap">
             {currentStep > 1 && (
               <Button
                 onClick={handlePrevious}
-                className="min-w-[120px]">
-                Previous
+                className="min-w-[180px]">
+                {`Previous: ${steps[currentStep - 2]?.title || 'Previous'}`}
               </Button>
             )}
             <Button 
