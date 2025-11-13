@@ -45,17 +45,16 @@ const ProfessionalDetails = ({
   });
 
   const membershipCategoryOptions = (categoryLookups || []).map(item => {
-    // Use a consistent identifier for the category
-    const code =
-      item?.code || item?.productType?.code || item?.name || item?.id;
+    // Use _id as the value to store
+    const id = item?._id || item?.id;
     const label =
       item?.name ||
       item?.DisplayName ||
       item?.label ||
       item?.productType?.name ||
-      code;
+      item?.code;
     return {
-      value: String(code || ''),
+      value: String(id || ''),
       label: String(label || ''),
       rawItem: item, // Keep reference to original item
     };
@@ -109,10 +108,19 @@ const ProfessionalDetails = ({
       nurseType: e.target.value,
     });
   };
-  // Helper function to check category type based on actual codes
+  // Helper function to check category type based on _id
   const isCategoryType = categoryType => {
     if (!formData?.membershipCategory) return false;
-    const selectedValue = String(formData.membershipCategory).toUpperCase();
+
+    // Find the selected category by _id
+    const selectedCategory = (categoryLookups || []).find(
+      item =>
+        String(item?._id || item?.id) === String(formData.membershipCategory),
+    );
+
+    if (!selectedCategory) return false;
+
+    const selectedCode = String(selectedCategory?.code || '').toUpperCase();
 
     // Map category types to their actual codes
     const categoryCodeMap = {
@@ -128,7 +136,7 @@ const ProfessionalDetails = ({
     };
 
     const targetCode = categoryCodeMap[categoryType];
-    return targetCode ? selectedValue === targetCode : false;
+    return targetCode ? selectedCode === targetCode : false;
   };
 
   return (
@@ -393,7 +401,8 @@ const ProfessionalDetails = ({
         </div>
 
         {/* Nursing Adaptation Programme */}
-        <div className="mb-6">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Radio
             label="Are you currently undertaking a nursing adaptation programme?"
             name="nursingAdaptationProgramme"
@@ -409,9 +418,7 @@ const ProfessionalDetails = ({
               { value: 'no', label: 'No' },
             ]}
           />
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+
           <Input
             disabled={formData?.nursingAdaptationProgramme !== 'yes'}
             required={formData?.nursingAdaptationProgramme === 'yes'}
@@ -425,7 +432,7 @@ const ProfessionalDetails = ({
         </div>
 
         {/* Nurse Type */}
-        <div>
+        <div className="mt-6 p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
           <Radio
             label="Please tick one of the following"
             name="nurseType"

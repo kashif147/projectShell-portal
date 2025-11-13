@@ -15,6 +15,7 @@ import Dashboard from '../pages/Dashboard';
 import ApplicationForm from '../pages/ApplicatonForm';
 import Membership from '../pages/Membership';
 import WorkLocation from '../pages/WorkLocation';
+import Notifications from '../pages/Notifications';
 
 export const publicRoutes = [
   {
@@ -87,6 +88,10 @@ export const privateRoutes = [
       {
         path: 'work-location',
         element: <WorkLocation />,
+      },
+      {
+        path: 'notifications',
+        element: <Notifications />,
       },
     ],
   },

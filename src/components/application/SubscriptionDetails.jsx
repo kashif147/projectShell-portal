@@ -45,57 +45,59 @@ const SubscriptionDetails = ({
     }
   };
 
-  // Extract pricing from category data
-  const pricing = categoryData?.pricing || {};
-  
-  // Format price with proper validation
-  const formatPrice = (price) => {
-    if (!price || price === 0 || price === '0') return '€0.00';
-    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-    if (isNaN(numPrice)) return '€0.00';
-    return `€${numPrice.toFixed(2)}`;
+  // Format price - convert from cents to currency
+  const formatPrice = (priceInCents, currency = 'EUR') => {
+    if (!priceInCents || priceInCents === 0) return '€0.00';
+    const priceInEuros = priceInCents / 100;
+    const currencySymbol = currency.toUpperCase() === 'EUR' ? '€' : currency.toUpperCase();
+    return `${currencySymbol}${priceInEuros.toFixed(2)}`;
   };
 
-  // Format label for display (capitalize first letter and add spacing)
+  // Format label for display
   const formatLabel = (key) => {
-    return key.charAt(0).toUpperCase() + key.slice(1);
+    return key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
   };
 
-  // Get available pricing options from the API
-  // Filter out null/undefined but allow 0 values to be displayed
-  const pricingEntries = Object.entries(pricing).filter(([key, value]) => {
-    if (value === null || value === undefined) return false;
-    const numValue = typeof value === 'string' ? parseFloat(value) : value;
-    return !isNaN(numValue);
-  });
+  // Get pricing from currentPricing
+  const currentPrice = categoryData?.currentPricing?.price;
+  const currency = categoryData?.currentPricing?.currency || 'EUR';
+
+  // Create pricing entries array to display
+  const pricingEntries = currentPrice ? [['Annual Fee', currentPrice]] : [];
 
   return (
     <div className="space-y-6">
       {/* Your Subscription Fees Section */}
-      {categoryData && (
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-sm border border-blue-200 p-6 hover:shadow-md transition-shadow duration-300">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Your Subscription Fees</h2>
-          {pricingEntries.length > 0 ? (
-            <>
-              <div className={`grid grid-cols-2 ${pricingEntries.length > 2 ? 'md:grid-cols-4' : 'md:grid-cols-2'} gap-4`}>
-                {pricingEntries.map(([key, value]) => (
-                  <div key={key} className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                    <p className="text-xs text-gray-600 mb-1">{formatLabel(key)}</p>
-                    <p className="text-2xl font-bold text-gray-900">{formatPrice(value)}</p>
-                  </div>
-                ))}
+      {categoryData && currentPrice && (
+        <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-lg shadow-sm border border-blue-200 overflow-hidden hover:shadow-md transition-all duration-300">
+          <div className="flex items-center justify-between p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-md">
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
               </div>
-              <p className="text-xs text-gray-600 mt-4">
-                Fees shown are based on your Membership Category selected in the previous step. Changing your category will update these fees.
-              </p>
-            </>
-          ) : (
-            <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 text-center">
-              <p className="text-sm text-gray-600">
-                Pricing information is not available for this membership category.
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Your Subscription Fees</h2>
+                <p className="text-xs text-gray-500">Based on your selected membership category</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-gray-500 mb-1">Annual Fee</p>
+              <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                {formatPrice(currentPrice, currency)}
               </p>
             </div>
-          )}
+          </div>
         </div>
       )}
 

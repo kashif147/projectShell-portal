@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import PersonalInformation from '../components/application/PersonalInformation';
 import ProfessionalDetails from '../components/application/ProfessionalDetails';
 import SubscriptionDetails from '../components/application/SubscriptionDetails';
-import {PaymentStatusModal } from '../components/modals';
+import { PaymentStatusModal } from '../components/modals';
 import Button from '../components/common/Button';
 import { useSelector } from 'react-redux';
 import { loadStripe } from '@stripe/stripe-js';
@@ -75,26 +75,82 @@ const ApplicationForm = () => {
       setFormData(prev => {
         // Only update if data has actually changed
         const newPersonalInfo = {
-          title: personalDetail?.personalInfo?.title || prev.personalInfo.title || '',
-          surname: personalDetail?.personalInfo?.surname || prev.personalInfo.surname || '',
-          forename: personalDetail?.personalInfo?.forename || prev.personalInfo.forename || '',
-          gender: personalDetail?.personalInfo?.gender || prev.personalInfo.gender || '',
-          dateOfBirth: personalDetail?.personalInfo?.dateOfBirth || prev.personalInfo.dateOfBirth || '',
+          title:
+            personalDetail?.personalInfo?.title ||
+            prev.personalInfo.title ||
+            '',
+          surname:
+            personalDetail?.personalInfo?.surname ||
+            prev.personalInfo.surname ||
+            '',
+          forename:
+            personalDetail?.personalInfo?.forename ||
+            prev.personalInfo.forename ||
+            '',
+          gender:
+            personalDetail?.personalInfo?.gender ||
+            prev.personalInfo.gender ||
+            '',
+          dateOfBirth:
+            personalDetail?.personalInfo?.dateOfBirth ||
+            prev.personalInfo.dateOfBirth ||
+            '',
           countryPrimaryQualification:
-            personalDetail?.personalInfo?.countryPrimaryQualification || prev.personalInfo.countryPrimaryQualification || '',
-          personalEmail: personalDetail?.contactInfo?.personalEmail || prev.personalInfo.personalEmail || '',
-          mobileNo: personalDetail?.contactInfo?.mobileNumber || prev.personalInfo.mobileNo || '',
-          consent: personalDetail?.contactInfo?.consent ?? prev.personalInfo.consent ?? true,
-          addressLine1: personalDetail?.contactInfo?.buildingOrHouse || prev.personalInfo.addressLine1 || '',
-          addressLine2: personalDetail?.contactInfo?.streetOrRoad || prev.personalInfo.addressLine2 || '',
-          addressLine3: personalDetail?.contactInfo?.areaOrTown || prev.personalInfo.addressLine3 || '',
-          addressLine4: personalDetail?.contactInfo?.countyCityOrPostCode || prev.personalInfo.addressLine4 || '',
-          eircode: personalDetail?.contactInfo?.eircode || prev.personalInfo.eircode || '',
-          preferredAddress: personalDetail?.contactInfo?.preferredAddress || prev.personalInfo.preferredAddress || '',
-          preferredEmail: personalDetail?.contactInfo?.preferredEmail || prev.personalInfo.preferredEmail || '',
-          homeWorkTelNo: personalDetail?.contactInfo?.telephoneNumber || prev.personalInfo.homeWorkTelNo || '',
-          country: personalDetail?.contactInfo?.country || prev.personalInfo.country || 'Ireland',
-          workEmail: personalDetail?.contactInfo?.workEmail || prev.personalInfo.workEmail || '',
+            personalDetail?.personalInfo?.countryPrimaryQualification ||
+            prev.personalInfo.countryPrimaryQualification ||
+            '',
+          personalEmail:
+            personalDetail?.contactInfo?.personalEmail ||
+            prev.personalInfo.personalEmail ||
+            '',
+          mobileNo:
+            personalDetail?.contactInfo?.mobileNumber ||
+            prev.personalInfo.mobileNo ||
+            '',
+          consent:
+            personalDetail?.contactInfo?.consent ??
+            prev.personalInfo.consent ??
+            true,
+          addressLine1:
+            personalDetail?.contactInfo?.buildingOrHouse ||
+            prev.personalInfo.addressLine1 ||
+            '',
+          addressLine2:
+            personalDetail?.contactInfo?.streetOrRoad ||
+            prev.personalInfo.addressLine2 ||
+            '',
+          addressLine3:
+            personalDetail?.contactInfo?.areaOrTown ||
+            prev.personalInfo.addressLine3 ||
+            '',
+          addressLine4:
+            personalDetail?.contactInfo?.countyCityOrPostCode ||
+            prev.personalInfo.addressLine4 ||
+            '',
+          eircode:
+            personalDetail?.contactInfo?.eircode ||
+            prev.personalInfo.eircode ||
+            '',
+          preferredAddress:
+            personalDetail?.contactInfo?.preferredAddress ||
+            prev.personalInfo.preferredAddress ||
+            '',
+          preferredEmail:
+            personalDetail?.contactInfo?.preferredEmail ||
+            prev.personalInfo.preferredEmail ||
+            '',
+          homeWorkTelNo:
+            personalDetail?.contactInfo?.telephoneNumber ||
+            prev.personalInfo.homeWorkTelNo ||
+            '',
+          country:
+            personalDetail?.contactInfo?.country ||
+            prev.personalInfo.country ||
+            'Ireland',
+          workEmail:
+            personalDetail?.contactInfo?.workEmail ||
+            prev.personalInfo.workEmail ||
+            '',
         };
 
         return {
@@ -113,34 +169,71 @@ const ApplicationForm = () => {
       setFormData(prev => ({
         ...prev,
         professionalDetails: {
-          membershipCategory: membershipCategory || prev.professionalDetails.membershipCategory || '',
-          workLocation: professionalDetail?.professionalDetails?.workLocation || prev.professionalDetails.workLocation || '',
+          membershipCategory:
+            membershipCategory ||
+            prev.professionalDetails.membershipCategory ||
+            '',
+          workLocation:
+            professionalDetail?.professionalDetails?.workLocation ||
+            prev.professionalDetails.workLocation ||
+            '',
           otherWorkLocation:
-            professionalDetail?.professionalDetails?.otherWorkLocation ?? prev.professionalDetails.otherWorkLocation ?? '',
-          grade: professionalDetail?.professionalDetails?.grade || prev.professionalDetails.grade || '',
-          otherGrade: professionalDetail?.professionalDetails?.otherGrade ?? prev.professionalDetails.otherGrade ?? '',
-          nmbiNumber: professionalDetail?.professionalDetails?.nmbiNumber ?? prev.professionalDetails.nmbiNumber ?? '',
-          nurseType: professionalDetail?.professionalDetails?.nurseType ?? prev.professionalDetails.nurseType ?? '',
+            professionalDetail?.professionalDetails?.otherWorkLocation ??
+            prev.professionalDetails.otherWorkLocation ??
+            '',
+          grade:
+            professionalDetail?.professionalDetails?.grade ||
+            prev.professionalDetails.grade ||
+            '',
+          otherGrade:
+            professionalDetail?.professionalDetails?.otherGrade ??
+            prev.professionalDetails.otherGrade ??
+            '',
+          nmbiNumber:
+            professionalDetail?.professionalDetails?.nmbiNumber ??
+            prev.professionalDetails.nmbiNumber ??
+            '',
+          nurseType:
+            professionalDetail?.professionalDetails?.nurseType ??
+            prev.professionalDetails.nurseType ??
+            '',
           nursingAdaptationProgramme: professionalDetail?.professionalDetails
             ?.nursingAdaptationProgramme
             ? 'yes'
             : prev.professionalDetails.nursingAdaptationProgramme || 'no',
-          region: professionalDetail?.professionalDetails?.region ?? prev.professionalDetails.region ?? '',
-          branch: professionalDetail?.professionalDetails?.branch ?? prev.professionalDetails.branch ?? '',
-          pensionNo: professionalDetail?.professionalDetails?.pensionNo ?? prev.professionalDetails.pensionNo ?? '',
+          region:
+            professionalDetail?.professionalDetails?.region ??
+            prev.professionalDetails.region ??
+            '',
+          branch:
+            professionalDetail?.professionalDetails?.branch ??
+            prev.professionalDetails.branch ??
+            '',
+          pensionNo:
+            professionalDetail?.professionalDetails?.pensionNo ??
+            prev.professionalDetails.pensionNo ??
+            '',
           isRetired:
-            professionalDetail?.professionalDetails?.isRetired ?? prev.professionalDetails.isRetired ?? false,
+            professionalDetail?.professionalDetails?.isRetired ??
+            prev.professionalDetails.isRetired ??
+            false,
           retiredDate:
-            professionalDetail?.professionalDetails?.retiredDate ?? prev.professionalDetails.retiredDate ?? '',
+            professionalDetail?.professionalDetails?.retiredDate ??
+            prev.professionalDetails.retiredDate ??
+            '',
           studyLocation:
-            professionalDetail?.professionalDetails?.studyLocation ?? prev.professionalDetails.studyLocation ?? '',
+            professionalDetail?.professionalDetails?.studyLocation ??
+            prev.professionalDetails.studyLocation ??
+            '',
           graduationDate:
-            professionalDetail?.professionalDetails?.graduationDate ?? prev.professionalDetails.graduationDate ?? '',
+            professionalDetail?.professionalDetails?.graduationDate ??
+            prev.professionalDetails.graduationDate ??
+            '',
         },
       }));
 
       // Fetch category data when professional details are available
-      if (membershipCategory && !categoryData) {
+      if (membershipCategory) {
         fetchCategoryByCategoryId(membershipCategory)
           .then(res => {
             const payload = res?.data?.data || res?.data;
@@ -151,7 +244,10 @@ const ApplicationForm = () => {
           });
       }
     }
-  }, [professionalDetail?.ApplicationId, professionalDetail?.professionalDetails?.membershipCategory]);
+  }, [
+    professionalDetail?.ApplicationId,
+    professionalDetail?.professionalDetails?.membershipCategory,
+  ]);
 
   useEffect(() => {
     if (subscriptionDetail?.ApplicationId) {
@@ -159,10 +255,18 @@ const ApplicationForm = () => {
       setFormData(prev => ({
         ...prev,
         subscriptionDetails: {
-          paymentType: subscriptionDetail?.subscriptionDetails?.paymentType || prev.subscriptionDetails.paymentType || '',
-          payrollNo: subscriptionDetail?.subscriptionDetails?.payrollNo ?? prev.subscriptionDetails.payrollNo ?? '',
+          paymentType:
+            subscriptionDetail?.subscriptionDetails?.paymentType ||
+            prev.subscriptionDetails.paymentType ||
+            '',
+          payrollNo:
+            subscriptionDetail?.subscriptionDetails?.payrollNo ??
+            prev.subscriptionDetails.payrollNo ??
+            '',
           memberStatus:
-            subscriptionDetail?.subscriptionDetails?.membershipStatus ?? prev.subscriptionDetails.memberStatus ?? '',
+            subscriptionDetail?.subscriptionDetails?.membershipStatus ??
+            prev.subscriptionDetails.memberStatus ??
+            '',
           otherIrishTradeUnion: subscriptionDetail?.subscriptionDetails
             ?.otherIrishTradeUnion
             ? 'yes'
@@ -171,35 +275,57 @@ const ApplicationForm = () => {
             ? 'yes'
             : prev.subscriptionDetails.otherScheme || 'no',
           recuritedBy:
-            subscriptionDetail?.subscriptionDetails?.recuritedBy ?? prev.subscriptionDetails.recuritedBy ?? '',
+            subscriptionDetail?.subscriptionDetails?.recuritedBy ??
+            prev.subscriptionDetails.recuritedBy ??
+            '',
           recuritedByMembershipNo:
             subscriptionDetail?.subscriptionDetails?.recuritedByMembershipNo ??
-            prev.subscriptionDetails.recuritedByMembershipNo ?? '',
+            prev.subscriptionDetails.recuritedByMembershipNo ??
+            '',
           primarySection:
-            subscriptionDetail?.subscriptionDetails?.primarySection || prev.subscriptionDetails.primarySection || '',
+            subscriptionDetail?.subscriptionDetails?.primarySection ||
+            prev.subscriptionDetails.primarySection ||
+            '',
           otherPrimarySection:
-            subscriptionDetail?.subscriptionDetails?.otherPrimarySection ?? prev.subscriptionDetails.otherPrimarySection ?? '',
+            subscriptionDetail?.subscriptionDetails?.otherPrimarySection ??
+            prev.subscriptionDetails.otherPrimarySection ??
+            '',
           secondarySection:
-            subscriptionDetail?.subscriptionDetails?.secondarySection || prev.subscriptionDetails.secondarySection || '',
+            subscriptionDetail?.subscriptionDetails?.secondarySection ||
+            prev.subscriptionDetails.secondarySection ||
+            '',
           otherSecondarySection:
             subscriptionDetail?.subscriptionDetails?.otherSecondarySection ??
-            prev.subscriptionDetails.otherSecondarySection ?? '',
+            prev.subscriptionDetails.otherSecondarySection ??
+            '',
           incomeProtectionScheme:
             subscriptionDetail?.subscriptionDetails?.incomeProtectionScheme ??
-            prev.subscriptionDetails.incomeProtectionScheme ?? false,
+            prev.subscriptionDetails.incomeProtectionScheme ??
+            false,
           inmoRewards:
-            subscriptionDetail?.subscriptionDetails?.inmoRewards ?? prev.subscriptionDetails.inmoRewards ?? false,
+            subscriptionDetail?.subscriptionDetails?.inmoRewards ??
+            prev.subscriptionDetails.inmoRewards ??
+            false,
           valueAddedServices:
             subscriptionDetail?.subscriptionDetails?.valueAddedServices ??
-            prev.subscriptionDetails.valueAddedServices ?? false,
+            prev.subscriptionDetails.valueAddedServices ??
+            false,
           termsAndConditions:
             subscriptionDetail?.subscriptionDetails?.termsAndConditions ??
-            prev.subscriptionDetails.termsAndConditions ?? false,
+            prev.subscriptionDetails.termsAndConditions ??
+            false,
           membershipCategory:
-            subscriptionDetail?.subscriptionDetails?.membershipCategory || prev.subscriptionDetails.membershipCategory || '',
-          dateJoined: subscriptionDetail?.subscriptionDetails?.dateJoined || prev.subscriptionDetails.dateJoined || '',
+            subscriptionDetail?.subscriptionDetails?.membershipCategory ||
+            prev.subscriptionDetails.membershipCategory ||
+            '',
+          dateJoined:
+            subscriptionDetail?.subscriptionDetails?.dateJoined ||
+            prev.subscriptionDetails.dateJoined ||
+            '',
           paymentFrequency:
-            subscriptionDetail?.subscriptionDetails?.paymentFrequency || prev.subscriptionDetails.paymentFrequency || '',
+            subscriptionDetail?.subscriptionDetails?.paymentFrequency ||
+            prev.subscriptionDetails.paymentFrequency ||
+            '',
         },
       }));
     }
@@ -471,14 +597,17 @@ const ApplicationForm = () => {
       if (res.status === 200) {
         // Update subscription detail
         getSubscriptionDetail(personalDetail?.ApplicationId);
-        
+
         // Check if undergraduate student - they don't need payment
-        if (professionalDetail?.professionalDetails?.membershipCategory === 'MEM-UG') {
+        if (
+          professionalDetail?.professionalDetails?.membershipCategory ===
+          'MEM-UG'
+        ) {
           setIsSubmitted(true);
-          setStatusModal({ 
-            open: true, 
-            status: 'success', 
-            message: 'Application submitted successfully!' 
+          setStatusModal({
+            open: true,
+            status: 'success',
+            message: 'Application submitted successfully!',
           });
         } else {
           // Trigger payment modal for other categories
@@ -540,14 +669,17 @@ const ApplicationForm = () => {
       if (res.status === 200) {
         // Update subscription detail
         getSubscriptionDetail(personalDetail?.ApplicationId);
-        
+
         // Check if undergraduate student - they don't need payment
-        if (professionalDetail?.professionalDetails?.membershipCategory === 'MEM-UG') {
+        if (
+          professionalDetail?.professionalDetails?.membershipCategory ===
+          'MEM-UG'
+        ) {
           setIsSubmitted(true);
-          setStatusModal({ 
-            open: true, 
-            status: 'success', 
-            message: 'Application updated successfully!' 
+          setStatusModal({
+            open: true,
+            status: 'success',
+            message: 'Application updated successfully!',
           });
         } else {
           // Trigger payment modal for other categories
@@ -690,17 +822,17 @@ const ApplicationForm = () => {
 
   const handleSubscriptionSuccess = async paymentData => {
     console.log('Payment Success Data:', paymentData);
-    
+
     // Close the payment modal
     setIsModalVisible(false);
-    
+
     // Show success status modal
-    setStatusModal({ 
-      open: true, 
-      status: 'success', 
-      message: 'Payment completed successfully!' 
+    setStatusModal({
+      open: true,
+      status: 'success',
+      message: 'Payment completed successfully!',
     });
-    
+
     // Reset form state
     setIsSubmitted(true);
   };
@@ -803,9 +935,12 @@ const ApplicationForm = () => {
                     <div
                       className={`
                         h-0.5 w-full
-                        ${(isSubmitted && step.number === 2) || currentStep > step.number 
-                          ? 'bg-green-500' 
-                          : 'bg-gray-300'}
+                        ${
+                          (isSubmitted && step.number === 2) ||
+                          currentStep > step.number
+                            ? 'bg-green-500'
+                            : 'bg-gray-300'
+                        }
                       `}
                     />
                   </div>
@@ -814,26 +949,21 @@ const ApplicationForm = () => {
             ))}
           </div>
 
-          {/* <Card className="p-4"> */}
-            {renderStepContent()}
-          {/* </Card> */}
+          {renderStepContent()}
 
           <div className="flex justify-end items-center gap-3 mt-6 flex-wrap">
             {currentStep > 1 && (
-              <Button
-                onClick={handlePrevious}
-                className="min-w-[180px]">
+              <Button onClick={handlePrevious} className="min-w-[180px]">
                 {`Previous: ${steps[currentStep - 2]?.title || 'Previous'}`}
               </Button>
             )}
-            <Button 
-              type="primary" 
+            <Button
+              type="primary"
               onClick={handleNext}
               className="min-w-[180px]">
-              {currentStep === steps.length 
-                ? 'Submit Application' 
-                : `Next: ${steps[currentStep]?.title || 'Next'}`
-              }
+              {currentStep === steps.length
+                ? 'Submit Application'
+                : `Next: ${steps[currentStep]?.title || 'Next'}`}
             </Button>
           </div>
         </>

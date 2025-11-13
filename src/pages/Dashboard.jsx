@@ -218,7 +218,6 @@ const Dashboard = () => {
   // Fetch category data for pricing
   useEffect(() => {
     const membershipCategory = professionalDetail?.professionalDetails?.membershipCategory;
-    console.log('MemberShipCategory===========>',membershipCategory)
     if (membershipCategory) {
       fetchCategoryByCategoryId(membershipCategory)
       .then(res => {

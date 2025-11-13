@@ -87,11 +87,12 @@ const Header = ({ collapsed, setCollapsed, isMobile, setDrawerVisible, pageTitle
       {/* Right Section - Notifications and User Profile */}
       <div className="flex items-center space-x-4">
         {/* Notification Bell */}
-        <Badge count={0} size="small">
+        <Badge count={3} size="small" offset={[-2, 2]}>
           <Button
             type="text"
             icon={<BellOutlined style={{ fontSize: '20px', color: '#52525b' }} />}
             className="hover:bg-gray-50 transition-colors"
+            onClick={() => navigate('/notifications')}
           />
         </Badge>
 
