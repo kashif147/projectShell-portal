@@ -1,43 +1,26 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Table, Empty, Tag, Card } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/common/Button';
 import { useApplication } from '../contexts/applicationContext';
+import { useLookup } from '../contexts/lookupContext';
 import { formatToDDMMYYYY } from '../helpers/date.helper';
-
-const membershipCategoryOptions = [
-  { value: 'general', label: 'General (all grades)' },
-  { value: 'postgraduate_student', label: 'Postgraduate Student' },
-  {
-    value: 'short_term_relief',
-    label: 'Short-term/ Relief (under 15 hrs/wk average)',
-  },
-  { value: 'private_nursing_home', label: 'Private nursing home' },
-  {
-    value: 'affiliate_non_practicing',
-    label: 'Affiliate members (non-practicing)',
-  },
-  {
-    value: 'lecturing',
-    label: 'Lecturing (employed in universities and IT institutes)',
-  },
-  {
-    value: 'associate',
-    label: 'Associate (not currently employed as a nurse/midwife)',
-  },
-  { value: 'retired_associate', label: 'Retired Associate' },
-  {
-    value: 'undergraduate_student',
-    label: 'Undergraduate Student',
-  },
-];
 
 const Application = () => {
   const { personalDetail, professionalDetail, subscriptionDetail } =
     useApplication();
+  const { categoryLookups, fetchLookups } = useLookup();
   const navigate = useNavigate();
+  const [categoryData, setCategoryData] = useState(null);
 
+
+  // Fetch category lookups on mount
+  useEffect(() => {
+    if (!categoryLookups || categoryLookups.length === 0) {
+      fetchLookups('category');
+    }
+  }, []);
 
   const hasData = personalDetail || professionalDetail || subscriptionDetail;
   const application = hasData
@@ -55,9 +38,16 @@ const Application = () => {
     navigate('/application/detail', { state: { application: record } });
   };
 
-  const getMembershipCategoryLabel = (value) => {
-    const option = membershipCategoryOptions.find(opt => opt.value === value);
-    return option ? option.label : value || 'N/A';
+  // Get category name by ID from dynamic lookup
+  const getMembershipCategoryLabel = (categoryId) => {
+    if (!categoryId) return 'N/A';
+    
+    // Find category in the lookup by _id or id
+    const category = categoryLookups?.find(
+      cat => (cat?._id === categoryId || cat?.id === categoryId)
+    );
+    
+    return category?.name || categoryId;
   };
 
   const columns = [

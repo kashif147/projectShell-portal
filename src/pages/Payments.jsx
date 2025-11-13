@@ -4,69 +4,72 @@ import Button from '../components/common/Button';
 import Receipt, { ReceiptPDF } from '../components/Receipt';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { useApplication } from '../contexts/applicationContext';
+import { useLookup } from '../contexts/lookupContext';
 import { formatToDDMMYYYY } from '../helpers/date.helper';
-
-const membershipCategoryOptions = [
-  { value: 'general', label: 'General (all grades)' },
-  { value: 'postgraduate_student', label: 'Postgraduate Student' },
-  {
-    value: 'short_term_relief',
-    label: 'Short-term/ Relief (under 15 hrs/wk average)',
-  },
-  { value: 'private_nursing_home', label: 'Private nursing home' },
-  {
-    value: 'affiliate_non_practicing',
-    label: 'Affiliate members (non-practicing)',
-  },
-  {
-    value: 'lecturing',
-    label: 'Lecturing (employed in universities and IT institutes)',
-  },
-  {
-    value: 'associate',
-    label: 'Associate (not currently employed as a nurse/midwife)',
-  },
-  { value: 'retired_associate', label: 'Retired Associate' },
-  {
-    value: 'undergraduate_student',
-    label: 'Undergraduate Student',
-  },
-];
 
 const Payments = () => {
   const { subscriptionDetail, personalDetail, professionalDetail } =
     useApplication();
+  const { categoryLookups, fetchLookups } = useLookup();
   const [paymentRows, setPaymentRows] = useState([]);
   const [receiptData, setReceiptData] = useState(null);
   const [receiptVisible, setReceiptVisible] = useState(false);
 
+  // Fetch category lookups on mount
+  useEffect(() => {
+    if (!categoryLookups || categoryLookups.length === 0) {
+      fetchLookups('category');
+    }
+  }, []);
+
   useEffect(() => {
     if (subscriptionDetail) {
+      const amount = subscriptionDetail?.subscriptionDetails?.totalAmount || '92';
+      const categoryId = professionalDetail?.professionalDetails?.membershipCategory;
+      
+      // Get category name for receipt
+      const category = categoryLookups?.find(
+        cat => (cat?._id === categoryId || cat?.id === categoryId)
+      );
+      const categoryName = category?.name || categoryId;
+      
       setPaymentRows([
         {
           key: 1,
           date: formatToDDMMYYYY(subscriptionDetail?.subscriptionDetails?.submissionDate),
-          description:
-            professionalDetail?.professionalDetails?.membershipCategory,
-          amount: '92',
+          description: categoryId,
+          amount: amount,
           status: 'Paid',
           details: {
             ...personalDetail?.personalInfo,
             ...personalDetail?.contactInfo,
             ...professionalDetail?.professionalDetails,
+            membershipCategoryName: categoryName, // Add resolved category name
+            paymentData: {
+              paymentMethod: subscriptionDetail?.subscriptionDetails?.paymentType === 'Card Payment' ? 'card' : subscriptionDetail?.subscriptionDetails?.paymentType,
+              total: amount,
+              date: subscriptionDetail?.subscriptionDetails?.submissionDate,
+            },
           },
         },
       ]);
     } else {
       setPaymentRows([]);
     }
-  }, []);
+  }, [subscriptionDetail, personalDetail, professionalDetail, categoryLookups]);
 
   console.log('Payment==================>', paymentRows);
 
-  const getMembershipCategoryLabel = (value) => {
-    const option = membershipCategoryOptions.find(opt => opt.value === value);
-    return option ? option.label : value || 'N/A';
+  // Get category name by ID from dynamic lookup
+  const getMembershipCategoryLabel = (categoryId) => {
+    if (!categoryId) return 'N/A';
+    
+    // Find category in the lookup by _id or id
+    const category = categoryLookups?.find(
+      cat => (cat?._id === categoryId || cat?.id === categoryId)
+    );
+    
+    return category?.name || 'N/A';
   };
 
   const columns = [
@@ -122,17 +125,18 @@ const Payments = () => {
         footer={[
           <PDFDownloadLink
             key="download"
-            document={<ReceiptPDF data={receiptData} />}
-            fileName="receipt.pdf">
+            document={<ReceiptPDF data={receiptData || {}} />}
+            fileName={`receipt-${new Date().getTime()}.pdf`}>
             {({ loading }) => (
-              <Button>
+              <Button type="primary" loading={loading}>
                 {loading ? 'Preparing PDF...' : 'Download as PDF'}
               </Button>
             )}
           </PDFDownloadLink>,
         ]}
         title="Payment Receipt"
-        width={650}>
+        width={750}
+        centered>
         {receiptData && <Receipt data={receiptData} />}
       </Modal>
     </Card>

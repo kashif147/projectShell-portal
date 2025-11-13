@@ -254,11 +254,11 @@ const Dashboard = () => {
   };
 
   const handleNext = () => {
-    if (
-      currentStep === 3 &&
-      professionalDetail?.professionalDetails?.membershipCategory !==
-      'undergraduate_student'
-    ) {
+    // Check if payment modal should be shown
+    // Skip for undergraduate students based on category code
+    const isUndergraduateStudent = categoryData?.code === 'undergraduate_student';
+    
+    if (currentStep === 3 && !isUndergraduateStudent) {
       setIsModalVisible(true);
     }
 
