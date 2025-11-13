@@ -1,216 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Divider, Space } from 'antd';
+import { EnvironmentOutlined, CheckCircleOutlined, EditOutlined } from '@ant-design/icons';
 import { useApplication } from '../contexts/applicationContext';
+import { useLookup } from '../contexts/lookupContext';
 import { updateProfessionalDetailRequest } from '../api/application.api';
 import { toast } from 'react-toastify';
 import Select from '../components/ui/Select';
 import { Input } from '../components/ui/Input';
 import Button from '../components/common/Button';
 
-// Reuse the same work location options and mapping logic as ProfessionalDetails
-const workLocations = [
-  '24 Hour Care Services',
-  '24 Hour Care Services (Mid-West)',
-  '24 Hour Care Services (North West)',
-  'ATU (LIMERICK)',
-  'BLANCHARDSTOWN INSTITUTE OF TECHNOLOGY',
-  'CAREDOC (CORK)',
-  'DUBLIN INSTITUTE OF TECHNOLOGY',
-  'GLENDALE NURSING HOME (TULLOW)',
-  'HOME INSTEAD (WESTERN REGION)',
-  'LETTERKENNY INSTITUTE OF TECHNOLOGY',
-  'LIMERICK INSTITUTE OF TECHNOLOGY',
-  'SLIGO INSTITUTE OF TECHNOLOGY',
-  'ST JOSEPHS HOSPITAL- MOUNT DESERT',
-  'TALLAGHT INSTITUTE OF TECHNOLOGY',
-  'Atu (Letterkenny)',
-  'Regional Centre Of Nursing & Midwifery Education',
-  'Newtown School',
-  'Tipperary Education & Training Board',
-  'National University Ireland Galway',
-  'South East Technological University (Setu)',
-  'Tud (Tallaght)',
-  'College Of Anaesthetists',
-  'Tud (Blanchardstown)',
-  'Gmit (Galway)',
-  'Cork University College',
-  'Mtu (Cork)',
-  'Student',
-  'St Columbas College (Dublin)',
-  'Setu (Waterford)',
-  'Nui Galway',
-  'Roscrea College',
-  'Dun Laoghaire Institute Of Art & Design',
-  'Mtu (Kerry)',
-  'Tus (Limerick)',
-  'Dundalk Institute Of Technology (Dkit)',
-  'Atu (Sligo)',
-  'Tud (Bolton Street)',
-  'Dublin City University',
-  'National University Ireland Maynooth',
-  'University College Dublin',
-  'Limerick University',
-  'Trinity College',
-  'St Angelas College (Sligo)',
-  'Royal College Of Surgeons',
-  'Tus (Technological University Of The Shannon)',
-  "Galway Mayo Institute Of Tech(C'Bar)",
-];
-
-const workLocationDetails = {
-  '24 Hour Care Services': { branch: 'Meath', region: 'Dublin North East' },
-  '24 Hour Care Services (Mid-West)': {
-    branch: 'Clare',
-    region: 'Mid-West, West and North West',
-  },
-  '24 Hour Care Services (North West)': {
-    branch: 'Sligo',
-    region: 'Mid-West, West and North West',
-  },
-  'BLANCHARDSTOWN INSTITUTE OF TECHNOLOGY': {
-    branch: 'Dublin Northern Branch',
-    region: 'Dublin Mid Leinster',
-  },
-  'CAREDOC (CORK)': {
-    branch: 'Cork Vol/Private Branch',
-    region: 'South - South East',
-  },
-  'DUBLIN INSTITUTE OF TECHNOLOGY': {
-    branch: 'Dublin South West Branch',
-    region: 'Dublin Mid Leinster',
-  },
-  'GLENDALE NURSING HOME (TULLOW)': {
-    branch: 'Carlow',
-    region: 'South - South East',
-  },
-  'HOME INSTEAD (WESTERN REGION)': { branch: 'Roscommon', region: 'West' },
-  'LETTERKENNY INSTITUTE OF TECHNOLOGY': {
-    branch: 'Letterkenny',
-    region: 'Letterkenny',
-  },
-  'LIMERICK INSTITUTE OF TECHNOLOGY': {
-    branch: 'Limerick',
-    region: 'Limerick',
-  },
-  'SLIGO INSTITUTE OF TECHNOLOGY': { branch: 'Sligo', region: 'Sligo' },
-  'ST JOSEPHS HOSPITAL- MOUNT DESERT': {
-    branch: 'Cork Vol/Private Branch',
-    region: 'South - South East',
-  },
-  'TALLAGHT INSTITUTE OF TECHNOLOGY': {
-    branch: 'Dublin South West Branch',
-    region: 'Dublin Mid Leinster',
-  },
-  'Atu (Letterkenny)': { branch: 'Letterkenny', region: 'Letterkenny' },
-  'Regional Centre Of Nursing & Midwifery Education': {
-    branch: 'Offaly',
-    region: 'Mid Leinster',
-  },
-  'Newtown School': { branch: 'Waterford', region: 'South - South East' },
-  'Tipperary Education & Training Board': {
-    branch: 'Tipperary-North-Mwhb',
-    region: 'Mid-West, West and North West',
-  },
-  'National University Ireland Galway': {
-    branch: 'Galway',
-    region: 'Mid-West, West and North West',
-  },
-  'South East Technological University (Setu)': {
-    branch: 'Carlow',
-    region: 'South - South East',
-  },
-  'Tud (Tallaght)': {
-    branch: 'Dublin South West Branch',
-    region: 'Dublin Mid Leinster',
-  },
-  'College Of Anaesthetists': {
-    branch: 'Dublin South West Branch',
-    region: 'Dublin Mid Leinster',
-  },
-  'Tud (Blanchardstown)': {
-    branch: 'Dublin Northern Branch',
-    region: 'Dublin North East',
-  },
-  'Gmit (Galway)': {
-    branch: 'Galway',
-    region: 'Mid-West, West and North West',
-  },
-  'Cork University College': {
-    branch: 'Cork Vol/Private Branch',
-    region: 'South - South East',
-  },
-  'Mtu (Cork)': {
-    branch: 'Cork Vol/Private Branch',
-    region: 'South - South East',
-  },
-  Student: { branch: 'Student', region: 'Student' },
-  'St Columbas College (Dublin)': {
-    branch: 'Dublin East Coast Branch',
-    region: 'Dublin Mid Leinster',
-  },
-  'Setu (Waterford)': { branch: 'Waterford', region: 'South - South East' },
-  'Nui Galway': {
-    branch: 'Galway City',
-    region: 'Mid-West, West and North West',
-  },
-  'Roscrea College': {
-    branch: 'Tipperary-North-Mwhb',
-    region: 'Mid-West, West and North West',
-  },
-  'Dun Laoghaire Institute Of Art & Design': {
-    branch: 'Dunlaoghaire',
-    region: 'Dublin Mid Leinster',
-  },
-  'Mtu (Kerry)': { branch: 'Kerry', region: 'South - South East' },
-  'Tus (Limerick)': {
-    branch: 'Limerick',
-    region: 'Mid-West, West and North West',
-  },
-  'Dundalk Institute Of Technology (Dkit)': {
-    branch: 'Dundalk',
-    region: 'Dublin North East',
-  },
-  'Atu (Sligo)': { branch: 'Sligo', region: 'Mid-West, West and North West' },
-  'Tud (Bolton Street)': {
-    branch: 'Dublin South West Branch',
-    region: 'Dublin Mid Leinster',
-  },
-  'Dublin City University': {
-    branch: 'Dublin Northern Branch',
-    region: 'Dublin North East',
-  },
-  'National University Ireland Maynooth': {
-    branch: 'Kildare/Naas',
-    region: 'Dublin Mid Leinster',
-  },
-  'University College Dublin': {
-    branch: 'Dublin East Coast Branch',
-    region: 'Dublin Mid Leinster',
-  },
-  'Limerick University': { branch: 'Limerick', region: 'Limerick' },
-  'Trinity College': {
-    branch: 'Dublin East Coast Branch',
-    region: 'Dublin Mid Leinster',
-  },
-  'St Angelas College (Sligo)': { branch: 'Sligo', region: 'Sligo' },
-  'Royal College Of Surgeons': {
-    branch: 'Dublin East Coast Branch',
-    region: 'Dublin North East',
-  },
-  'Tus (Technological University Of The Shannon)': {
-    branch: 'Athlone',
-    region: 'Dublin North East',
-  },
-  "Galway Mayo Institute Of Tech(C'Bar)": {
-    branch: 'Castlebar',
-    region: 'Mid-West, West and North West',
-  },
-};
-
 const WorkLocation = () => {
   const { personalDetail, professionalDetail, getProfessionalDetail } = useApplication();
+  const { workLocationLookups, fetchWorkLocationLookups } = useLookup();
   const [form, setForm] = useState({ workLocation: '', otherWorkLocation: '', branch: '', region: '' });
   const existing = professionalDetail?.professionalDetails || {};
+
+  useEffect(() => {
+    if (!workLocationLookups || workLocationLookups.length === 0) {
+      fetchWorkLocationLookups?.();
+    }
+  }, []);
 
   useEffect(() => {
     setForm({
@@ -221,6 +29,31 @@ const WorkLocation = () => {
     });
   }, [professionalDetail]);
 
+  const workLocationOptions = (workLocationLookups || []).map(item => {
+    const name = item?.lookup?.DisplayName || item?.lookup?.lookupname || '';
+    return { value: name, label: name };
+  });
+
+  const branchOptions = Array.from(
+    new Set(
+      (workLocationLookups || []).map(
+        i => i?.branch?.DisplayName || i?.branch?.lookupname,
+      ),
+    ),
+  )
+    .filter(Boolean)
+    .map(name => ({ value: name, label: name }));
+
+  const regionOptions = Array.from(
+    new Set(
+      (workLocationLookups || []).map(
+        i => i?.region?.DisplayName || i?.region?.lookupname,
+      ),
+    ),
+  )
+    .filter(Boolean)
+    .map(name => ({ value: name, label: name }));
+
   const onChange = e => {
     const { name, value } = e.target;
     const updated = { ...form, [name]: value };
@@ -228,9 +61,14 @@ const WorkLocation = () => {
       if (value === 'other') {
         updated.branch = '';
         updated.region = '';
-      } else if (workLocationDetails[value]) {
-        updated.branch = workLocationDetails[value].branch;
-        updated.region = workLocationDetails[value].region;
+      } else {
+        const selected = (workLocationLookups || []).find(
+          i => (i?.lookup?.DisplayName || i?.lookup?.lookupname) === value,
+        );
+        if (selected) {
+          updated.branch = selected?.branch?.DisplayName || selected?.branch?.lookupname || '';
+          updated.region = selected?.region?.DisplayName || selected?.region?.lookupname || '';
+        }
       }
     }
     setForm(updated);
@@ -256,82 +94,163 @@ const WorkLocation = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card title="Current Details">
-        <div className="space-y-3 text-sm">
-          <div>
-            <span className="text-gray-500">Work Location: </span>
-            <span className="text-gray-800">{existing.workLocation || 'N/A'}</span>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <EnvironmentOutlined className="text-3xl text-white" />
           </div>
           <div>
-            <span className="text-gray-500">Other Work Location: </span>
-            <span className="text-gray-800">{existing.otherWorkLocation || 'N/A'}</span>
-          </div>
-          <div>
-            <span className="text-gray-500">Branch: </span>
-            <span className="text-gray-800">{existing.branch || 'N/A'}</span>
-          </div>
-          <div>
-            <span className="text-gray-500">Region: </span>
-            <span className="text-gray-800">{existing.region || 'N/A'}</span>
+            <h1 className="text-3xl font-bold text-gray-900">Work Location</h1>
+            <p className="text-sm text-gray-600 mt-1">
+              View and update your work location details
+            </p>
           </div>
         </div>
-      </Card>
+      </div>
 
-      <Card title="Update Work Location">
-        <div className="space-y-4">
-          <Select
-            label="Work Location"
-            name="workLocation"
-            value={form.workLocation}
-            onChange={onChange}
-            required
-            options={[...workLocations.map(loc => ({ value: loc, label: loc })), { value: 'other', label: 'other' }]}
-          />
-          <Input
-            label="Other Work Location"
-            name="otherWorkLocation"
-            value={form.otherWorkLocation}
-            onChange={onChange}
-            disabled={form.workLocation !== 'other'}
-            placeholder="Enter your other work location"
-          />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select 
-              label="Branch" 
-              name="branch" 
-              value={form.branch} 
-              onChange={onChange} 
-              disabled={form.workLocation !== 'other'}
-              required={form.workLocation === 'other'}
-              options={form.workLocation === 'other' ? 
-                Array.from(new Set(Object.values(workLocationDetails).map(d => d.branch))).map(branch => ({ value: branch, label: branch })) : 
-                form.workLocation && workLocationDetails[form.workLocation] ? 
-                [{ value: workLocationDetails[form.workLocation].branch, label: workLocationDetails[form.workLocation].branch }] : 
-                []
-              }
-            />
-            <Select 
-              label="Region" 
-              name="region" 
-              value={form.region} 
-              onChange={onChange} 
-              disabled={form.workLocation !== 'other'}
-              required={form.workLocation === 'other'}
-              options={form.workLocation === 'other' ? 
-                Array.from(new Set(Object.values(workLocationDetails).map(d => d.region))).map(region => ({ value: region, label: region })) : 
-                form.workLocation && workLocationDetails[form.workLocation] ? 
-                [{ value: workLocationDetails[form.workLocation].region, label: workLocationDetails[form.workLocation].region }] : 
-                []
-              }
-            />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Current Work Location */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-300">
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-green-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-md">
+                <CheckCircleOutlined className="text-white text-xl" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">Current Location</h3>
+            </div>
           </div>
-          <Divider className="my-2" />
-          <Space>
-            <Button type="primary" onClick={onSubmit}>Update</Button>
-          </Space>
+
+          <div className="p-6">
+            {existing.workLocation ? (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    Work Location
+                  </p>
+                  <p className="text-lg font-bold text-gray-900">
+                    {existing.workLocation}
+                  </p>
+                </div>
+
+                {existing.otherWorkLocation && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      Other Work Location
+                    </p>
+                    <p className="text-base font-semibold text-gray-900">
+                      {existing.otherWorkLocation}
+                    </p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      Branch
+                    </p>
+                    <p className="text-base font-semibold text-gray-900">
+                      {existing.branch || 'N/A'}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      Region
+                    </p>
+                    <p className="text-base font-semibold text-gray-900">
+                      {existing.region || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <EnvironmentOutlined className="text-3xl text-gray-400" />
+                </div>
+                <p className="text-gray-600 text-sm">No work location assigned</p>
+              </div>
+            )}
+          </div>
         </div>
-      </Card>
+
+        {/* Update Work Location */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-300">
+          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 px-6 py-4 border-b border-teal-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center shadow-md">
+                <EditOutlined className="text-white text-xl" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">Update Location</h3>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-4">
+            <Select
+              label="Work Location"
+              name="workLocation"
+              value={form.workLocation}
+              onChange={onChange}
+              required
+              tooltip="Select your primary work location. If your location is not listed, choose 'Other'."
+              placeholder="Select work location"
+              options={[
+                ...workLocationOptions,
+                { value: 'other', label: 'Other' },
+              ]}
+            />
+
+            <Input
+              label="Other Work Location"
+              name="otherWorkLocation"
+              value={form.otherWorkLocation}
+              onChange={onChange}
+              disabled={form.workLocation !== 'other'}
+              required={form.workLocation === 'other'}
+              placeholder="Enter your work location"
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Select
+                label="Branch"
+                name="branch"
+                value={form.branch}
+                onChange={onChange}
+                disabled={form.workLocation !== 'other'}
+                required={form.workLocation === 'other'}
+                placeholder="Select branch"
+                options={form.workLocation === 'other' ? branchOptions : form.branch ? [{ value: form.branch, label: form.branch }] : branchOptions}
+              />
+              <Select
+                label="Region"
+                name="region"
+                value={form.region}
+                onChange={onChange}
+                disabled={form.workLocation !== 'other'}
+                required={form.workLocation === 'other'}
+                placeholder="Select region"
+                options={form.workLocation === 'other' ? regionOptions : form.region ? [{ value: form.region, label: form.region }] : regionOptions}
+              />
+            </div>
+
+            <div className="pt-4">
+              <Button
+                type="primary"
+                onClick={onSubmit}
+                className="w-full bg-teal-600 hover:bg-teal-700 border-teal-600 h-11 text-base font-medium shadow-sm">
+                Update Work Location
+              </Button>
+            </div>
+
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-xs text-blue-700">
+                <strong>Note:</strong> Selecting a work location will automatically populate the branch and region fields.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

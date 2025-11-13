@@ -28,6 +28,8 @@ const ProfessionalDetails = ({
     fetchWorkLocationLookups,
     categoryLookups,
     fetchCategoryLookups,
+    gradeLookups,
+    fetchLookups,
   } = useLookup();
 
   React.useEffect(() => {
@@ -36,6 +38,9 @@ const ProfessionalDetails = ({
     }
     if (!categoryLookups || categoryLookups.length === 0) {
       fetchCategoryLookups?.();
+    }
+    if (!gradeLookups || gradeLookups.length === 0) {
+      fetchLookups?.();
     }
   }, []);
 
@@ -59,6 +64,13 @@ const ProfessionalDetails = ({
       rawItem: item, // Keep reference to original item
     };
   });
+
+  const gradeOptions = (gradeLookups || [])
+    .map(item => {
+      const name = item?.DisplayName || item?.lookupname || '';
+      return { value: name, label: name };
+    })
+    .filter(option => option.value); // Filter out empty values
 
   const branchOptions = Array.from(
     new Set(
@@ -352,13 +364,7 @@ const ProfessionalDetails = ({
             onChange={handleInputChange}
             showValidation={showValidation}
             placeholder="Select grade"
-            options={[
-              { value: 'junior', label: 'Junior' },
-              { value: 'senior', label: 'Senior' },
-              { value: 'lead', label: 'Lead' },
-              { value: 'manager', label: 'Manager' },
-              { value: 'other', label: 'Other' },
-            ]}
+            options={ gradeOptions }
           />
           <Input
             label="Other Grade"

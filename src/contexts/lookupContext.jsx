@@ -39,6 +39,7 @@ export const LookupProvider = ({ children }) => {
   const [workLocationLookups, setWorkLocationLookups] = React.useState([]);
   const [countryLookups, setCountryLookups] = React.useState([]);
   const [categoryLookups, setCategoryLookups] = React.useState([]);
+  const [gradeLookups, setGradeLookups] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
 
@@ -64,11 +65,16 @@ export const LookupProvider = ({ children }) => {
           item => item.lookuptypeId?.lookuptype === 'Section',
         );
 
+        const gradeData = result.filter(
+          item => item.lookuptypeId?.lookuptype === 'Grade',
+        );
+
         await saveLocal('genderLookups', genderData);
         await saveLocal('cityLookups', cityData);
         await saveLocal('titleLookups', titleData);
         await saveLocal('secondarySection', secondarySectionData);
         await saveLocal('primarySection', sectionData);
+        await saveLocal('gradeLookups', gradeData);
         setLookups(result);
       }
 
@@ -124,7 +130,6 @@ export const LookupProvider = ({ children }) => {
         throw new Error('No token found');
       }
       const response = await fetchAllCategoryRequest();
-      console.log('responseCategory==========>', response);
       const results = response?.data?.data || [];
       await saveLocal('categories', results);
       setCategoryLookups(results);
@@ -146,6 +151,8 @@ export const LookupProvider = ({ children }) => {
       const workLocationLookups = await fetchLocal('workLocationLookups');
       const countryLookups = await fetchLocal('countries');
       const categoryLookups = await fetchLocal('categories');
+      const gradeLookups = await fetchLocal('gradeLookups');
+
       setGenderLookups(genderLookups);
       setCityLookups(cityLookups);
       setTitleLookups(titleLookups);
@@ -154,6 +161,7 @@ export const LookupProvider = ({ children }) => {
       setWorkLocationLookups(workLocationLookups);
       setCountryLookups(countryLookups);
       setCategoryLookups(categoryLookups);
+      setGradeLookups(gradeLookups);
     };
     fetchGenderLookups();
   }, [lookups]);
@@ -193,6 +201,7 @@ export const LookupProvider = ({ children }) => {
     workLocationLookups,
     countryLookups,
     categoryLookups,
+    gradeLookups,
     loading,
     error,
     fetchLookups,

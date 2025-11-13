@@ -205,165 +205,282 @@ const SubscriptionModal = ({
 
   return (
     <Modal
-      title={
-        <div className="text-center">
-          <h2 className="text-xl font-bold mb-1">Membership Subscription</h2>
-          <p className="text-sm text-gray-500">
-            Review your membership and complete payment
-          </p>
-        </div>
-      }
+      title={null}
       open={isVisible}
       onCancel={onClose}
       footer={null}
-      width={window.innerWidth <= 768 ? '95%' : '550px'}
-      centered>
+      width={window.innerWidth <= 768 ? '95%' : '600px'}
+      centered
+      closeIcon={
+        <span className="text-gray-400 hover:text-gray-600 transition-colors">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </span>
+      }>
+      
+      {/* Modern Header with Gradient */}
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 -m-6 mb-6 p-6 rounded-t-lg">
+        <div className="text-center text-white">
+          <div className="flex justify-center mb-3">
+            <div className="bg-white/20 backdrop-blur-sm p-3 rounded-full">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Membership Subscription</h2>
+          <p className="text-indigo-100 text-sm">
+            Review your membership and complete payment
+          </p>
+        </div>
+      </div>
+
       {productLoading ? (
-        <div className="text-center py-8">
+        <div className="text-center py-12">
           <Spinner />
-          <p className="text-gray-500 mt-2">Loading payment details...</p>
+          <p className="text-gray-500 mt-4 font-medium">Loading payment details...</p>
         </div>
       ) : (
         <Form
           form={form}
           layout="vertical"
-          size="small">
+          className="space-y-5">
           
-          {/* Membership Category Details */}
+          {/* Membership Category Details - Modern Card */}
           {product && (
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h3 className="font-semibold text-gray-800">
-                    {product?.name || 'Membership Category'}
-                  </h3>
-                  {product?.description && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      {product.description}
-                    </p>
-                  )}
+            <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border border-indigo-200 shadow-sm">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 rounded-full -mr-16 -mt-16"></div>
+              <div className="relative p-5">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg text-gray-800 mb-1">
+                      {product?.name || 'Membership Category'}
+                    </h3>
+                    {product?.description && (
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        {product.description}
+                      </p>
+                    )}
+                  </div>
+                  <div className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-semibold ml-3">
+                    Active
+                  </div>
                 </div>
-              </div>
-              <div className="mt-3 pt-3 border-t border-blue-200">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Category Price:</span>
-                  <span className="font-semibold text-gray-800">
-                    {formatCurrency(getDisplayPrice())}
-                  </span>
-                </div>
-                {product?.currentPricing?.frequency && (
-                  <div className="flex justify-between text-sm mt-1">
-                    <span className="text-gray-600">Payment Frequency:</span>
-                    <span className="font-medium text-gray-800">
-                      {product.currentPricing.frequency}
+                
+                <div className="mt-4 pt-4 border-t border-indigo-200/60 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600 font-medium">Category Price</span>
+                    <span className="text-xl font-bold text-indigo-600">
+                      {formatCurrency(getDisplayPrice())}
                     </span>
                   </div>
-                )}
+                  {product?.currentPricing?.frequency && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-500">Payment Frequency</span>
+                      <span className="text-sm font-semibold text-gray-700 bg-white px-3 py-1 rounded-full">
+                        {product.currentPricing.frequency}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
 
-          {/* Name on Card */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <span className="text-red-500">* </span>Name on Card
+          {/* Name on Card - Modern Style */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <span className="text-red-500 mr-1">*</span>Name on Card
             </label>
-            <Input 
-              value={user?.userFirstName && user?.userLastName
-                ? `${user.userFirstName} ${user.userLastName}`
-                : userDetail?.userFirstName && userDetail?.userLastName
-                  ? `${userDetail.userFirstName} ${userDetail.userLastName}`
-                  : formData?.personalInfo?.forename && formData?.personalInfo?.surname
-                    ? `${formData.personalInfo.forename} ${formData.personalInfo.surname}`
-                    : user?.userName || userDetail?.userName || ''}
-              readOnly
-              size="large"
-              className="shadow-sm"
-              style={{ 
-                backgroundColor: '#f9fafb',
-                fontWeight: '500',
-                color: '#111827'
-              }}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              ✓ Pre-filled from your profile
-            </p>
+            <div className="relative">
+              <Input 
+                value={user?.userFirstName && user?.userLastName
+                  ? `${user.userFirstName} ${user.userLastName}`
+                  : userDetail?.userFirstName && userDetail?.userLastName
+                    ? `${userDetail.userFirstName} ${userDetail.userLastName}`
+                    : formData?.personalInfo?.forename && formData?.personalInfo?.surname
+                      ? `${formData.personalInfo.forename} ${formData.personalInfo.surname}`
+                      : user?.userName || userDetail?.userName || ''}
+                readOnly
+                size="large"
+                className="shadow-sm rounded-lg"
+                prefix={
+                  <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                }
+                style={{ 
+                  backgroundColor: '#f9fafb',
+                  fontWeight: '500',
+                  color: '#111827',
+                  borderColor: '#e5e7eb'
+                }}
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <span className="inline-flex items-center text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Auto-filled
+                </span>
+              </div>
+            </div>
           </div>
           
-          {/* Email */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <span className="text-red-500">* </span>Email
+          {/* Email - Modern Style */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <span className="text-red-500 mr-1">*</span>Email
             </label>
-            <Input 
-              type="email"
-              value={user?.userEmail || userDetail?.userEmail || user?.email || userDetail?.email || 
-                (formData?.personalInfo?.preferredEmail === 'work'
-                  ? formData?.personalInfo?.workEmail
-                  : formData?.personalInfo?.personalEmail) || ''}
-              readOnly
-              size="large"
-              className="shadow-sm"
-              style={{ 
-                backgroundColor: '#f9fafb',
-                fontWeight: '500',
-                color: '#111827'
-              }}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              ✓ Pre-filled from your profile
-            </p>
-          </div>
-
-        <Form.Item label="Card Number" required>
-          <div className="p-3 border rounded-lg bg-white shadow-sm">
-            <CardNumberElement
-              options={ELEMENT_OPTIONS}
-              onChange={(e) => {
-                setCardComplete(prev => ({ ...prev, cardNumber: e.complete }));
-              }}
-            />
-          </div>
-        </Form.Item>
-
-        <div className="grid grid-cols-2 gap-4">
-          <Form.Item label="Expiry Date" required>
-            <div className="p-3 border rounded-lg bg-white shadow-sm">
-              <CardExpiryElement
-                options={ELEMENT_OPTIONS}
-                onChange={(e) => {
-                  setCardComplete(prev => ({ ...prev, cardExpiry: e.complete }));
+            <div className="relative">
+              <Input 
+                type="email"
+                value={user?.userEmail || userDetail?.userEmail || user?.email || userDetail?.email || 
+                  (formData?.personalInfo?.preferredEmail === 'work'
+                    ? formData?.personalInfo?.workEmail
+                    : formData?.personalInfo?.personalEmail) || ''}
+                readOnly
+                size="large"
+                className="shadow-sm rounded-lg"
+                prefix={
+                  <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                }
+                style={{ 
+                  backgroundColor: '#f9fafb',
+                  fontWeight: '500',
+                  color: '#111827',
+                  borderColor: '#e5e7eb'
                 }}
               />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <span className="inline-flex items-center text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Auto-filled
+                </span>
+              </div>
             </div>
-          </Form.Item>
+          </div>
 
-          <Form.Item label="Security Code" required>
-            <div className="p-3 border rounded-lg bg-white shadow-sm">
-              <CardCvcElement
-                options={ELEMENT_OPTIONS}
-                onChange={(e) => {
-                  setCardComplete(prev => ({ ...prev, cardCvc: e.complete }));
-                }}
-              />
+          {/* Card Number - Modern Style */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <span className="text-red-500 mr-1">*</span>Card Number
+            </label>
+            <div className="relative group">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+              </div>
+              <div className="pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
+                <CardNumberElement
+                  options={ELEMENT_OPTIONS}
+                  onChange={(e) => {
+                    setCardComplete(prev => ({ ...prev, cardNumber: e.complete }));
+                  }}
+                />
+              </div>
+              {cardComplete.cardNumber && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              )}
             </div>
-          </Form.Item>
-        </div>
+          </div>
 
-          <Divider />
-          <div className="flex justify-between items-center">
+          {/* Expiry & CVC - Modern Style */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="font-semibold">
-                Total: {formatCurrency(getDisplayPrice())}
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <span className="text-red-500 mr-1">*</span>Expiry Date
+              </label>
+              <div className="relative group">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div className="pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
+                  <CardExpiryElement
+                    options={ELEMENT_OPTIONS}
+                    onChange={(e) => {
+                      setCardComplete(prev => ({ ...prev, cardExpiry: e.complete }));
+                    }}
+                  />
+                </div>
+                {cardComplete.cardExpiry && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <span className="text-red-500 mr-1">*</span>Security Code
+              </label>
+              <div className="relative group">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <div className="pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
+                  <CardCvcElement
+                    options={ELEMENT_OPTIONS}
+                    onChange={(e) => {
+                      setCardComplete(prev => ({ ...prev, cardCvc: e.complete }));
+                    }}
+                  />
+                </div>
+                {cardComplete.cardCvc && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-gray-200 my-6"></div>
+
+          {/* Footer with Total and Pay Button */}
+          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-indigo-50 rounded-xl border border-gray-200">
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Total Amount</p>
+              <p className="text-2xl font-bold text-gray-800">
+                {formatCurrency(getDisplayPrice())}
               </p>
             </div>
             <Button
               type="primary"
               onClick={handlePayNow}
               loading={loading}
-              disabled={!isCardReady}>
-              Pay Now
+              disabled={!isCardReady}
+              className="!h-12 !px-8 !text-base !font-semibold !bg-gradient-to-r !from-indigo-600 !to-purple-600 hover:!from-indigo-700 hover:!to-purple-700 !border-0 !shadow-lg hover:!shadow-xl !transition-all !duration-200">
+              {loading ? 'Processing...' : 'Pay Now'}
             </Button>
+          </div>
+
+          {/* Security Notice */}
+          <div className="flex items-center justify-center text-xs text-gray-500 mt-4">
+            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            Secure payment powered by Stripe
           </div>
         </Form>
       )}

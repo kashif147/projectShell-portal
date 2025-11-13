@@ -1,11 +1,12 @@
 import React from 'react';
-import { Card, Row, Col, Tag, Empty, Button, Divider } from 'antd';
+import { Tag } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   UserOutlined,
   IdcardOutlined,
   CreditCardOutlined,
   ArrowLeftOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { formatToDDMMYYYY } from '../helpers/date.helper';
 
@@ -16,14 +17,31 @@ const ApplicationDetail = () => {
 
   if (!application) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4">
-        <Card className="max-w-4xl mx-auto shadow-lg">
-          <Empty
-            description="No application data available"
-            className="py-8"
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-          />
-        </Card>
+      <div className="space-y-6">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate('/application')}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
+          <ArrowLeftOutlined />
+          <span className="text-sm font-medium">Back to Applications</span>
+        </button>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12">
+          <div className="text-center">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FileTextOutlined className="text-4xl text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Application Data</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              The application data could not be found or loaded.
+            </p>
+            <button
+              onClick={() => navigate('/application')}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm">
+              Back to Applications
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -31,7 +49,31 @@ const ApplicationDetail = () => {
   const { personalDetail, professionalDetail, subscriptionDetail } =
     application;
 
-  const renderSection = (title, data, icon, color = 'blue') => {
+  const getIconConfig = (type) => {
+    const configs = {
+      personal: {
+        icon: <UserOutlined className="text-2xl" />,
+        bgColor: 'from-blue-500 to-blue-600',
+        lightBg: 'from-blue-50 to-indigo-50',
+        borderColor: 'border-blue-200',
+      },
+      professional: {
+        icon: <IdcardOutlined className="text-2xl" />,
+        bgColor: 'from-green-500 to-green-600',
+        lightBg: 'from-green-50 to-emerald-50',
+        borderColor: 'border-green-200',
+      },
+      subscription: {
+        icon: <CreditCardOutlined className="text-2xl" />,
+        bgColor: 'from-purple-500 to-purple-600',
+        lightBg: 'from-purple-50 to-pink-50',
+        borderColor: 'border-purple-200',
+      },
+    };
+    return configs[type] || configs.personal;
+  };
+
+  const renderSection = (title, data, type) => {
     if (!data || Object.keys(data).length === 0) return null;
 
     const nonNullData = Object.entries(data).filter(
@@ -44,61 +86,52 @@ const ApplicationDetail = () => {
 
     if (nonNullData.length === 0) return null;
 
+    const config = getIconConfig(type);
+
     return (
-      <Card
-        title={
-          <div className="flex items-center gap-2">
-            <div className={`p-1 rounded-md bg-${color}-100`}>
-              {React.cloneElement(icon, {
-                className: `text-${color}-500 text-sm`,
-              })}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-300">
+        {/* Section Header */}
+        <div className={`bg-gradient-to-r ${config.lightBg} px-6 py-4 border-b ${config.borderColor}`}>
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 bg-gradient-to-br ${config.bgColor} rounded-lg flex items-center justify-center shadow-md`}>
+              {React.cloneElement(config.icon, { className: 'text-white' })}
             </div>
-            <span className="text-base font-semibold text-gray-800">
-              {title}
-            </span>
+            <h3 className="text-lg font-bold text-gray-900">{title}</h3>
           </div>
-        }
-        className="mb-3 shadow-sm border-0 bg-white"
-        styles={{
-          header: {
-            borderBottom: '1px solid #f3f4f6',
-            padding: '10px 14px',
-          },
-          body: {
-            padding: '10px 14px',
-          },
-        }}>
-        <Row gutter={[12, 8]}>
-          {nonNullData.map(([key, value]) => (
-            <Col xs={24} sm={12} lg={8} key={key}>
-              <div className="bg-gray-50 p-2 rounded-md border border-gray-100 hover:shadow-sm hover:bg-gray-100 transition-all">
-                <div className="text-[10px] font-medium text-gray-600 uppercase tracking-wide mb-0.5">
+        </div>
+
+        {/* Section Body */}
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {nonNullData.map(([key, value]) => (
+              <div key={key} className="space-y-1">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                   {key
                     .replace(/([A-Z])/g, ' $1')
                     .replace(/^./, s => s.toUpperCase())}
-                </div>
-                <div className="text-xs font-medium text-gray-800">
+                </p>
+                <div className="text-sm font-semibold text-gray-900">
                   {typeof value === 'boolean' ? (
                     <Tag
-                      color={value ? 'green' : 'red'}
-                      className="text-[10px] px-1 py-0 h-auto">
+                      color={value ? 'success' : 'error'}
+                      className="px-2 py-1 text-xs font-medium rounded-md">
                       {value ? 'Yes' : 'No'}
                     </Tag>
                   ) : typeof value === 'string' && value.includes('_') ? (
-                    <span className="capitalize text-gray-900">
+                    <span className="capitalize">
                       {value
                         .replace(/_/g, ' ')
                         .replace(/\b\w/g, l => l.toUpperCase())}
                     </span>
                   ) : (
-                    <span className="text-gray-900">{String(value)}</span>
+                    <span>{String(value)}</span>
                   )}
                 </div>
               </div>
-            </Col>
-          ))}
-        </Row>
-      </Card>
+            ))}
+          </div>
+        </div>
+      </div>
     );
   };
 
@@ -133,53 +166,105 @@ const ApplicationDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4">
-      <div className="">
-        {/* Back Button */}
-        <div className="mb-4">
-          <Button
-            type="text"
-            icon={<ArrowLeftOutlined />}
-            onClick={() => navigate('/application')}
-            className="text-gray-600 hover:text-gray-800 hover:bg-gray-100 px-3 py-1.5 h-auto text-sm">
-            Back to Applications
-          </Button>
+    <div className="space-y-6">
+      {/* Back Button */}
+      <button
+        onClick={() => navigate('/application')}
+        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors group">
+        <ArrowLeftOutlined className="group-hover:-translate-x-1 transition-transform" />
+        <span className="text-sm font-medium">Back to Applications</span>
+      </button>
+
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <FileTextOutlined className="text-3xl text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Application Details</h1>
+            <p className="text-sm text-gray-600 mt-1">
+              Complete overview of your membership application
+            </p>
+          </div>
         </div>
+      </div>
 
-        {/* Application Data Sections */}
-        {hasAnyData() ? (
-          <div className="space-y-4">
-            {renderSection(
-              'Personal Information',
-              formatPersonalInfo(),
-              <UserOutlined />,
-              'blue',
+      {/* Application Overview Card */}
+      <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-lg p-6 border border-blue-200">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center shadow-md">
+              <FileTextOutlined className="text-white text-xl" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">
+                Application #{application?.id || 'N/A'}
+              </h3>
+              <p className="text-sm text-gray-600">
+                {application?.submissionDate 
+                  ? `Submitted on ${formatToDDMMYYYY(application.submissionDate)}`
+                  : 'Not yet submitted'}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {personalDetail && (
+              <div className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-medium">
+                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                Personal
+              </div>
             )}
-
-            {renderSection(
-              'Professional Information',
-              formatProfessionalInfo(),
-              <IdcardOutlined />,
-              'green',
+            {professionalDetail && (
+              <div className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-medium">
+                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                Professional
+              </div>
             )}
-
-            {renderSection(
-              'Subscription Information',
-              formatSubscriptionInfo(),
-              <CreditCardOutlined />,
-              'purple',
+            {subscriptionDetail && (
+              <div className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-medium">
+                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                Subscription
+              </div>
             )}
           </div>
-        ) : (
-          <Card className="shadow-md border-0 bg-white">
-            <Empty
-              description="No application data available to display"
-              className="py-12"
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-            />
-          </Card>
-        )}
+        </div>
       </div>
+
+      {/* Application Data Sections */}
+      {hasAnyData() ? (
+        <div className="space-y-6">
+          {renderSection(
+            'Personal Information',
+            formatPersonalInfo(),
+            'personal',
+          )}
+
+          {renderSection(
+            'Professional Information',
+            formatProfessionalInfo(),
+            'professional',
+          )}
+
+          {renderSection(
+            'Subscription Information',
+            formatSubscriptionInfo(),
+            'subscription',
+          )}
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12">
+          <div className="text-center">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FileTextOutlined className="text-4xl text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Data Available</h3>
+            <p className="text-sm text-gray-600">
+              No application data available to display at this time.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
