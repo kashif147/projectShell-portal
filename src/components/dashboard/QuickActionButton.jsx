@@ -59,11 +59,11 @@ const QuickActionButton = ({
       onClick={onClick}
       disabled={disabled}
       className={`
-        relative flex flex-col items-center justify-center p-6 rounded-xl border-2
+        relative flex flex-col items-center justify-center p-2.5 sm:p-4 lg:p-6 rounded-xl border-2
         transition-all duration-300 ease-in-out transform
         ${disabled
           ? 'cursor-not-allowed opacity-60'
-          : `${colors.hoverBorder} ${colors.hoverGradient} hover:shadow-xl hover:scale-105 hover:-translate-y-1 active:scale-100`
+          : `${colors.hoverBorder} ${colors.hoverGradient} hover:shadow-xl sm:hover:scale-105 sm:hover:-translate-y-1 active:scale-100`
         }
         ${colors.border} ${colors.gradient}
         shadow-md backdrop-blur-sm
@@ -71,21 +71,21 @@ const QuickActionButton = ({
     >
       {/* Icon container with gradient and shadow */}
       <div className={`
-        w-14 h-14 rounded-full flex items-center justify-center mb-4
+        w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center mb-1.5 sm:mb-3 lg:mb-4
         ${colors.iconBg} shadow-lg ${colors.iconShadow}
         transform transition-transform duration-300
         ${!disabled && 'group-hover:scale-110'}
       `}>
-        <Icon className="text-2xl text-white" />
+        <Icon className="text-lg sm:text-xl lg:text-2xl text-white" />
       </div>
       
       {/* Title with better typography */}
-      <h3 className="font-bold text-gray-900 mb-1.5 text-base tracking-tight">
+      <h3 className="font-bold text-gray-900 mb-0.5 sm:mb-1 lg:mb-1.5 text-xs sm:text-sm lg:text-base tracking-tight">
         {title}
       </h3>
       
       {/* Subtitle with improved contrast */}
-      <p className="text-xs text-gray-600 text-center leading-relaxed font-medium">
+      <p className="text-[10px] sm:text-xs text-gray-600 text-center leading-relaxed font-medium">
         {subtitle}
       </p>
       

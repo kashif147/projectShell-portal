@@ -335,25 +335,25 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
       {/* Welcome Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">
+      <div className="mb-3 sm:mb-6 lg:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">
           Welcome back, {user?.userFirstName || 'Member'}!
         </h1>
-        <p className="text-gray-600">
+        <p className="text-sm sm:text-base text-gray-600">
           Here's a quick overview of your member account.
         </p>
       </div>
 
       {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6">
         {/* Left Column - Application Status & Events */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-3 sm:space-y-6">
           {/* Quick Actions Section */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Quick Actions</h2>
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
               {/* Application Action */}
               <QuickActionButton
           title="Application"
@@ -395,97 +395,97 @@ const Dashboard = () => {
           </div>
 
           {/* Application Status Section */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold mb-4">Application Status</h2>
-            <div className="space-y-4">
+          <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Application Status</h2>
+            <div className="space-y-2.5 sm:space-y-4">
               {/* Application Submitted */}
-              <div className="flex items-start gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+              <div className="flex items-start gap-2 sm:gap-3">
+                <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                   isApplicationSubmitted ? 'bg-blue-100' : 'bg-gray-100'
                 }`}>
                   {isApplicationSubmitted ? (
-                    <span className="text-blue-600">✓</span>
+                    <span className="text-blue-600 text-sm sm:text-base">✓</span>
                   ) : (
-                    <span className="text-gray-400">○</span>
+                    <span className="text-gray-400 text-sm sm:text-base">○</span>
                   )}
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800">Application Submitted</h3>
-                  <p className="text-sm text-gray-500">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm sm:text-base text-gray-800">Application Submitted</h3>
+                  <p className="text-xs sm:text-sm text-gray-500">
                     {isApplicationSubmitted ? 'Completed: June 5, 2024' : 'Not completed yet'}
                   </p>
                 </div>
               </div>
 
               {/* In Review */}
-              <div className="flex items-start gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+              <div className="flex items-start gap-2 sm:gap-3">
+                <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                   isApplicationSubmitted ? 'bg-blue-500' : 'bg-gray-100'
                 }`}>
-                  <FormOutlined className={`text-sm ${
+                  <FormOutlined className={`text-xs sm:text-sm ${
                     isApplicationSubmitted ? 'text-white' : 'text-gray-400'
                   }`} />
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800">In Review</h3>
-                  <p className="text-sm text-gray-500">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm sm:text-base text-gray-800">In Review</h3>
+                  <p className="text-xs sm:text-sm text-gray-500">
                     {isApplicationSubmitted ? 'Current Stage' : 'Pending'}
                   </p>
                 </div>
               </div>
 
               {/* Approved */}
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-100">
-                  <span className="text-gray-400">○</span>
+              <div className="flex items-start gap-2 sm:gap-3">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-100">
+                  <span className="text-gray-400 text-sm sm:text-base">○</span>
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800">Approved</h3>
-                  <p className="text-sm text-gray-500">Pending</p>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm sm:text-base text-gray-800">Approved</h3>
+                  <p className="text-xs sm:text-sm text-gray-500">Pending</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Upcoming Events Section */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Upcoming Events</h2>
+          <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <h2 className="text-lg sm:text-xl font-semibold">Upcoming Events</h2>
               <button 
                 onClick={() => navigate("/events")}
-                className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                className="text-blue-600 hover:text-blue-700 text-xs sm:text-sm font-medium">
                 View All
               </button>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-2.5 sm:space-y-4">
               {/* Event 1 */}
-              <div className="flex items-center gap-4 p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors">
-                <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <CalendarOutlined className="text-blue-600 text-xl" />
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-4 p-2.5 sm:p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <CalendarOutlined className="text-blue-600 text-lg sm:text-xl" />
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800">Annual Member Mixer</h3>
-                  <p className="text-sm text-gray-600">July 15, 2024 @ 6:00 PM</p>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm sm:text-base text-gray-800">Annual Member Mixer</h3>
+                  <p className="text-xs sm:text-sm text-gray-600">July 15, 2024 @ 6:00 PM</p>
                 </div>
                 <button 
                   onClick={() => navigate("/events")}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                  className="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium">
                   Register
                 </button>
               </div>
 
               {/* Event 2 */}
-              <div className="flex items-center gap-4 p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors">
-                <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <CalendarOutlined className="text-blue-600 text-xl" />
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-4 p-2.5 sm:p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <CalendarOutlined className="text-blue-600 text-lg sm:text-xl" />
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800">Workshop: Advanced Techniques</h3>
-                  <p className="text-sm text-gray-600">August 2, 2024 @ 9:00 AM</p>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm sm:text-base text-gray-800">Workshop: Advanced Techniques</h3>
+                  <p className="text-xs sm:text-sm text-gray-600">August 2, 2024 @ 9:00 AM</p>
                 </div>
                 <button 
                   onClick={() => navigate("/events")}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+                  className="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-xs sm:text-sm font-medium">
                   Learn More
                 </button>
               </div>
@@ -494,18 +494,18 @@ const Dashboard = () => {
         </div>
 
         {/* Right Column - Profile & Payments */}
-        <div className="space-y-6">
+        <div className="space-y-3 sm:space-y-6">
           {/* Profile Completion Section */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold mb-4">Profile Completion</h2>
-            <p className="text-gray-600 text-sm mb-4">
+          <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Profile Completion</h2>
+            <p className="text-gray-600 text-xs sm:text-sm mb-2.5 sm:mb-4">
               {isApplicationSubmitted 
                 ? "Your profile is complete! Well done." 
                 : "Complete your profile to get the most out of your membership."}
             </p>
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className={`text-2xl font-bold ${
+            <div className="mb-2.5 sm:mb-4">
+              <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                <span className={`text-xl sm:text-2xl font-bold ${
                   getProfileCompletion() === 100 ? 'text-green-600' : 'text-blue-600'
                 }`}>
                   {getProfileCompletion()}%
@@ -522,7 +522,7 @@ const Dashboard = () => {
             </div>
             <button 
               onClick={() => navigate(isApplicationSubmitted ? "/profile" : "/applicationForm")}
-              className={`w-full px-4 py-3 rounded-lg transition-colors font-medium ${
+              className={`w-full px-4 py-2.5 sm:py-3 rounded-lg transition-colors font-medium text-sm sm:text-base ${
                 isApplicationSubmitted 
                   ? 'bg-green-600 text-white hover:bg-green-700'
                   : 'bg-blue-600 text-white hover:bg-blue-700'
@@ -532,19 +532,19 @@ const Dashboard = () => {
           </div>
 
           {/* Payments & Billing Section */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold mb-4">Payments & Billing</h2>
-            <div className="space-y-4">
+          <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Payments & Billing</h2>
+            <div className="space-y-2.5 sm:space-y-4">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Next Payment Due</p>
-                <p className="text-lg font-semibold text-gray-800">Dec 1, 2025</p>
+                <p className="text-xs sm:text-sm text-gray-600 mb-1">Next Payment Due</p>
+                <p className="text-base sm:text-lg font-semibold text-gray-800">Dec 1, 2025</p>
               </div>
               <div className="text-right">
-                <p className="text-3xl font-bold text-blue-600">
+                <p className="text-2xl sm:text-3xl font-bold text-blue-600">
                   {categoryData ? formatCurrency(getPaymentAmount()) : '€0.00'}
                 </p>
                 {categoryData && subscriptionDetail?.subscriptionDetails?.paymentType && (
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-xs sm:text-sm text-gray-600 mt-1">
                     {subscriptionDetail.subscriptionDetails.paymentType === 'deduction' 
                       ? 'Monthly Payment' 
                       : 'Annual Payment'}
@@ -554,7 +554,7 @@ const Dashboard = () => {
               <button 
                 onClick={handleNext}
                 disabled={!categoryData}
-                className={`w-full px-4 py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium ${
+                className={`w-full px-4 py-2.5 sm:py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm sm:text-base ${
                   !categoryData ? 'opacity-50 cursor-not-allowed' : ''
                 }`}>
                 {categoryData ? 'Pay Now' : 'View History'}

@@ -16,14 +16,84 @@ const PersonalInformation = ({
   showValidation = false,
 }) => {
   const inputRef = useRef(null);
+  const hasFormattedInitialPhone = useRef(false);
   const { genderLookups, titleLookups, countryLookups, fetchCountryLookups } =
     useLookup();
+
+  // Function to format mobile number without country code
+  const formatMobileNumber = (value) => {
+    if (!value) return '';
+    
+    // Remove all non-digit characters
+    const cleaned = value.replace(/\D/g, '');
+    
+    // Remove leading 0 if present
+    const digits = cleaned.startsWith('0') ? cleaned.substring(1) : cleaned;
+    
+    // Format: XX XXX XXXX (for 9 digits) or adjust based on length
+    let formatted = digits;
+    
+    if (digits.length > 0) {
+      if (digits.length <= 2) {
+        formatted = digits;
+      } else if (digits.length <= 5) {
+        // XX XXX
+        formatted = `${digits.substring(0, 2)} ${digits.substring(2)}`;
+      } else {
+        // XX XXX XXXX
+        formatted = `${digits.substring(0, 2)} ${digits.substring(2, 5)} ${digits.substring(5, 9)}`;
+      }
+    }
+
+    return formatted;
+  };
 
   React.useEffect(() => {
     if (!countryLookups || countryLookups.length === 0) {
       fetchCountryLookups?.();
     }
   }, []);
+
+  // Set default value to Ireland if countryPrimaryQualification is empty
+  React.useEffect(() => {
+    if (!formData?.countryPrimaryQualification && countryLookups && countryLookups.length > 0) {
+      const irelandCountry = countryLookups.find(c => 
+        c?.code === 'Ireland' || 
+        c?.name === 'Ireland' || 
+        c?.displayname === 'Ireland'
+      );
+      if (irelandCountry) {
+        onFormDataChange({
+          ...formData,
+          countryPrimaryQualification: irelandCountry.code,
+        });
+      }
+    }
+  }, [countryLookups]);
+
+  // Format existing phone numbers on initial load only
+  React.useEffect(() => {
+    if (!hasFormattedInitialPhone.current && (formData?.mobileNo || formData?.homeWorkTelNo)) {
+      const needsFormatting = 
+        (formData?.mobileNo && !formData.mobileNo.includes(' ')) ||
+        (formData?.homeWorkTelNo && !formData.homeWorkTelNo.includes(' '));
+
+      if (needsFormatting) {
+        hasFormattedInitialPhone.current = true;
+        const updatedData = { ...formData };
+        
+        if (formData?.mobileNo && !formData.mobileNo.includes(' ')) {
+          updatedData.mobileNo = formatMobileNumber(formData.mobileNo);
+        }
+        
+        if (formData?.homeWorkTelNo && !formData.homeWorkTelNo.includes(' ')) {
+          updatedData.homeWorkTelNo = formatMobileNumber(formData.homeWorkTelNo);
+        }
+        
+        onFormDataChange(updatedData);
+      }
+    }
+  }, [formData?.mobileNo, formData?.homeWorkTelNo]);
 
   const countryOptions = (countryLookups || []).map(c => ({
     value: c?.code,
@@ -44,6 +114,35 @@ const PersonalInformation = ({
       [name]: type === 'checkbox' ? checked : value,
     });
   };
+
+  // Handle phone number change with formatting (works for any phone field)
+  const handlePhoneNumberChange = (e) => {
+    const { name, value } = e.target;
+    const formatted = formatMobileNumber(value);
+    
+    onFormDataChange({
+      ...formData,
+      [name]: formatted,
+    });
+  };
+
+  // Function to clear all address fields
+  const handleClearAddress = () => {
+    onFormDataChange({
+      ...formData,
+      addressLine1: '',
+      addressLine2: '',
+      addressLine3: '',
+      addressLine4: '',
+      eircode: '',
+      country: 'IE', // Reset to default Ireland
+    });
+  };
+
+  // Check if any address field has a value
+  const hasAddressData = formData?.addressLine1 || formData?.addressLine2 || 
+                         formData?.addressLine3 || formData?.addressLine4 || 
+                         formData?.eircode;
 
   const handlePlacesChanged = () => {
     const places = inputRef.current.getPlaces();
@@ -72,6 +171,9 @@ const PersonalInformation = ({
           const getComponent = type =>
             components.find(c => c.types.includes(type))?.long_name || '';
 
+          const getComponentShortName = type =>
+            components.find(c => c.types.includes(type))?.short_name || '';
+
           const streetNumber = getComponent('street_number');
           const route = getComponent('route');
           const neighborhood = getComponent('neighborhood') || '';
@@ -80,12 +182,32 @@ const PersonalInformation = ({
             getComponent('locality') || getComponent('postal_town') || '';
           const county = getComponent('administrative_area_level_1') || '';
           const postalCode = getComponent('postal_code');
+          const countryLongName = getComponent('country');
+          const countryShortName = getComponentShortName('country');
 
           const addressLine1 = `${streetNumber} ${route}`.trim();
           const addressLine2 = neighborhood || sublocality; // Use neighborhood first, fallback to sublocality
           const addressLine3 = town;
           const addressLine4 = `${county}`.trim();
           const eircode = `${postalCode}`.trim();
+
+          // Find the country code from countryLookups based on the country name or code
+          let countryCode = formData?.country || 'IE'; // Default to Ireland if not found
+          if (countryLongName || countryShortName) {
+            console.log('Country from API - Long Name:', countryLongName, 'Short Name:', countryShortName);
+            const matchedCountry = countryLookups?.find(c => 
+              c?.code === countryLongName || 
+              c?.code === countryShortName ||
+              c?.name === countryLongName ||
+              c?.displayname === countryLongName
+            );
+            if (matchedCountry) {
+              countryCode = matchedCountry.code;
+              console.log('Matched country:', matchedCountry);
+            } else {
+              console.log('No matching country found in lookup');
+            }
+          }
 
           onFormDataChange({
             ...formData,
@@ -94,6 +216,7 @@ const PersonalInformation = ({
             addressLine3,
             addressLine4,
             eircode,
+            country: countryCode,
           });
         }
       });
@@ -198,6 +321,8 @@ const PersonalInformation = ({
             onChange={handleInputChange}
             options={countryOptions}
             isSearchable
+            required
+            showValidation={showValidation}
           />
         </div>
       </div>
@@ -270,23 +395,50 @@ const PersonalInformation = ({
         {/* Find your address */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <span className="flex items-center gap-2">
-                <svg
-                  className="w-4 h-4 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-                Find your address
-              </span>
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                <span className="flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                  Find your address
+                </span>
+              </label>
+              
+              {/* Clear Address Button */}
+              {hasAddressData && (
+                <button
+                  type="button"
+                  onClick={handleClearAddress}
+                  className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 hover:text-red-700 transition-all duration-200 border border-red-200"
+                  title="Clear all address fields"
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                  Clear Address
+                </button>
+              )}
+            </div>
+            
             {isLoaded && (
               <StandaloneSearchBox
                 onLoad={ref => (inputRef.current = ref)}
@@ -392,17 +544,17 @@ const PersonalInformation = ({
             label="Mobile Number"
             name="mobileNo"
             required
-            placeholder="+353 8X XXX XXXX"
+            placeholder="8X XXX XXXX"
             value={formData?.mobileNo || ''}
-            onChange={handleInputChange}
+            onChange={handlePhoneNumberChange}
             showValidation={showValidation}
           />
           <Input
             label="Home / Work Tel Number (Optional)"
             name="homeWorkTelNo"
-            placeholder="+353 8X XXX XXXX"
+            placeholder="8X XXX XXXX"
             value={formData?.homeWorkTelNo || ''}
-            onChange={handleInputChange}
+            onChange={handlePhoneNumberChange}
           />
         </div>
 

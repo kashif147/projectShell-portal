@@ -168,69 +168,117 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
   if (isMobile) {
     return (
       <>
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-lg">
-          <div className="flex justify-around items-center h-16 px-2">
-            {mobileTabItems.map((item) => {
-              const isActive = location.pathname === item.key;
-              return (
-                <button
-                  key={item.key}
-                  onClick={() => navigate(item.key)}
-                  className="flex flex-col items-center justify-center flex-1 h-full transition-all duration-200"
-                >
-                  <div 
-                    className={`text-xl mb-1 transition-transform duration-200 ${
-                      isActive ? 'scale-110' : ''
-                    }`}
-                    style={{ color: isActive ? item.color : '#6b7280' }}
+        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-200/50 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+          {/* Safe area padding for devices with bottom notch */}
+          <div className="safe-area-bottom">
+            <div className="flex justify-around items-center h-16 px-1">
+              {mobileTabItems.map((item) => {
+                const isActive = location.pathname === item.key;
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => navigate(item.key)}
+                    className="relative flex flex-col items-center justify-center flex-1 h-full transition-all duration-300 ease-out group"
                   >
-                    {item.icon}
+                    {/* Active background pill */}
+                    {isActive && (
+                      <div 
+                        className="absolute inset-x-1 top-1/2 -translate-y-1/2 h-10 rounded-2xl transition-all duration-300 opacity-10"
+                        style={{ backgroundColor: item.color }}
+                      />
+                    )}
+                    
+                    {/* Icon container with bounce animation */}
+                    <div className="relative">
+                      <div 
+                        className={`text-2xl mb-0.5 transition-all duration-300 ${
+                          isActive 
+                            ? 'scale-110 -translate-y-0.5' 
+                            : 'scale-100 group-active:scale-90'
+                        }`}
+                        style={{ 
+                          color: item.color,
+                          opacity: isActive ? 1 : 0.6
+                        }}
+                      >
+                        {item.icon}
+                      </div>
+                      
+                      {/* Active dot indicator */}
+                      {isActive && (
+                        <div 
+                          className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full animate-pulse"
+                          style={{ backgroundColor: item.color }}
+                        />
+                      )}
+                    </div>
+                    
+                    {/* Label with fade effect */}
+                    <span 
+                      className={`text-[10px] font-semibold transition-all duration-300 ${
+                        isActive ? 'opacity-100' : 'opacity-70'
+                      }`}
+                      style={{ color: item.color }}
+                    >
+                      {item.label}
+                    </span>
+                    
+                    {/* Ripple effect on tap */}
+                    <span className="absolute inset-0 overflow-hidden rounded-xl">
+                      <span className="absolute inset-0 transform scale-0 group-active:scale-100 bg-gray-200 rounded-full transition-transform duration-300 opacity-30" />
+                    </span>
+                  </button>
+                );
+              })}
+              
+              {/* More Menu Button with enhanced styling */}
+              <button
+                onClick={() => setMoreMenuVisible(true)}
+                className="relative flex flex-col items-center justify-center flex-1 h-full transition-all duration-300 group"
+              >
+                <div className="relative">
+                  <div className="text-2xl mb-0.5 transition-all duration-300 group-active:scale-90" style={{ color: '#8b5cf6', opacity: 0.7 }}>
+                    <MenuOutlined />
                   </div>
-                  <span 
-                    className="text-xs font-medium"
-                    style={{ color: isActive ? item.color : '#6b7280' }}
-                  >
-                    {item.label}
-                  </span>
-                  {isActive && (
-                    <div 
-                      className="absolute top-0 w-12 h-1 rounded-b-full" 
-                      style={{ backgroundColor: item.color }}
-                    />
-                  )}
-                </button>
-              );
-            })}
-            
-            {/* More Menu Button */}
-            <button
-              onClick={() => setMoreMenuVisible(true)}
-              className="flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 text-gray-600"
-            >
-              <div className="text-xl mb-1">
-                <MenuOutlined />
-              </div>
-              <span className="text-xs font-medium">More</span>
-            </button>
+                </div>
+                <span className="text-[10px] font-semibold opacity-70" style={{ color: '#8b5cf6' }}>
+                  More
+                </span>
+                
+                {/* Ripple effect */}
+                <span className="absolute inset-0 overflow-hidden rounded-xl">
+                  <span className="absolute inset-0 transform scale-0 group-active:scale-100 bg-gray-200 rounded-full transition-transform duration-300 opacity-30" />
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* More Menu Drawer */}
+        {/* More Menu Drawer - Enhanced */}
         <Drawer
           title={
-            <div className="text-center">
-              <h2 className="text-xl font-bold text-gray-900">Menu</h2>
-              <p className="text-sm text-gray-500">More options</p>
+            <div className="text-center pb-2">
+              <h2 className="text-xl font-bold text-gray-900 mb-1">More Options</h2>
+              <p className="text-xs text-gray-500">Access all your features</p>
             </div>
           }
           placement="bottom"
           onClose={() => setMoreMenuVisible(false)}
           open={moreMenuVisible}
-          height="70vh"
+          height="75vh"
           closable={true}
-          bodyStyle={{ padding: '16px 0' }}
+          bodyStyle={{ 
+            padding: '20px 16px', 
+            background: 'linear-gradient(to bottom, #f9fafb, #ffffff)',
+            borderRadius: '24px 24px 0 0'
+          }}
+          headerStyle={{
+            borderBottom: '1px solid #e5e7eb',
+            paddingTop: '24px',
+            paddingBottom: '16px'
+          }}
         >
-          <div className="grid grid-cols-3 gap-4 px-4">
+          <div className="grid grid-cols-3 gap-3 px-2">
             {moreMenuItems.map((item) => {
               const isActive = location.pathname === item.key;
               return (
@@ -240,32 +288,55 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
                     navigate(item.key);
                     setMoreMenuVisible(false);
                   }}
-                  className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-200 border-2 ${
+                  className={`relative flex flex-col items-center justify-center p-4 rounded-2xl transition-all duration-300 border-2 group overflow-hidden ${
                     isActive 
-                      ? 'bg-opacity-10 border-opacity-30' 
-                      : 'bg-gray-50 text-gray-700 border-transparent hover:bg-gray-100'
+                      ? 'shadow-lg transform scale-105' 
+                      : 'bg-white shadow-sm hover:shadow-md hover:scale-105 border-gray-100'
                   }`}
                   style={isActive ? {
-                    backgroundColor: `${item.color}20`,
-                    borderColor: `${item.color}50`
+                    backgroundColor: `${item.color}15`,
+                    borderColor: `${item.color}40`
                   } : {}}
                 >
-                  <div 
-                    className="text-3xl mb-2"
-                    style={{ color: isActive ? item.color : '#6b7280' }}
-                  >
-                    {item.icon}
+                  {/* Background gradient on hover */}
+                  {!isActive && (
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  )}
+                  
+                  {/* Icon with animation */}
+                  <div className="relative z-10">
+                    <div 
+                      className={`text-3xl mb-2 transition-all duration-300 ${
+                        isActive ? 'scale-110' : 'group-hover:scale-110'
+                      }`}
+                      style={{ color: isActive ? item.color : '#6b7280' }}
+                    >
+                      {item.icon}
+                    </div>
                   </div>
+                  
+                  {/* Label */}
                   <span 
-                    className="text-xs font-medium text-center leading-tight"
+                    className="relative z-10 text-[10px] font-semibold text-center leading-tight"
                     style={{ color: isActive ? item.color : '#374151' }}
                   >
                     {item.label}
                   </span>
+                  
+                  {/* Active indicator dot */}
+                  {isActive && (
+                    <div 
+                      className="absolute top-2 right-2 w-2 h-2 rounded-full animate-pulse"
+                      style={{ backgroundColor: item.color }}
+                    />
+                  )}
                 </button>
               );
             })}
           </div>
+          
+          {/* Bottom padding for visual balance */}
+          <div className="h-8" />
         </Drawer>
       </>
     );

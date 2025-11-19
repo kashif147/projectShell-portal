@@ -52,6 +52,8 @@ const ApplicationForm = () => {
   const [categoryData, setCategoryData] = useState(null);
   const [paymentIntentCreated, setPaymentIntentCreated] = useState(false);
   const [shouldShowModal, setShouldShowModal] = useState(false);
+  const [isNextLoading, setIsNextLoading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [formData, setFormData] = useState({
     personalInfo: {
       forename: user?.userFirstName || '',
@@ -339,6 +341,13 @@ const ApplicationForm = () => {
     }
   }, [shouldShowModal]);
 
+  // Set initial load to false after first load completes
+  useEffect(() => {
+    if (!loading && isInitialLoad) {
+      setIsInitialLoad(false);
+    }
+  }, [loading, isInitialLoad]);
+
   const steps = [
     { number: 1, title: 'Personal Information' },
     { number: 2, title: 'Professional Details' },
@@ -396,9 +405,11 @@ const ApplicationForm = () => {
         } else {
           toast.error(res.data.message ?? 'Unable to add personal detail');
         }
+        setIsNextLoading(false);
       })
       .catch(() => {
         toast.error('Something went wrong');
+        setIsNextLoading(false);
       });
   };
 
@@ -453,9 +464,11 @@ const ApplicationForm = () => {
         } else {
           toast.error(res.data.message ?? 'Unable to update personal detail');
         }
+        setIsNextLoading(false);
       })
       .catch(() => {
         toast.error('Something went wrong');
+        setIsNextLoading(false);
       });
   };
   const createProfessionalDetail = data => {
@@ -497,9 +510,11 @@ const ApplicationForm = () => {
         } else {
           toast.error(res.data.message ?? 'Unable to add professional detail');
         }
+        setIsNextLoading(false);
       })
       .catch(() => {
         toast.error('Something went wrong');
+        setIsNextLoading(false);
       });
   };
 
@@ -544,9 +559,11 @@ const ApplicationForm = () => {
             res.data.message ?? 'Unable to update professional detail',
           );
         }
+        setIsNextLoading(false);
       })
       .catch(() => {
         toast.error('Something went wrong');
+        setIsNextLoading(false);
       });
   };
 
@@ -609,16 +626,20 @@ const ApplicationForm = () => {
             status: 'success',
             message: 'Application submitted successfully!',
           });
+          setIsNextLoading(false);
         } else {
           // Trigger payment modal for other categories
           setShouldShowModal(true);
+          setIsNextLoading(false);
         }
       } else {
         toast.error(res.data.message ?? 'Unable to add subscription detail');
+        setIsNextLoading(false);
       }
     } catch (error) {
       console.error('Subscription creation failed:', error);
       toast.error('Failed to process subscription. Please try again.');
+      setIsNextLoading(false);
     }
   };
 
@@ -681,22 +702,27 @@ const ApplicationForm = () => {
             status: 'success',
             message: 'Application updated successfully!',
           });
+          setIsNextLoading(false);
         } else {
           // Trigger payment modal for other categories
           setShouldShowModal(true);
+          setIsNextLoading(false);
         }
       } else {
         toast.error(res.data.message ?? 'Unable to update subscription detail');
+        setIsNextLoading(false);
       }
     } catch (error) {
       console.error('Subscription update failed:', error);
       toast.error('Failed to update subscription. Please try again.');
+      setIsNextLoading(false);
     }
   };
 
   const handleNext = () => {
     setShowValidation(true);
     if (validateCurrentStep()) {
+      setIsNextLoading(true);
       if (currentStep === 1) {
         if (!personalDetail) {
           createPersonalDetail(formData.personalInfo);
@@ -887,7 +913,7 @@ const ApplicationForm = () => {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold mb-4">Application</h1>
-      {loading ? (
+      {isInitialLoad && loading ? (
         <Spinner />
       ) : (
         <>
@@ -951,19 +977,26 @@ const ApplicationForm = () => {
 
           {renderStepContent()}
 
-          <div className="flex justify-end items-center gap-3 mt-6 flex-wrap">
+          <div className="flex justify-between sm:justify-end items-center gap-3 mt-6">
             {currentStep > 1 && (
-              <Button onClick={handlePrevious} className="min-w-[180px]">
-                {`Previous: ${steps[currentStep - 2]?.title || 'Previous'}`}
+              <Button onClick={handlePrevious} className="min-w-[120px] sm:min-w-[180px] flex-1 sm:flex-initial">
+                <span className="hidden sm:inline">Previous: </span>
+                {steps[currentStep - 2]?.title || 'Previous'}
               </Button>
             )}
             <Button
               type="primary"
               onClick={handleNext}
-              className="min-w-[180px]">
-              {currentStep === steps.length
-                ? 'Submit Application'
-                : `Next: ${steps[currentStep]?.title || 'Next'}`}
+              loading={isNextLoading}
+              className="min-w-[120px] sm:min-w-[180px] flex-1 sm:flex-initial">
+              {currentStep === steps.length ? (
+                'Submit Application'
+              ) : (
+                <>
+                  <span className="hidden sm:inline">Next: </span>
+                  {steps[currentStep]?.title || 'Next'}
+                </>
+              )}
             </Button>
           </div>
         </>

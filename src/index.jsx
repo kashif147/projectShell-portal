@@ -138,6 +138,7 @@ root.render(
   </React.StrictMode>,
 );
 
+// Inject pulse animation styles
 const pulseStyles = `
 @keyframes pulse {
   0%, 80%, 100% {
@@ -150,3 +151,7 @@ const pulseStyles = `
   }
 }
 `;
+
+const styleSheet = document.createElement('style');
+styleSheet.textContent = pulseStyles;
+document.head.appendChild(styleSheet);

@@ -65,12 +65,15 @@ const ProfessionalDetails = ({
     };
   });
 
-  const gradeOptions = (gradeLookups || [])
-    .map(item => {
-      const name = item?.DisplayName || item?.lookupname || '';
-      return { value: name, label: name };
-    })
-    .filter(option => option.value); // Filter out empty values
+  const gradeOptions = [
+    ...(gradeLookups || [])
+      .map(item => {
+        const name = item?.DisplayName || item?.lookupname || '';
+        return { value: name, label: name };
+      })
+      .filter(option => option.value), // Filter out empty values
+    { value: 'other', label: 'Other' } // Add "Other" option at the end
+  ];
 
   const branchOptions = Array.from(
     new Set(

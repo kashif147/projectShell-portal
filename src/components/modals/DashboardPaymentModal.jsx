@@ -41,6 +41,7 @@ const DashboardPaymentModal = ({
     cardExpiry: false,
     cardCvc: false,
   });
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   const { userDetail, user } = useSelector(state => state.auth);
   const { personalDetail } = useApplication();
@@ -51,6 +52,20 @@ const DashboardPaymentModal = ({
       console.log('User data from API:', { user, userDetail });
     }
   }, [isVisible, user, userDetail]);
+
+  // Handle window resize to make modal responsive
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+    
+    // Cleanup listener on unmount
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   // Check if all card fields are complete
   const isCardReady = cardComplete.cardNumber && cardComplete.cardExpiry && cardComplete.cardCvc;
@@ -240,7 +255,7 @@ const DashboardPaymentModal = ({
       open={isVisible}
       onCancel={onClose}
       footer={null}
-      width={window.innerWidth <= 768 ? '95%' : '600px'}
+      width={windowWidth <= 768 ? '95%' : '600px'}
       centered
       closeIcon={
         <span className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -538,7 +553,7 @@ const DashboardPaymentModal = ({
               onClick={handlePayNow}
               loading={loading}
               disabled={!isCardReady || !editablePrice || editablePrice <= 0}
-              className="!h-12 !px-8 !text-base !font-semibold !bg-gradient-to-r !from-indigo-600 !to-purple-600 hover:!from-indigo-700 hover:!to-purple-700 !border-0 !shadow-lg hover:!shadow-xl !transition-all !duration-200">
+              className="!h-12 !px-8 !text-base !font-semibold !bg-gradient-to-r !from-indigo-600 !to-purple-600 hover:!from-indigo-700 hover:!to-purple-700 !border-0 !shadow-lg hover:!shadow-xl !transition-all !duration-200 disabled:!bg-gradient-to-r disabled:!from-indigo-300 disabled:!to-purple-300 disabled:!text-white disabled:!opacity-100 disabled:!cursor-not-allowed disabled:!shadow-md">
               {loading ? 'Processing...' : 'Pay Now'}
             </Button>
           </div>
