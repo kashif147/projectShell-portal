@@ -1,11 +1,6 @@
 // src/components/modals/SubscriptionModal.jsx
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  Modal,
-  Form,
-  Input,
-  Divider,
-} from 'antd';
+import { Modal, Form, Input, Divider } from 'antd';
 import {
   useStripe,
   useElements,
@@ -45,12 +40,16 @@ const SubscriptionModal = ({
   // Debug: Log user data structure
   useEffect(() => {
     if (isVisible) {
-      console.log('User data from API (SubscriptionModal):', { user, userDetail });
+      console.log('User data from API (SubscriptionModal):', {
+        user,
+        userDetail,
+      });
     }
   }, [isVisible, user, userDetail]);
 
   // Check if all card fields are complete
-  const isCardReady = cardComplete.cardNumber && cardComplete.cardExpiry && cardComplete.cardCvc;
+  const isCardReady =
+    cardComplete.cardNumber && cardComplete.cardExpiry && cardComplete.cardCvc;
 
   // Stripe element styling options
   const ELEMENT_OPTIONS = {
@@ -121,16 +120,20 @@ const SubscriptionModal = ({
   const handlePayNow = async () => {
     // Get user data for payment
     const userData = user || userDetail;
-    const userName = userData?.userFirstName && userData?.userLastName
-      ? `${userData.userFirstName} ${userData.userLastName}`
-      : userData?.userName || 
-        (formData?.personalInfo?.forename && formData?.personalInfo?.surname
-          ? `${formData.personalInfo.forename} ${formData.personalInfo.surname}`
-          : '');
-    const userEmail = userData?.userEmail || userData?.email || 
+    const userName =
+      userData?.userFirstName && userData?.userLastName
+        ? `${userData.userFirstName} ${userData.userLastName}`
+        : userData?.userName ||
+          (formData?.personalInfo?.forename && formData?.personalInfo?.surname
+            ? `${formData.personalInfo.forename} ${formData.personalInfo.surname}`
+            : '');
+    const userEmail =
+      userData?.userEmail ||
+      userData?.email ||
       (formData?.personalInfo?.preferredEmail === 'work'
         ? formData?.personalInfo?.workEmail
-        : formData?.personalInfo?.personalEmail) || '';
+        : formData?.personalInfo?.personalEmail) ||
+      '';
 
     // Validate user data
     if (!userName || !userEmail) {
@@ -151,14 +154,15 @@ const SubscriptionModal = ({
     setLoading(true);
     try {
       // Create payment method with card element
-      const { error: methodError, paymentMethod: stripePaymentMethod } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: elements.getElement(CardNumberElement),
-        billing_details: {
-          name: userName,
-          email: userEmail,
-        },
-      });
+      const { error: methodError, paymentMethod: stripePaymentMethod } =
+        await stripe.createPaymentMethod({
+          type: 'card',
+          card: elements.getElement(CardNumberElement),
+          billing_details: {
+            name: userName,
+            email: userEmail,
+          },
+        });
 
       if (methodError) {
         throw new Error(methodError.message);
@@ -167,12 +171,10 @@ const SubscriptionModal = ({
       console.log('Payment Method Created:', stripePaymentMethod);
 
       // Confirm the payment with the payment method
-      const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
-        clientSecret,
-        {
+      const { error: confirmError, paymentIntent } =
+        await stripe.confirmCardPayment(clientSecret, {
           payment_method: stripePaymentMethod.id,
-        }
-      );
+        });
 
       if (confirmError) {
         throw new Error(confirmError.message);
@@ -213,19 +215,36 @@ const SubscriptionModal = ({
       centered
       closeIcon={
         <span className="text-gray-400 hover:text-gray-600 transition-colors">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </span>
       }>
-      
       {/* Modern Header with Gradient */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 -m-6 mb-6 p-6 rounded-t-lg">
         <div className="text-center text-white">
           <div className="flex justify-center mb-3">
             <div className="bg-white/20 backdrop-blur-sm p-3 rounded-full">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              <svg
+                className="w-8 h-8 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                />
               </svg>
             </div>
           </div>
@@ -239,14 +258,12 @@ const SubscriptionModal = ({
       {productLoading ? (
         <div className="text-center py-12">
           <Spinner />
-          <p className="text-gray-500 mt-4 font-medium">Loading payment details...</p>
+          <p className="text-gray-500 mt-4 font-medium">
+            Loading payment details...
+          </p>
         </div>
       ) : (
-        <Form
-          form={form}
-          layout="vertical"
-          className="space-y-5">
-          
+        <Form form={form} layout="vertical" className="space-y-5">
           {/* Membership Category Details - Modern Card */}
           {product && (
             <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border border-indigo-200 shadow-sm">
@@ -267,17 +284,21 @@ const SubscriptionModal = ({
                     Active
                   </div>
                 </div>
-                
+
                 <div className="mt-4 pt-4 border-t border-indigo-200/60 space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600 font-medium">Category Price</span>
+                    <span className="text-sm text-gray-600 font-medium">
+                      Category Price
+                    </span>
                     <span className="text-xl font-bold text-indigo-600">
                       {formatCurrency(getDisplayPrice())}
                     </span>
                   </div>
                   {product?.currentPricing?.frequency && (
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">Payment Frequency</span>
+                      <span className="text-xs text-gray-500">
+                        Payment Frequency
+                      </span>
                       <span className="text-sm font-semibold text-gray-700 bg-white px-3 py-1 rounded-full">
                         {product.currentPricing.frequency}
                       </span>
@@ -294,71 +315,112 @@ const SubscriptionModal = ({
               <span className="text-red-500 mr-1">*</span>Name on Card
             </label>
             <div className="relative">
-              <Input 
-                value={user?.userFirstName && user?.userLastName
-                  ? `${user.userFirstName} ${user.userLastName}`
-                  : userDetail?.userFirstName && userDetail?.userLastName
-                    ? `${userDetail.userFirstName} ${userDetail.userLastName}`
-                    : formData?.personalInfo?.forename && formData?.personalInfo?.surname
-                      ? `${formData.personalInfo.forename} ${formData.personalInfo.surname}`
-                      : user?.userName || userDetail?.userName || ''}
+              <Input
+                value={
+                  user?.userFirstName && user?.userLastName
+                    ? `${user.userFirstName} ${user.userLastName}`
+                    : userDetail?.userFirstName && userDetail?.userLastName
+                      ? `${userDetail.userFirstName} ${userDetail.userLastName}`
+                      : formData?.personalInfo?.forename &&
+                          formData?.personalInfo?.surname
+                        ? `${formData.personalInfo.forename} ${formData.personalInfo.surname}`
+                        : user?.userName || userDetail?.userName || ''
+                }
                 readOnly
                 size="large"
                 className="shadow-sm rounded-lg"
                 prefix={
-                  <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  <svg
+                    className="w-4 h-4 text-gray-400 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
                   </svg>
                 }
-                style={{ 
+                style={{
                   backgroundColor: '#f9fafb',
                   fontWeight: '500',
                   color: '#111827',
-                  borderColor: '#e5e7eb'
+                  borderColor: '#e5e7eb',
                 }}
               />
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
                 <span className="inline-flex items-center text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  <svg
+                    className="w-3 h-3 mr-1"
+                    fill="currentColor"
+                    viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   Auto-filled
                 </span>
               </div>
             </div>
           </div>
-          
+
           {/* Email - Modern Style */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               <span className="text-red-500 mr-1">*</span>Email
             </label>
             <div className="relative">
-              <Input 
+              <Input
                 type="email"
-                value={user?.userEmail || userDetail?.userEmail || user?.email || userDetail?.email || 
+                value={
+                  user?.userEmail ||
+                  userDetail?.userEmail ||
+                  user?.email ||
+                  userDetail?.email ||
                   (formData?.personalInfo?.preferredEmail === 'work'
                     ? formData?.personalInfo?.workEmail
-                    : formData?.personalInfo?.personalEmail) || ''}
+                    : formData?.personalInfo?.personalEmail) ||
+                  ''
+                }
                 readOnly
                 size="large"
                 className="shadow-sm rounded-lg"
                 prefix={
-                  <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  <svg
+                    className="w-4 h-4 text-gray-400 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    />
                   </svg>
                 }
-                style={{ 
+                style={{
                   backgroundColor: '#f9fafb',
                   fontWeight: '500',
                   color: '#111827',
-                  borderColor: '#e5e7eb'
+                  borderColor: '#e5e7eb',
                 }}
               />
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
                 <span className="inline-flex items-center text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  <svg
+                    className="w-3 h-3 mr-1"
+                    fill="currentColor"
+                    viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   Auto-filled
                 </span>
@@ -373,22 +435,41 @@ const SubscriptionModal = ({
             </label>
             <div className="relative group">
               <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                  />
                 </svg>
               </div>
               <div className="pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
                 <CardNumberElement
                   options={ELEMENT_OPTIONS}
-                  onChange={(e) => {
-                    setCardComplete(prev => ({ ...prev, cardNumber: e.complete }));
+                  onChange={e => {
+                    setCardComplete(prev => ({
+                      ...prev,
+                      cardNumber: e.complete,
+                    }));
                   }}
                 />
               </div>
               {cardComplete.cardNumber && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  <svg
+                    className="w-5 h-5 text-green-500"
+                    fill="currentColor"
+                    viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
               )}
@@ -403,22 +484,41 @@ const SubscriptionModal = ({
               </label>
               <div className="relative group">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
                   </svg>
                 </div>
                 <div className="pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
                   <CardExpiryElement
                     options={ELEMENT_OPTIONS}
-                    onChange={(e) => {
-                      setCardComplete(prev => ({ ...prev, cardExpiry: e.complete }));
+                    onChange={e => {
+                      setCardComplete(prev => ({
+                        ...prev,
+                        cardExpiry: e.complete,
+                      }));
                     }}
                   />
                 </div>
                 {cardComplete.cardExpiry && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    <svg
+                      className="w-5 h-5 text-green-500"
+                      fill="currentColor"
+                      viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </div>
                 )}
@@ -431,22 +531,41 @@ const SubscriptionModal = ({
               </label>
               <div className="relative group">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    />
                   </svg>
                 </div>
                 <div className="pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
                   <CardCvcElement
                     options={ELEMENT_OPTIONS}
-                    onChange={(e) => {
-                      setCardComplete(prev => ({ ...prev, cardCvc: e.complete }));
+                    onChange={e => {
+                      setCardComplete(prev => ({
+                        ...prev,
+                        cardCvc: e.complete,
+                      }));
                     }}
                   />
                 </div>
                 {cardComplete.cardCvc && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    <svg
+                      className="w-5 h-5 text-green-500"
+                      fill="currentColor"
+                      viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </div>
                 )}
@@ -470,15 +589,24 @@ const SubscriptionModal = ({
               onClick={handlePayNow}
               loading={loading}
               disabled={!isCardReady}
-              className="!h-12 !px-8 !text-base !font-semibold !bg-gradient-to-r !from-indigo-600 !to-purple-600 hover:!from-indigo-700 hover:!to-purple-700 !border-0 !shadow-lg hover:!shadow-xl !transition-all !duration-200">
+              className="!h-12 !px-8 !text-base !font-semibold !bg-gradient-to-r !from-indigo-600 !to-purple-600 hover:!from-indigo-700 hover:!to-purple-700 !border-0 !shadow-lg hover:!shadow-xl !transition-all !duration-200 disabled:!bg-gradient-to-r disabled:!from-indigo-300 disabled:!to-purple-300 disabled:!text-white disabled:!opacity-100 disabled:!cursor-not-allowed disabled:!shadow-md">
               {loading ? 'Processing...' : 'Pay Now'}
             </Button>
           </div>
 
           {/* Security Notice */}
           <div className="flex items-center justify-center text-xs text-gray-500 mt-4">
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            <svg
+              className="w-4 h-4 mr-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
             </svg>
             Secure payment powered by Stripe
           </div>

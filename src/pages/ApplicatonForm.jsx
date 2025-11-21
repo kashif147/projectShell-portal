@@ -727,6 +727,7 @@ const ApplicationForm = () => {
         if (!personalDetail) {
           createPersonalDetail(formData.personalInfo);
         } else {
+          console.log('personalInformation========>',formData.personalInfo)
           updatePersonalDetail(formData.personalInfo);
         }
       }
@@ -779,6 +780,7 @@ const ApplicationForm = () => {
           addressLine1,
           addressLine4,
           preferredAddress,
+          countryPrimaryQualification
         } = formData.personalInfo || {};
         if (
           !title ||
@@ -790,7 +792,8 @@ const ApplicationForm = () => {
           !mobileNo ||
           !addressLine1 ||
           !addressLine4 ||
-          !preferredAddress
+          !preferredAddress ||
+          !countryPrimaryQualification
         ) {
           return false;
         }
@@ -834,9 +837,9 @@ const ApplicationForm = () => {
 
         if (!termsAndConditions) return false;
 
-        if (memberStatus === 'new' || memberStatus === 'graduate') {
-          if (!incomeProtectionScheme || !inmoRewards) return false;
-        }
+        // if (memberStatus === 'new' || memberStatus === 'graduate') {
+        //   if (!incomeProtectionScheme || !inmoRewards) return false;
+        // }
         break;
     }
     return true;

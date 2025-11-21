@@ -94,8 +94,19 @@ const SubscriptionWrapper = ({
 
   if (loading || !clientSecret) {
     return (
-      <div className="p-6 text-center text-gray-600">
-        Initializing payment form...
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div className="bg-white rounded-lg shadow-2xl p-8 flex flex-col items-center gap-4">
+          <div className="relative w-16 h-16">
+            <div className="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-t-blue-600 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+          </div>
+          <p className="text-gray-700 font-medium text-lg">
+            Initializing payment form...
+          </p>
+          <p className="text-gray-500 text-sm">
+            Please wait while we prepare your payment
+          </p>
+        </div>
       </div>
     );
   }

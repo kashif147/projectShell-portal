@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
 import { Radio } from '../ui/Radio';
 import { useLookup } from '../../contexts/lookupContext';
-import { IncomeProtectionModal, RewardsModal } from '../modals';
 
 const SubscriptionDetails = ({
   formData,
@@ -13,8 +12,6 @@ const SubscriptionDetails = ({
   categoryData = null,
 }) => {
   const { primarySectionLookups, secondarySectionLookups } = useLookup();
-  const [showIncomeProtectionModal, setShowIncomeProtectionModal] = useState(false);
-  const [showRewardsModal, setShowRewardsModal] = useState(false);
 
   const primaryOptions = (primarySectionLookups || []).map(l => ({
     value: l?.DisplayName || l?.lookupname,
@@ -179,44 +176,40 @@ const SubscriptionDetails = ({
           </div>
         </div>
 
-        <Radio
-          label="Please select the most appropriate option below"
-          name="memberStatus"
-          value={formData?.memberStatus || ''}
-          onChange={e => {
-            const newStatus = e.target.value;
-            const updatedData = {
-              ...formData,
-              memberStatus: newStatus,
-            };
-            // Reset checkboxes based on member status
-            if (newStatus !== 'new' && newStatus !== 'graduate') {
-              // Reset both if neither new nor graduate
-              updatedData.incomeProtectionScheme = false;
-              updatedData.inmoRewards = false;
-            } else if (newStatus === 'new') {
-              // Reset income protection if switching to new member (they only see rewards)
-              updatedData.incomeProtectionScheme = false;
-            }
-            onFormDataChange(updatedData);
-          }}
-          options={[
-            { value: 'new', label: 'New member' },
-            { value: 'graduate', label: 'Newly graduated' },
-            {
-              value: 'rejoin',
-              label: 'Rejoining',
-            },
-            {
-              value: 'careerBreak',
-              label: 'Returning from career break',
-            },
-            {
-              value: 'nursingAbroad',
-              label: 'Returning from nursing abroad',
-            },
-          ]}
-        />
+        <div className="mt-6 p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+          <Radio
+            label="Please select the most appropriate option below"
+            name="memberStatus"
+            value={formData?.memberStatus || ''}
+            onChange={e => {
+              const newStatus = e.target.value;
+              const updatedData = {
+                ...formData,
+                memberStatus: newStatus,
+                // Always clear both checkboxes when changing member status
+                incomeProtectionScheme: false,
+                inmoRewards: false,
+              };
+              onFormDataChange(updatedData);
+            }}
+            options={[
+              { value: 'new', label: 'New member' },
+              { value: 'graduate', label: 'Newly graduated' },
+              {
+                value: 'rejoin',
+                label: 'Rejoining',
+              },
+              {
+                value: 'careerBreak',
+                label: 'Returning from career break',
+              },
+              {
+                value: 'nursingAbroad',
+                label: 'Returning from nursing abroad',
+              },
+            ]}
+          />
+        </div>
 
         {/* Conditional checkboxes for new members */}
         {formData?.memberStatus === 'new' && (
@@ -230,16 +223,14 @@ const SubscriptionDetails = ({
                   <div>
                     <span className="font-semibold text-gray-900">
                       Tick here to join{' '}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setShowRewardsModal(true);
-                        }}
+                      <a
+                        href="https://cornmarket.ie/rewards"
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="text-blue-600 underline hover:text-blue-800 cursor-pointer"
                       >
                         Rewards
-                      </button>{' '}
+                      </a>{' '}
                       for INMO members
                     </span>
                     <p className="text-xs text-gray-500 mt-1">
@@ -288,16 +279,14 @@ const SubscriptionDetails = ({
                   <div>
                     <span className="font-semibold text-gray-900">
                       I consent to{' '}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setShowIncomeProtectionModal(true);
-                        }}
+                      <a
+                        href="https://cornmarket.ie/income-protection"
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="text-blue-600 underline hover:text-blue-800 cursor-pointer"
                       >
                         INMO Income Protection Scheme
-                      </button>
+                      </a>
                       .
                     </span>
                     <p className="text-xs text-gray-500 mt-1">
@@ -344,15 +333,50 @@ const SubscriptionDetails = ({
 
         <div className="space-y-6">
           <div>
+            <div className="mt-6 p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+              <Radio
+                label="Are you a member of another Trade Union? If yes, which Union?"
+                name="otherIrishTradeUnion"
+                required
+                value={formData?.otherIrishTradeUnion || ''}
+                onChange={e =>
+                  onFormDataChange({
+                    ...formData,
+                    otherIrishTradeUnion: e.target.value,
+                  })
+                }
+                showValidation={showValidation}
+                options={[
+                  { value: 'no', label: 'No' },
+                  { value: 'yes', label: 'Yes' },
+                ]}
+              />
+              {formData?.otherIrishTradeUnion === 'yes' && (
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    label="If yes, which Union?"
+                    name="unionName"
+                    required={formData?.otherIrishTradeUnion === 'yes'}
+                    value={formData?.unionName || ''}
+                    onChange={handleInputChange}
+                    showValidation={showValidation}
+                    placeholder="Enter Union Name"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6 p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
             <Radio
-              label="Are you a member of another Trade Union? If yes, which Union?"
-              name="otherIrishTradeUnion"
+              label="Are you or were you a member of another Irish trade Union salary or Income Protection Scheme?"
+              name="otherScheme"
               required
-              value={formData?.otherIrishTradeUnion || ''}
+              value={formData?.otherScheme || ''}
               onChange={e =>
                 onFormDataChange({
                   ...formData,
-                  otherIrishTradeUnion: e.target.value,
+                  otherScheme: e.target.value,
                 })
               }
               showValidation={showValidation}
@@ -361,38 +385,7 @@ const SubscriptionDetails = ({
                 { value: 'yes', label: 'Yes' },
               ]}
             />
-            {formData?.otherIrishTradeUnion === 'yes' && (
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  label="If yes, which Union?"
-                  name="unionName"
-                  required={formData?.otherIrishTradeUnion === 'yes'}
-                  value={formData?.unionName || ''}
-                  onChange={handleInputChange}
-                  showValidation={showValidation}
-                  placeholder="Enter Union Name"
-                />
-              </div>
-            )}
           </div>
-
-          <Radio
-            label="Are you or were you a member of another Irish trade Union salary or Income Protection Scheme?"
-            name="otherScheme"
-            required
-            value={formData?.otherScheme || ''}
-            onChange={e =>
-              onFormDataChange({
-                ...formData,
-                otherScheme: e.target.value,
-              })
-            }
-            showValidation={showValidation}
-            options={[
-              { value: 'no', label: 'No' },
-              { value: 'yes', label: 'Yes' },
-            ]}
-          />
         </div>
       </div>
 
@@ -592,16 +585,6 @@ const SubscriptionDetails = ({
           </div>
         </div>
       </div>
-
-      {/* Modals */}
-      <IncomeProtectionModal 
-        isOpen={showIncomeProtectionModal} 
-        onClose={() => setShowIncomeProtectionModal(false)} 
-      />
-      <RewardsModal 
-        isOpen={showRewardsModal} 
-        onClose={() => setShowRewardsModal(false)} 
-      />
     </div>
   );
 };

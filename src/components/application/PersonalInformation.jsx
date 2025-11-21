@@ -4,6 +4,9 @@ import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
 import { Radio } from '../ui/Radio';
 import { DatePicker } from '../ui/DatePicker';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
+import '../../assets/theme/phoneInput.css';
 // Dynamic countries from lookup context will replace static constants
 import { useLookup } from '../../contexts/lookupContext';
 import { useJsApiLoader, StandaloneSearchBox } from '@react-google-maps/api';
@@ -16,37 +19,10 @@ const PersonalInformation = ({
   showValidation = false,
 }) => {
   const inputRef = useRef(null);
-  const hasFormattedInitialPhone = useRef(false);
+  const searchInputRef = useRef(null);
+  const [searchValue, setSearchValue] = React.useState('');
   const { genderLookups, titleLookups, countryLookups, fetchCountryLookups } =
     useLookup();
-
-  // Function to format mobile number without country code
-  const formatMobileNumber = (value) => {
-    if (!value) return '';
-    
-    // Remove all non-digit characters
-    const cleaned = value.replace(/\D/g, '');
-    
-    // Remove leading 0 if present
-    const digits = cleaned.startsWith('0') ? cleaned.substring(1) : cleaned;
-    
-    // Format: XX XXX XXXX (for 9 digits) or adjust based on length
-    let formatted = digits;
-    
-    if (digits.length > 0) {
-      if (digits.length <= 2) {
-        formatted = digits;
-      } else if (digits.length <= 5) {
-        // XX XXX
-        formatted = `${digits.substring(0, 2)} ${digits.substring(2)}`;
-      } else {
-        // XX XXX XXXX
-        formatted = `${digits.substring(0, 2)} ${digits.substring(2, 5)} ${digits.substring(5, 9)}`;
-      }
-    }
-
-    return formatted;
-  };
 
   React.useEffect(() => {
     if (!countryLookups || countryLookups.length === 0) {
@@ -71,30 +47,6 @@ const PersonalInformation = ({
     }
   }, [countryLookups]);
 
-  // Format existing phone numbers on initial load only
-  React.useEffect(() => {
-    if (!hasFormattedInitialPhone.current && (formData?.mobileNo || formData?.homeWorkTelNo)) {
-      const needsFormatting = 
-        (formData?.mobileNo && !formData.mobileNo.includes(' ')) ||
-        (formData?.homeWorkTelNo && !formData.homeWorkTelNo.includes(' '));
-
-      if (needsFormatting) {
-        hasFormattedInitialPhone.current = true;
-        const updatedData = { ...formData };
-        
-        if (formData?.mobileNo && !formData.mobileNo.includes(' ')) {
-          updatedData.mobileNo = formatMobileNumber(formData.mobileNo);
-        }
-        
-        if (formData?.homeWorkTelNo && !formData.homeWorkTelNo.includes(' ')) {
-          updatedData.homeWorkTelNo = formatMobileNumber(formData.homeWorkTelNo);
-        }
-        
-        onFormDataChange(updatedData);
-      }
-    }
-  }, [formData?.mobileNo, formData?.homeWorkTelNo]);
-
   const countryOptions = (countryLookups || []).map(c => ({
     value: c?.code,
     label: c?.displayname || c?.name || c?.code,
@@ -115,19 +67,20 @@ const PersonalInformation = ({
     });
   };
 
-  // Handle phone number change with formatting (works for any phone field)
-  const handlePhoneNumberChange = (e) => {
-    const { name, value } = e.target;
-    const formatted = formatMobileNumber(value);
-    
+  // Handle phone number change for PhoneInput component
+  const handleMobileNumberChange = (value) => {
     onFormDataChange({
       ...formData,
-      [name]: formatted,
+      mobileNo: value || '',
     });
   };
 
-  // Function to clear all address fields
+  // Function to clear all address fields and search input
   const handleClearAddress = () => {
+    setSearchValue(''); // Clear the search input
+    if (searchInputRef.current) {
+      searchInputRef.current.value = ''; // Clear the actual input element
+    }
     onFormDataChange({
       ...formData,
       addressLine1: '',
@@ -139,17 +92,17 @@ const PersonalInformation = ({
     });
   };
 
-  // Check if any address field has a value
-  const hasAddressData = formData?.addressLine1 || formData?.addressLine2 || 
-                         formData?.addressLine3 || formData?.addressLine4 || 
-                         formData?.eircode;
-
   const handlePlacesChanged = () => {
     const places = inputRef.current.getPlaces();
 
     if (places && places.length > 0) {
       const place = places[0];
       const placeId = place.place_id;
+      
+      // Update search value with the formatted address
+      if (place.formatted_address) {
+        setSearchValue(place.formatted_address);
+      }
 
       const service = new window.google.maps.places.PlacesService(
         document.createElement('div'),
@@ -413,42 +366,35 @@ const PersonalInformation = ({
                   Find your address
                 </span>
               </label>
-              
-              {/* Clear Address Button */}
-              {hasAddressData && (
-                <button
-                  type="button"
-                  onClick={handleClearAddress}
-                  className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 hover:text-red-700 transition-all duration-200 border border-red-200"
-                  title="Clear all address fields"
-                >
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                  Clear Address
-                </button>
-              )}
             </div>
             
             {isLoaded && (
-              <StandaloneSearchBox
-                onLoad={ref => (inputRef.current = ref)}
-                onPlacesChanged={handlePlacesChanged}>
-                <input
-                  type="text"
-                  placeholder="Start typing your address or Eircode..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                />
-              </StandaloneSearchBox>
+              <div className="relative">
+                <StandaloneSearchBox
+                  onLoad={ref => (inputRef.current = ref)}
+                  onPlacesChanged={handlePlacesChanged}>
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="Start typing your address or Eircode..."
+                    value={searchValue}
+                    onChange={(e) => setSearchValue(e.target.value)}
+                    className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  />
+                </StandaloneSearchBox>
+                {searchValue && (
+                  <button
+                    type="button"
+                    onClick={handleClearAddress}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200 focus:outline-none z-10"
+                    title="Clear address"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             )}
             <div className="mt-2 text-right">
               <span className="text-sm text-blue-600 cursor-pointer hover:text-blue-700 hover:underline font-medium">
@@ -540,21 +486,35 @@ const PersonalInformation = ({
 
         {/* Phone Numbers */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <Input
-            label="Mobile Number"
-            name="mobileNo"
-            required
-            placeholder="8X XXX XXXX"
-            value={formData?.mobileNo || ''}
-            onChange={handlePhoneNumberChange}
-            showValidation={showValidation}
-          />
+          {/* Mobile Number with Country Code */}
+          <div className="flex flex-col">
+            <label className="mb-1 text-sm font-medium text-gray-700">
+              Mobile Number <span className="text-red-500">*</span>
+              {showValidation && !formData?.mobileNo && (
+                <span className="ml-1 text-xs text-red-500">(Required)</span>
+              )}
+            </label>
+            <PhoneInput
+              international
+              defaultCountry="IE"
+              value={formData?.mobileNo || ''}
+              onChange={handleMobileNumberChange}
+              className={`phone-input-custom ${
+                showValidation && !formData?.mobileNo
+                  ? 'border-red-500 bg-red-50'
+                  : 'border-blue-500'
+              }`}
+              placeholder="345 123 4567"
+            />
+          </div>
+
+          {/* Home/Work Number */}
           <Input
             label="Home / Work Tel Number (Optional)"
             name="homeWorkTelNo"
-            placeholder="8X XXX XXXX"
+            placeholder="Enter telephone number"
             value={formData?.homeWorkTelNo || ''}
-            onChange={handlePhoneNumberChange}
+            onChange={handleInputChange}
           />
         </div>
 
