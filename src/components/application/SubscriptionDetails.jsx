@@ -11,7 +11,7 @@ const SubscriptionDetails = ({
   showValidation = false,
   categoryData = null,
 }) => {
-  const { primarySectionLookups, secondarySectionLookups } = useLookup();
+  const { primarySectionLookups, secondarySectionLookups, paymentLooups } = useLookup();
 
   const primaryOptions = (primarySectionLookups || []).map(l => ({
     value: l?.DisplayName || l?.lookupname,
@@ -21,19 +21,37 @@ const SubscriptionDetails = ({
     value: l?.DisplayName || l?.lookupname,
     label: l?.DisplayName || l?.lookupname,
   }));
+  const paymentOptions = (paymentLooups || []).map(l => ({
+    value: l?.DisplayName || l?.lookupname,
+    label: l?.DisplayName || l?.lookupname,
+    code: l?.code,
+  }));
   
+  // Helper function to check if payment type requires payroll number
+  const requiresPayrollNo = (paymentType) => {
+    const paymentTypesRequiringPayroll = ['Direct Debit', 'Salary Deduction'];
+    return paymentTypesRequiringPayroll.includes(paymentType);
+  };
+
   const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
-    if (
-      name === 'paymentType' &&
-      formData?.paymentType === 'Payroll Deduction' &&
-      value === 'Card Payment'
-    ) {
-      onFormDataChange({
-        ...formData,
-        [name]: value,
-        payrollNo: '',
-      });
+    if (name === 'paymentType') {
+      // Clear payrollNo when switching to a payment type that doesn't require it
+      const newPaymentType = value;
+      const oldPaymentType = formData?.paymentType;
+      
+      if (requiresPayrollNo(oldPaymentType) && !requiresPayrollNo(newPaymentType)) {
+        onFormDataChange({
+          ...formData,
+          [name]: value,
+          payrollNo: '',
+        });
+      } else {
+        onFormDataChange({
+          ...formData,
+          [name]: value,
+        });
+      }
     } else {
       onFormDataChange({
         ...formData,
@@ -133,16 +151,13 @@ const SubscriptionDetails = ({
             onChange={handleInputChange}
             showValidation={showValidation}
             placeholder="Select payment type"
-            options={[
-              { value: 'Payroll Deduction', label: 'Deduction at Source' },
-              { value: 'Card Payment', label: 'Credit Card' },
-            ]}
+            options={paymentOptions}
           />
           <Input
             label="Payroll No"
             name="payrollNo"
-            required={formData?.paymentType === 'Payroll Deduction'}
-            disabled={formData?.paymentType !== 'Payroll Deduction'}
+            required={requiresPayrollNo(formData?.paymentType)}
+            disabled={!requiresPayrollNo(formData?.paymentType)}
             value={formData?.payrollNo || ''}
             onChange={handleInputChange}
             showValidation={showValidation}

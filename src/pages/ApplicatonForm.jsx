@@ -67,10 +67,12 @@ const ApplicationForm = () => {
     subscriptionDetails: {},
   });
 
-  console.log('Application ID', personalDetail?.ApplicationId);
+  console.log('Application ID', personalDetail?.applicationId);
+
+  console.log('professionalDetail=======>',professionalDetail)
 
   useEffect(() => {
-    if (personalDetail?.ApplicationId) {
+    if (personalDetail?.applicationId) {
       // Reset payment intent state for new application
       setPaymentIntentCreated(false);
 
@@ -161,10 +163,10 @@ const ApplicationForm = () => {
         };
       });
     }
-  }, [personalDetail?.ApplicationId]);
+  }, [personalDetail?.applicationId]);
 
   useEffect(() => {
-    if (professionalDetail?.ApplicationId) {
+    if (professionalDetail?.applicationId) {
       const membershipCategory =
         professionalDetail?.professionalDetails?.membershipCategory;
 
@@ -247,12 +249,12 @@ const ApplicationForm = () => {
       }
     }
   }, [
-    professionalDetail?.ApplicationId,
+    professionalDetail?.applicationId,
     professionalDetail?.professionalDetails?.membershipCategory,
   ]);
 
   useEffect(() => {
-    if (subscriptionDetail?.ApplicationId) {
+    if (subscriptionDetail?.applicationId) {
       setIsSubmitted(true);
       setFormData(prev => ({
         ...prev,
@@ -331,7 +333,7 @@ const ApplicationForm = () => {
         },
       }));
     }
-  }, [subscriptionDetail?.ApplicationId]);
+  }, [subscriptionDetail?.applicationId]);
 
   // Show modal after subscription detail is created/updated
   useEffect(() => {
@@ -455,7 +457,7 @@ const ApplicationForm = () => {
       }
     });
 
-    updatePersonalDetailRequest(personalDetail?.ApplicationId, personalInfo)
+    updatePersonalDetailRequest(personalDetail?.applicationId, personalInfo)
       .then(res => {
         if (res.status === 200) {
           // Update personal detail and move to next step
@@ -497,15 +499,17 @@ const ApplicationForm = () => {
         professionalInfo.professionalDetails[key] = value;
       }
     });
-
+console.log('professionalInfo==========>', professionalInfo);
+console.log('personalDetail?.applicationId==========>', personalDetail?.applicationId);
     createProfessionalDetailRequest(
-      personalDetail?.ApplicationId,
+      personalDetail?.applicationId,
       professionalInfo,
     )
       .then(res => {
+        console.log('res==========>', res);
         if (res.status === 200) {
           // Update professional detail and move to next step
-          getProfessionalDetail(personalDetail?.ApplicationId);
+          getProfessionalDetail(personalDetail?.applicationId);
           setCurrentStep(3);
         } else {
           toast.error(res.data.message ?? 'Unable to add professional detail');
@@ -546,13 +550,13 @@ const ApplicationForm = () => {
     });
 
     updateProfessionalDetailRequest(
-      personalDetail?.ApplicationId,
+      personalDetail?.applicationId,
       professionalInfo,
     )
       .then(res => {
         if (res.status === 200) {
           // Update professional detail and move to next step
-          getProfessionalDetail(personalDetail?.ApplicationId);
+          getProfessionalDetail(personalDetail?.applicationId);
           setCurrentStep(3);
         } else {
           toast.error(
@@ -607,13 +611,13 @@ const ApplicationForm = () => {
       };
 
       const res = await createSubscriptionDetailRequest(
-        personalDetail?.ApplicationId,
+        personalDetail?.applicationId,
         subscriptionInfo,
       );
 
       if (res.status === 200) {
         // Update subscription detail
-        getSubscriptionDetail(personalDetail?.ApplicationId);
+        getSubscriptionDetail(personalDetail?.applicationId);
 
         // Check if undergraduate student - they don't need payment
         if (
@@ -683,13 +687,13 @@ const ApplicationForm = () => {
       };
 
       const res = await updateSubscriptionDetailRequest(
-        personalDetail?.ApplicationId,
+        personalDetail?.applicationId,
         subscriptionInfo,
       );
 
       if (res.status === 200) {
         // Update subscription detail
-        getSubscriptionDetail(personalDetail?.ApplicationId);
+        getSubscriptionDetail(personalDetail?.applicationId);
 
         // Check if undergraduate student - they don't need payment
         if (
@@ -727,7 +731,6 @@ const ApplicationForm = () => {
         if (!personalDetail) {
           createPersonalDetail(formData.personalInfo);
         } else {
-          console.log('personalInformation========>',formData.personalInfo)
           updatePersonalDetail(formData.personalInfo);
         }
       }

@@ -40,6 +40,7 @@ export const LookupProvider = ({ children }) => {
   const [countryLookups, setCountryLookups] = React.useState([]);
   const [categoryLookups, setCategoryLookups] = React.useState([]);
   const [gradeLookups, setGradeLookups] = React.useState([]);
+  const [paymentLooups, setPaymentLooups] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
 
@@ -69,6 +70,10 @@ export const LookupProvider = ({ children }) => {
           item => item.lookuptypeId?.lookuptype === 'Grade',
         );
 
+        const paymentData = result.filter(
+          item => item.lookuptypeId?.lookuptype === 'Payment Type',
+        );
+        await saveLocal('paymentLookups', paymentData);
         await saveLocal('genderLookups', genderData);
         await saveLocal('cityLookups', cityData);
         await saveLocal('titleLookups', titleData);
@@ -152,6 +157,7 @@ export const LookupProvider = ({ children }) => {
       const countryLookups = await fetchLocal('countries');
       const categoryLookups = await fetchLocal('categories');
       const gradeLookups = await fetchLocal('gradeLookups');
+      const paymentLookups = await fetchLocal('paymentLookups');
 
       setGenderLookups(genderLookups);
       setCityLookups(cityLookups);
@@ -162,6 +168,7 @@ export const LookupProvider = ({ children }) => {
       setCountryLookups(countryLookups);
       setCategoryLookups(categoryLookups);
       setGradeLookups(gradeLookups);
+      setPaymentLooups(paymentLookups);
     };
     fetchGenderLookups();
   }, [lookups]);
@@ -202,6 +209,7 @@ export const LookupProvider = ({ children }) => {
     countryLookups,
     categoryLookups,
     gradeLookups,
+    paymentLooups,
     loading,
     error,
     fetchLookups,

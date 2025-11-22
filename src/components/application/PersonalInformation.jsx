@@ -519,7 +519,7 @@ const PersonalInformation = ({
         </div>
 
         {/* Preferred Email Radio */}
-        <div className="mb-4">
+        <div className="mb-4 p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
           <Radio
             label="Preferred Email"
             name="preferredEmail"

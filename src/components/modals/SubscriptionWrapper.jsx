@@ -28,7 +28,7 @@ const SubscriptionWrapper = ({
 
   useEffect(() => {
     const initPayment = async () => {
-      if (!isVisible || !personalDetail?.ApplicationId || !membershipCategory)
+      if (!isVisible || !personalDetail?.applicationId || !membershipCategory)
         return;
 
       setLoading(true);
@@ -47,7 +47,7 @@ const SubscriptionWrapper = ({
 
         // ✅ Step 2: Prepare dynamic data
         // console.log('userDetail=======>', userDetail);
-        const applicationId = personalDetail?.ApplicationId;
+        const applicationId = personalDetail?.applicationId;
         const userId = userDetail?.id || userDetail?._id;
         const tenantId = userDetail?.tenantId || userDetail?.userTenantId;
 

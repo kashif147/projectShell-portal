@@ -33,7 +33,7 @@ export const ApplicationProvider = ({ children }) => {
   };
 
   const getProfessionalDetail = (applicationId) => {
-    const appId = applicationId || personalDetail?.ApplicationId;
+    const appId = applicationId || personalDetail?.applicationId;
     if (!appId) return;
     
     setLoading(true);
@@ -52,7 +52,7 @@ export const ApplicationProvider = ({ children }) => {
   };
 
   const getSubscriptionDetail = (applicationId) => {
-    const appId = applicationId || personalDetail?.ApplicationId;
+    const appId = applicationId || personalDetail?.applicationId;
     if (!appId) return;
     
     setLoading(true);
@@ -71,16 +71,16 @@ export const ApplicationProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    if (personalDetail?.ApplicationId) {
+    if (personalDetail?.applicationId) {
       // Only fetch if we don't already have the data
       if (!professionalDetail) {
-        getProfessionalDetail(personalDetail.ApplicationId);
+        getProfessionalDetail(personalDetail.applicationId);
       }
       if (!subscriptionDetail) {
-        getSubscriptionDetail(personalDetail.ApplicationId);
+        getSubscriptionDetail(personalDetail.applicationId);
       }
     }
-  }, [personalDetail?.ApplicationId]);
+  }, [personalDetail?.applicationId]);
 
   const value = {
     loading,

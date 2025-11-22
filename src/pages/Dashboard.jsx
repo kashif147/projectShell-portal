@@ -56,7 +56,7 @@ const Dashboard = () => {
     subscriptionDetails: {},
   });
   useEffect(() => {
-    if (personalDetail?.ApplicationId) {
+    if (personalDetail?.applicationId) {
       setFormData(prev => ({
         ...prev,
         personalInfo: {
@@ -83,10 +83,10 @@ const Dashboard = () => {
         },
       }));
     }
-  }, [personalDetail?.ApplicationId]);
+  }, [personalDetail?.applicationId]);
 
   useEffect(() => {
-    if (professionalDetail?.ApplicationId) {
+    if (professionalDetail?.applicationId) {
       setFormData(prev => ({
         ...prev,
         professionalDetails: {
@@ -117,10 +117,10 @@ const Dashboard = () => {
         },
       }));
     }
-  }, [professionalDetail?.ApplicationId]);
+  }, [professionalDetail?.applicationId]);
 
   useEffect(() => {
-    if (subscriptionDetail?.ApplicationId) {
+    if (subscriptionDetail?.applicationId) {
       setFormData(prev => ({
         ...prev,
         subscriptionDetails: {
@@ -168,7 +168,7 @@ const Dashboard = () => {
         },
       }));
     }
-  }, [subscriptionDetail?.ApplicationId]);
+  }, [subscriptionDetail?.applicationId]);
 
   // Fetch personal detail on mount
   useEffect(() => {
@@ -178,9 +178,9 @@ const Dashboard = () => {
   // Check application status
   useEffect(() => {
     const checkApplicationStatus = async () => {
-      if (personalDetail?.ApplicationId) {
+      if (personalDetail?.applicationId) {
         try {
-          const response = await applicationConfirmationRequest(personalDetail.ApplicationId);
+          const response = await applicationConfirmationRequest(personalDetail.applicationId);
           console.log('Application Status Response:', response);
           
           if (response?.status === 200 || response?.data?.status === 'success') {
@@ -200,20 +200,20 @@ const Dashboard = () => {
     };
 
     checkApplicationStatus();
-  }, [personalDetail?.ApplicationId]);
+  }, [personalDetail?.applicationId]);
 
   // Update current step based on application progress
   useEffect(() => {
-    if (!personalDetail?.ApplicationId) {
+    if (!personalDetail?.applicationId) {
       setCurrentStep(1);
-    } else if (personalDetail?.ApplicationId && !professionalDetail?.ApplicationId) {
+    } else if (personalDetail?.applicationId && !professionalDetail?.applicationId) {
       setCurrentStep(2);
-    } else if (personalDetail?.ApplicationId && professionalDetail?.ApplicationId && !subscriptionDetail?.ApplicationId) {
+    } else if (personalDetail?.applicationId && professionalDetail?.applicationId && !subscriptionDetail?.applicationId) {
       setCurrentStep(3);
-    } else if (personalDetail?.ApplicationId && professionalDetail?.ApplicationId && subscriptionDetail?.ApplicationId) {
+    } else if (personalDetail?.applicationId && professionalDetail?.applicationId && subscriptionDetail?.applicationId) {
       setCurrentStep(3);
     }
-  }, [personalDetail?.ApplicationId, professionalDetail?.ApplicationId, subscriptionDetail?.ApplicationId]);
+  }, [personalDetail?.applicationId, professionalDetail?.applicationId, subscriptionDetail?.applicationId]);
 
   // Fetch category data for pricing
   useEffect(() => {
@@ -317,17 +317,17 @@ const Dashboard = () => {
     let completionPercentage = 0;
 
     // Step 1: Personal Detail completed = 33%
-    if (personalDetail?.ApplicationId) {
+    if (personalDetail?.applicationId) {
       completionPercentage = 33;
     }
 
     // Step 2: Professional Detail completed = 67%
-    if (professionalDetail?.ApplicationId) {
+    if (professionalDetail?.applicationId) {
       completionPercentage = 67;
     }
 
     // Step 3: Subscription Detail completed (not submitted yet) = 90%
-    if (subscriptionDetail?.ApplicationId) {
+    if (subscriptionDetail?.applicationId) {
       completionPercentage = 90;
     }
 

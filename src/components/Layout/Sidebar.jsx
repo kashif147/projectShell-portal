@@ -188,27 +188,34 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
                       />
                     )}
                     
-                    {/* Icon container with bounce animation */}
+                    {/* Icon container with gradient background */}
                     <div className="relative">
                       <div 
-                        className={`text-2xl mb-0.5 transition-all duration-300 ${
+                        className={`w-12 h-12 rounded-xl flex items-center justify-center mb-0.5 transition-all duration-300 ${
                           isActive 
-                            ? 'scale-110 -translate-y-0.5' 
-                            : 'scale-100 group-active:scale-90'
+                            ? 'scale-110 -translate-y-0.5 shadow-lg' 
+                            : 'scale-95 group-active:scale-90 opacity-60'
                         }`}
-                        style={{ 
-                          color: item.color,
-                          opacity: isActive ? 1 : 0.6
+                        style={isActive ? { 
+                          background: `linear-gradient(135deg, ${item.color} 0%, ${item.color}dd 100%)`,
+                          boxShadow: `0 4px 12px ${item.color}50`
+                        } : {
+                          background: 'transparent'
                         }}
                       >
-                        {item.icon}
+                        <div 
+                          className="text-xl"
+                          style={{ color: isActive ? '#ffffff' : item.color }}
+                        >
+                          {item.icon}
+                        </div>
                       </div>
                       
                       {/* Active dot indicator */}
                       {isActive && (
                         <div 
-                          className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full animate-pulse"
-                          style={{ backgroundColor: item.color }}
+                          className="absolute -top-1 -right-1 w-2 h-2 rounded-full animate-pulse bg-white border-2"
+                          style={{ borderColor: item.color }}
                         />
                       )}
                     </div>
@@ -288,48 +295,55 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
                     navigate(item.key);
                     setMoreMenuVisible(false);
                   }}
-                  className={`relative flex flex-col items-center justify-center p-4 rounded-2xl transition-all duration-300 border-2 group overflow-hidden ${
-                    isActive 
-                      ? 'shadow-lg transform scale-105' 
-                      : 'bg-white shadow-sm hover:shadow-md hover:scale-105 border-gray-100'
-                  }`}
-                  style={isActive ? {
-                    backgroundColor: `${item.color}15`,
-                    borderColor: `${item.color}40`
-                  } : {}}
+                  className="relative flex flex-col items-center justify-center p-4 rounded-2xl transition-all duration-300 group overflow-hidden bg-white shadow-sm hover:shadow-xl border border-gray-100 hover:border-transparent"
                 >
-                  {/* Background gradient on hover */}
-                  {!isActive && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  )}
+                  {/* Animated gradient background on hover */}
+                  <div 
+                    className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-2xl"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${item.color} 0%, ${item.color}80 100%)`
+                    }}
+                  />
                   
-                  {/* Icon with animation */}
-                  <div className="relative z-10">
+                  {/* Icon container with gradient background and shadow */}
+                  <div className="relative z-10 mb-3">
                     <div 
-                      className={`text-3xl mb-2 transition-all duration-300 ${
-                        isActive ? 'scale-110' : 'group-hover:scale-110'
-                      }`}
-                      style={{ color: isActive ? item.color : '#6b7280' }}
+                      className="w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-md group-hover:shadow-xl"
+                      style={{ 
+                        background: `linear-gradient(135deg, ${item.color} 0%, ${item.color}dd 100%)`,
+                        boxShadow: `0 4px 12px ${item.color}40`
+                      }}
                     >
-                      {item.icon}
+                      <div className="text-2xl text-white">
+                        {item.icon}
+                      </div>
                     </div>
                   </div>
                   
-                  {/* Label */}
-                  <span 
-                    className="relative z-10 text-[10px] font-semibold text-center leading-tight"
-                    style={{ color: isActive ? item.color : '#374151' }}
-                  >
+                  {/* Label with better typography */}
+                  <span className="relative z-10 text-[11px] font-semibold text-center leading-tight text-gray-700 group-hover:text-gray-900 transition-colors">
                     {item.label}
                   </span>
                   
-                  {/* Active indicator dot */}
+                  {/* Active indicator with glow */}
                   {isActive && (
-                    <div 
-                      className="absolute top-2 right-2 w-2 h-2 rounded-full animate-pulse"
-                      style={{ backgroundColor: item.color }}
-                    />
+                    <>
+                      <div 
+                        className="absolute top-2 right-2 w-2 h-2 rounded-full animate-pulse"
+                        style={{ 
+                          backgroundColor: item.color,
+                          boxShadow: `0 0 8px ${item.color}`
+                        }}
+                      />
+                      <div 
+                        className="absolute inset-0 rounded-2xl border-2 animate-pulse"
+                        style={{ borderColor: `${item.color}60` }}
+                      />
+                    </>
                   )}
+                  
+                  {/* Shimmer effect on hover */}
+                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
                 </button>
               );
             })}
