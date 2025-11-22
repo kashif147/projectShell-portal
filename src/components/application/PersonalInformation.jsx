@@ -41,16 +41,31 @@ const PersonalInformation = ({
       if (irelandCountry) {
         onFormDataChange({
           ...formData,
-          countryPrimaryQualification: irelandCountry.code,
+          countryPrimaryQualification: irelandCountry.displayname,
         });
       }
     }
   }, [countryLookups]);
 
   const countryOptions = (countryLookups || []).map(c => ({
-    value: c?.code,
+    value: c?.displayname,
     label: c?.displayname || c?.name || c?.code,
   }));
+
+  const getCountryDisplayName = (codeOrName) => {
+    if (!codeOrName || !countryLookups) return codeOrName;
+    
+    const byDisplayName = countryLookups.find(c => c?.displayname === codeOrName);
+    if (byDisplayName) return codeOrName;
+    
+    const byCode = countryLookups.find(c => c?.code === codeOrName);
+    if (byCode) return byCode.displayname;
+    
+    const byName = countryLookups.find(c => c?.name === codeOrName);
+    if (byName) return byName.displayname;
+    
+    return codeOrName;
+  };
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: 'AIzaSyCJYpj8WV5Rzof7O3jGhW9XabD0J4Yqe1o',
@@ -270,7 +285,7 @@ const PersonalInformation = ({
             label="Country of Primary Qualification"
             name="countryPrimaryQualification"
             placeholder="Select country"
-            value={formData?.countryPrimaryQualification || ''}
+            value={getCountryDisplayName(formData?.countryPrimaryQualification) || ''}
             onChange={handleInputChange}
             options={countryOptions}
             isSearchable
