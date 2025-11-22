@@ -9,13 +9,14 @@ import {
 } from '@ant-design/icons';
 import { useApplication } from '../contexts/applicationContext';
 import { Elements } from '@stripe/react-stripe-js';
-import { PaymentStatusModal, DashboardPaymentModal } from '../components/modals';
+import {
+  PaymentStatusModal,
+  DashboardPaymentModal,
+} from '../components/modals';
 import { loadStripe } from '@stripe/stripe-js';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { 
-  applicationConfirmationRequest 
-} from '../api/application.api';
+import { applicationConfirmationRequest } from '../api/application.api';
 import { fetchCategoryByCategoryId } from '../api/category.api';
 
 const stripePromise = loadStripe(
@@ -31,7 +32,7 @@ const Dashboard = () => {
     personalDetail,
     professionalDetail,
     getSubscriptionDetail,
-    loading
+    loading,
   } = useApplication();
   const { user } = useSelector(state => state.auth);
   const navigate = useNavigate();
@@ -60,26 +61,86 @@ const Dashboard = () => {
       setFormData(prev => ({
         ...prev,
         personalInfo: {
-          title: personalDetail?.personalInfo?.title || prev.personalInfo.title || '',
-          surname: personalDetail?.personalInfo?.surname || prev.personalInfo.surname || user?.userLastName || '',
-          forename: personalDetail?.personalInfo?.forename || prev.personalInfo.forename || user?.userFirstName || '',
-          gender: personalDetail?.personalInfo?.gender || prev.personalInfo.gender || '',
-          dateOfBirth: personalDetail?.personalInfo?.dateOfBirth || prev.personalInfo.dateOfBirth || '',
+          title:
+            personalDetail?.personalInfo?.title ||
+            prev.personalInfo.title ||
+            '',
+          surname:
+            personalDetail?.personalInfo?.surname ||
+            prev.personalInfo.surname ||
+            user?.userLastName ||
+            '',
+          forename:
+            personalDetail?.personalInfo?.forename ||
+            prev.personalInfo.forename ||
+            user?.userFirstName ||
+            '',
+          gender:
+            personalDetail?.personalInfo?.gender ||
+            prev.personalInfo.gender ||
+            '',
+          dateOfBirth:
+            personalDetail?.personalInfo?.dateOfBirth ||
+            prev.personalInfo.dateOfBirth ||
+            '',
           countryPrimaryQualification:
-            personalDetail?.personalInfo?.countryPrimaryQualification || prev.personalInfo.countryPrimaryQualification || '',
-          personalEmail: personalDetail?.contactInfo?.personalEmail || prev.personalInfo.personalEmail || user?.userEmail || '',
-          mobileNo: personalDetail?.contactInfo?.mobileNumber || prev.personalInfo.mobileNo || user?.userMobilePhone || '',
-          consent: personalDetail?.contactInfo?.consent ?? prev.personalInfo.consent ?? true,
-          addressLine1: personalDetail?.contactInfo?.buildingOrHouse || prev.personalInfo.addressLine1 || '',
-          addressLine2: personalDetail?.contactInfo?.streetOrRoad || prev.personalInfo.addressLine2 || '',
-          addressLine3: personalDetail?.contactInfo?.areaOrTown || prev.personalInfo.addressLine3 || '',
-          addressLine4: personalDetail?.contactInfo?.countyCityOrPostCode || prev.personalInfo.addressLine4 || '',
-          eircode: personalDetail?.contactInfo?.eircode || prev.personalInfo.eircode || '',
-          preferredAddress: personalDetail?.contactInfo?.preferredAddress || prev.personalInfo.preferredAddress || '',
-          preferredEmail: personalDetail?.contactInfo?.preferredEmail || prev.personalInfo.preferredEmail || '',
-          homeWorkTelNo: personalDetail?.contactInfo?.telephoneNumber || prev.personalInfo.homeWorkTelNo || '',
-          country: personalDetail?.contactInfo?.country || prev.personalInfo.country || 'Ireland',
-          workEmail: personalDetail?.contactInfo?.workEmail || prev.personalInfo.workEmail || '',
+            personalDetail?.personalInfo?.countryPrimaryQualification ||
+            prev.personalInfo.countryPrimaryQualification ||
+            '',
+          personalEmail:
+            personalDetail?.contactInfo?.personalEmail ||
+            prev.personalInfo.personalEmail ||
+            user?.userEmail ||
+            '',
+          mobileNo:
+            personalDetail?.contactInfo?.mobileNumber ||
+            prev.personalInfo.mobileNo ||
+            user?.userMobilePhone ||
+            '',
+          consent:
+            personalDetail?.contactInfo?.consent ??
+            prev.personalInfo.consent ??
+            true,
+          addressLine1:
+            personalDetail?.contactInfo?.buildingOrHouse ||
+            prev.personalInfo.addressLine1 ||
+            '',
+          addressLine2:
+            personalDetail?.contactInfo?.streetOrRoad ||
+            prev.personalInfo.addressLine2 ||
+            '',
+          addressLine3:
+            personalDetail?.contactInfo?.areaOrTown ||
+            prev.personalInfo.addressLine3 ||
+            '',
+          addressLine4:
+            personalDetail?.contactInfo?.countyCityOrPostCode ||
+            prev.personalInfo.addressLine4 ||
+            '',
+          eircode:
+            personalDetail?.contactInfo?.eircode ||
+            prev.personalInfo.eircode ||
+            '',
+          preferredAddress:
+            personalDetail?.contactInfo?.preferredAddress ||
+            prev.personalInfo.preferredAddress ||
+            '',
+          preferredEmail:
+            personalDetail?.contactInfo?.preferredEmail ||
+            prev.personalInfo.preferredEmail ||
+            '',
+          homeWorkTelNo:
+            personalDetail?.contactInfo?.telephoneNumber ||
+            prev.personalInfo.homeWorkTelNo ||
+            '',
+          country:
+            personalDetail?.contactInfo?.country ||
+            prev.personalInfo.country ||
+            'Ireland',
+          workEmail:
+            personalDetail?.contactInfo?.workEmail ||
+            prev.personalInfo.workEmail ||
+            '',
         },
       }));
     }
@@ -91,29 +152,65 @@ const Dashboard = () => {
         ...prev,
         professionalDetails: {
           membershipCategory:
-            professionalDetail?.professionalDetails?.membershipCategory || prev.professionalDetails.membershipCategory || '',
-          workLocation: professionalDetail?.professionalDetails?.workLocation || prev.professionalDetails.workLocation || '',
+            professionalDetail?.professionalDetails?.membershipCategory ||
+            prev.professionalDetails.membershipCategory ||
+            '',
+          workLocation:
+            professionalDetail?.professionalDetails?.workLocation ||
+            prev.professionalDetails.workLocation ||
+            '',
           otherWorkLocation:
-            professionalDetail?.professionalDetails?.otherWorkLocation ?? prev.professionalDetails.otherWorkLocation ?? '',
-          grade: professionalDetail?.professionalDetails?.grade || prev.professionalDetails.grade || '',
-          otherGrade: professionalDetail?.professionalDetails?.otherGrade ?? prev.professionalDetails.otherGrade ?? '',
-          nmbiNumber: professionalDetail?.professionalDetails?.nmbiNumber ?? prev.professionalDetails.nmbiNumber ?? '',
-          nurseType: professionalDetail?.professionalDetails?.nurseType ?? prev.professionalDetails.nurseType ?? '',
+            professionalDetail?.professionalDetails?.otherWorkLocation ??
+            prev.professionalDetails.otherWorkLocation ??
+            '',
+          grade:
+            professionalDetail?.professionalDetails?.grade ||
+            prev.professionalDetails.grade ||
+            '',
+          otherGrade:
+            professionalDetail?.professionalDetails?.otherGrade ??
+            prev.professionalDetails.otherGrade ??
+            '',
+          nmbiNumber:
+            professionalDetail?.professionalDetails?.nmbiNumber ??
+            prev.professionalDetails.nmbiNumber ??
+            '',
+          nurseType:
+            professionalDetail?.professionalDetails?.nurseType ??
+            prev.professionalDetails.nurseType ??
+            '',
           nursingAdaptationProgramme: professionalDetail?.professionalDetails
             ?.nursingAdaptationProgramme
             ? 'yes'
             : prev.professionalDetails.nursingAdaptationProgramme || 'no',
-          region: professionalDetail?.professionalDetails?.region ?? prev.professionalDetails.region ?? '',
-          branch: professionalDetail?.professionalDetails?.branch ?? prev.professionalDetails.branch ?? '',
-          pensionNo: professionalDetail?.professionalDetails?.pensionNo ?? prev.professionalDetails.pensionNo ?? '',
+          region:
+            professionalDetail?.professionalDetails?.region ??
+            prev.professionalDetails.region ??
+            '',
+          branch:
+            professionalDetail?.professionalDetails?.branch ??
+            prev.professionalDetails.branch ??
+            '',
+          pensionNo:
+            professionalDetail?.professionalDetails?.pensionNo ??
+            prev.professionalDetails.pensionNo ??
+            '',
           isRetired:
-            professionalDetail?.professionalDetails?.isRetired ?? prev.professionalDetails.isRetired ?? false,
+            professionalDetail?.professionalDetails?.isRetired ??
+            prev.professionalDetails.isRetired ??
+            false,
           retiredDate:
-            professionalDetail?.professionalDetails?.retiredDate ?? prev.professionalDetails.retiredDate ?? '',
+            professionalDetail?.professionalDetails?.retiredDate ??
+            prev.professionalDetails.retiredDate ??
+            '',
           studyLocation:
-            professionalDetail?.professionalDetails?.studyLocation ?? prev.professionalDetails.studyLocation ?? '',
+            professionalDetail?.professionalDetails?.studyLocation ??
+            prev.professionalDetails.studyLocation ??
+            '',
           graduationDate:
-            professionalDetail?.professionalDetails?.graduationDate ?? prev.professionalDetails.graduationDate ?? '',
+            professionalDetail?.professionalDetails?.graduationDate ??
+            prev.professionalDetails.graduationDate ??
+            '',
         },
       }));
     }
@@ -124,10 +221,18 @@ const Dashboard = () => {
       setFormData(prev => ({
         ...prev,
         subscriptionDetails: {
-          paymentType: subscriptionDetail?.subscriptionDetails?.paymentType || prev.subscriptionDetails.paymentType || '',
-          payrollNo: subscriptionDetail?.subscriptionDetails?.payrollNo ?? prev.subscriptionDetails.payrollNo ?? '',
+          paymentType:
+            subscriptionDetail?.subscriptionDetails?.paymentType ||
+            prev.subscriptionDetails.paymentType ||
+            '',
+          payrollNo:
+            subscriptionDetail?.subscriptionDetails?.payrollNo ??
+            prev.subscriptionDetails.payrollNo ??
+            '',
           memberStatus:
-            subscriptionDetail?.subscriptionDetails?.membershipStatus ?? prev.subscriptionDetails.memberStatus ?? '',
+            subscriptionDetail?.subscriptionDetails?.membershipStatus ??
+            prev.subscriptionDetails.memberStatus ??
+            '',
           otherIrishTradeUnion: subscriptionDetail?.subscriptionDetails
             ?.otherIrishTradeUnion
             ? 'yes'
@@ -136,35 +241,57 @@ const Dashboard = () => {
             ? 'yes'
             : prev.subscriptionDetails.otherScheme || 'no',
           recuritedBy:
-            subscriptionDetail?.subscriptionDetails?.recuritedBy ?? prev.subscriptionDetails.recuritedBy ?? '',
+            subscriptionDetail?.subscriptionDetails?.recuritedBy ??
+            prev.subscriptionDetails.recuritedBy ??
+            '',
           recuritedByMembershipNo:
             subscriptionDetail?.subscriptionDetails?.recuritedByMembershipNo ??
-            prev.subscriptionDetails.recuritedByMembershipNo ?? '',
+            prev.subscriptionDetails.recuritedByMembershipNo ??
+            '',
           primarySection:
-            subscriptionDetail?.subscriptionDetails?.primarySection || prev.subscriptionDetails.primarySection || '',
+            subscriptionDetail?.subscriptionDetails?.primarySection ||
+            prev.subscriptionDetails.primarySection ||
+            '',
           otherPrimarySection:
-            subscriptionDetail?.subscriptionDetails?.otherPrimarySection ?? prev.subscriptionDetails.otherPrimarySection ?? '',
+            subscriptionDetail?.subscriptionDetails?.otherPrimarySection ??
+            prev.subscriptionDetails.otherPrimarySection ??
+            '',
           secondarySection:
-            subscriptionDetail?.subscriptionDetails?.secondarySection || prev.subscriptionDetails.secondarySection || '',
+            subscriptionDetail?.subscriptionDetails?.secondarySection ||
+            prev.subscriptionDetails.secondarySection ||
+            '',
           otherSecondarySection:
             subscriptionDetail?.subscriptionDetails?.otherSecondarySection ??
-            prev.subscriptionDetails.otherSecondarySection ?? '',
+            prev.subscriptionDetails.otherSecondarySection ??
+            '',
           incomeProtectionScheme:
             subscriptionDetail?.subscriptionDetails?.incomeProtectionScheme ??
-            prev.subscriptionDetails.incomeProtectionScheme ?? false,
+            prev.subscriptionDetails.incomeProtectionScheme ??
+            false,
           inmoRewards:
-            subscriptionDetail?.subscriptionDetails?.inmoRewards ?? prev.subscriptionDetails.inmoRewards ?? false,
+            subscriptionDetail?.subscriptionDetails?.inmoRewards ??
+            prev.subscriptionDetails.inmoRewards ??
+            false,
           valueAddedServices:
             subscriptionDetail?.subscriptionDetails?.valueAddedServices ??
-            prev.subscriptionDetails.valueAddedServices ?? false,
+            prev.subscriptionDetails.valueAddedServices ??
+            false,
           termsAndConditions:
             subscriptionDetail?.subscriptionDetails?.termsAndConditions ??
-            prev.subscriptionDetails.termsAndConditions ?? false,
+            prev.subscriptionDetails.termsAndConditions ??
+            false,
           membershipCategory:
-            subscriptionDetail?.subscriptionDetails?.membershipCategory || prev.subscriptionDetails.membershipCategory || '',
-          dateJoined: subscriptionDetail?.subscriptionDetails?.dateJoined || prev.subscriptionDetails.dateJoined || '',
+            subscriptionDetail?.subscriptionDetails?.membershipCategory ||
+            prev.subscriptionDetails.membershipCategory ||
+            '',
+          dateJoined:
+            subscriptionDetail?.subscriptionDetails?.dateJoined ||
+            prev.subscriptionDetails.dateJoined ||
+            '',
           paymentFrequency:
-            subscriptionDetail?.subscriptionDetails?.paymentFrequency || prev.subscriptionDetails.paymentFrequency || '',
+            subscriptionDetail?.subscriptionDetails?.paymentFrequency ||
+            prev.subscriptionDetails.paymentFrequency ||
+            '',
         },
       }));
     }
@@ -180,12 +307,19 @@ const Dashboard = () => {
     const checkApplicationStatus = async () => {
       if (personalDetail?.applicationId) {
         try {
-          const response = await applicationConfirmationRequest(personalDetail.applicationId);
+          const response = await applicationConfirmationRequest(
+            personalDetail.applicationId,
+          );
           console.log('Application Status Response:', response);
-          
-          if (response?.status === 200 || response?.data?.status === 'success') {
-            const applicationStatus = response?.data?.data?.applicationStatus || response?.data?.applicationStatus;
-            
+
+          if (
+            response?.status === 200 ||
+            response?.data?.status === 'success'
+          ) {
+            const applicationStatus =
+              response?.data?.data?.applicationStatus ||
+              response?.data?.applicationStatus;
+
             if (applicationStatus === 'submitted') {
               setIsApplicationSubmitted(true);
             } else {
@@ -201,26 +335,49 @@ const Dashboard = () => {
 
     checkApplicationStatus();
   }, [personalDetail?.applicationId]);
+  console.log('subscriptionDetail========>', subscriptionDetail);
+  console.log('professionalDetail========>', professionalDetail);
+  console.log('personalDetail========>', personalDetail);
 
   // Update current step based on application progress
   useEffect(() => {
+    // Only set step after data is fully loaded
+    if (loading) return;
+
     if (!personalDetail?.applicationId) {
       setCurrentStep(1);
-    } else if (personalDetail?.applicationId && !professionalDetail?.applicationId) {
+    } else if (
+      personalDetail?.applicationId &&
+      !professionalDetail?.applicationId
+    ) {
       setCurrentStep(2);
-    } else if (personalDetail?.applicationId && professionalDetail?.applicationId && !subscriptionDetail?.applicationId) {
+    } else if (
+      personalDetail?.applicationId &&
+      professionalDetail?.applicationId &&
+      !subscriptionDetail?.applicationId
+    ) {
       setCurrentStep(3);
-    } else if (personalDetail?.applicationId && professionalDetail?.applicationId && subscriptionDetail?.applicationId) {
+    } else if (
+      personalDetail?.applicationId &&
+      professionalDetail?.applicationId &&
+      subscriptionDetail?.applicationId
+    ) {
       setCurrentStep(3);
     }
-  }, [personalDetail?.applicationId, professionalDetail?.applicationId, subscriptionDetail?.applicationId]);
+  }, [
+    loading,
+    personalDetail?.applicationId,
+    professionalDetail?.applicationId,
+    subscriptionDetail?.applicationId,
+  ]);
 
   // Fetch category data for pricing
   useEffect(() => {
-    const membershipCategory = professionalDetail?.professionalDetails?.membershipCategory;
+    const membershipCategory =
+      professionalDetail?.professionalDetails?.membershipCategory;
     if (membershipCategory) {
       fetchCategoryByCategoryId(membershipCategory)
-      .then(res => {
+        .then(res => {
           const payload = res?.data?.data || res?.data;
           setCategoryData(payload);
         })
@@ -236,11 +393,11 @@ const Dashboard = () => {
 
   const handleSubscriptionSuccess = paymentData => {
     console.log('Payment Success from Dashboard:', paymentData);
-      setIsModalVisible(false);
-    setStatusModal({ 
-      open: true, 
-      status: 'success', 
-      message: 'Payment completed successfully!' 
+    setIsModalVisible(false);
+    setStatusModal({
+      open: true,
+      status: 'success',
+      message: 'Payment completed successfully!',
     });
   };
 
@@ -256,12 +413,12 @@ const Dashboard = () => {
   const handleNext = () => {
     // Check if payment modal should be shown
     // Skip for undergraduate students based on category code
-    const isUndergraduateStudent = categoryData?.code === 'undergraduate_student';
-    
+    const isUndergraduateStudent =
+      categoryData?.code === 'undergraduate_student';
+
     if (currentStep === 3 && !isUndergraduateStudent) {
       setIsModalVisible(true);
     }
-
   };
 
   const stepToButtonText = {
@@ -279,8 +436,10 @@ const Dashboard = () => {
   };
 
   // Format currency for display
-  const formatCurrency = (value) => {
-    const currency = (categoryData?.currentPricing?.currency || 'EUR').toUpperCase();
+  const formatCurrency = value => {
+    const currency = (
+      categoryData?.currentPricing?.currency || 'EUR'
+    ).toUpperCase();
     try {
       return new Intl.NumberFormat('en-IE', {
         style: 'currency',
@@ -295,14 +454,14 @@ const Dashboard = () => {
   const getPaymentAmount = () => {
     if (!categoryData?.currentPricing?.price) return 0;
     const priceInEuros = categoryData.currentPricing.price / 100;
-    
+
     // If payment type is set in subscription details
     const paymentType = subscriptionDetail?.subscriptionDetails?.paymentType;
     if (paymentType === 'deduction') {
       // Monthly payment (divide by 12 for monthly)
       return priceInEuros / 12;
     }
-    
+
     // Default to annual price
     return priceInEuros;
   };
@@ -352,40 +511,46 @@ const Dashboard = () => {
         <div className="lg:col-span-2 space-y-3 sm:space-y-6">
           {/* Quick Actions Section */}
           <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Quick Actions</h2>
+            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
+              Quick Actions
+            </h2>
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
               {/* Application Action */}
               <QuickActionButton
-          title="Application"
-                subtitle={isApplicationSubmitted ? 'Submitted' : getApplicationButtonText()}
+                title="Application"
+                subtitle={
+                  isApplicationSubmitted
+                    ? 'Submitted'
+                    : getApplicationButtonText()
+                }
                 icon={FormOutlined}
-                onClick={() => !isApplicationSubmitted && navigate("/applicationForm")}
-                // onClick={() => navigate("/applicationForm")}
-                disabled={isApplicationSubmitted}
+                // onClick={() => !isApplicationSubmitted && navigate("/applicationForm")}
+                onClick={() => navigate('/applicationForm')}
+                // disabled={isApplicationSubmitted}
                 colorScheme={isApplicationSubmitted ? 'green' : 'blue'}
-        />
+              />
 
               {/* Profile Action */}
               <QuickActionButton
-          title="My Profile"
+                title="My Profile"
                 subtitle="View Profile"
                 icon={UserOutlined}
-                onClick={() => navigate("/profile")}
+                onClick={() => navigate('/profile')}
                 colorScheme="purple"
               />
 
               {/* Events Action */}
               <QuickActionButton
-          title="Events"
+                title="Events"
                 subtitle="View Events"
                 icon={CalendarOutlined}
-                onClick={() => navigate("/events")}
+                onClick={() => navigate('/events')}
                 colorScheme="orange"
               />
 
               {/* Payments Action */}
               <QuickActionButton
-          title="Payments"
+                title="Payments"
                 subtitle="Pay Now"
                 icon={CreditCardOutlined}
                 onClick={handleNext}
@@ -396,38 +561,54 @@ const Dashboard = () => {
 
           {/* Application Status Section */}
           <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Application Status</h2>
+            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
+              Application Status
+            </h2>
             <div className="space-y-2.5 sm:space-y-4">
               {/* Application Submitted */}
               <div className="flex items-start gap-2 sm:gap-3">
-                <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  isApplicationSubmitted ? 'bg-blue-100' : 'bg-gray-100'
-                }`}>
+                <div
+                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    isApplicationSubmitted ? 'bg-blue-100' : 'bg-gray-100'
+                  }`}>
                   {isApplicationSubmitted ? (
-                    <span className="text-blue-600 text-sm sm:text-base">✓</span>
+                    <span className="text-blue-600 text-sm sm:text-base">
+                      ✓
+                    </span>
                   ) : (
-                    <span className="text-gray-400 text-sm sm:text-base">○</span>
+                    <span className="text-gray-400 text-sm sm:text-base">
+                      ○
+                    </span>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm sm:text-base text-gray-800">Application Submitted</h3>
+                  <h3 className="font-semibold text-sm sm:text-base text-gray-800">
+                    Application Submitted
+                  </h3>
                   <p className="text-xs sm:text-sm text-gray-500">
-                    {isApplicationSubmitted ? 'Completed: June 5, 2024' : 'Not completed yet'}
+                    {isApplicationSubmitted
+                      ? 'Completed: June 5, 2024'
+                      : 'Not completed yet'}
                   </p>
                 </div>
               </div>
 
               {/* In Review */}
               <div className="flex items-start gap-2 sm:gap-3">
-                <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  isApplicationSubmitted ? 'bg-blue-500' : 'bg-gray-100'
-                }`}>
-                  <FormOutlined className={`text-xs sm:text-sm ${
-                    isApplicationSubmitted ? 'text-white' : 'text-gray-400'
-                  }`} />
+                <div
+                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    isApplicationSubmitted ? 'bg-blue-500' : 'bg-gray-100'
+                  }`}>
+                  <FormOutlined
+                    className={`text-xs sm:text-sm ${
+                      isApplicationSubmitted ? 'text-white' : 'text-gray-400'
+                    }`}
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm sm:text-base text-gray-800">In Review</h3>
+                  <h3 className="font-semibold text-sm sm:text-base text-gray-800">
+                    In Review
+                  </h3>
                   <p className="text-xs sm:text-sm text-gray-500">
                     {isApplicationSubmitted ? 'Current Stage' : 'Pending'}
                   </p>
@@ -440,7 +621,9 @@ const Dashboard = () => {
                   <span className="text-gray-400 text-sm sm:text-base">○</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm sm:text-base text-gray-800">Approved</h3>
+                  <h3 className="font-semibold text-sm sm:text-base text-gray-800">
+                    Approved
+                  </h3>
                   <p className="text-xs sm:text-sm text-gray-500">Pending</p>
                 </div>
               </div>
@@ -450,9 +633,11 @@ const Dashboard = () => {
           {/* Upcoming Events Section */}
           <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <h2 className="text-lg sm:text-xl font-semibold">Upcoming Events</h2>
-              <button 
-                onClick={() => navigate("/events")}
+              <h2 className="text-lg sm:text-xl font-semibold">
+                Upcoming Events
+              </h2>
+              <button
+                onClick={() => navigate('/events')}
                 className="text-blue-600 hover:text-blue-700 text-xs sm:text-sm font-medium">
                 View All
               </button>
@@ -464,11 +649,15 @@ const Dashboard = () => {
                   <CalendarOutlined className="text-blue-600 text-lg sm:text-xl" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm sm:text-base text-gray-800">Annual Member Mixer</h3>
-                  <p className="text-xs sm:text-sm text-gray-600">July 15, 2024 @ 6:00 PM</p>
+                  <h3 className="font-semibold text-sm sm:text-base text-gray-800">
+                    Annual Member Mixer
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-600">
+                    July 15, 2024 @ 6:00 PM
+                  </p>
                 </div>
-                <button 
-                  onClick={() => navigate("/events")}
+                <button
+                  onClick={() => navigate('/events')}
                   className="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium">
                   Register
                 </button>
@@ -480,11 +669,15 @@ const Dashboard = () => {
                   <CalendarOutlined className="text-blue-600 text-lg sm:text-xl" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm sm:text-base text-gray-800">Workshop: Advanced Techniques</h3>
-                  <p className="text-xs sm:text-sm text-gray-600">August 2, 2024 @ 9:00 AM</p>
+                  <h3 className="font-semibold text-sm sm:text-base text-gray-800">
+                    Workshop: Advanced Techniques
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-600">
+                    August 2, 2024 @ 9:00 AM
+                  </p>
                 </div>
-                <button 
-                  onClick={() => navigate("/events")}
+                <button
+                  onClick={() => navigate('/events')}
                   className="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-xs sm:text-sm font-medium">
                   Learn More
                 </button>
@@ -497,33 +690,43 @@ const Dashboard = () => {
         <div className="space-y-3 sm:space-y-6">
           {/* Profile Completion Section */}
           <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Profile Completion</h2>
+            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
+              Profile Completion
+            </h2>
             <p className="text-gray-600 text-xs sm:text-sm mb-2.5 sm:mb-4">
-              {isApplicationSubmitted 
-                ? "Your profile is complete! Well done." 
-                : "Complete your profile to get the most out of your membership."}
+              {isApplicationSubmitted
+                ? 'Your profile is complete! Well done.'
+                : 'Complete your profile to get the most out of your membership.'}
             </p>
             <div className="mb-2.5 sm:mb-4">
               <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                <span className={`text-xl sm:text-2xl font-bold ${
-                  getProfileCompletion() === 100 ? 'text-green-600' : 'text-blue-600'
-                }`}>
+                <span
+                  className={`text-xl sm:text-2xl font-bold ${
+                    getProfileCompletion() === 100
+                      ? 'text-green-600'
+                      : 'text-blue-600'
+                  }`}>
                   {getProfileCompletion()}%
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
+                <div
                   className={`h-2 rounded-full transition-all duration-500 ${
-                    getProfileCompletion() === 100 ? 'bg-green-600' : 'bg-blue-600'
-                  }`} 
-                  style={{ width: `${getProfileCompletion()}%` }}>
-                </div>
+                    getProfileCompletion() === 100
+                      ? 'bg-green-600'
+                      : 'bg-blue-600'
+                  }`}
+                  style={{ width: `${getProfileCompletion()}%` }}></div>
               </div>
             </div>
-            <button 
-              onClick={() => navigate(isApplicationSubmitted ? "/profile" : "/applicationForm")}
+            <button
+              onClick={() =>
+                navigate(
+                  isApplicationSubmitted ? '/profile' : '/applicationForm',
+                )
+              }
               className={`w-full px-4 py-2.5 sm:py-3 rounded-lg transition-colors font-medium text-sm sm:text-base ${
-                isApplicationSubmitted 
+                isApplicationSubmitted
                   ? 'bg-green-600 text-white hover:bg-green-700'
                   : 'bg-blue-600 text-white hover:bg-blue-700'
               }`}>
@@ -533,25 +736,33 @@ const Dashboard = () => {
 
           {/* Payments & Billing Section */}
           <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Payments & Billing</h2>
+            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
+              Payments & Billing
+            </h2>
             <div className="space-y-2.5 sm:space-y-4">
               <div>
-                <p className="text-xs sm:text-sm text-gray-600 mb-1">Next Payment Due</p>
-                <p className="text-base sm:text-lg font-semibold text-gray-800">Dec 1, 2025</p>
+                <p className="text-xs sm:text-sm text-gray-600 mb-1">
+                  Next Payment Due
+                </p>
+                <p className="text-base sm:text-lg font-semibold text-gray-800">
+                  Dec 1, 2025
+                </p>
               </div>
               <div className="text-right">
                 <p className="text-2xl sm:text-3xl font-bold text-blue-600">
                   {categoryData ? formatCurrency(getPaymentAmount()) : '€0.00'}
                 </p>
-                {categoryData && subscriptionDetail?.subscriptionDetails?.paymentType && (
-                  <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                    {subscriptionDetail.subscriptionDetails.paymentType === 'deduction' 
-                      ? 'Monthly Payment' 
-                      : 'Annual Payment'}
-                  </p>
-                )}
+                {categoryData &&
+                  subscriptionDetail?.subscriptionDetails?.paymentType && (
+                    <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                      {subscriptionDetail.subscriptionDetails.paymentType ===
+                      'deduction'
+                        ? 'Monthly Payment'
+                        : 'Annual Payment'}
+                    </p>
+                  )}
               </div>
-              <button 
+              <button
                 onClick={handleNext}
                 disabled={!categoryData}
                 className={`w-full px-4 py-2.5 sm:py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm sm:text-base ${

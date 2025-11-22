@@ -111,7 +111,7 @@ const SubscriptionModal = ({
 
   const getDisplayPrice = () => {
     const defaultPrice =
-      formData?.subscriptionDetails?.paymentType === 'Card Payment'
+      formData?.subscriptionDetails?.paymentType === 'Credit Card'
         ? priceInfo.full
         : priceInfo.monthly;
     return customPrice || defaultPrice;
