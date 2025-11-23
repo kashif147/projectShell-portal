@@ -15,7 +15,7 @@ export const microSoftUrlRedirect = async () => {
   authUrl.searchParams.append('nonce', 'defaultNonce');
   authUrl.searchParams.append(
     'redirect_uri',
-    'http://localhost:3001, https://project-shell-portal.vercel.app',
+    'https://project-shell-portal.vercel.app',
   );
   authUrl.searchParams.append('scope', 'openid offline_access');
   authUrl.searchParams.append('response_type', 'code');
