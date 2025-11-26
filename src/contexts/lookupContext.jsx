@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { getHeaders } from '../helpers/auth.helper';
 import { fetchAllCountry, fetchAllLookupRequest, fetchLookupHierarchyByType } from '../api/lookup.api';
-import { fetchAllCategoryRequest } from '../api/category.api';
+import { fetchAllCategoryRequest, fetchCategoryByTypeId } from '../api/category.api';
 
 const getAllLookups = async () => {
   try {
@@ -134,8 +134,8 @@ export const LookupProvider = ({ children }) => {
       if (!headers.token) {
         throw new Error('No token found');
       }
-      const response = await fetchAllCategoryRequest();
-      const results = response?.data?.data || [];
+      const response = await fetchCategoryByTypeId('68dae613c5b15073d66b891f');
+      const results = response?.data?.data?.products || [];
       await saveLocal('categories', results);
       setCategoryLookups(results);
       setError(null);

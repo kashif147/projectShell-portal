@@ -1,5 +1,5 @@
 // src/components/modals/SubscriptionModal.jsx
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { Modal, Form, Input, Divider } from 'antd';
 import {
   useStripe,
@@ -34,6 +34,10 @@ const SubscriptionModal = ({
     cardExpiry: false,
     cardCvc: false,
   });
+
+  // Refs for auto-focusing card elements
+  const cardExpiryRef = useRef(null);
+  const cardCvcRef = useRef(null);
 
   const { userDetail, user } = useSelector(state => state.auth);
 
@@ -456,6 +460,10 @@ const SubscriptionModal = ({
                       ...prev,
                       cardNumber: e.complete,
                     }));
+                    // Auto-focus expiry field when card number is complete
+                    if (e.complete && cardExpiryRef.current) {
+                      cardExpiryRef.current.focus();
+                    }
                   }}
                 />
               </div>
@@ -499,12 +507,17 @@ const SubscriptionModal = ({
                 </div>
                 <div className="pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
                   <CardExpiryElement
+                    onReady={element => (cardExpiryRef.current = element)}
                     options={ELEMENT_OPTIONS}
                     onChange={e => {
                       setCardComplete(prev => ({
                         ...prev,
                         cardExpiry: e.complete,
                       }));
+                      // Auto-focus CVC field when expiry is complete
+                      if (e.complete && cardCvcRef.current) {
+                        cardCvcRef.current.focus();
+                      }
                     }}
                   />
                 </div>
@@ -546,6 +559,7 @@ const SubscriptionModal = ({
                 </div>
                 <div className="pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
                   <CardCvcElement
+                    onReady={element => (cardCvcRef.current = element)}
                     options={ELEMENT_OPTIONS}
                     onChange={e => {
                       setCardComplete(prev => ({

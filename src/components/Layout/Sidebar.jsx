@@ -206,8 +206,8 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
                         <div 
                           className="text-xl"
                           style={{ color: isActive ? '#ffffff' : item.color }}
-                        >
-                          {item.icon}
+                      >
+                        {item.icon}
                         </div>
                       </div>
                       
@@ -315,7 +315,7 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
                       }}
                     >
                       <div className="text-2xl text-white">
-                        {item.icon}
+                      {item.icon}
                       </div>
                     </div>
                   </div>
@@ -328,8 +328,8 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
                   {/* Active indicator with glow */}
                   {isActive && (
                     <>
-                      <div 
-                        className="absolute top-2 right-2 w-2 h-2 rounded-full animate-pulse"
+                    <div 
+                      className="absolute top-2 right-2 w-2 h-2 rounded-full animate-pulse"
                         style={{ 
                           backgroundColor: item.color,
                           boxShadow: `0 0 8px ${item.color}`
@@ -338,7 +338,7 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
                       <div 
                         className="absolute inset-0 rounded-2xl border-2 animate-pulse"
                         style={{ borderColor: `${item.color}60` }}
-                      />
+                    />
                     </>
                   )}
                   

@@ -69,8 +69,6 @@ const ApplicationForm = () => {
 
   console.log('Application ID', personalDetail?.applicationId);
 
-  console.log('professionalDetail=======>',professionalDetail)
-
   useEffect(() => {
     if (personalDetail?.applicationId) {
       // Reset payment intent state for new application
@@ -330,6 +328,10 @@ const ApplicationForm = () => {
             subscriptionDetail?.subscriptionDetails?.paymentFrequency ||
             prev.subscriptionDetails.paymentFrequency ||
             '',
+          exclusiveDiscountsAndOffers:
+            subscriptionDetail?.subscriptionDetails?.exclusiveDiscountsAndOffers ??
+            prev.subscriptionDetails.exclusiveDiscountsAndOffers ??
+            false,
         },
       }));
     }
@@ -499,14 +501,12 @@ const ApplicationForm = () => {
         professionalInfo.professionalDetails[key] = value;
       }
     });
-console.log('professionalInfo==========>', professionalInfo);
-console.log('personalDetail?.applicationId==========>', personalDetail?.applicationId);
+    
     createProfessionalDetailRequest(
       personalDetail?.applicationId,
       professionalInfo,
     )
       .then(res => {
-        console.log('res==========>', res);
         if (res.status === 200) {
           // Update professional detail and move to next step
           getProfessionalDetail(personalDetail?.applicationId);
@@ -596,6 +596,8 @@ console.log('personalDetail?.applicationId==========>', personalDetail?.applicat
         inmoRewards: data?.inmoRewards === true,
         valueAddedServices: data?.valueAddedServices === true,
         termsAndConditions: data?.termsAndConditions === true,
+        exclusiveDiscountsAndOffers:data?.exclusiveDiscountsAndOffers === true,
+        paymentFrequency: data?.paymentType === 'Credit Card' ? "Annual" : "Monthly",
         ...defaultFields,
       };
 
@@ -621,8 +623,7 @@ console.log('personalDetail?.applicationId==========>', personalDetail?.applicat
 
         // Check if undergraduate student - they don't need payment
         if (
-          professionalDetail?.professionalDetails?.membershipCategory ===
-          'MEM-UG'
+          categoryData?.name === 'Undergraduate Student'
         ) {
           setIsSubmitted(true);
           setStatusModal({
@@ -672,6 +673,8 @@ console.log('personalDetail?.applicationId==========>', personalDetail?.applicat
         inmoRewards: data?.inmoRewards === true,
         valueAddedServices: data?.valueAddedServices === true,
         termsAndConditions: data?.termsAndConditions === true,
+        exclusiveDiscountsAndOffers: data?.exclusiveDiscountsAndOffers === true,
+        paymentFrequency: data?.paymentType === 'Credit Card' ? "Annual" : "Monthly",
         ...defaultFields,
       };
 
@@ -697,8 +700,7 @@ console.log('personalDetail?.applicationId==========>', personalDetail?.applicat
 
         // Check if undergraduate student - they don't need payment
         if (
-          professionalDetail?.professionalDetails?.membershipCategory ===
-          'MEM-UG'
+          categoryData?.name === 'Undergraduate Student'
         ) {
           setIsSubmitted(true);
           setStatusModal({
