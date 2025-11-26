@@ -79,11 +79,12 @@ const SubscriptionDetails = ({
 
   // Create pricing entries array to display
   const pricingEntries = currentPrice ? [['Annual Fee', currentPrice]] : [];
+  
 
   return (
     <div className="space-y-6">
       {/* Your Subscription Fees Section */}
-      {categoryData && currentPrice && (
+      {categoryData && (
         <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-lg shadow-sm border border-blue-200 overflow-hidden hover:shadow-md transition-all duration-300">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-3">
@@ -282,8 +283,8 @@ const SubscriptionDetails = ({
                     Would you like to hear about exclusive discounts and offers for INMO members?
                   </span>
                 }
-                name="incomeProtectionScheme"
-                checked={formData?.incomeProtectionScheme || false}
+                name="exclusiveDiscountsAndOffers"
+                checked={formData?.exclusiveDiscountsAndOffers || false}
                 onChange={handleInputChange}
               />
             </div>

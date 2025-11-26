@@ -413,21 +413,21 @@ const ProfessionalDetails = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-            <Radio
-              label="Are you currently undertaking a nursing adaptation programme?"
-              name="nursingAdaptationProgramme"
-              value={formData?.nursingAdaptationProgramme || 'no'}
-              onChange={e =>
-                onFormDataChange({
-                  ...formData,
-                  nursingAdaptationProgramme: e.target.value,
-                })
-              }
-              options={[
-                { value: 'yes', label: 'Yes' },
-                { value: 'no', label: 'No' },
-              ]}
-            />
+          <Radio
+            label="Are you currently undertaking a nursing adaptation programme?"
+            name="nursingAdaptationProgramme"
+            value={formData?.nursingAdaptationProgramme || 'no'}
+            onChange={e =>
+              onFormDataChange({
+                ...formData,
+                nursingAdaptationProgramme: e.target.value,
+              })
+            }
+            options={[
+              { value: 'yes', label: 'Yes' },
+              { value: 'no', label: 'No' },
+            ]}
+          />
           </div>
 
           <Input

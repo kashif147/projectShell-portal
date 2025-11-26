@@ -40,10 +40,16 @@ const SubscriptionWrapper = ({
         // console.log('CategoryData========>', categoryData);
         const currentPricing = categoryData?.currentPricing || {};
 
-        const amountInCents = currentPricing?.price; // Stripe expects amount in cents
+        const basePrice = currentPricing?.price; // Stripe expects amount in cents
         const currency = currentPricing?.currency || 'eur';
 
-        if (!amountInCents) throw new Error('Invalid category price data');
+        if (!basePrice) throw new Error('Invalid category price data');
+
+        // Calculate amount based on payment type
+        const paymentType = formData?.subscriptionDetails?.paymentType;
+        const amountInCents = paymentType === 'Credit Card' 
+          ? basePrice 
+          : Math.round(basePrice / 4); // Divide by 4 for other payment types
 
         // ✅ Step 2: Prepare dynamic data
         // console.log('userDetail=======>', userDetail);
@@ -58,7 +64,9 @@ const SubscriptionWrapper = ({
           currency,
           metadata: {
             applicationId,
-            description: 'Annual membership fees',
+            description: paymentType === 'Credit Card' 
+              ? 'Annual membership fees' 
+              : 'Quarterly membership fees',
             tenantId,
             userId,
             membershipCategory,

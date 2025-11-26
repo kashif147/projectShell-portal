@@ -30,40 +30,28 @@ const PersonalInformation = ({
     }
   }, []);
 
-  // Set default value to Ireland if countryPrimaryQualification is empty
-  React.useEffect(() => {
-    if (!formData?.countryPrimaryQualification && countryLookups && countryLookups.length > 0) {
-      const irelandCountry = countryLookups.find(c => 
-        c?.code === 'Ireland' || 
-        c?.name === 'Ireland' || 
-        c?.displayname === 'Ireland'
-      );
-      if (irelandCountry) {
-        onFormDataChange({
-          ...formData,
-          countryPrimaryQualification: irelandCountry.displayname,
-        });
-      }
-    }
-  }, [countryLookups]);
+  const countryOptions = [
+    { value: '', label: 'Select' },
+    ...(countryLookups || []).map(c => ({
+      value: c?.displayname,
+      label: c?.displayname || c?.name || c?.code,
+    })),
+  ];
 
-  const countryOptions = (countryLookups || []).map(c => ({
-    value: c?.displayname,
-    label: c?.displayname || c?.name || c?.code,
-  }));
-
-  const getCountryDisplayName = (codeOrName) => {
+  const getCountryDisplayName = codeOrName => {
     if (!codeOrName || !countryLookups) return codeOrName;
-    
-    const byDisplayName = countryLookups.find(c => c?.displayname === codeOrName);
+
+    const byDisplayName = countryLookups.find(
+      c => c?.displayname === codeOrName,
+    );
     if (byDisplayName) return codeOrName;
-    
+
     const byCode = countryLookups.find(c => c?.code === codeOrName);
     if (byCode) return byCode.displayname;
-    
+
     const byName = countryLookups.find(c => c?.name === codeOrName);
     if (byName) return byName.displayname;
-    
+
     return codeOrName;
   };
   const { isLoaded } = useJsApiLoader({
@@ -83,7 +71,7 @@ const PersonalInformation = ({
   };
 
   // Handle phone number change for PhoneInput component
-  const handleMobileNumberChange = (value) => {
+  const handleMobileNumberChange = value => {
     onFormDataChange({
       ...formData,
       mobileNo: value || '',
@@ -103,7 +91,7 @@ const PersonalInformation = ({
       addressLine3: '',
       addressLine4: '',
       eircode: '',
-      country: 'IE', // Reset to default Ireland
+      country: '',
     });
   };
 
@@ -113,7 +101,7 @@ const PersonalInformation = ({
     if (places && places.length > 0) {
       const place = places[0];
       const placeId = place.place_id;
-      
+
       // Update search value with the formatted address
       if (place.formatted_address) {
         setSearchValue(place.formatted_address);
@@ -160,14 +148,20 @@ const PersonalInformation = ({
           const eircode = `${postalCode}`.trim();
 
           // Find the country code from countryLookups based on the country name or code
-          let countryCode = formData?.country || 'IE'; // Default to Ireland if not found
+          let countryCode = formData?.country || 'Ireland'; // Default to Ireland if not found
           if (countryLongName || countryShortName) {
-            console.log('Country from API - Long Name:', countryLongName, 'Short Name:', countryShortName);
-            const matchedCountry = countryLookups?.find(c => 
-              c?.code === countryLongName || 
-              c?.code === countryShortName ||
-              c?.name === countryLongName ||
-              c?.displayname === countryLongName
+            console.log(
+              'Country from API - Long Name:',
+              countryLongName,
+              'Short Name:',
+              countryShortName,
+            );
+            const matchedCountry = countryLookups?.find(
+              c =>
+                c?.code === countryLongName ||
+                c?.code === countryShortName ||
+                c?.name === countryLongName ||
+                c?.displayname === countryLongName,
             );
             if (matchedCountry) {
               countryCode = matchedCountry.code;
@@ -285,7 +279,7 @@ const PersonalInformation = ({
             label="Country of Primary Qualification"
             name="countryPrimaryQualification"
             placeholder="Select country"
-            value={getCountryDisplayName(formData?.countryPrimaryQualification) || ''}
+            value={getCountryDisplayName(formData?.countryPrimaryQualification)}
             onChange={handleInputChange}
             options={countryOptions}
             isSearchable
@@ -325,7 +319,7 @@ const PersonalInformation = ({
         {/* Consent and Preferred Address Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
           {/* Consent Checkbox */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="mb-4 p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
             <Checkbox
               label={
                 <div>
@@ -333,7 +327,7 @@ const PersonalInformation = ({
                     I consent to receive Correspondence
                   </span>
                   <p className="text-xs text-gray-500 mt-1">
-                    Please tick this box if you would not like to receive
+                    Please un-tick this box if you would not like to receive
                     correspondence from us to this address.
                   </p>
                 </div>
@@ -345,7 +339,7 @@ const PersonalInformation = ({
           </div>
 
           {/* Preferred Address Radio */}
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <div className="mb-4 p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
             <Radio
               label="Preferred address"
               name="preferredAddress"
@@ -354,7 +348,7 @@ const PersonalInformation = ({
               showValidation={showValidation}
               options={[
                 { value: 'home', label: 'Home' },
-                { value: 'personal', label: 'Personal' },
+                { value: 'work', label: 'Work' },
               ]}
             />
           </div>
@@ -382,7 +376,7 @@ const PersonalInformation = ({
                 </span>
               </label>
             </div>
-            
+
             {isLoaded && (
               <div className="relative">
                 <StandaloneSearchBox
@@ -393,7 +387,7 @@ const PersonalInformation = ({
                     type="text"
                     placeholder="Start typing your address or Eircode..."
                     value={searchValue}
-                    onChange={(e) => setSearchValue(e.target.value)}
+                    onChange={e => setSearchValue(e.target.value)}
                     className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
                 </StandaloneSearchBox>
@@ -402,10 +396,18 @@ const PersonalInformation = ({
                     type="button"
                     onClick={handleClearAddress}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200 focus:outline-none z-10"
-                    title="Clear address"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    title="Clear address">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 )}
@@ -464,7 +466,7 @@ const PersonalInformation = ({
             label="Country"
             name="country"
             placeholder="Select country"
-            value={formData?.country || 'IE'}
+            value={getCountryDisplayName(formData?.country) || 'Ireland'}
             onChange={handleInputChange}
             options={countryOptions}
             isSearchable
@@ -510,7 +512,6 @@ const PersonalInformation = ({
               )}
             </label>
             <PhoneInput
-              international
               defaultCountry="IE"
               value={formData?.mobileNo || ''}
               onChange={handleMobileNumberChange}
@@ -519,7 +520,7 @@ const PersonalInformation = ({
                   ? 'border-red-500 bg-red-50'
                   : 'border-blue-500'
               }`}
-              placeholder="345 123 4567"
+              placeholder="85 123 4567"
             />
           </div>
 
