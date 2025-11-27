@@ -106,7 +106,7 @@ export const DatePicker = ({
           onChange({
             target: {
               name,
-              value: parsedDate.format("DD/MM/YYYY"),
+              value: parsedDate.toISOString(),
             },
           });
         }
@@ -144,7 +144,7 @@ export const DatePicker = ({
         onChange({
           target: {
             name,
-            value: date.format("DD/MM/YYYY"),
+            value: date.toISOString(),
           },
         });
       }

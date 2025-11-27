@@ -11,7 +11,8 @@ const SubscriptionDetails = ({
   showValidation = false,
   categoryData = null,
 }) => {
-  const { primarySectionLookups, secondarySectionLookups, paymentLooups } = useLookup();
+  const { primarySectionLookups, secondarySectionLookups, paymentLooups } =
+    useLookup();
 
   const primaryOptions = (primarySectionLookups || []).map(l => ({
     value: l?.DisplayName || l?.lookupname,
@@ -26,9 +27,9 @@ const SubscriptionDetails = ({
     label: l?.DisplayName || l?.lookupname,
     code: l?.code,
   }));
-  
+
   // Helper function to check if payment type requires payroll number
-  const requiresPayrollNo = (paymentType) => {
+  const requiresPayrollNo = paymentType => {
     const paymentTypesRequiringPayroll = ['Direct Debit', 'Salary Deduction'];
     return paymentTypesRequiringPayroll.includes(paymentType);
   };
@@ -39,8 +40,11 @@ const SubscriptionDetails = ({
       // Clear payrollNo when switching to a payment type that doesn't require it
       const newPaymentType = value;
       const oldPaymentType = formData?.paymentType;
-      
-      if (requiresPayrollNo(oldPaymentType) && !requiresPayrollNo(newPaymentType)) {
+
+      if (
+        requiresPayrollNo(oldPaymentType) &&
+        !requiresPayrollNo(newPaymentType)
+      ) {
         onFormDataChange({
           ...formData,
           [name]: value,
@@ -64,13 +68,16 @@ const SubscriptionDetails = ({
   const formatPrice = (priceInCents, currency = 'EUR') => {
     if (!priceInCents || priceInCents === 0) return '€0.00';
     const priceInEuros = priceInCents / 100;
-    const currencySymbol = currency.toUpperCase() === 'EUR' ? '€' : currency.toUpperCase();
+    const currencySymbol =
+      currency.toUpperCase() === 'EUR' ? '€' : currency.toUpperCase();
     return `${currencySymbol}${priceInEuros.toFixed(2)}`;
   };
 
   // Format label for display
-  const formatLabel = (key) => {
-    return key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+  const formatLabel = key => {
+    return key
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, str => str.toUpperCase());
   };
 
   // Get pricing from currentPricing
@@ -79,7 +86,6 @@ const SubscriptionDetails = ({
 
   // Create pricing entries array to display
   const pricingEntries = currentPrice ? [['Annual Fee', currentPrice]] : [];
-  
 
   return (
     <div className="space-y-6">
@@ -103,8 +109,12 @@ const SubscriptionDetails = ({
                 </svg>
               </div>
               <div>
-                <h2 className="text-lg font-bold text-gray-900">Your Subscription Fees</h2>
-                <p className="text-xs text-gray-500">Based on your selected membership category</p>
+                <h2 className="text-lg font-bold text-gray-900">
+                  Your Subscription Fees
+                </h2>
+                <p className="text-xs text-gray-500">
+                  Based on your selected membership category
+                </p>
               </div>
             </div>
             <div className="text-right">
@@ -135,7 +145,9 @@ const SubscriptionDetails = ({
             </svg>
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Payment Information</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Payment Information
+            </h2>
             <p className="text-sm text-gray-600 mt-1">
               Select your preferred payment method.
             </p>
@@ -196,6 +208,7 @@ const SubscriptionDetails = ({
           <Radio
             label="Please select the most appropriate option below"
             name="memberStatus"
+            required
             value={formData?.memberStatus || ''}
             onChange={e => {
               const newStatus = e.target.value;
@@ -208,6 +221,7 @@ const SubscriptionDetails = ({
               };
               onFormDataChange(updatedData);
             }}
+            showValidation={showValidation}
             options={[
               { value: 'new', label: 'New member' },
               { value: 'graduate', label: 'Newly graduated' },
@@ -243,22 +257,31 @@ const SubscriptionDetails = ({
                         href="https://cornmarket.ie/rewards"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 underline hover:text-blue-800 cursor-pointer"
-                      >
+                        className="text-blue-600 underline hover:text-blue-800 cursor-pointer">
                         Rewards
                       </a>{' '}
                       for INMO members
                     </span>
                     <p className="text-xs text-gray-500 mt-1">
-                      By ticking here, you confirm that you agree to the Terms & Conditions available on{' '}
-                      <a href="https://cornmarket.ie/rewards-club-terms" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline hover:text-blue-800">
+                      By ticking here, you confirm that you agree to the Terms &
+                      Conditions available on{' '}
+                      <a
+                        href="https://cornmarket.ie/rewards-club-terms"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline hover:text-blue-800">
                         Cornmarket.ie/rewards-club-terms
                       </a>{' '}
                       and the Data Protection Statement available on{' '}
-                      <a href="https://cornmarket.ie/rewards-dps" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline hover:text-blue-800">
+                      <a
+                        href="https://cornmarket.ie/rewards-dps"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline hover:text-blue-800">
                         Cornmarket.ie/rewards-dps
                       </a>
-                      . Cornmarket will contact you about your Rewards Benefits. You can opt out at any time.
+                      . Cornmarket will contact you about your Rewards Benefits.
+                      You can opt out at any time.
                     </p>
                   </div>
                 }
@@ -280,7 +303,8 @@ const SubscriptionDetails = ({
               <Checkbox
                 label={
                   <span className="font-semibold text-gray-900">
-                    Would you like to hear about exclusive discounts and offers for INMO members?
+                    Would you like to hear about exclusive discounts and offers
+                    for INMO members?
                   </span>
                 }
                 name="exclusiveDiscountsAndOffers"
@@ -299,22 +323,46 @@ const SubscriptionDetails = ({
                         href="https://cornmarket.ie/income-protection"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 underline hover:text-blue-800 cursor-pointer"
-                      >
+                        className="text-blue-600 underline hover:text-blue-800 cursor-pointer">
                         INMO Income Protection Scheme
                       </a>
                       .
                     </span>
                     <p className="text-xs text-gray-500 mt-1">
-                      By selecting 'I consent' below, you are agreeing to the INMO, sharing your Trade Union membership details with Cornmarket. Cornmarket as Scheme Administrator will process and retain details of your Trade Union membership for the purposes of assessing eligibility and admitting eligible members (automatically) to the Income Protection Scheme (with 9 Months' Free Cover), and for the ongoing administration of the Scheme. Where you have also opted in to receiving marketing communications, Cornmarket will provide you with information on discounts and offers they have for INMO members. This consent can be withdrawn at any time by emailing Cornmarket at dataprotection@cornmarket.ie. Please note, if you do consent below, your data will be shared with Cornmarket, and you will be assessed for eligibility for automatic Income Protection Scheme membership. If you do not consent, your data will not be shared with Cornmarket for this purpose, you will not be assessed for automatic Scheme membership (including 9 Months' Free Cover) and you will have to contact Cornmarket separately should you wish to apply for Scheme membership. This offer will run on a pilot basis. Terms and conditions apply and are subject to change.
+                      By selecting 'I consent' below, you are agreeing to the
+                      INMO, sharing your Trade Union membership details with
+                      Cornmarket. Cornmarket as Scheme Administrator will
+                      process and retain details of your Trade Union membership
+                      for the purposes of assessing eligibility and admitting
+                      eligible members (automatically) to the Income Protection
+                      Scheme (with 9 Months' Free Cover), and for the ongoing
+                      administration of the Scheme. Where you have also opted in
+                      to receiving marketing communications, Cornmarket will
+                      provide you with information on discounts and offers they
+                      have for INMO members. This consent can be withdrawn at
+                      any time by emailing Cornmarket at
+                      dataprotection@cornmarket.ie. Please note, if you do
+                      consent below, your data will be shared with Cornmarket,
+                      and you will be assessed for eligibility for automatic
+                      Income Protection Scheme membership. If you do not
+                      consent, your data will not be shared with Cornmarket for
+                      this purpose, you will not be assessed for automatic
+                      Scheme membership (including 9 Months' Free Cover) and you
+                      will have to contact Cornmarket separately should you wish
+                      to apply for Scheme membership. This offer will run on a
+                      pilot basis. Terms and conditions apply and are subject to
+                      change.
                     </p>
                     <p className="text-xs font-semibold text-gray-900 mt-2">
-                      Important: If you do not give your consent, your Trade union membership data will not be shared with Cornmarket for this purpose. This means you will not be assessed for Automatic Access to the Scheme.
+                      Important: If you do not give your consent, your Trade
+                      union membership data will not be shared with Cornmarket
+                      for this purpose. This means you will not be assessed for
+                      Automatic Access to the Scheme.
                     </p>
                   </div>
                 }
-                name="inmoRewards"
-                checked={formData?.inmoRewards || false}
+                name="incomeProtectionScheme"
+                checked={formData?.incomeProtectionScheme || false}
                 onChange={handleInputChange}
               />
             </div>
@@ -340,7 +388,9 @@ const SubscriptionDetails = ({
             </svg>
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Additional Memberships</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Additional Memberships
+            </h2>
             <p className="text-sm text-gray-600 mt-1">
               Are you a member of another Trade Union?
             </p>
@@ -355,12 +405,15 @@ const SubscriptionDetails = ({
                 name="otherIrishTradeUnion"
                 required
                 value={formData?.otherIrishTradeUnion || ''}
-                onChange={e =>
+                onChange={e => {
+                  const newValue = e.target.value;
                   onFormDataChange({
                     ...formData,
-                    otherIrishTradeUnion: e.target.value,
-                  })
-                }
+                    otherIrishTradeUnion: newValue,
+                    unionName:
+                      newValue === 'no' ? '' : formData?.unionName || '',
+                  });
+                }}
                 showValidation={showValidation}
                 options={[
                   { value: 'no', label: 'No' },
@@ -423,7 +476,9 @@ const SubscriptionDetails = ({
             </svg>
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Recruitment Details</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Recruitment Details
+            </h2>
             <p className="text-sm text-gray-600 mt-1">
               Were you recruited by another member?
             </p>
@@ -466,7 +521,9 @@ const SubscriptionDetails = ({
             </svg>
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Section Details</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Section Details
+            </h2>
             <p className="text-sm text-gray-600 mt-1">
               Select your primary and secondary sections.
             </p>
@@ -503,7 +560,10 @@ const SubscriptionDetails = ({
               value={formData?.secondarySection || ''}
               onChange={handleInputChange}
               placeholder="Select secondary section"
-              options={[...secondaryOptions, { value: 'other', label: 'Other' }]}
+              options={[
+                ...secondaryOptions,
+                { value: 'other', label: 'Other' },
+              ]}
             />
             <Input
               label="Other Secondary Section"
@@ -537,7 +597,9 @@ const SubscriptionDetails = ({
             </svg>
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Additional Services & Terms</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Additional Services & Terms
+            </h2>
             <p className="text-sm text-gray-600 mt-1">
               Select additional services and agree to terms.
             </p>
@@ -549,7 +611,8 @@ const SubscriptionDetails = ({
             <Checkbox
               label={
                 <span className="font-semibold text-gray-900">
-                  Tick here to allow our partners to contact you about Value added Services by Email and SMS
+                  Tick here to allow our partners to contact you about Value
+                  added Services by Email and SMS
                 </span>
               }
               name="valueAddedServices"
@@ -566,22 +629,19 @@ const SubscriptionDetails = ({
                     I have read and agree to the{' '}
                     <a
                       href="#"
-                      className="text-blue-600 underline hover:text-blue-800"
-                    >
+                      className="text-blue-600 underline hover:text-blue-800">
                       INMO Data Protection Statement
                     </a>
                     , the{' '}
                     <a
                       href="#"
-                      className="text-blue-600 underline hover:text-blue-800"
-                    >
+                      className="text-blue-600 underline hover:text-blue-800">
                       INMO Privacy Statement
                     </a>{' '}
                     and the{' '}
                     <a
                       href="#"
-                      className="text-blue-600 underline hover:text-blue-800"
-                    >
+                      className="text-blue-600 underline hover:text-blue-800">
                       INMO Conditions of Membership
                     </a>
                   </span>

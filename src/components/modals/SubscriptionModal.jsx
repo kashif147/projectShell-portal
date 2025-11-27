@@ -114,8 +114,9 @@ const SubscriptionModal = ({
   }, [membershipCategory]);
 
   const getDisplayPrice = () => {
-    const defaultPrice =
-      formData?.subscriptionDetails?.paymentType === 'Credit Card'
+    const defaultPrice = product?.name === 'Retired Associate'
+      ? priceInfo.full // Full price for Retired Associate
+      : formData?.subscriptionDetails?.paymentType === 'Credit Card'
         ? priceInfo.full
         : priceInfo.monthly;
     return customPrice || defaultPrice;

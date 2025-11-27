@@ -47,9 +47,13 @@ const SubscriptionWrapper = ({
 
         // Calculate amount based on payment type
         const paymentType = formData?.subscriptionDetails?.paymentType;
-        const amountInCents = paymentType === 'Credit Card' 
-          ? basePrice 
-          : Math.round(basePrice / 4); // Divide by 4 for other payment types
+        // Retired Associate gets full price regardless of payment type (special offer)
+        const isRetiredAssociate = categoryData?.name === 'Retired Associate';
+        const amountInCents = isRetiredAssociate
+          ? basePrice // Full price for Retired Associate
+          : paymentType === 'Credit Card' 
+            ? basePrice 
+            : Math.round(basePrice / 4); // Divide by 4 for other payment types
 
         // ✅ Step 2: Prepare dynamic data
         // console.log('userDetail=======>', userDetail);

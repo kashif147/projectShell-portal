@@ -416,7 +416,7 @@ const ProfessionalDetails = ({
           <Radio
             label="Are you currently undertaking a nursing adaptation programme?"
             name="nursingAdaptationProgramme"
-            value={formData?.nursingAdaptationProgramme || 'no'}
+            value={formData?.nursingAdaptationProgramme || ''}
             onChange={e =>
               onFormDataChange({
                 ...formData,
