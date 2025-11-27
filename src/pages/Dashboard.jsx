@@ -51,7 +51,7 @@ const Dashboard = () => {
       personalEmail: user?.userEmail || '',
       mobileNo: user?.userMobilePhone || '',
       country: 'Ireland',
-      consent: true,
+      consent: false,
     },
     professionalDetails: {},
     subscriptionDetails: {},
@@ -100,7 +100,7 @@ const Dashboard = () => {
           consent:
             personalDetail?.contactInfo?.consent ??
             prev.personalInfo.consent ??
-            true,
+            false,
           addressLine1:
             personalDetail?.contactInfo?.buildingOrHouse ||
             prev.personalInfo.addressLine1 ||

@@ -28,7 +28,7 @@ const Profile = () => {
         countryPrimaryQualification: personalDetail?.personalInfo?.countryPrimaryQualification || '',
         personalEmail: personalDetail?.contactInfo?.personalEmail || '',
         mobileNo: personalDetail?.contactInfo?.mobileNumber || '',
-        consent: personalDetail?.contactInfo?.consent ?? true,
+        consent: personalDetail?.contactInfo?.consent ?? false,
         addressLine1: personalDetail?.contactInfo?.buildingOrHouse || '',
         addressLine2: personalDetail?.contactInfo?.streetOrRoad || '',
         addressLine3: personalDetail?.contactInfo?.areaOrTown || '',

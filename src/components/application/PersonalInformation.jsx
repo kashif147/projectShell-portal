@@ -30,13 +30,44 @@ const PersonalInformation = ({
     }
   }, []);
 
-  const countryOptions = [
-    { value: '', label: 'Select' },
-    ...(countryLookups || []).map(c => ({
-      value: c?.displayname,
-      label: c?.displayname || c?.name || c?.code,
-    })),
-  ];
+  // Set default value to Ireland if countryPrimaryQualification is empty
+  React.useEffect(() => {
+    if (!formData?.countryPrimaryQualification && countryLookups && countryLookups.length > 0) {
+      const irelandCountry = countryLookups.find(c => 
+        c?.code === 'IE' || 
+        c?.name === 'Ireland' || 
+        c?.displayname === 'Ireland'
+      );
+      if (irelandCountry) {
+        onFormDataChange({
+          ...formData,
+          countryPrimaryQualification: irelandCountry.displayname,
+        });
+      }
+    }
+  }, [countryLookups]);
+
+  // Set default value to Ireland for address country field if empty
+  React.useEffect(() => {
+    if (!formData?.country && countryLookups && countryLookups.length > 0) {
+      const irelandCountry = countryLookups.find(c => 
+        c?.code === 'IE' || 
+        c?.name === 'Ireland' || 
+        c?.displayname === 'Ireland'
+      );
+      if (irelandCountry) {
+        onFormDataChange({
+          ...formData,
+          country: irelandCountry.displayname,
+        });
+      }
+    }
+  }, [countryLookups]);
+
+  const countryOptions = (countryLookups || []).map(c => ({
+    value: c?.displayname,
+    label: c?.displayname || c?.name || c?.code,
+  }));
 
   const getCountryDisplayName = codeOrName => {
     if (!codeOrName || !countryLookups) return codeOrName;
@@ -75,6 +106,17 @@ const PersonalInformation = ({
     onFormDataChange({
       ...formData,
       mobileNo: value || '',
+    });
+  };
+
+  // Handle numeric-only input fields
+  const handleNumericInputChange = e => {
+    const { name, value } = e.target;
+    // Allow only numbers, spaces, hyphens, and plus signs
+    const numericValue = value.replace(/[^0-9\s\-+]/g, '');
+    onFormDataChange({
+      ...formData,
+      [name]: numericValue,
     });
   };
 
@@ -147,8 +189,8 @@ const PersonalInformation = ({
           const addressLine4 = `${county}`.trim();
           const eircode = `${postalCode}`.trim();
 
-          // Find the country code from countryLookups based on the country name or code
-          let countryCode = formData?.country || 'Ireland'; // Default to Ireland if not found
+          // Find the country displayname from countryLookups based on the country name or code
+          let countryDisplayName = formData?.country || 'Ireland'; // Default to Ireland if not found
           if (countryLongName || countryShortName) {
             console.log(
               'Country from API - Long Name:',
@@ -164,7 +206,7 @@ const PersonalInformation = ({
                 c?.displayname === countryLongName,
             );
             if (matchedCountry) {
-              countryCode = matchedCountry.code;
+              countryDisplayName = matchedCountry.displayname;
               console.log('Matched country:', matchedCountry);
             } else {
               console.log('No matching country found in lookup');
@@ -178,7 +220,7 @@ const PersonalInformation = ({
             addressLine3,
             addressLine4,
             eircode,
-            country: countryCode,
+            country: countryDisplayName,
           });
         }
       });
@@ -279,7 +321,7 @@ const PersonalInformation = ({
             label="Country of Primary Qualification"
             name="countryPrimaryQualification"
             placeholder="Select country"
-            value={getCountryDisplayName(formData?.countryPrimaryQualification)}
+            value={getCountryDisplayName(formData?.countryPrimaryQualification) || 'Ireland'}
             onChange={handleInputChange}
             options={countryOptions}
             isSearchable
@@ -528,9 +570,10 @@ const PersonalInformation = ({
           <Input
             label="Home / Work Tel Number (Optional)"
             name="homeWorkTelNo"
+            type="tel"
             placeholder="Enter telephone number"
             value={formData?.homeWorkTelNo || ''}
-            onChange={handleInputChange}
+            onChange={handleNumericInputChange}
           />
         </div>
 

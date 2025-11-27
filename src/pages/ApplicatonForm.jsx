@@ -61,7 +61,7 @@ const ApplicationForm = () => {
       personalEmail: user?.userEmail || '',
       mobileNo: user?.userMobilePhone || '',
       country: 'Ireland',
-      consent: true,
+      consent: false,
     },
     professionalDetails: {},
     subscriptionDetails: {},
@@ -112,7 +112,7 @@ const ApplicationForm = () => {
           consent:
             personalDetail?.contactInfo?.consent ??
             prev.personalInfo.consent ??
-            true,
+            false,
           addressLine1:
             personalDetail?.contactInfo?.buildingOrHouse ||
             prev.personalInfo.addressLine1 ||
@@ -738,17 +738,21 @@ const ApplicationForm = () => {
       }
       if (currentStep === 2) {
         if (!professionalDetail) {
-          createProfessionalDetail(formData.professionalDetails);
+          console.log('formData.professionalDetails', formData.professionalDetails);
+          // createProfessionalDetail(formData.professionalDetails);
         } else {
-          updateProfessionalDetail(formData.professionalDetails);
+          console.log('formData.professionalDetails', formData.professionalDetails);
+          // updateProfessionalDetail(formData.professionalDetails);
         }
       }
       if (currentStep === 3) {
         // Always create/update subscription detail first
         if (!subscriptionDetail) {
-          createSubscriptionDetail(formData.subscriptionDetails);
+          console.log('formData.subscriptionDetails', formData.subscriptionDetails);
+          // createSubscriptionDetail(formData.subscriptionDetails);
         } else {
-          updateSubscriptionDetail(formData.subscriptionDetails);
+          console.log('formData.subscriptionDetails', formData.subscriptionDetails);
+          // updateSubscriptionDetail(formData.subscriptionDetails);
         }
         // Modal will be shown by useEffect after subscription is saved (via shouldShowModal)
       }
