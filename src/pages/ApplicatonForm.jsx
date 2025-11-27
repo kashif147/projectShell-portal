@@ -202,7 +202,7 @@ const ApplicationForm = () => {
           nursingAdaptationProgramme: professionalDetail?.professionalDetails
             ?.nursingAdaptationProgramme
             ? 'yes'
-            : prev.professionalDetails.nursingAdaptationProgramme || 'no',
+            : prev.professionalDetails.nursingAdaptationProgramme || '',
           region:
             professionalDetail?.professionalDetails?.region ??
             prev.professionalDetails.region ??
@@ -273,6 +273,10 @@ const ApplicationForm = () => {
             ?.otherIrishTradeUnion
             ? 'yes'
             : prev.subscriptionDetails.otherIrishTradeUnion || 'no',
+          otherIrishTradeUnionName:
+            subscriptionDetail?.subscriptionDetails?.otherIrishTradeUnionName ??
+            prev.subscriptionDetails.otherIrishTradeUnionName ??
+            '',
           otherScheme: subscriptionDetail?.subscriptionDetails?.otherScheme
             ? 'yes'
             : prev.subscriptionDetails.otherScheme || 'no',
@@ -329,7 +333,8 @@ const ApplicationForm = () => {
             prev.subscriptionDetails.paymentFrequency ||
             '',
           exclusiveDiscountsAndOffers:
-            subscriptionDetail?.subscriptionDetails?.exclusiveDiscountsAndOffers ??
+            subscriptionDetail?.subscriptionDetails
+              ?.exclusiveDiscountsAndOffers ??
             prev.subscriptionDetails.exclusiveDiscountsAndOffers ??
             false,
         },
@@ -488,7 +493,7 @@ const ApplicationForm = () => {
       region: data.region,
       branch: data.branch,
       pensionNo: data.pensionNo,
-      isRetired: data?.membershipCategory === 'MEM-RET',
+      // isRetired: data?.membershipCategory === 'MEM-RET',
       retiredDate: data.retiredDate && isDataFormat(data.retiredDate),
       studyLocation: data.studyLocation,
       graduationDate: data.graduationDate && isDataFormat(data.graduationDate),
@@ -501,7 +506,7 @@ const ApplicationForm = () => {
         professionalInfo.professionalDetails[key] = value;
       }
     });
-    
+
     createProfessionalDetailRequest(
       personalDetail?.applicationId,
       professionalInfo,
@@ -535,7 +540,7 @@ const ApplicationForm = () => {
       region: data.region,
       branch: data.branch,
       pensionNo: data.pensionNo,
-      isRetired: data?.membershipCategory === 'MEM-RET',
+      // isRetired: data?.membershipCategory === 'MEM-RET',
       retiredDate: data.retiredDate && isDataFormat(data.retiredDate),
       studyLocation: data.studyLocation,
       graduationDate: data.graduationDate && isDataFormat(data.graduationDate),
@@ -585,6 +590,7 @@ const ApplicationForm = () => {
         payrollNo: data?.payrollNo,
         membershipStatus: data?.memberStatus,
         otherIrishTradeUnion: data?.otherIrishTradeUnion === true,
+        // otherIrishTradeUnionName: data?.unionName,
         otherScheme: data?.otherScheme === true,
         recuritedBy: data?.recuritedBy,
         recuritedByMembershipNo: data?.recuritedByMembershipNo,
@@ -596,8 +602,9 @@ const ApplicationForm = () => {
         inmoRewards: data?.inmoRewards === true,
         valueAddedServices: data?.valueAddedServices === true,
         termsAndConditions: data?.termsAndConditions === true,
-        exclusiveDiscountsAndOffers:data?.exclusiveDiscountsAndOffers === true,
-        paymentFrequency: data?.paymentType === 'Credit Card' ? "Annual" : "Monthly",
+        exclusiveDiscountsAndOffers: data?.exclusiveDiscountsAndOffers === true,
+        paymentFrequency:
+          data?.paymentType === 'Credit Card' ? 'Annualy' : 'Monthly',
         ...defaultFields,
       };
 
@@ -622,9 +629,7 @@ const ApplicationForm = () => {
         getSubscriptionDetail(personalDetail?.applicationId);
 
         // Check if undergraduate student - they don't need payment
-        if (
-          categoryData?.name === 'Undergraduate Student'
-        ) {
+        if (categoryData?.name === 'Undergraduate Student') {
           setIsSubmitted(true);
           setStatusModal({
             open: true,
@@ -662,6 +667,7 @@ const ApplicationForm = () => {
         payrollNo: data?.payrollNo,
         membershipStatus: data?.memberStatus,
         otherIrishTradeUnion: data?.otherIrishTradeUnion === true,
+        // otherIrishTradeUnionName: data?.unionName,
         otherScheme: data?.otherScheme === true,
         recuritedBy: data?.recuritedBy,
         recuritedByMembershipNo: data?.recuritedByMembershipNo,
@@ -674,7 +680,8 @@ const ApplicationForm = () => {
         valueAddedServices: data?.valueAddedServices === true,
         termsAndConditions: data?.termsAndConditions === true,
         exclusiveDiscountsAndOffers: data?.exclusiveDiscountsAndOffers === true,
-        paymentFrequency: data?.paymentType === 'Credit Card' ? "Annual" : "Monthly",
+        paymentFrequency:
+          data?.paymentType === 'Credit Card' ? 'Annualy' : 'Monthly',
         ...defaultFields,
       };
 
@@ -699,9 +706,7 @@ const ApplicationForm = () => {
         getSubscriptionDetail(personalDetail?.applicationId);
 
         // Check if undergraduate student - they don't need payment
-        if (
-          categoryData?.name === 'Undergraduate Student'
-        ) {
+        if (categoryData?.name === 'Undergraduate Student') {
           setIsSubmitted(true);
           setStatusModal({
             open: true,
@@ -738,21 +743,17 @@ const ApplicationForm = () => {
       }
       if (currentStep === 2) {
         if (!professionalDetail) {
-          console.log('formData.professionalDetails', formData.professionalDetails);
-          // createProfessionalDetail(formData.professionalDetails);
+          createProfessionalDetail(formData.professionalDetails);
         } else {
-          console.log('formData.professionalDetails', formData.professionalDetails);
-          // updateProfessionalDetail(formData.professionalDetails);
+          updateProfessionalDetail(formData.professionalDetails);
         }
       }
       if (currentStep === 3) {
         // Always create/update subscription detail first
         if (!subscriptionDetail) {
-          console.log('formData.subscriptionDetails', formData.subscriptionDetails);
-          // createSubscriptionDetail(formData.subscriptionDetails);
+          createSubscriptionDetail(formData.subscriptionDetails);
         } else {
-          console.log('formData.subscriptionDetails', formData.subscriptionDetails);
-          // updateSubscriptionDetail(formData.subscriptionDetails);
+          updateSubscriptionDetail(formData.subscriptionDetails);
         }
         // Modal will be shown by useEffect after subscription is saved (via shouldShowModal)
       }
@@ -789,7 +790,7 @@ const ApplicationForm = () => {
           addressLine1,
           addressLine4,
           preferredAddress,
-          countryPrimaryQualification
+          countryPrimaryQualification,
         } = formData.personalInfo || {};
         if (
           !title ||
@@ -921,7 +922,7 @@ const ApplicationForm = () => {
         return null;
     }
   };
-  console.log('modal==========>', isModalVisible);
+
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold mb-4">Application</h1>
@@ -991,7 +992,9 @@ const ApplicationForm = () => {
 
           <div className="flex justify-between sm:justify-end items-center gap-3 mt-6">
             {currentStep > 1 && (
-              <Button onClick={handlePrevious} className="min-w-[120px] sm:min-w-[180px] flex-1 sm:flex-initial">
+              <Button
+                onClick={handlePrevious}
+                className="min-w-[120px] sm:min-w-[180px] flex-1 sm:flex-initial">
                 <span className="hidden sm:inline">Previous: </span>
                 {steps[currentStep - 2]?.title || 'Previous'}
               </Button>
