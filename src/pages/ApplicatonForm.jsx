@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from 'antd';
 import { toast } from 'react-toastify';
 import PersonalInformation from '../components/application/PersonalInformation';
@@ -29,6 +29,7 @@ const stripePromise = loadStripe(
 
 const ApplicationForm = () => {
   const navigate = useNavigate();
+  const formTopRef = useRef(null);
   const { user } = useSelector(state => state.auth);
   const {
     personalDetail,
@@ -356,6 +357,18 @@ const ApplicationForm = () => {
       setIsInitialLoad(false);
     }
   }, [loading, isInitialLoad]);
+
+  useEffect(() => {
+    if (isInitialLoad) return;
+    if (formTopRef.current) {
+      formTopRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentStep, isInitialLoad]);
 
   const steps = [
     { number: 1, title: 'Personal Information' },
@@ -924,7 +937,7 @@ const ApplicationForm = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" ref={formTopRef}>
       <h1 className="text-2xl font-bold mb-4">Application</h1>
       {isInitialLoad && loading ? (
         <Spinner />
