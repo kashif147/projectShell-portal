@@ -7,11 +7,11 @@ import { Radio } from '../ui/Radio';
 import { useLookup } from '../../contexts/lookupContext';
 
 const nurseTypeOptions = [
-  { value: 'general', label: 'General Nurse' },
-  { value: 'publicHealth', label: 'Public Health Nurse' },
+  { value: 'generalNursing', label: 'General Nurse' },
+  { value: 'publicHealthNurse', label: 'Public Health Nurse' },
   { value: 'mentalHealth', label: 'Mental health nurse' },
   { value: 'midwife', label: 'Midwife' },
-  { value: 'sickChildren', label: "Sick Children's Nurse" },
+  { value: 'sickChildrenNurse', label: "Sick Children's Nurse" },
   {
     value: 'intellectualDisability',
     label: 'Registered Nurse for Intellectual Disability',
@@ -237,6 +237,16 @@ const ProfessionalDetails = ({
                 disableAgeValidation
               />
             </div>
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+                label="Discipline"
+                name="discipline"
+                value={formData?.discipline || ''}
+                onChange={handleInputChange}
+                placeholder="Enter your discipline"
+              />
+          </div>
+
           </div>
         )}
 

@@ -1,15 +1,27 @@
 /* eslint-disable dot-notation */
 import axios from 'axios';
 import { getHeaders } from '../helpers/auth.helper';
+import { decryptToken } from '../helpers/crypt.helper';
 import { PORTAL_URL } from '../constants/api';
 
 const application_request = axios.create();
 
 application_request.interceptors.request.use(
-  config => {
+  async config => {
     const headers = getHeaders();
-    console.log('Headers======>',headers.token);
-    config.headers['Authorization'] = `Bearer ${headers.token}`;
+    let token = headers.token;
+    
+    // Decrypt token if it exists and appears to be encrypted (contains colons)
+    if (token && token.includes(':')) {
+      try {
+        token = await decryptToken(token);
+      } catch (error) {
+        console.error('Token decryption failed:', error);
+        // Continue with original token if decryption fails
+      }
+    }
+    
+    config.headers['Authorization'] = `Bearer ${token}`;
     config.headers['Content-Type'] = 'application/json';
 
     config.baseURL = PORTAL_URL;
