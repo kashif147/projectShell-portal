@@ -279,10 +279,16 @@ const SubscriptionModal = ({
                     <h3 className="font-bold text-lg text-gray-800 mb-1">
                       {product?.name || 'Membership Category'}
                     </h3>
-                    {product?.description && (
+                    {formData?.subscriptionDetails?.paymentType !== 'Credit Card' ? (
                       <p className="text-sm text-gray-600 leading-relaxed">
-                        {product.description}
+                        Your annual membership fee is {formatCurrency(priceInfo.full)}. For now, we are only collecting {formatCurrency(priceInfo.monthly)} as the application processing amount. The remaining balance will be applied when your membership is approved.
                       </p>
+                    ) : (
+                      product?.description && (
+                        <p className="text-sm text-gray-600 leading-relaxed">
+                          {product.description}
+                        </p>
+                      )
                     )}
                   </div>
                   <div className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-semibold ml-3">

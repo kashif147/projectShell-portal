@@ -238,12 +238,21 @@ const ProfessionalDetails = ({
               />
             </div>
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
+            <Select
                 label="Discipline"
                 name="discipline"
                 value={formData?.discipline || ''}
                 onChange={handleInputChange}
-                placeholder="Enter your discipline"
+                placeholder="Select your discipline"
+                options={[
+                  { value: 'nursing', label: 'Nursing' },
+                  { value: 'midwifery', label: 'Midwifery' },
+                  { value: 'publicHealth', label: 'Public Health' },
+                  { value: 'mentalHealth', label: 'Mental Health' },
+                  { value: 'pediatric', label: 'Pediatric Nursing' },
+                  { value: 'adult', label: 'Adult Nursing' },
+                  { value: 'other', label: 'Other' },
+                ]}
               />
           </div>
 
@@ -307,7 +316,7 @@ const ProfessionalDetails = ({
             </svg>
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Work Details</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{isCategoryType('undergraduate_student') ? 'Work Location / Placement Details' : 'Work Details'}</h2>
             <p className="text-sm text-gray-600 mt-1">
               Provide your work location and professional grade.
             </p>
