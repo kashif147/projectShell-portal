@@ -335,9 +335,6 @@ const Dashboard = () => {
 
     checkApplicationStatus();
   }, [personalDetail?.applicationId]);
-  console.log('subscriptionDetail========>', subscriptionDetail);
-  console.log('professionalDetail========>', professionalDetail);
-  console.log('personalDetail========>', personalDetail);
 
   // Update current step based on application progress
   useEffect(() => {

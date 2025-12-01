@@ -21,7 +21,7 @@ export const validation = () => {
       if (res?.token && user?.user) {
         dispatch(setSignedIn(true));
         dispatch(setUser(JSON.parse(user?.user)));
-        const memberDetail = getMemberDetail();
+        const memberDetail = await getMemberDetail();
         dispatch(setDetail(memberDetail));
       } else {
         dispatch(setSignedIn(false));
@@ -54,9 +54,9 @@ export const getMemberRule = () => {
 };
 
 export const signInMicrosoft = data => {
-  return dispatch => {
+  return async dispatch => {
     signInMicrosoftRequest(data)
-      .then(res => {
+      .then(async res => {
         if (res.status === 200) {
           console.log('resonse=================>', res);
           setHeaders(res.data);
@@ -64,7 +64,7 @@ export const signInMicrosoft = data => {
           deleteVerifier();
           dispatch(setSignedIn(true));
           dispatch(setUser(res.data.user));
-          const memberDetail = getMemberDetail();
+          const memberDetail = await getMemberDetail();
           dispatch(setDetail(memberDetail));
         } else {
           toast.error(res.data.errors[0] ?? 'Unable to Sign In');
