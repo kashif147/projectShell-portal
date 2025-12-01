@@ -11,7 +11,7 @@ import Button from '../components/common/Button';
 const WorkLocation = () => {
   const { personalDetail, professionalDetail, getProfessionalDetail } = useApplication();
   const { workLocationLookups, fetchWorkLocationLookups } = useLookup();
-  const [form, setForm] = useState({ workLocation: '', otherWorkLocation: '', branch: '', region: '' });
+  const [form, setForm] = useState({ workLocation: '', otherWorkLocation: '', branch: '', region: '', reasonToChange: '' });
   const existing = professionalDetail?.professionalDetails || {};
 
   useEffect(() => {
@@ -26,6 +26,7 @@ const WorkLocation = () => {
       otherWorkLocation: existing.otherWorkLocation || '',
       branch: existing.branch || '',
       region: existing.region || '',
+      reasonToChange: existing.reasonToChange || '',
     });
   }, [professionalDetail]);
 
@@ -80,6 +81,7 @@ const WorkLocation = () => {
     if (form.otherWorkLocation) payload.professionalDetails.otherWorkLocation = form.otherWorkLocation;
     if (form.branch) payload.professionalDetails.branch = form.branch;
     if (form.region) payload.professionalDetails.region = form.region;
+    if (form.reasonToChange) payload.professionalDetails.reasonToChange = form.reasonToChange;
 
     // updateProfessionalDetailRequest(personalDetail?.ApplicationId, payload)
     //   .then(res => {
@@ -233,6 +235,16 @@ const WorkLocation = () => {
                 options={form.workLocation === 'other' ? regionOptions : form.region ? [{ value: form.region, label: form.region }] : regionOptions}
               />
             </div>
+
+            <Input
+              label="Reason to Change"
+              name="reasonToChange"
+              value={form.reasonToChange}
+              onChange={onChange}
+              multiline
+              placeholder="Please provide a reason for changing your work location"
+              rows={4}
+            />
 
             <div className="pt-4">
               <Button
