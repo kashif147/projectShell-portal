@@ -135,6 +135,7 @@ export const LookupProvider = ({ children }) => {
         throw new Error('No token found');
       }
       const response = await fetchCategoryByTypeId('68dae613c5b15073d66b891f');
+      console.log("response=============>",response)
       const results = response?.data?.data?.products || [];
       await saveLocal('categories', results);
       setCategoryLookups(results);
