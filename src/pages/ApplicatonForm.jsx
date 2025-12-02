@@ -694,7 +694,7 @@ const ApplicationForm = () => {
         termsAndConditions: data?.termsAndConditions === true,
         exclusiveDiscountsAndOffers: data?.exclusiveDiscountsAndOffers === true,
         paymentFrequency:
-          data?.paymentType === 'Credit Card' ? 'Annualy' : 'Monthly',
+          data?.paymentType === 'Credit Card' ? 'Annually' : 'Monthly',
         ...defaultFields,
       };
 
