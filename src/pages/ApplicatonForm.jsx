@@ -62,7 +62,7 @@ const ApplicationForm = () => {
       personalEmail: user?.userEmail || '',
       mobileNo: user?.userMobilePhone || '',
       country: 'Ireland',
-      consent: false,
+      consent: true,
     },
     professionalDetails: {},
     subscriptionDetails: {},
@@ -617,7 +617,7 @@ const ApplicationForm = () => {
         termsAndConditions: data?.termsAndConditions === true,
         exclusiveDiscountsAndOffers: data?.exclusiveDiscountsAndOffers === true,
         paymentFrequency:
-          data?.paymentType === 'Credit Card' ? 'Annualy' : 'Monthly',
+          data?.paymentType === 'Credit Card' ? 'Annually' : 'Monthly',
         ...defaultFields,
       };
 
