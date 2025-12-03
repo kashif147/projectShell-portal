@@ -416,17 +416,17 @@ const SubscriptionDetails = ({
                 }}
                 showValidation={showValidation}
                 options={[
-                  { value: 'no', label: 'No' },
                   { value: 'yes', label: 'Yes' },
+                  { value: 'no', label: 'No' },
                 ]}
               />
               {formData?.otherIrishTradeUnion === 'yes' && (
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     label="If yes, which Union?"
-                    name="unionName"
+                    name="otherIrishTradeUnionName"
                     required={formData?.otherIrishTradeUnion === 'yes'}
-                    value={formData?.unionName || ''}
+                    value={formData?.otherIrishTradeUnionName || ''}
                     onChange={handleInputChange}
                     showValidation={showValidation}
                     placeholder="Enter Union Name"
@@ -450,8 +450,8 @@ const SubscriptionDetails = ({
               }
               showValidation={showValidation}
               options={[
-                { value: 'no', label: 'No' },
                 { value: 'yes', label: 'Yes' },
+                { value: 'no', label: 'No' },
               ]}
             />
           </div>

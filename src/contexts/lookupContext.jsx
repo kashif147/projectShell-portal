@@ -41,6 +41,7 @@ export const LookupProvider = ({ children }) => {
   const [categoryLookups, setCategoryLookups] = React.useState([]);
   const [gradeLookups, setGradeLookups] = React.useState([]);
   const [paymentLooups, setPaymentLooups] = React.useState([]);
+  const [studyLocationLookups, setStudyLocationLookups] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
 
@@ -73,6 +74,9 @@ export const LookupProvider = ({ children }) => {
         const paymentData = result.filter(
           item => item.lookuptypeId?.lookuptype === 'Payment Type',
         );
+        const studyLocationData = result.filter(
+          item => item.lookuptypeId?.lookuptype === 'Study Location',
+        );
         await saveLocal('paymentLookups', paymentData);
         await saveLocal('genderLookups', genderData);
         await saveLocal('cityLookups', cityData);
@@ -80,6 +84,7 @@ export const LookupProvider = ({ children }) => {
         await saveLocal('secondarySection', secondarySectionData);
         await saveLocal('primarySection', sectionData);
         await saveLocal('gradeLookups', gradeData);
+        await saveLocal('studyLocationLookups', studyLocationData);
         setLookups(result);
       }
 
@@ -159,7 +164,7 @@ export const LookupProvider = ({ children }) => {
       const categoryLookups = await fetchLocal('categories');
       const gradeLookups = await fetchLocal('gradeLookups');
       const paymentLookups = await fetchLocal('paymentLookups');
-
+      const studyLocationLookups = await fetchLocal('studyLocationLookups');
       setGenderLookups(genderLookups);
       setCityLookups(cityLookups);
       setTitleLookups(titleLookups);
@@ -170,6 +175,7 @@ export const LookupProvider = ({ children }) => {
       setCategoryLookups(categoryLookups);
       setGradeLookups(gradeLookups);
       setPaymentLooups(paymentLookups);
+      setStudyLocationLookups(studyLocationLookups);
     };
     fetchGenderLookups();
   }, [lookups]);
@@ -211,6 +217,7 @@ export const LookupProvider = ({ children }) => {
     categoryLookups,
     gradeLookups,
     paymentLooups,
+    studyLocationLookups,
     loading,
     error,
     fetchLookups,

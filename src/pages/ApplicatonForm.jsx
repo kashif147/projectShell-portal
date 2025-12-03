@@ -192,18 +192,42 @@ const ApplicationForm = () => {
             professionalDetail?.professionalDetails?.otherGrade ??
             prev.professionalDetails.otherGrade ??
             '',
-          nmbiNumber:
-            professionalDetail?.professionalDetails?.nmbiNumber ??
-            prev.professionalDetails.nmbiNumber ??
-            '',
-          nurseType:
-            professionalDetail?.professionalDetails?.nurseType ??
-            prev.professionalDetails.nurseType ??
-            '',
-          nursingAdaptationProgramme: professionalDetail?.professionalDetails
-            ?.nursingAdaptationProgramme
-            ? 'yes'
-            : prev.professionalDetails.nursingAdaptationProgramme || '',
+          nursingAdaptationProgramme: (() => {
+            const value =
+              professionalDetail?.professionalDetails
+                ?.nursingAdaptationProgramme;
+            if (value === false) return 'no';
+            if (value === true || value === 'yes') return 'yes';
+            return prev.professionalDetails.nursingAdaptationProgramme || '';
+          })(),
+          nmbiNumber: (() => {
+            const programmeValue =
+              professionalDetail?.professionalDetails
+                ?.nursingAdaptationProgramme;
+            // Clear nmbiNumber if nursingAdaptationProgramme is false or 'no'
+            if (programmeValue === false || programmeValue === 'no') {
+              return '';
+            }
+            return (
+              professionalDetail?.professionalDetails?.nmbiNumber ??
+              prev.professionalDetails.nmbiNumber ??
+              ''
+            );
+          })(),
+          nurseType: (() => {
+            const programmeValue =
+              professionalDetail?.professionalDetails
+                ?.nursingAdaptationProgramme;
+            // Clear nurseType if nursingAdaptationProgramme is false or 'no'
+            if (programmeValue === false || programmeValue === 'no') {
+              return '';
+            }
+            return (
+              professionalDetail?.professionalDetails?.nurseType ??
+              prev.professionalDetails.nurseType ??
+              ''
+            );
+          })(),
           region:
             professionalDetail?.professionalDetails?.region ??
             prev.professionalDetails.region ??
@@ -602,7 +626,7 @@ const ApplicationForm = () => {
         paymentType: data?.paymentType,
         payrollNo: data?.payrollNo,
         membershipStatus: data?.memberStatus,
-        otherIrishTradeUnion: data?.otherIrishTradeUnion === true,
+        otherIrishTradeUnion: data?.otherIrishTradeUnion === 'yes',
         otherIrishTradeUnionName: data?.unionName,
         otherScheme: data?.otherScheme === true,
         recuritedBy: data?.recuritedBy,
@@ -679,7 +703,7 @@ const ApplicationForm = () => {
         paymentType: data?.paymentType,
         payrollNo: data?.payrollNo,
         membershipStatus: data?.memberStatus,
-        otherIrishTradeUnion: data?.otherIrishTradeUnion === true,
+        otherIrishTradeUnion: data?.otherIrishTradeUnion === 'yes',
         otherIrishTradeUnionName: data?.unionName,
         otherScheme: data?.otherScheme === true,
         recuritedBy: data?.recuritedBy,
@@ -935,6 +959,9 @@ const ApplicationForm = () => {
         return null;
     }
   };
+  console.log('Professional Detail:', professionalDetail);
+  console.log('Subscription Detail:', subscriptionDetail);
+  console.log('Personal Detail:', personalDetail);
 
   return (
     <div className="space-y-4" ref={formTopRef}>
