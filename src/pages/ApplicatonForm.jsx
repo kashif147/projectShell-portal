@@ -8,7 +8,7 @@ import { PaymentStatusModal } from '../components/modals';
 import Button from '../components/common/Button';
 import { useSelector } from 'react-redux';
 import { loadStripe } from '@stripe/stripe-js';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   createPersonalDetailRequest,
   createProfessionalDetailRequest,
@@ -29,6 +29,7 @@ const stripePromise = loadStripe(
 
 const ApplicationForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const formTopRef = useRef(null);
   const { user } = useSelector(state => state.auth);
   const {
@@ -192,18 +193,42 @@ const ApplicationForm = () => {
             professionalDetail?.professionalDetails?.otherGrade ??
             prev.professionalDetails.otherGrade ??
             '',
-          nmbiNumber:
-            professionalDetail?.professionalDetails?.nmbiNumber ??
-            prev.professionalDetails.nmbiNumber ??
-            '',
-          nurseType:
-            professionalDetail?.professionalDetails?.nurseType ??
-            prev.professionalDetails.nurseType ??
-            '',
-          nursingAdaptationProgramme: professionalDetail?.professionalDetails
-            ?.nursingAdaptationProgramme
-            ? 'yes'
-            : prev.professionalDetails.nursingAdaptationProgramme || '',
+          nursingAdaptationProgramme: (() => {
+            const value =
+              professionalDetail?.professionalDetails
+                ?.nursingAdaptationProgramme;
+            if (value === false) return 'no';
+            if (value === true || value === 'yes') return 'yes';
+            return prev.professionalDetails.nursingAdaptationProgramme || '';
+          })(),
+          nmbiNumber: (() => {
+            const programmeValue =
+              professionalDetail?.professionalDetails
+                ?.nursingAdaptationProgramme;
+            // Clear nmbiNumber if nursingAdaptationProgramme is false or 'no'
+            if (programmeValue === false || programmeValue === 'no') {
+              return '';
+            }
+            return (
+              professionalDetail?.professionalDetails?.nmbiNumber ??
+              prev.professionalDetails.nmbiNumber ??
+              ''
+            );
+          })(),
+          nurseType: (() => {
+            const programmeValue =
+              professionalDetail?.professionalDetails
+                ?.nursingAdaptationProgramme;
+            // Clear nurseType if nursingAdaptationProgramme is false or 'no'
+            if (programmeValue === false || programmeValue === 'no') {
+              return '';
+            }
+            return (
+              professionalDetail?.professionalDetails?.nurseType ??
+              prev.professionalDetails.nurseType ??
+              ''
+            );
+          })(),
           region:
             professionalDetail?.professionalDetails?.region ??
             prev.professionalDetails.region ??
@@ -358,16 +383,21 @@ const ApplicationForm = () => {
     }
   }, [loading, isInitialLoad]);
 
+  // Scroll to top when component mounts or route changes
+  useEffect(() => {
+    // Use setTimeout to ensure DOM is fully rendered
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 0);
+  }, [location.pathname]);
+
+  // Scroll to top when step changes (after initial load)
   useEffect(() => {
     if (isInitialLoad) return;
-    if (formTopRef.current) {
-      formTopRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
-    } else {
+    // Use setTimeout to ensure DOM is fully rendered
+    setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    }, 0);
   }, [currentStep, isInitialLoad]);
 
   const steps = [
@@ -602,7 +632,7 @@ const ApplicationForm = () => {
         paymentType: data?.paymentType,
         payrollNo: data?.payrollNo,
         membershipStatus: data?.memberStatus,
-        otherIrishTradeUnion: data?.otherIrishTradeUnion === true,
+        otherIrishTradeUnion: data?.otherIrishTradeUnion === 'yes',
         otherIrishTradeUnionName: data?.unionName,
         otherScheme: data?.otherScheme === true,
         recuritedBy: data?.recuritedBy,
@@ -679,7 +709,7 @@ const ApplicationForm = () => {
         paymentType: data?.paymentType,
         payrollNo: data?.payrollNo,
         membershipStatus: data?.memberStatus,
-        otherIrishTradeUnion: data?.otherIrishTradeUnion === true,
+        otherIrishTradeUnion: data?.otherIrishTradeUnion === 'yes',
         otherIrishTradeUnionName: data?.unionName,
         otherScheme: data?.otherScheme === true,
         recuritedBy: data?.recuritedBy,
@@ -935,6 +965,9 @@ const ApplicationForm = () => {
         return null;
     }
   };
+  console.log('Professional Detail:', professionalDetail);
+  console.log('Subscription Detail:', subscriptionDetail);
+  console.log('Personal Detail:', personalDetail);
 
   return (
     <div className="space-y-4" ref={formTopRef}>

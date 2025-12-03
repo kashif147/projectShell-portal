@@ -30,6 +30,7 @@ const ProfessionalDetails = ({
     fetchCategoryLookups,
     gradeLookups,
     fetchLookups,
+    studyLocationLookups,
   } = useLookup();
 
   React.useEffect(() => {
@@ -39,7 +40,7 @@ const ProfessionalDetails = ({
     if (!categoryLookups || categoryLookups.length === 0) {
       fetchCategoryLookups?.();
     }
-    if (!gradeLookups || gradeLookups.length === 0) {
+    if (!gradeLookups || gradeLookups.length === 0 || !studyLocationLookups || studyLocationLookups.length === 0) {
       fetchLookups?.();
     }
   }, []);
@@ -74,6 +75,13 @@ const ProfessionalDetails = ({
       .filter(option => option.value), // Filter out empty values
     { value: 'other', label: 'Other' } // Add "Other" option at the end
   ];
+
+  const studyLocationOptions = (studyLocationLookups || [])
+    .map(item => {
+      const name = item?.DisplayName || item?.lookupname || '';
+      return { value: name, label: name };
+    })
+    .filter(option => option.value); // Filter out empty values
 
   const branchOptions = Array.from(
     new Set(
@@ -223,14 +231,10 @@ const ProfessionalDetails = ({
                 value={formData?.studyLocation || ''}
                 onChange={handleInputChange}
                 placeholder="Select study location"
-                options={[
-                  { value: 'location1', label: 'Location 1' },
-                  { value: 'location2', label: 'Location 2' },
-                  { value: 'location3', label: 'Location 3' },
-                ]}
+                options={studyLocationOptions}
               />
               <DatePicker
-                label="Graduation Date"
+                label="Initial Date"
                 name="graduationDate"
                 value={formData?.graduationDate || ''}
                 onChange={handleInputChange}
@@ -436,12 +440,18 @@ const ProfessionalDetails = ({
             label="Are you currently undertaking a nursing adaptation programme?"
             name="nursingAdaptationProgramme"
             value={formData?.nursingAdaptationProgramme || ''}
-            onChange={e =>
-              onFormDataChange({
+            onChange={e => {
+              const updatedData = {
                 ...formData,
                 nursingAdaptationProgramme: e.target.value,
-              })
-            }
+              };
+              // Clear nmbiNumber and nurseType if "no" is selected
+              if (e.target.value === 'no') {
+                updatedData.nmbiNumber = '';
+                updatedData.nurseType = '';
+              }
+              onFormDataChange(updatedData);
+            }}
             options={[
               { value: 'yes', label: 'Yes' },
               { value: 'no', label: 'No' },
