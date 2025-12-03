@@ -8,7 +8,7 @@ import { PaymentStatusModal } from '../components/modals';
 import Button from '../components/common/Button';
 import { useSelector } from 'react-redux';
 import { loadStripe } from '@stripe/stripe-js';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   createPersonalDetailRequest,
   createProfessionalDetailRequest,
@@ -29,6 +29,7 @@ const stripePromise = loadStripe(
 
 const ApplicationForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const formTopRef = useRef(null);
   const { user } = useSelector(state => state.auth);
   const {
@@ -382,16 +383,21 @@ const ApplicationForm = () => {
     }
   }, [loading, isInitialLoad]);
 
+  // Scroll to top when component mounts or route changes
+  useEffect(() => {
+    // Use setTimeout to ensure DOM is fully rendered
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 0);
+  }, [location.pathname]);
+
+  // Scroll to top when step changes (after initial load)
   useEffect(() => {
     if (isInitialLoad) return;
-    if (formTopRef.current) {
-      formTopRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
-    } else {
+    // Use setTimeout to ensure DOM is fully rendered
+    setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    }, 0);
   }, [currentStep, isInitialLoad]);
 
   const steps = [
