@@ -3,6 +3,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 import { getHeaders } from '../helpers/auth.helper';
 import { fetchAllCountry, fetchAllLookupRequest, fetchLookupHierarchyByType } from '../api/lookup.api';
 import { fetchAllCategoryRequest, fetchCategoryByTypeId } from '../api/category.api';
+import { toast } from 'react-toastify';
 
 const getAllLookups = async () => {
   try {
@@ -23,6 +24,92 @@ const getAllCountry = async () => {
     return response.data;
   } catch (error) {
     toast.error(error.response?.data?.message ?? 'Failed to fetch country');
+  }
+};
+
+// Standalone function to fetch and save all lookups - can be called from anywhere
+export const fetchAllLookupsOnLogin = async () => {
+  try {
+    const headers = getHeaders();
+    if (!headers.token) {
+      console.warn('No token found, skipping lookup fetch');
+      return;
+    }
+
+    // Helper function to save to localStorage
+    const saveToLocalStorage = (key, value) => {
+      try {
+        window.localStorage.setItem(key, JSON.stringify(value));
+      } catch (error) {
+        console.error(`Failed to save ${key} to localStorage:`, error);
+      }
+    };
+
+    // Fetch all lookups in parallel
+    const [allLookupsResult, workLocationResult, countryResult, categoryResult] = await Promise.allSettled([
+      getAllLookups(),
+      (async () => {
+        try {
+          const response = await fetchLookupHierarchyByType('68d036e2662428d1c504b3ad');
+          return response?.data?.results || [];
+        } catch (error) {
+          console.error('Failed to fetch work location lookups:', error);
+          return [];
+        }
+      })(),
+      getAllCountry(),
+      (async () => {
+        try {
+          const response = await fetchCategoryByTypeId('68dae613c5b15073d66b891f');
+          return response?.data?.data?.products || [];
+        } catch (error) {
+          console.error('Failed to fetch category lookups:', error);
+          return [];
+        }
+      })(),
+    ]);
+
+    // Process and save all lookups
+    if (allLookupsResult.status === 'fulfilled' && allLookupsResult.value) {
+      const result = allLookupsResult.value;
+      
+      const genderData = result.filter(item => item.lookuptypeId?.lookuptype === 'Gender');
+      const cityData = result.filter(item => item.lookuptypeId?.lookuptype === 'City');
+      const titleData = result.filter(item => item.lookuptypeId?.lookuptype === 'Title');
+      const secondarySectionData = result.filter(item => item.lookuptypeId?.lookuptype === 'Secondary Section');
+      const sectionData = result.filter(item => item.lookuptypeId?.lookuptype === 'Section');
+      const gradeData = result.filter(item => item.lookuptypeId?.lookuptype === 'Grade');
+      const paymentData = result.filter(item => item.lookuptypeId?.lookuptype === 'Payment Type');
+      const studyLocationData = result.filter(item => item.lookuptypeId?.lookuptype === 'Study Location');
+
+      saveToLocalStorage('paymentLookups', paymentData);
+      saveToLocalStorage('genderLookups', genderData);
+      saveToLocalStorage('cityLookups', cityData);
+      saveToLocalStorage('titleLookups', titleData);
+      saveToLocalStorage('secondarySection', secondarySectionData);
+      saveToLocalStorage('primarySection', sectionData);
+      saveToLocalStorage('gradeLookups', gradeData);
+      saveToLocalStorage('studyLocationLookups', studyLocationData);
+    }
+
+    // Save work location lookups
+    if (workLocationResult.status === 'fulfilled' && workLocationResult.value) {
+      saveToLocalStorage('workLocationLookups', workLocationResult.value);
+    }
+
+    // Save country lookups
+    if (countryResult.status === 'fulfilled' && countryResult.value) {
+      saveToLocalStorage('countries', countryResult.value);
+    }
+
+    // Save category lookups
+    if (categoryResult.status === 'fulfilled' && categoryResult.value) {
+      saveToLocalStorage('categories', categoryResult.value);
+    }
+
+    console.log('All lookups fetched and saved successfully');
+  } catch (error) {
+    console.error('Error fetching all lookups on login:', error);
   }
 };
 
@@ -152,6 +239,24 @@ export const LookupProvider = ({ children }) => {
     }
   };
 
+  const fetchAllLookups = async () => {
+    try {
+      setLoading(true);
+      await Promise.all([
+        fetchLookups(),
+        fetchWorkLocationLookups(),
+        fetchCountryLookups(),
+        fetchCategoryLookups(),
+      ]);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching all lookups:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchGenderLookups = async () => {
       const genderLookups = await fetchLocal('genderLookups');
@@ -181,27 +286,26 @@ export const LookupProvider = ({ children }) => {
   }, [lookups]);
 
   useEffect(() => {
-    const ensureWorkLocations = async () => {
-      const cached = await fetchLocal('workLocationLookups');
-      if (!cached || cached.length === 0) {
-        await fetchWorkLocationLookups();
+    const initializeLookups = async () => {
+      const headers = getHeaders();
+      if (headers?.token) {
+        const gradeCached = await fetchLocal('gradeLookups');
+        const genderCached = await fetchLocal('genderLookups');
+        
+        await Promise.all([
+          fetchWorkLocationLookups(),
+          fetchCountryLookups(),
+          fetchCategoryLookups(),
+        ]);
+        
+        if (!gradeCached || !genderCached || 
+            gradeCached.length === 0 || genderCached.length === 0) {
+          await fetchLookups();
+        }
       }
     };
-    const ensureCountries = async () => {
-      const cached = await fetchLocal('countries');
-      if (!cached || cached.length === 0) {
-        await fetchCountryLookups();
-      }
-    };
-    const ensureCategories = async () => {
-      const cached = await fetchLocal('categories');
-      if (!cached || cached.length === 0) {
-        await fetchCategoryLookups();
-      }
-    };
-    ensureWorkLocations();
-    ensureCountries();
-    ensureCategories();
+    
+    initializeLookups();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -224,6 +328,7 @@ export const LookupProvider = ({ children }) => {
     fetchWorkLocationLookups,
     fetchCountryLookups,
     fetchCategoryLookups,
+    fetchAllLookups,
   };
 
   return (

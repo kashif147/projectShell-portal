@@ -320,7 +320,10 @@ const Dashboard = () => {
               response?.data?.data?.applicationStatus ||
               response?.data?.applicationStatus;
 
-            if (applicationStatus === 'submitted') {
+            if (
+              applicationStatus === 'submitted' ||
+              applicationStatus === 'approved'
+            ) {
               setIsApplicationSubmitted(true);
             } else {
               setIsApplicationSubmitted(false);
@@ -367,15 +370,14 @@ const Dashboard = () => {
     professionalDetail?.applicationId,
     subscriptionDetail?.applicationId,
   ]);
-
-  // Fetch category data for pricing
   useEffect(() => {
     const membershipCategory =
-      professionalDetail?.professionalDetails?.membershipCategory;
+      subscriptionDetail?.subscriptionDetails?.membershipCategory;
     if (membershipCategory) {
       fetchCategoryByCategoryId(membershipCategory)
         .then(res => {
           const payload = res?.data?.data || res?.data;
+          console.log('Category Data:', payload);
           setCategoryData(payload);
         })
         .catch(error => {

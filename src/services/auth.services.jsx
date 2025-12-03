@@ -12,6 +12,8 @@ import { deleteVerifier } from '../helpers/verifier.helper';
 import { setSignedIn, setUser, setDetail } from '../store/slice/auth.slice';
 import { microSoftUrlRedirect } from '../helpers/B2C.helper';
 import { getMemberDetail } from '../helpers/decode.helper';
+import { toast } from 'react-toastify';
+import { fetchAllLookupsOnLogin } from '../contexts/lookupContext';
 
 export const validation = () => {
   return async dispatch => {
@@ -23,6 +25,11 @@ export const validation = () => {
         dispatch(setUser(JSON.parse(user?.user)));
         const memberDetail = await getMemberDetail();
         dispatch(setDetail(memberDetail));
+        
+        // Fetch all lookups if user is already authenticated
+        fetchAllLookupsOnLogin().catch(error => {
+          console.error('Failed to fetch lookups on validation:', error);
+        });
       } else {
         dispatch(setSignedIn(false));
       }
@@ -66,6 +73,11 @@ export const signInMicrosoft = data => {
           dispatch(setUser(res.data.user));
           const memberDetail = await getMemberDetail();
           dispatch(setDetail(memberDetail));
+          
+          // Fetch all lookups after successful login
+          fetchAllLookupsOnLogin().catch(error => {
+            console.error('Failed to fetch lookups on login:', error);
+          });
         } else {
           toast.error(res.data.errors[0] ?? 'Unable to Sign In');
         }
@@ -84,6 +96,30 @@ export const signOut = navigate => {
       dispatch(setUser({}));
       deleteHeaders();
       deleteUser();
+      
+      // Clear all lookup data from local storage
+      const lookupKeys = [
+        'paymentLookups',
+        'genderLookups',
+        'cityLookups',
+        'titleLookups',
+        'secondarySection',
+        'primarySection',
+        'gradeLookups',
+        'studyLocationLookups',
+        'workLocationLookups',
+        'countries',
+        'categories',
+      ];
+      
+      lookupKeys.forEach(key => {
+        try {
+          window.localStorage.removeItem(key);
+        } catch (error) {
+          console.error(`Failed to remove ${key} from localStorage:`, error);
+        }
+      });
+      
       navigate('/');
       // await microSoftUrlRedirect();
     } catch (error) {
