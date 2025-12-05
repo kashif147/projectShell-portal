@@ -24,12 +24,6 @@ const PersonalInformation = ({
   const { genderLookups, titleLookups, countryLookups, fetchCountryLookups } =
     useLookup();
 
-  React.useEffect(() => {
-    if (!countryLookups || countryLookups.length === 0) {
-      fetchCountryLookups?.();
-    }
-  }, []);
-
   // Set default value to Ireland if countryPrimaryQualification is empty
   React.useEffect(() => {
     if (!formData?.countryPrimaryQualification && countryLookups && countryLookups.length > 0) {
@@ -385,13 +379,11 @@ const PersonalInformation = ({
             <Radio
               label="Preferred address"
               name="preferredAddress"
+              required
               value={formData?.preferredAddress || ''}
               onChange={handleInputChange}
               showValidation={showValidation}
-              options={[
-                { value: 'home', label: 'Home' },
-                { value: 'work', label: 'Work' },
-              ]}
+              options={[{ value: 'home', label: 'Home' }, { value: 'work', label: 'Work' }]}
             />
           </div>
         </div>

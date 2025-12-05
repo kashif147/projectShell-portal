@@ -11,6 +11,7 @@ import Button from '../components/common/Button';
 const WorkLocation = () => {
   const { professionalDetail, getProfessionalDetail } = useApplication();
   const { workLocationLookups, fetchWorkLocationLookups } = useLookup();
+  const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({ workLocation: '', otherWorkLocation: '', branch: '', region: '', reasonToChange: '' });
   const existing = professionalDetail?.professionalDetails || {};
 

@@ -523,9 +523,9 @@ const Dashboard = () => {
                     : getApplicationButtonText()
                 }
                 icon={FormOutlined}
-                // onClick={() => !isApplicationSubmitted && navigate("/applicationForm")}
-                onClick={() => navigate('/applicationForm')}
-                // disabled={isApplicationSubmitted}
+                onClick={() => !isApplicationSubmitted && navigate("/applicationForm")}
+                // onClick={() => navigate('/applicationForm')}
+                disabled={isApplicationSubmitted}
                 colorScheme={isApplicationSubmitted ? 'green' : 'blue'}
               />
 
