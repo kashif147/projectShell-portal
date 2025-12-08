@@ -4,9 +4,9 @@ import { getHeaders } from '../helpers/auth.helper';
 import { decryptToken } from '../helpers/crypt.helper';
 import { PROFILE_URL } from '../constants/api';
 
-const transfer_request = axios.create();
+const profile_request = axios.create();
 
-transfer_request.interceptors.request.use(
+profile_request.interceptors.request.use(
   async config => {
     const headers = getHeaders();
     let token = headers.token;
@@ -30,7 +30,7 @@ transfer_request.interceptors.request.use(
   },
 );
 
-transfer_request.interceptors.response.use(
+profile_request.interceptors.response.use(
   res => {
     return res;
   },
@@ -39,4 +39,4 @@ transfer_request.interceptors.response.use(
   },
 );
 
-export default transfer_request;
+export default profile_request;

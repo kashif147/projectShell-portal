@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { EnvironmentOutlined, CheckCircleOutlined, EditOutlined } from '@ant-design/icons';
 import { useApplication } from '../contexts/applicationContext';
 import { useLookup } from '../contexts/lookupContext';
-import { transferRequest } from '../api/transfer.api';
+import { profileRequest } from '../api/profile.api';
 import { toast } from 'react-toastify';
 import Select from '../components/ui/Select';
 import { Input } from '../components/ui/Input';
@@ -122,8 +122,7 @@ const WorkLocation = () => {
       reason: form.reasonToChange,
     };
 
-    console.log('transferPayload=============>', transferPayload);
-    transferRequest(transferPayload)
+    profileRequest(transferPayload)
       .then(res => {
         if (res?.status === 200 || res?.status === 201) {
           toast.success('Work location transfer request submitted successfully');
