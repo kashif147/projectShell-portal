@@ -21,7 +21,7 @@ const PaymentStatusModal = ({
   const resolvedPrimaryText = primaryText || (isSuccess ? 'Go to home' : 'Back to home');
 
   return (
-    <Modal open={open} onCancel={onClose} footer={null} centered width={420}>
+    <Modal open={open} onCancel={onClose} footer={null} centered width={420} closable={false} maskClosable={false}>
       <Result
         status={isSuccess ? 'success' : 'error'}
         title={resolvedTitle}

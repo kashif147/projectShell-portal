@@ -1,18 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { EnvironmentOutlined, CheckCircleOutlined, EditOutlined } from '@ant-design/icons';
 import { useApplication } from '../contexts/applicationContext';
+import { useProfile } from '../contexts/profileContext';
 import { useLookup } from '../contexts/lookupContext';
-import { updateProfessionalDetailRequest } from '../api/application.api';
+import { profileRequest } from '../api/profile.api';
 import { toast } from 'react-toastify';
 import Select from '../components/ui/Select';
 import { Input } from '../components/ui/Input';
 import Button from '../components/common/Button';
 
 const WorkLocation = () => {
-  const { personalDetail, professionalDetail, getProfessionalDetail } = useApplication();
+  const { professionalDetail, getProfessionalDetail } = useApplication();
+  const { profileByIdDetail, getProfileDetail } = useProfile();
   const { workLocationLookups, fetchWorkLocationLookups } = useLookup();
+  const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({ workLocation: '', otherWorkLocation: '', branch: '', region: '', reasonToChange: '' });
-  const existing = professionalDetail?.professionalDetails || {};
+  
+  // Prioritize profile data over application data
+  const existing = profileByIdDetail?.professionalDetails || professionalDetail?.professionalDetails || {};
 
   useEffect(() => {
     if (!workLocationLookups || workLocationLookups.length === 0) {
@@ -28,11 +33,12 @@ const WorkLocation = () => {
       region: existing.region || '',
       reasonToChange: existing.reasonToChange || '',
     });
-  }, [professionalDetail]);
+  }, [professionalDetail, profileByIdDetail]);
 
   const workLocationOptions = (workLocationLookups || []).map(item => {
     const name = item?.lookup?.DisplayName || item?.lookup?.lookupname || '';
-    return { value: name, label: name };
+    const id = item?.lookup?._id || item?.lookup?.id || '';
+    return { value: name, label: name, id };
   });
 
   const branchOptions = Array.from(
@@ -76,23 +82,72 @@ const WorkLocation = () => {
   };
 
   const onSubmit = () => {
-    const payload = { professionalDetails: {} };
-    if (form.workLocation) payload.professionalDetails.workLocation = form.workLocation;
-    if (form.otherWorkLocation) payload.professionalDetails.otherWorkLocation = form.otherWorkLocation;
-    if (form.branch) payload.professionalDetails.branch = form.branch;
-    if (form.region) payload.professionalDetails.region = form.region;
-    if (form.reasonToChange) payload.professionalDetails.reasonToChange = form.reasonToChange;
+    const currentWorkLocationItem = (workLocationLookups || []).find(
+      item => (item?.lookup?.DisplayName || item?.lookup?.lookupname) === existing.workLocation
+    );
+    const currentWorkLocationId = currentWorkLocationItem?.lookup?._id || currentWorkLocationItem?.lookup?.id;
 
-    // updateProfessionalDetailRequest(personalDetail?.ApplicationId, payload)
-    //   .then(res => {
-    //     if (res.status === 200) {
-    //       toast.success('Work location updated');
-    //       getProfessionalDetail();
-    //     } else {
-    //       toast.error(res.data?.message || 'Update failed');
-    //     }
-    //   })
-    //   .catch(() => toast.error('Something went wrong'));
+    let requestedWorkLocationId = null;
+    if (form.workLocation && form.workLocation !== 'other') {
+      const requestedWorkLocationItem = (workLocationLookups || []).find(
+        item => (item?.lookup?.DisplayName || item?.lookup?.lookupname) === form.workLocation
+      );
+      requestedWorkLocationId = requestedWorkLocationItem?.lookup?._id || requestedWorkLocationItem?.lookup?.id;
+    }
+
+    if (!form.workLocation) {
+      toast.error('Please select a work location');
+      return;
+    }
+
+    if (form.workLocation === 'other') {
+      toast.error('Please select a work location from the list. Transfer requests require a valid work location ID.');
+      return;
+    }
+
+    if (!currentWorkLocationId) {
+      toast.error('Current work location not found. Please contact support.');
+      return;
+    }
+
+    if (!requestedWorkLocationId) {
+      toast.error('Requested work location not found. Please select a valid work location.');
+      return;
+    }
+
+    if (!form.reasonToChange || form.reasonToChange.trim() === '') {
+      toast.error('Please provide a reason for changing your work location');
+      return;
+    }
+
+    const transferPayload = {
+      currentWorkLocationId,
+      requestedWorkLocationId,
+      reason: form.reasonToChange,
+    };
+
+    profileRequest(transferPayload)
+      .then(res => {
+        if (res?.status === 200 || res?.status === 201) {
+          toast.success('Work location transfer request submitted successfully');
+          // Refresh both profile and application data
+          getProfileDetail?.();
+          getProfessionalDetail?.();
+          setForm({
+            workLocation: '',
+            otherWorkLocation: '',
+            branch: '',
+            region: '',
+            reasonToChange: '',
+          });
+        } else {
+          toast.error(res?.data?.message || 'Transfer request failed');
+        }
+      })
+      .catch(error => {
+        console.error('Transfer request error:', error);
+        toast.error(error?.response?.data?.message || 'Something went wrong');
+      });
   };
 
   return (

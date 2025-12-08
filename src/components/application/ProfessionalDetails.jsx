@@ -40,7 +40,12 @@ const ProfessionalDetails = ({
     if (!categoryLookups || categoryLookups.length === 0) {
       fetchCategoryLookups?.();
     }
-    if (!gradeLookups || gradeLookups.length === 0 || !studyLocationLookups || studyLocationLookups.length === 0) {
+    if (
+      !gradeLookups ||
+      gradeLookups.length === 0 ||
+      !studyLocationLookups ||
+      studyLocationLookups.length === 0
+    ) {
       fetchLookups?.();
     }
   }, []);
@@ -73,7 +78,7 @@ const ProfessionalDetails = ({
         return { value: name, label: name };
       })
       .filter(option => option.value), // Filter out empty values
-    { value: 'other', label: 'Other' } // Add "Other" option at the end
+    { value: 'other', label: 'Other' }, // Add "Other" option at the end
   ];
 
   const studyLocationOptions = (studyLocationLookups || [])
@@ -224,25 +229,8 @@ const ProfessionalDetails = ({
               </svg>
               Student Information
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className=" grid grid-cols-1 md:grid-cols-2 gap-4">
               <Select
-                label="Study Location"
-                name="studyLocation"
-                value={formData?.studyLocation || ''}
-                onChange={handleInputChange}
-                placeholder="Select study location"
-                options={studyLocationOptions}
-              />
-              <DatePicker
-                label="Initial Date"
-                name="graduationDate"
-                value={formData?.graduationDate || ''}
-                onChange={handleInputChange}
-                disableAgeValidation
-              />
-            </div>
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select
                 label="Discipline"
                 name="discipline"
                 value={formData?.discipline || ''}
@@ -258,8 +246,31 @@ const ProfessionalDetails = ({
                   { value: 'other', label: 'Other' },
                 ]}
               />
-          </div>
-
+              <Select
+                label="Study Location"
+                name="studyLocation"
+                value={formData?.studyLocation || ''}
+                onChange={handleInputChange}
+                placeholder="Select study location"
+                options={studyLocationOptions}
+              />
+            </div>
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <DatePicker
+                label="Start Date"
+                name="startDate"
+                value={formData?.startDate || ''}
+                onChange={handleInputChange}
+                disableAgeValidation
+              />
+              <DatePicker
+                label="Graduation Date"
+                name="graduationDate"
+                value={formData?.graduationDate || ''}
+                onChange={handleInputChange}
+                disableAgeValidation
+              />
+            </div>
           </div>
         )}
 
@@ -320,7 +331,11 @@ const ProfessionalDetails = ({
             </svg>
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">{isCategoryType('undergraduate_student') ? 'Work Location / Placement Details' : 'Work Details'}</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {isCategoryType('undergraduate_student')
+                ? 'Work Location / Placement Details'
+                : 'Work Details'}
+            </h2>
             <p className="text-sm text-gray-600 mt-1">
               Provide your work location and professional grade.
             </p>
@@ -390,7 +405,7 @@ const ProfessionalDetails = ({
             onChange={handleInputChange}
             showValidation={showValidation}
             placeholder="Select grade"
-            options={ gradeOptions }
+            options={gradeOptions}
           />
           <Input
             label="Other Grade"
@@ -436,27 +451,27 @@ const ProfessionalDetails = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-          <Radio
-            label="Are you currently undertaking a nursing adaptation programme?"
-            name="nursingAdaptationProgramme"
-            value={formData?.nursingAdaptationProgramme || ''}
-            onChange={e => {
-              const updatedData = {
-                ...formData,
-                nursingAdaptationProgramme: e.target.value,
-              };
-              // Clear nmbiNumber and nurseType if "no" is selected
-              if (e.target.value === 'no') {
-                updatedData.nmbiNumber = '';
-                updatedData.nurseType = '';
-              }
-              onFormDataChange(updatedData);
-            }}
-            options={[
-              { value: 'yes', label: 'Yes' },
-              { value: 'no', label: 'No' },
-            ]}
-          />
+            <Radio
+              label="Are you currently undertaking a nursing adaptation programme?"
+              name="nursingAdaptationProgramme"
+              value={formData?.nursingAdaptationProgramme || ''}
+              onChange={e => {
+                const updatedData = {
+                  ...formData,
+                  nursingAdaptationProgramme: e.target.value,
+                };
+                // Clear nmbiNumber and nurseType if "no" is selected
+                if (e.target.value === 'no') {
+                  updatedData.nmbiNumber = '';
+                  updatedData.nurseType = '';
+                }
+                onFormDataChange(updatedData);
+              }}
+              options={[
+                { value: 'yes', label: 'Yes' },
+                { value: 'no', label: 'No' },
+              ]}
+            />
           </div>
 
           <Input

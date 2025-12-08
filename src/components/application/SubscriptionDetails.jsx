@@ -216,6 +216,7 @@ const SubscriptionDetails = ({
                 ...formData,
                 memberStatus: newStatus,
                 // Always clear both checkboxes when changing member status
+                exclusiveDiscountsAndOffers: false,
                 incomeProtectionScheme: false,
                 inmoRewards: false,
               };

@@ -8,6 +8,7 @@ import {
   FormOutlined,
 } from '@ant-design/icons';
 import { useApplication } from '../contexts/applicationContext';
+import { useProfile } from '../contexts/profileContext';
 import { Elements } from '@stripe/react-stripe-js';
 import {
   PaymentStatusModal,
@@ -34,6 +35,7 @@ const Dashboard = () => {
     getSubscriptionDetail,
     loading,
   } = useApplication();
+  const { profileDetail, getProfileDetail } = useProfile();
   const { user } = useSelector(state => state.auth);
   const navigate = useNavigate();
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -56,6 +58,11 @@ const Dashboard = () => {
     professionalDetails: {},
     subscriptionDetails: {},
   });
+
+  useEffect(() => {
+    getProfileDetail();
+  }, []);
+
   useEffect(() => {
     if (personalDetail?.applicationId) {
       setFormData(prev => ({
@@ -496,12 +503,16 @@ const Dashboard = () => {
     <div className="space-y-4 sm:space-y-6 px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
       {/* Welcome Header */}
       <div className="mb-3 sm:mb-6 lg:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2">
-          Welcome back, {user?.userFirstName || 'Member'}!
-        </h1>
-        <p className="text-sm sm:text-base text-gray-600">
-          Here's a quick overview of your member account.
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+              Welcome back, {user?.userFirstName || 'Member'}!
+            </h1>
+            <p className="text-sm sm:text-base text-gray-600">
+              Here's a quick overview of your member account.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Main Grid Layout */}
