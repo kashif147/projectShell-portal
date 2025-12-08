@@ -92,12 +92,7 @@ export const signInMicrosoft = data => {
 export const signOut = navigate => {
   return async dispatch => {
     try {
-      dispatch(setSignedIn(false));
-      dispatch(setUser({}));
-      deleteHeaders();
-      deleteUser();
-      
-      // Clear all lookup data from local storage
+      // Clear all lookup data from local storage first
       const lookupKeys = [
         'paymentLookups',
         'genderLookups',
@@ -119,11 +114,30 @@ export const signOut = navigate => {
           console.error(`Failed to remove ${key} from localStorage:`, error);
         }
       });
+
+      // Clear auth data
+      deleteHeaders();
+      deleteUser();
       
-      navigate('/');
+      // Dispatch state changes
+      dispatch(setSignedIn(false));
+      dispatch(setUser({}));
+      
+      // Use setTimeout to allow React to finish unmounting before navigation
+      // This prevents the "removeChild" error during component cleanup
+      setTimeout(() => {
+        // Use window.location for a clean navigation that resets everything
+        window.location.href = '/';
+      }, 100);
+      
       // await microSoftUrlRedirect();
     } catch (error) {
+      console.error('Logout error:', error);
       toast.error('Something went wrong');
+      // Fallback navigation
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
     }
   };
 };

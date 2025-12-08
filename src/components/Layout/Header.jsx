@@ -7,10 +7,12 @@ import { signOut } from '../../services/auth.services';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useLookup } from '../../contexts/lookupContext';
+import { useProfile } from '../../contexts/profileContext';
 
 const Header = ({ collapsed, setCollapsed, isMobile, setDrawerVisible, pageTitle }) => {
   const {user} = useSelector((state) => state.auth);
   const {fetchLookups} = useLookup();
+  const { profileDetail } = useProfile();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState('');
@@ -84,8 +86,23 @@ const Header = ({ collapsed, setCollapsed, isMobile, setDrawerVisible, pageTitle
         </div>
       </div>
 
-      {/* Right Section - Notifications and User Profile */}
+      {/* Right Section - Membership Number, Notifications and User Profile */}
       <div className="flex items-center space-x-4">
+        {/* Membership Number */}
+        {profileDetail?.membershipNumber && (
+          <div className="flex bg-green-50 border border-green-200 rounded-lg px-2 md:px-3 py-1 md:py-1.5">
+            <div className="flex flex-col">
+              <p className="text-[10px] md:text-xs text-green-600 font-medium leading-tight">
+                <span className="hidden sm:inline">Membership Number</span>
+                <span className="sm:hidden">Member #</span>
+              </p>
+              <p className="text-xs md:text-sm font-semibold text-green-900 leading-tight">
+                {profileDetail.membershipNumber}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Notification Bell */}
         <Badge count={3} size="small" offset={[-2, 2]}>
           <Button

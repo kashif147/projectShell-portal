@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { EnvironmentOutlined, CheckCircleOutlined, EditOutlined } from '@ant-design/icons';
 import { useApplication } from '../contexts/applicationContext';
+import { useProfile } from '../contexts/profileContext';
 import { useLookup } from '../contexts/lookupContext';
 import { profileRequest } from '../api/profile.api';
 import { toast } from 'react-toastify';
@@ -10,10 +11,13 @@ import Button from '../components/common/Button';
 
 const WorkLocation = () => {
   const { professionalDetail, getProfessionalDetail } = useApplication();
+  const { profileByIdDetail, getProfileDetail } = useProfile();
   const { workLocationLookups, fetchWorkLocationLookups } = useLookup();
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({ workLocation: '', otherWorkLocation: '', branch: '', region: '', reasonToChange: '' });
-  const existing = professionalDetail?.professionalDetails || {};
+  
+  // Prioritize profile data over application data
+  const existing = profileByIdDetail?.professionalDetails || professionalDetail?.professionalDetails || {};
 
   useEffect(() => {
     if (!workLocationLookups || workLocationLookups.length === 0) {
@@ -29,7 +33,7 @@ const WorkLocation = () => {
       region: existing.region || '',
       reasonToChange: existing.reasonToChange || '',
     });
-  }, [professionalDetail]);
+  }, [professionalDetail, profileByIdDetail]);
 
   const workLocationOptions = (workLocationLookups || []).map(item => {
     const name = item?.lookup?.DisplayName || item?.lookup?.lookupname || '';
@@ -126,6 +130,8 @@ const WorkLocation = () => {
       .then(res => {
         if (res?.status === 200 || res?.status === 201) {
           toast.success('Work location transfer request submitted successfully');
+          // Refresh both profile and application data
+          getProfileDetail?.();
           getProfessionalDetail?.();
           setForm({
             workLocation: '',

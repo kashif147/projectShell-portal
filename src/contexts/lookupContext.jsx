@@ -21,7 +21,7 @@ const getAllLookups = async () => {
 const getAllCountry = async () => {
   try {
     const response = await fetchAllCountry();
-    return response.data;
+    return response?.data?.data;
   } catch (error) {
     toast.error(error.response?.data?.message ?? 'Failed to fetch country');
   }

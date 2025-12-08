@@ -512,28 +512,6 @@ const Dashboard = () => {
               Here's a quick overview of your member account.
             </p>
           </div>
-          {(profileDetail?.profileId || profileDetail?.membershipNumber) && (
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-              {/* {profileDetail?.profileId && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 sm:px-4 py-2">
-                  <p className="text-xs text-blue-600 font-medium">Profile ID</p>
-                  <p className="text-sm sm:text-base font-semibold text-blue-900">
-                    {profileDetail?.profileId}
-                  </p>
-                </div>
-              )} */}
-              {profileDetail?.membershipNumber && (
-                <div className="bg-green-50 border border-green-200 rounded-lg px-3 sm:px-4 py-2">
-                  <p className="text-xs text-green-600 font-medium">
-                    Membership Number
-                  </p>
-                  <p className="text-sm sm:text-base font-semibold text-green-900">
-                    {profileDetail?.membershipNumber}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
