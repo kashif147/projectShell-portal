@@ -122,7 +122,6 @@ const Profile = () => {
       </Col>
       {loading ? <Spinner /> : (
         <Col xs={24} md={16}>
-          <Card title="Personal Information">
             <PersonalInformation
               formData={personalInfo}
               onFormDataChange={setPersonalInfo}
@@ -136,7 +135,6 @@ const Profile = () => {
                 Cancel
               </Button>
             </div>
-          </Card>
         </Col>
       )}
     </Row>

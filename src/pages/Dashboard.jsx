@@ -513,7 +513,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6 px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-6 lg:px-8 py-3 sm:py-6">
       {/* Welcome Header */}
       <div className="mb-3 sm:mb-6 lg:mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
@@ -529,15 +529,15 @@ const Dashboard = () => {
       </div>
 
       {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-6">
         {/* Left Column - Application Status & Events */}
         <div className="lg:col-span-2 space-y-3 sm:space-y-6">
           {/* Quick Actions Section */}
-          <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
+          <div className="bg-white rounded-lg shadow-sm p-2 sm:p-6">
             <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
               Quick Actions
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
               {/* Application Action */}
               <QuickActionButton
                 title="Application"
@@ -686,7 +686,7 @@ const Dashboard = () => {
           </div> */}
 
           {/* Upcoming Events Section */}
-          <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
+          <div className="bg-white rounded-lg shadow-sm p-2 sm:p-6">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               <h2 className="text-lg sm:text-xl font-semibold">
                 Upcoming Events
@@ -699,7 +699,7 @@ const Dashboard = () => {
             </div>
             <div className="space-y-2.5 sm:space-y-4">
               {/* Event 1 */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-4 p-2.5 sm:p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 p-2 sm:p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
                   <CalendarOutlined className="text-blue-600 text-lg sm:text-xl" />
                 </div>
@@ -719,7 +719,7 @@ const Dashboard = () => {
               </div>
 
               {/* Event 2 */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-4 p-2.5 sm:p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 p-2 sm:p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
                   <CalendarOutlined className="text-blue-600 text-lg sm:text-xl" />
                 </div>
@@ -744,7 +744,7 @@ const Dashboard = () => {
         {/* Right Column - Profile & Payments */}
         <div className="space-y-3 sm:space-y-6">
           {/* Profile Completion Section */}
-          <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
+          <div className="bg-white rounded-lg shadow-sm p-2 sm:p-6">
             <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
               Profile Completion
             </h2>
@@ -790,7 +790,7 @@ const Dashboard = () => {
           </div>
 
           {/* Payments & Billing Section */}
-          <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
+          <div className="bg-white rounded-lg shadow-sm p-2 sm:p-6">
             <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
               Payments & Billing
             </h2>

@@ -9,6 +9,7 @@ const Button = ({
   icon,
   block,
   className = '',
+  loading = false,
   ...props 
 }) => {
   const getButtonStyle = () => {
@@ -35,6 +36,7 @@ const Button = ({
     <AntButton
       type={type}
       size={size}
+      loading={loading}
       icon={icon}
       block={block}
       className={getButtonStyle()}
@@ -51,7 +53,8 @@ Button.propTypes = {
   size: PropTypes.oneOf(['large', 'middle', 'small']),
   icon: PropTypes.node,
   block: PropTypes.bool,
-  className: PropTypes.string
+  className: PropTypes.string,
+  loading: PropTypes.bool
 };
 
 export default Button; 
