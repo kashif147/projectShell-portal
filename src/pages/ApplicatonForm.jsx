@@ -812,6 +812,34 @@ const ApplicationForm = () => {
     });
   };
 
+  const handleStepClick = (stepNumber) => {
+    // Allow navigation to:
+    // 1. Already completed steps (can go back)
+    // 2. Current step (no change)
+    // 3. Next step if current step is validated
+    if (stepNumber === currentStep) {
+      return; // Already on this step
+    }
+    
+    if (stepNumber < currentStep) {
+      // Going back to a previous step - always allowed
+      setCurrentStep(stepNumber);
+      return;
+    }
+    
+    if (stepNumber === currentStep + 1) {
+      // Going to next step - validate current step first
+      handleNext();
+      return;
+    }
+    
+    // Cannot skip steps ahead
+    if (stepNumber > currentStep + 1) {
+      toast.warning('Please complete the current step before proceeding');
+      return;
+    }
+  };
+
   const handleFormDataChange = (stepName, data) => {
     setFormData(prev => {
       const newData = { ...prev, [stepName]: data };
@@ -977,61 +1005,83 @@ const ApplicationForm = () => {
       ) : (
         <>
           <div className="flex items-center mb-6 sm:mb-8 px-1 sm:px-8 md:px-12 lg:px-16 overflow-x-auto">
-            {steps.map((step, index) => (
-              <React.Fragment key={step.number}>
-                {/* Step Circle and Label */}
-                <div className="flex flex-col items-center relative flex-shrink-0">
-                  <div
+            {steps.map((step, index) => {
+              const isCompleted = currentStep > step.number || (isSubmitted && step.number === 3);
+              const isCurrent = currentStep === step.number;
+              const isClickable = isCompleted || isCurrent || step.number === currentStep + 1;
+              
+              return (
+                <React.Fragment key={step.number}>
+                  {/* Step Circle and Label */}
+                  <button
+                    type="button"
+                    onClick={() => handleStepClick(step.number)}
+                    disabled={!isClickable || isNextLoading}
                     className={`
-                      w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-semibold text-sm sm:text-base
-                      ${
-                        isSubmitted && step.number === 3
-                          ? 'bg-green-500 text-white'
-                          : currentStep === step.number
-                            ? 'bg-blue-500 text-white'
-                            : currentStep > step.number
-                              ? 'bg-green-500 text-white'
-                              : 'bg-gray-300 text-gray-600'
+                      flex flex-col items-center relative flex-shrink-0
+                      transition-all duration-200
+                      ${isClickable && !isNextLoading
+                        ? 'cursor-pointer hover:scale-105 active:scale-95'
+                        : 'cursor-not-allowed opacity-60'
                       }
                     `}>
-                    {isSubmitted && step.number === 3
-                      ? '✓'
-                      : currentStep > step.number
-                        ? '✓'
-                        : step.number}
-                  </div>
-                  <p
-                    className={`mt-1.5 sm:mt-2 text-[9px] xs:text-[10px] sm:text-xs md:text-sm font-medium text-center max-w-[70px] sm:max-w-none leading-tight sm:leading-normal ${
-                      isSubmitted && step.number === 3
-                        ? 'text-green-500'
-                        : currentStep === step.number
-                          ? 'text-blue-500'
-                          : currentStep > step.number
-                            ? 'text-green-500'
-                            : 'text-gray-500'
-                    }`}>
-                    {step.title}
-                  </p>
-                </div>
-
-                {/* Connecting Line */}
-                {index < steps.length - 1 && (
-                  <div className="flex-1 mx-1 sm:mx-4 md:mx-6 lg:mx-8 min-w-[30px] sm:min-w-[80px] md:min-w-[100px]">
                     <div
                       className={`
-                        h-0.5 w-full
+                        w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-semibold text-sm sm:text-base
+                        transition-all duration-200
                         ${
-                          (isSubmitted && step.number === 2) ||
-                          currentStep > step.number
-                            ? 'bg-green-500'
-                            : 'bg-gray-300'
+                          isSubmitted && step.number === 3
+                            ? 'bg-green-500 text-white'
+                            : isCurrent
+                              ? 'bg-blue-500 text-white'
+                              : isCompleted
+                                ? 'bg-green-500 text-white'
+                                : 'bg-gray-300 text-gray-600'
                         }
-                      `}
-                    />
-                  </div>
-                )}
-              </React.Fragment>
-            ))}
+                        ${isClickable && !isNextLoading && !isCurrent
+                          ? 'hover:shadow-lg hover:ring-2 hover:ring-blue-300'
+                          : ''
+                        }
+                      `}>
+                      {isSubmitted && step.number === 3
+                        ? '✓'
+                        : isCompleted
+                          ? '✓'
+                          : step.number}
+                    </div>
+                    <p
+                      className={`mt-1.5 sm:mt-2 text-[9px] xs:text-[10px] sm:text-xs md:text-sm font-medium text-center max-w-[70px] sm:max-w-none leading-tight sm:leading-normal transition-colors duration-200 ${
+                        isSubmitted && step.number === 3
+                          ? 'text-green-500'
+                          : isCurrent
+                            ? 'text-blue-500'
+                            : isCompleted
+                              ? 'text-green-500'
+                              : 'text-gray-500'
+                      }`}>
+                      {step.title}
+                    </p>
+                  </button>
+
+                  {/* Connecting Line */}
+                  {index < steps.length - 1 && (
+                    <div className="flex-1 mx-1 sm:mx-4 md:mx-6 lg:mx-8 min-w-[30px] sm:min-w-[80px] md:min-w-[100px]">
+                      <div
+                        className={`
+                          h-0.5 w-full transition-colors duration-200
+                          ${
+                            (isSubmitted && step.number === 2) ||
+                            currentStep > step.number
+                              ? 'bg-green-500'
+                              : 'bg-gray-300'
+                          }
+                        `}
+                      />
+                    </div>
+                  )}
+                </React.Fragment>
+              );
+            })}
           </div>
 
           {renderStepContent()}
