@@ -1,4 +1,5 @@
 import React from 'react';
+import Spinner from '../common/Spinner';
 
 const QuickActionButton = ({
   title,
@@ -7,6 +8,7 @@ const QuickActionButton = ({
   onClick,
   disabled = false,
   colorScheme = 'blue',
+  loading = false,
 }) => {
   // Color configurations with gradients and modern styling
   const colorSchemes = {
@@ -75,8 +77,13 @@ const QuickActionButton = ({
         ${colors.iconBg} shadow-lg ${colors.iconShadow}
         transform transition-transform duration-300
         ${!disabled && 'group-hover:scale-110'}
+        ${loading && 'animate-spin'}
       `}>
-        <Icon className="text-lg sm:text-xl lg:text-2xl text-white" />
+        {loading ? (
+          <Spinner size={20} color="#fff" loading={loading} />
+        ) : (
+          <Icon className="text-lg sm:text-xl lg:text-2xl text-white" />
+        )}
       </div>
       
       {/* Title with better typography */}

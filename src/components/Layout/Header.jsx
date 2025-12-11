@@ -60,12 +60,14 @@ const Header = ({ collapsed, setCollapsed, isMobile, setDrawerVisible, pageTitle
     >
       {/* Left Section - Menu Button, Title, and Search */}
       <div className="flex items-center flex-1">
-        <Button
-          type="text"
-          icon={isMobile ? <MenuUnfoldOutlined /> : (collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />)}
-          onClick={() => isMobile ? setDrawerVisible(true) : setCollapsed(!collapsed)}
-          className="ml-[-24px] w-16 h-16"
-        />
+        {!isMobile && (
+          <Button
+            type="text"
+            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            onClick={() => setCollapsed(!collapsed)}
+            className="ml-[-24px] w-16 h-16"
+          />
+        )}
         <h1 className="header-title text-2xl ml-4 text-gray-800 tracking-tight">{pageTitle}</h1>
         
         {/* Search Bar */}

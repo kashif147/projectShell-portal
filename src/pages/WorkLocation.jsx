@@ -3,7 +3,7 @@ import { EnvironmentOutlined, CheckCircleOutlined, EditOutlined } from '@ant-des
 import { useApplication } from '../contexts/applicationContext';
 import { useProfile } from '../contexts/profileContext';
 import { useLookup } from '../contexts/lookupContext';
-import { profileRequest } from '../api/profile.api';
+import { profileRequest, fetchTransferRequest } from '../api/profile.api';
 import { toast } from 'react-toastify';
 import Select from '../components/ui/Select';
 import { Input } from '../components/ui/Input';
@@ -14,7 +14,10 @@ const WorkLocation = () => {
   const { profileByIdDetail, getProfileDetail } = useProfile();
   const { workLocationLookups, fetchWorkLocationLookups } = useLookup();
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true);
   const [form, setForm] = useState({ workLocation: '', otherWorkLocation: '', branch: '', region: '', reasonToChange: '' });
+  const [transferRequest, setTransferRequest] = useState(null);
+  const [hasPendingRequest, setHasPendingRequest] = useState(false);
   
   // Prioritize profile data over application data
   const existing = profileByIdDetail?.professionalDetails || professionalDetail?.professionalDetails || {};
@@ -26,14 +29,102 @@ const WorkLocation = () => {
   }, []);
 
   useEffect(() => {
-    setForm({
-      workLocation: existing.workLocation || '',
-      otherWorkLocation: existing.otherWorkLocation || '',
-      branch: existing.branch || '',
-      region: existing.region || '',
-      reasonToChange: existing.reasonToChange || '',
-    });
-  }, [professionalDetail, profileByIdDetail]);
+    getProfileDetail()
+  }, []);
+
+  useEffect(() => {
+    setInitialLoading(true);
+    fetchTransferRequest()
+      .then(res => {
+        if (res?.status === 200 && res?.data?.success && res?.data?.data?.length > 0) {
+          const requests = res.data.data;
+          // Find the most recent PENDING request, or the latest request if no PENDING exists
+          const pendingRequest = requests.find(req => req.status === 'PENDING');
+          const latestRequest = requests.sort((a, b) => 
+            new Date(b.requestDate || b.createdAt) - new Date(a.requestDate || a.createdAt)
+          )[0];
+          
+          const activeRequest = pendingRequest || latestRequest;
+          
+          if (activeRequest) {
+            setTransferRequest(activeRequest);
+            setHasPendingRequest(activeRequest.status === 'PENDING');
+            
+            // Only populate form if there's a PENDING request
+            if (activeRequest.status === 'PENDING') {
+              setForm(prev => ({
+                ...prev,
+                workLocation: activeRequest.requestedWorkLocationName || '',
+                branch: activeRequest.requestedBranchName || '',
+                region: activeRequest.requestedRegionName || '',
+                reasonToChange: activeRequest.reason || '',
+              }));
+            } else {
+              // Clear form if no pending request
+              setForm({
+                workLocation: '',
+                otherWorkLocation: '',
+                branch: '',
+                region: '',
+                reasonToChange: '',
+              });
+            }
+          } else {
+            // No requests found, clear form
+            setTransferRequest(null);
+            setHasPendingRequest(false);
+            setForm({
+              workLocation: '',
+              otherWorkLocation: '',
+              branch: '',
+              region: '',
+              reasonToChange: '',
+            });
+          }
+        } else {
+          // No requests found, clear form
+          setTransferRequest(null);
+          setHasPendingRequest(false);
+          setForm({
+            workLocation: '',
+            otherWorkLocation: '',
+            branch: '',
+            region: '',
+            reasonToChange: '',
+          });
+        }
+        setInitialLoading(false);
+      })
+      .catch(error => {
+        console.error('Error fetching transfer requests:', error);
+        // On error, clear form
+        setTransferRequest(null);
+        setHasPendingRequest(false);
+        setForm({
+          workLocation: '',
+          otherWorkLocation: '',
+          branch: '',
+          region: '',
+          reasonToChange: '',
+        });
+        setInitialLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    // Only set form from existing data if there's no transfer request data and no pending request
+    if (!transferRequest && !hasPendingRequest) {
+      // Keep form empty - don't populate with existing data
+      // User should fill the form manually
+      setForm({
+        workLocation: '',
+        otherWorkLocation: '',
+        branch: '',
+        region: '',
+        reasonToChange: '',
+      });
+    }
+  }, [professionalDetail, profileByIdDetail, transferRequest, hasPendingRequest]);
 
   const workLocationOptions = (workLocationLookups || []).map(item => {
     const name = item?.lookup?.DisplayName || item?.lookup?.lookupname || '';
@@ -119,7 +210,7 @@ const WorkLocation = () => {
       toast.error('Please provide a reason for changing your work location');
       return;
     }
-
+setLoading(true);
     const transferPayload = {
       currentWorkLocationId,
       requestedWorkLocationId,
@@ -133,20 +224,71 @@ const WorkLocation = () => {
           // Refresh both profile and application data
           getProfileDetail?.();
           getProfessionalDetail?.();
-          setForm({
-            workLocation: '',
-            otherWorkLocation: '',
-            branch: '',
-            region: '',
-            reasonToChange: '',
-          });
+          // Refresh transfer requests to get the new PENDING status
+          fetchTransferRequest()
+            .then(transferRes => {
+              if (transferRes?.status === 200 && transferRes?.data?.success && transferRes?.data?.data?.length > 0) {
+                const requests = transferRes.data.data;
+                const pendingRequest = requests.find(req => req.status === 'PENDING');
+                const latestRequest = requests.sort((a, b) => 
+                  new Date(b.requestDate || b.createdAt) - new Date(a.requestDate || a.createdAt)
+                )[0];
+                
+                const activeRequest = pendingRequest || latestRequest;
+                
+                if (activeRequest) {
+                  setTransferRequest(activeRequest);
+                  setHasPendingRequest(activeRequest.status === 'PENDING');
+                  
+                  // Only populate form if there's a PENDING request
+                  if (activeRequest.status === 'PENDING') {
+                    setForm(prev => ({
+                      ...prev,
+                      workLocation: activeRequest.requestedWorkLocationName || '',
+                      branch: activeRequest.requestedBranchName || '',
+                      region: activeRequest.requestedRegionName || '',
+                      reasonToChange: activeRequest.reason || '',
+                    }));
+                    setLoading(false);
+                  } else {
+                    // Clear form if no pending request
+                    setForm({
+                      workLocation: '',
+                      otherWorkLocation: '',
+                      branch: '',
+                      region: '',
+                      reasonToChange: '',
+                    });
+                    setLoading(false);
+                  }
+                } else {
+                  // No requests found, clear form
+                  setTransferRequest(null);
+                  setHasPendingRequest(false);
+                  setForm({
+                    workLocation: '',
+                    otherWorkLocation: '',
+                    branch: '',
+                    region: '',
+                    reasonToChange: '',
+                  });
+                  setLoading(false);
+                }
+              }
+            })
+            .catch(error => {
+              console.error('Error refreshing transfer requests:', error);
+              setLoading(false);
+            });
         } else {
           toast.error(res?.data?.message || 'Transfer request failed');
+          setLoading(false);
         }
       })
       .catch(error => {
         console.error('Transfer request error:', error);
         toast.error(error?.response?.data?.message || 'Something went wrong');
+        setLoading(false);
       });
   };
 
@@ -250,6 +392,7 @@ const WorkLocation = () => {
               value={form.workLocation}
               onChange={onChange}
               required
+              disabled={hasPendingRequest || initialLoading}
               tooltip="Select your primary work location. If your location is not listed, choose 'Other'."
               placeholder="Select work location"
               options={[
@@ -263,7 +406,7 @@ const WorkLocation = () => {
               name="otherWorkLocation"
               value={form.otherWorkLocation}
               onChange={onChange}
-              disabled={form.workLocation !== 'other'}
+              disabled={form.workLocation !== 'other' || hasPendingRequest || initialLoading}
               required={form.workLocation === 'other'}
               placeholder="Enter your work location"
             />
@@ -274,7 +417,7 @@ const WorkLocation = () => {
                 name="branch"
                 value={form.branch}
                 onChange={onChange}
-                disabled={form.workLocation !== 'other'}
+                disabled={form.workLocation !== 'other' || hasPendingRequest || initialLoading}
                 required={form.workLocation === 'other'}
                 placeholder="Select branch"
                 options={form.workLocation === 'other' ? branchOptions : form.branch ? [{ value: form.branch, label: form.branch }] : branchOptions}
@@ -284,7 +427,7 @@ const WorkLocation = () => {
                 name="region"
                 value={form.region}
                 onChange={onChange}
-                disabled={form.workLocation !== 'other'}
+                disabled={form.workLocation !== 'other' || hasPendingRequest || initialLoading}
                 required={form.workLocation === 'other'}
                 placeholder="Select region"
                 options={form.workLocation === 'other' ? regionOptions : form.region ? [{ value: form.region, label: form.region }] : regionOptions}
@@ -294,8 +437,10 @@ const WorkLocation = () => {
             <Input
               label="Reason to Change"
               name="reasonToChange"
+              required
               value={form.reasonToChange}
               onChange={onChange}
+              disabled={hasPendingRequest || initialLoading}
               multiline
               placeholder="Please provide a reason for changing your work location"
               rows={4}
@@ -303,8 +448,10 @@ const WorkLocation = () => {
 
             <div className="pt-4">
               <Button
+                loading={loading || initialLoading}
                 type="primary"
                 onClick={onSubmit}
+                disabled={hasPendingRequest || initialLoading}
                 className="w-full bg-teal-600 hover:bg-teal-700 border-teal-600 h-11 text-base font-medium shadow-sm">
                 Update Work Location
               </Button>

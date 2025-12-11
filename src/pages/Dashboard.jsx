@@ -45,7 +45,9 @@ const Dashboard = () => {
     message: '',
   });
   const [isApplicationSubmitted, setIsApplicationSubmitted] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState(null);
   const [categoryData, setCategoryData] = useState(null);
+  const [appicationLoader, setApplicationLoader] = useState(true)
   const [formData, setFormData] = useState({
     personalInfo: {
       forename: user?.userFirstName || '',
@@ -314,6 +316,7 @@ const Dashboard = () => {
     const checkApplicationStatus = async () => {
       if (personalDetail?.applicationId) {
         try {
+          setApplicationLoader(true);
           const response = await applicationConfirmationRequest(
             personalDetail.applicationId,
           );
@@ -323,23 +326,33 @@ const Dashboard = () => {
             response?.status === 200 ||
             response?.data?.status === 'success'
           ) {
-            const applicationStatus =
+            const status =
               response?.data?.data?.applicationStatus ||
               response?.data?.applicationStatus;
 
+            setApplicationStatus(status);
+            setApplicationLoader(false);
             if (
-              applicationStatus === 'submitted' ||
-              applicationStatus === 'approved'
+              status === 'submitted' ||
+              status === 'approved'
             ) {
               setIsApplicationSubmitted(true);
             } else {
               setIsApplicationSubmitted(false);
             }
+          } else {
+            setApplicationLoader(false);
           }
         } catch (error) {
           console.error('Failed to fetch application status:', error);
           setIsApplicationSubmitted(false);
+          setApplicationStatus(null);
+          setApplicationLoader(false);
         }
+      } else {
+        // No application exists, enable the button
+        setApplicationStatus('none');
+        setApplicationLoader(false);
       }
     };
 
@@ -500,7 +513,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6 px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-6 lg:px-8 py-3 sm:py-6">
       {/* Welcome Header */}
       <div className="mb-3 sm:mb-6 lg:mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
@@ -516,28 +529,36 @@ const Dashboard = () => {
       </div>
 
       {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-6">
         {/* Left Column - Application Status & Events */}
         <div className="lg:col-span-2 space-y-3 sm:space-y-6">
           {/* Quick Actions Section */}
-          <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
+          <div className="bg-white rounded-lg shadow-sm p-2 sm:p-6">
             <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
               Quick Actions
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
               {/* Application Action */}
               <QuickActionButton
                 title="Application"
                 subtitle={
-                  isApplicationSubmitted
-                    ? 'Submitted'
+                  applicationStatus === 'approved'
+                    ? 'Approved'
+                    : applicationStatus === 'submitted'
+                    ? 'In Review'
                     : getApplicationButtonText()
                 }
                 icon={FormOutlined}
-                // onClick={() => !isApplicationSubmitted && navigate("/applicationForm")}
                 onClick={() => navigate('/applicationForm')}
-                // disabled={isApplicationSubmitted}
-                colorScheme={isApplicationSubmitted ? 'green' : 'blue'}
+                disabled={appicationLoader || applicationStatus === 'submitted' || applicationStatus === 'approved'}
+                colorScheme={
+                  applicationStatus === 'approved'
+                    ? 'green'
+                    : applicationStatus === 'submitted'
+                    ? 'blue'
+                    : 'blue'
+                }
+                loading={appicationLoader}
               />
 
               {/* Profile Action */}
@@ -570,18 +591,19 @@ const Dashboard = () => {
           </div>
 
           {/* Application Status Section */}
-          <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
+          {/* <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
             <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
               Application Status
             </h2>
             <div className="space-y-2.5 sm:space-y-4">
-              {/* Application Submitted */}
               <div className="flex items-start gap-2 sm:gap-3">
                 <div
                   className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    isApplicationSubmitted ? 'bg-blue-100' : 'bg-gray-100'
+                    applicationStatus === 'submitted' || applicationStatus === 'approved'
+                      ? 'bg-blue-100'
+                      : 'bg-gray-100'
                   }`}>
-                  {isApplicationSubmitted ? (
+                  {applicationStatus === 'submitted' || applicationStatus === 'approved' ? (
                     <span className="text-blue-600 text-sm sm:text-base">
                       ✓
                     </span>
@@ -596,22 +618,29 @@ const Dashboard = () => {
                     Application Submitted
                   </h3>
                   <p className="text-xs sm:text-sm text-gray-500">
-                    {isApplicationSubmitted
-                      ? 'Completed: June 5, 2024'
+                    {applicationStatus === 'submitted' || applicationStatus === 'approved'
+                      ? 'Completed'
                       : 'Not completed yet'}
                   </p>
                 </div>
               </div>
 
-              {/* In Review */}
               <div className="flex items-start gap-2 sm:gap-3">
                 <div
                   className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    isApplicationSubmitted ? 'bg-blue-500' : 'bg-gray-100'
+                    applicationStatus === 'submitted'
+                      ? 'bg-blue-500'
+                      : applicationStatus === 'approved'
+                      ? 'bg-green-100'
+                      : 'bg-gray-100'
                   }`}>
                   <FormOutlined
                     className={`text-xs sm:text-sm ${
-                      isApplicationSubmitted ? 'text-white' : 'text-gray-400'
+                      applicationStatus === 'submitted'
+                        ? 'text-white'
+                        : applicationStatus === 'approved'
+                        ? 'text-green-600'
+                        : 'text-gray-400'
                     }`}
                   />
                 </div>
@@ -620,28 +649,44 @@ const Dashboard = () => {
                     In Review
                   </h3>
                   <p className="text-xs sm:text-sm text-gray-500">
-                    {isApplicationSubmitted ? 'Current Stage' : 'Pending'}
+                    {applicationStatus === 'submitted'
+                      ? 'Current Stage'
+                      : applicationStatus === 'approved'
+                      ? 'Completed'
+                      : 'Pending'}
                   </p>
                 </div>
               </div>
 
-              {/* Approved */}
               <div className="flex items-start gap-2 sm:gap-3">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-100">
-                  <span className="text-gray-400 text-sm sm:text-base">○</span>
+                <div
+                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    applicationStatus === 'approved'
+                      ? 'bg-green-100'
+                      : 'bg-gray-100'
+                  }`}>
+                  {applicationStatus === 'approved' ? (
+                    <span className="text-green-600 text-sm sm:text-base">✓</span>
+                  ) : (
+                    <span className="text-gray-400 text-sm sm:text-base">○</span>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-sm sm:text-base text-gray-800">
                     Approved
                   </h3>
-                  <p className="text-xs sm:text-sm text-gray-500">Pending</p>
+                  <p className="text-xs sm:text-sm text-gray-500">
+                    {applicationStatus === 'approved'
+                      ? 'Completed'
+                      : 'Pending'}
+                  </p>
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Upcoming Events Section */}
-          <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
+          <div className="bg-white rounded-lg shadow-sm p-2 sm:p-6">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               <h2 className="text-lg sm:text-xl font-semibold">
                 Upcoming Events
@@ -654,7 +699,7 @@ const Dashboard = () => {
             </div>
             <div className="space-y-2.5 sm:space-y-4">
               {/* Event 1 */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-4 p-2.5 sm:p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 p-2 sm:p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
                   <CalendarOutlined className="text-blue-600 text-lg sm:text-xl" />
                 </div>
@@ -674,7 +719,7 @@ const Dashboard = () => {
               </div>
 
               {/* Event 2 */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-4 p-2.5 sm:p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 p-2 sm:p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
                   <CalendarOutlined className="text-blue-600 text-lg sm:text-xl" />
                 </div>
@@ -699,7 +744,7 @@ const Dashboard = () => {
         {/* Right Column - Profile & Payments */}
         <div className="space-y-3 sm:space-y-6">
           {/* Profile Completion Section */}
-          <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
+          <div className="bg-white rounded-lg shadow-sm p-2 sm:p-6">
             <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
               Profile Completion
             </h2>
@@ -745,7 +790,7 @@ const Dashboard = () => {
           </div>
 
           {/* Payments & Billing Section */}
-          <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
+          <div className="bg-white rounded-lg shadow-sm p-2 sm:p-6">
             <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
               Payments & Billing
             </h2>
@@ -803,7 +848,7 @@ const Dashboard = () => {
           onSuccess={handleSubscriptionSuccess}
           onFailure={handleSubscriptionFailure}
           formData={formData}
-          membershipCategory={formData.professionalDetails.membershipCategory}
+          membershipCategory={formData.subscriptionDetails.membershipCategory}
         />
       </Elements>
     </div>

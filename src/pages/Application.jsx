@@ -110,27 +110,94 @@ const Application = () => {
     },
   ];
 
-  return (
-    <Card title="Application History">
-      <div className="space-y-6">
-        {hasData ? (
-          <Table
-            dataSource={[application]}
-            columns={columns}
-            rowKey="id"
-            pagination={false}
-          />
-        ) : (
-          <Empty
-            description="No application data found."
-            className="py-12"
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-          />
-        )}
+  // Render mobile card view
+  const renderMobileCard = (record) => {
+    const category =
+      record.professionalDetail?.professionalDetails?.membershipCategory || '';
+    const categoryLabel = category ? getMembershipCategoryLabel(category) : 'N/A';
+    const submissionDate = record.submissionDate;
+    const status = record.subscriptionDetail?.subscriptionDetails?.memberStatus || 'N/A';
 
-
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-4 shadow-sm mb-3">
+        <div className="space-y-2.5 sm:space-y-3">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <p className="text-xs text-gray-500 mb-1">Membership Category</p>
+              <p className={`text-sm font-medium ${category ? 'text-gray-800' : 'text-gray-400'}`}>
+                {categoryLabel}
+              </p>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-100 pt-2.5 sm:pt-3">
+            <p className="text-xs text-gray-500 mb-1">Submission Date</p>
+            <p className={`text-sm font-medium ${submissionDate ? 'text-gray-800' : 'text-gray-400'}`}>
+              {submissionDate ? formatToDDMMYYYY(submissionDate) : 'N/A'}
+            </p>
+          </div>
+          
+          <div className="border-t border-gray-100 pt-2.5 sm:pt-3">
+            <p className="text-xs text-gray-500 mb-1">Status</p>
+            <p className={`text-sm font-medium ${status !== 'N/A' ? 'text-gray-800' : 'text-gray-400'}`}>
+              {status}
+            </p>
+          </div>
+          
+          <div className="border-t border-gray-100 pt-2.5 sm:pt-3">
+            <Button
+              type="primary"
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={() => handleViewApplication(record)}
+              className="w-full bg-blue-500 hover:bg-blue-600 border-blue-500">
+              View Details
+            </Button>
+          </div>
+        </div>
       </div>
-    </Card>
+    );
+  };
+
+  return (
+    <div className="px-1 sm:px-6 py-4 sm:py-6">
+      <Card 
+        title="Application History"
+        // className="shadow-sm"
+        bodyStyle={{ padding: '8px' }}
+      >
+        <div className="space-y-4 sm:space-y-6">
+          {hasData ? (
+            <>
+              {/* Mobile Card View */}
+              <div className="block md:hidden">
+                {[application].map((record) => (
+                  <div key={record.id}>
+                    {renderMobileCard(record)}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Desktop Table View */}
+              <div className="hidden md:block">
+                <Table
+                  dataSource={[application]}
+                  columns={columns}
+                  rowKey="id"
+                  pagination={false}
+                />
+              </div>
+            </>
+          ) : (
+            <Empty
+              description="No application data found."
+              className="py-12"
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
+          )}
+        </div>
+      </Card>
+    </div>
   );
 };
 
