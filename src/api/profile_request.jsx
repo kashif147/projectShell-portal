@@ -10,6 +10,11 @@ profile_request.interceptors.request.use(
   async config => {
     const headers = getHeaders();
     let token = headers.token;
+    if (!token) {
+      console.error('No token found in localStorage');
+      return Promise.reject(new Error('Authentication token not found'));
+    }
+    
     if (token && token.includes(':')) {
       try {
         token = await decryptToken(token);

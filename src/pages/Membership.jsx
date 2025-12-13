@@ -12,7 +12,7 @@ import Button from '../components/common/Button';
 const Membership = () => {
   const { personalDetail, professionalDetail, getProfessionalDetail } =
     useApplication();
-  const { categoryLookups, fetchCategoryLookups } = useLookup();
+  const { categoryLookups } = useLookup();
   const [form, setForm] = useState({
     membershipCategory: '',
     studyLocation: '',
@@ -22,12 +22,6 @@ const Membership = () => {
     isRetired: false,
   });
   const existing = professionalDetail?.professionalDetails || {};
-
-  useEffect(() => {
-    if (!categoryLookups || categoryLookups.length === 0) {
-      fetchCategoryLookups?.();
-    }
-  }, []);
 
   useEffect(() => {
     setForm({

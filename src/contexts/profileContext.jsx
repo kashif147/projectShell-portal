@@ -4,12 +4,14 @@ import {
   fetchProfileRequest,
 } from '../api/profile.api';
 import { toast } from 'react-toastify';
+import { getHeaders } from '../helpers/auth.helper';
 const ProfileContext = createContext();
 
 export const ProfileProvider = ({ children }) => {
   const [loading, setLoading] = React.useState(false);
   const [profileDetail, setProfileDetail] = useState(null);
   const [profileByIdDetail, setProfileByIdDetail] = useState(null);
+  const { token } = getHeaders();
   const getProfileDetail = () => {
     setLoading(true);
     fetchProfileRequest()
@@ -19,7 +21,7 @@ export const ProfileProvider = ({ children }) => {
           setLoading(false);
         } else {
           setLoading(false);
-        //   toast.error(res.data.message ?? 'Unable to get profile datail');
+          //   toast.error(res.data.message ?? 'Unable to get profile datail');
         }
       })
       .catch(() => {
@@ -36,7 +38,7 @@ export const ProfileProvider = ({ children }) => {
           setLoading(false);
         } else {
           setLoading(false);
-        //   toast.error(res.data.message ?? 'Unable to get profile datail');
+          //   toast.error(res.data.message ?? 'Unable to get profile datail');
         }
       })
       .catch(() => {
@@ -46,12 +48,16 @@ export const ProfileProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    getProfileDetail();
+    if (token) {
+      getProfileDetail();
+    }
   }, []);
 
   useEffect(() => {
-    if (profileDetail?.profileId) {
-    getProfileByIdDetail(profileDetail?.profileId);
+    if (token) {
+      if (profileDetail?.profileId) {
+        getProfileByIdDetail(profileDetail?.profileId);
+      }
     }
   }, [profileDetail?.profileId]);
 

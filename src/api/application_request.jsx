@@ -11,6 +11,10 @@ application_request.interceptors.request.use(
     const headers = getHeaders();
     let token = headers.token;
     
+    if (!token) {
+      console.error('No token found in localStorage');
+      return Promise.reject(new Error('Authentication token not found'));
+    }
     // Decrypt token if it exists and appears to be encrypted (contains colons)
     if (token && token.includes(':')) {
       try {
