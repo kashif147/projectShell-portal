@@ -4,6 +4,7 @@ import {
   fetchProfessionalDetail,
   fetchSubscriptionDetail,
 } from '../api/application.api';
+import { getHeaders } from '../helpers/auth.helper';
 
 const ApplicationContext = createContext();
 
@@ -13,9 +14,11 @@ export const ApplicationProvider = ({ children }) => {
   const [professionalDetail, setProfessionalDetail] = useState(null);
   const [subscriptionDetail, setSubscriptionDetail] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
+  const { token } = getHeaders();
 
   const getPersonalDetail = () => {
     setLoading(true);
+
     fetchPersonalDetail()
       .then(res => {
         if (res.status === 200) {
@@ -23,19 +26,18 @@ export const ApplicationProvider = ({ children }) => {
           setLoading(false);
         } else {
           setLoading(false);
-          toast.error(res.data.message ?? 'Unable to get personal datail');
+          // toast.error(res.data.message ?? 'Unable to get personal datail');
         }
       })
       .catch(() => {
         setLoading(false);
-        toast.error('Something went wrong');
       });
   };
 
-  const getProfessionalDetail = (applicationId) => {
+  const getProfessionalDetail = applicationId => {
     const appId = applicationId || personalDetail?.applicationId;
     if (!appId) return;
-    
+
     setLoading(true);
     fetchProfessionalDetail(appId)
       .then(res => {
@@ -51,10 +53,10 @@ export const ApplicationProvider = ({ children }) => {
       });
   };
 
-  const getSubscriptionDetail = (applicationId) => {
+  const getSubscriptionDetail = applicationId => {
     const appId = applicationId || personalDetail?.applicationId;
     if (!appId) return;
-    
+
     setLoading(true);
     fetchSubscriptionDetail(appId)
       .then(res => {
@@ -71,13 +73,15 @@ export const ApplicationProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    if (personalDetail?.applicationId) {
-      // Only fetch if we don't already have the data
-      if (!professionalDetail) {
-        getProfessionalDetail(personalDetail.applicationId);
-      }
-      if (!subscriptionDetail) {
-        getSubscriptionDetail(personalDetail.applicationId);
+    if (token) {
+      if (personalDetail?.applicationId) {
+        // Only fetch if we don't already have the data
+        if (!professionalDetail) {
+          getProfessionalDetail(personalDetail.applicationId);
+        }
+        if (!subscriptionDetail) {
+          getSubscriptionDetail(personalDetail.applicationId);
+        }
       }
     }
   }, [personalDetail?.applicationId]);

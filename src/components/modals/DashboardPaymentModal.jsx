@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Modal,
   Form,
@@ -42,6 +42,10 @@ const DashboardPaymentModal = ({
     cardCvc: false,
   });
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  // Refs for auto-focusing card elements
+  const cardExpiryRef = useRef(null);
+  const cardCvcRef = useRef(null);
 
   const { userDetail, user } = useSelector(state => state.auth);
   const { personalDetail } = useApplication();
@@ -114,7 +118,6 @@ const DashboardPaymentModal = ({
     fetchProduct();
   }, [membershipCategory, isVisible]);
 
-
   const formatCurrency = value => {
     const currency = (product?.currentPricing?.currency || 'EUR').toUpperCase();
     try {
@@ -171,7 +174,7 @@ const DashboardPaymentModal = ({
         amount: amountInCents,
         currency,
         metadata: {
-          memberId:applicationId,
+          memberId: applicationId,
           description: 'Membership payment from dashboard',
           tenantId,
           userId,
@@ -465,6 +468,10 @@ const DashboardPaymentModal = ({
                   options={ELEMENT_OPTIONS}
                   onChange={(e) => {
                     setCardComplete(prev => ({ ...prev, cardNumber: e.complete }));
+                    // Auto-focus expiry field when card number is complete
+                    if (e.complete && cardExpiryRef.current) {
+                      cardExpiryRef.current.focus();
+                    }
                   }}
                 />
               </div>
@@ -492,9 +499,14 @@ const DashboardPaymentModal = ({
                 </div>
                 <div className="pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
                   <CardExpiryElement
+                    onReady={element => (cardExpiryRef.current = element)}
                     options={ELEMENT_OPTIONS}
                     onChange={(e) => {
                       setCardComplete(prev => ({ ...prev, cardExpiry: e.complete }));
+                      // Auto-focus CVC field when expiry is complete
+                      if (e.complete && cardCvcRef.current) {
+                        cardCvcRef.current.focus();
+                      }
                     }}
                   />
                 </div>
@@ -520,6 +532,7 @@ const DashboardPaymentModal = ({
                 </div>
                 <div className="pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
                   <CardCvcElement
+                    onReady={element => (cardCvcRef.current = element)}
                     options={ELEMENT_OPTIONS}
                     onChange={(e) => {
                       setCardComplete(prev => ({ ...prev, cardCvc: e.complete }));
@@ -572,4 +585,3 @@ const DashboardPaymentModal = ({
 };
 
 export default DashboardPaymentModal;
-

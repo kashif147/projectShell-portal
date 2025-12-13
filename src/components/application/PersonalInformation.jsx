@@ -21,8 +21,7 @@ const PersonalInformation = ({
   const inputRef = useRef(null);
   const searchInputRef = useRef(null);
   const [searchValue, setSearchValue] = React.useState('');
-  const { genderLookups, titleLookups, countryLookups, fetchCountryLookups } =
-    useLookup();
+  const { genderLookups, titleLookups, countryLookups } = useLookup();
 
   // Set default value to Ireland if countryPrimaryQualification is empty
   React.useEffect(() => {

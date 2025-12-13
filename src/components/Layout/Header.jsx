@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Layout, Avatar, Dropdown, Badge, Input } from 'antd';
-import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, BellOutlined, SearchOutlined } from '@ant-design/icons';
+import {
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  UserOutlined,
+  BellOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
 import Button from '../common/Button';
 import { useDispatch } from 'react-redux';
 import { signOut } from '../../services/auth.services';
@@ -9,16 +15,22 @@ import { useSelector } from 'react-redux';
 import { useLookup } from '../../contexts/lookupContext';
 import { useProfile } from '../../contexts/profileContext';
 
-const Header = ({ collapsed, setCollapsed, isMobile, setDrawerVisible, pageTitle }) => {
-  const {user} = useSelector((state) => state.auth);
-  const {fetchLookups} = useLookup();
+const Header = ({
+  collapsed,
+  setCollapsed,
+  isMobile,
+  setDrawerVisible,
+  pageTitle,
+}) => {
+  const { user } = useSelector(state => state.auth);
+  const {  fetchAllLookups } = useLookup();
   const { profileDetail } = useProfile();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState('');
 
   useEffect(() => {
-    fetchLookups();
+     fetchAllLookups()
   }, []);
 
   const items = [
@@ -38,7 +50,7 @@ const Header = ({ collapsed, setCollapsed, isMobile, setDrawerVisible, pageTitle
     }
   };
 
-  const handleSearch = (value) => {
+  const handleSearch = value => {
     console.log('Search:', value);
     // Add your search logic here
   };
@@ -56,8 +68,7 @@ const Header = ({ collapsed, setCollapsed, isMobile, setDrawerVisible, pageTitle
         zIndex: 99,
         boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
         height: '72px',
-      }}
-    >
+      }}>
       {/* Left Section - Menu Button, Title, and Search */}
       <div className="flex items-center flex-1">
         {!isMobile && (
@@ -68,15 +79,19 @@ const Header = ({ collapsed, setCollapsed, isMobile, setDrawerVisible, pageTitle
             className="ml-[-24px] w-16 h-16"
           />
         )}
-        <h1 className="header-title text-2xl ml-4 text-gray-800 tracking-tight">{pageTitle}</h1>
-        
+        <h1 className="header-title text-2xl ml-4 text-gray-800 tracking-tight">
+          {pageTitle}
+        </h1>
+
         {/* Search Bar */}
-        <div className="ml-8 hidden md:block" style={{ maxWidth: '300px', width: '100%' }}>
+        <div
+          className="ml-8 hidden md:block"
+          style={{ maxWidth: '300px', width: '100%' }}>
           <Input
             placeholder="Search..."
             prefix={<SearchOutlined className="text-gray-400" />}
             value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
+            onChange={e => setSearchValue(e.target.value)}
             onPressEnter={() => handleSearch(searchValue)}
             style={{
               borderRadius: '8px',
@@ -109,14 +124,18 @@ const Header = ({ collapsed, setCollapsed, isMobile, setDrawerVisible, pageTitle
         <Badge count={3} size="small" offset={[-2, 2]}>
           <Button
             type="text"
-            icon={<BellOutlined style={{ fontSize: '20px', color: '#52525b' }} />}
+            icon={
+              <BellOutlined style={{ fontSize: '20px', color: '#52525b' }} />
+            }
             className="hover:bg-gray-50 transition-colors"
             onClick={() => navigate('/notifications')}
           />
         </Badge>
 
         {/* User Profile Dropdown */}
-        <Dropdown menu={{ items, onClick: handleMenuClick }} placement="bottomRight">
+        <Dropdown
+          menu={{ items, onClick: handleMenuClick }}
+          placement="bottomRight">
           <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-lg px-3 py-2 transition-colors">
             <Avatar
               icon={<UserOutlined />}
@@ -139,4 +158,4 @@ const Header = ({ collapsed, setCollapsed, isMobile, setDrawerVisible, pageTitle
   );
 };
 
-export default Header; 
+export default Header;

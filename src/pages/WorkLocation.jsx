@@ -12,7 +12,7 @@ import Button from '../components/common/Button';
 const WorkLocation = () => {
   const { professionalDetail, getProfessionalDetail } = useApplication();
   const { profileByIdDetail, getProfileDetail } = useProfile();
-  const { workLocationLookups, fetchWorkLocationLookups } = useLookup();
+  const { workLocationLookups } = useLookup();
   const [loading, setLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true);
   const [form, setForm] = useState({ workLocation: '', otherWorkLocation: '', branch: '', region: '', reasonToChange: '' });
@@ -21,12 +21,6 @@ const WorkLocation = () => {
   
   // Prioritize profile data over application data
   const existing = profileByIdDetail?.professionalDetails || professionalDetail?.professionalDetails || {};
-
-  useEffect(() => {
-    if (!workLocationLookups || workLocationLookups.length === 0) {
-      fetchWorkLocationLookups?.();
-    }
-  }, []);
 
   useEffect(() => {
     getProfileDetail()

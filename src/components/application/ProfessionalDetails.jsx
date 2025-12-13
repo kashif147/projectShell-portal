@@ -25,30 +25,10 @@ const ProfessionalDetails = ({
 }) => {
   const {
     workLocationLookups,
-    fetchWorkLocationLookups,
     categoryLookups,
-    fetchCategoryLookups,
     gradeLookups,
-    fetchLookups,
     studyLocationLookups,
   } = useLookup();
-
-  React.useEffect(() => {
-    if (!workLocationLookups || workLocationLookups.length === 0) {
-      fetchWorkLocationLookups?.();
-    }
-    if (!categoryLookups || categoryLookups.length === 0) {
-      fetchCategoryLookups?.();
-    }
-    if (
-      !gradeLookups ||
-      gradeLookups.length === 0 ||
-      !studyLocationLookups ||
-      studyLocationLookups.length === 0
-    ) {
-      fetchLookups?.();
-    }
-  }, []);
 
   const workLocationOptions = (workLocationLookups || []).map(item => {
     const name = item?.lookup?.DisplayName || item?.lookup?.lookupname || '';
