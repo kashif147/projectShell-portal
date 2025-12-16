@@ -19,6 +19,7 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { applicationConfirmationRequest } from '../api/application.api';
 import { fetchCategoryByCategoryId } from '../api/category.api';
+import { fetchAllLookupsOnLogin } from '../contexts/lookupContext';
 
 const stripePromise = loadStripe(
   'pk_test_51SBAG4FTlZb0wcbr19eI8nC5u62DfuaUWRVS51VTERBocxSM9JSEs4ubrW57hYTCAHK9d6jrarrT4SAViKFMqKjT00TrEr3PNV',
@@ -306,12 +307,25 @@ const Dashboard = () => {
     }
   }, [subscriptionDetail?.applicationId]);
 
-  // Fetch personal detail on mount
+  // Fetch personal detail and all lookups on mount
   useEffect(() => {
-    getPersonalDetail();
+    const initializeDashboard = async () => {
+      // Fetch all lookups when Dashboard loads (matching mobile version)
+      try {
+        console.log('🔄 Dashboard: Initializing lookups on mount...');
+        await fetchAllLookupsOnLogin();
+      } catch (error) {
+        console.error('❌ Dashboard: Error initializing lookups:', error);
+      }
+      
+      // Fetch personal detail
+      getPersonalDetail();
+    };
+
+    initializeDashboard();
   }, []);
 
-  // Check application status
+  // Check application status and fetch all lookups
   useEffect(() => {
     const checkApplicationStatus = async () => {
       if (personalDetail?.applicationId) {
