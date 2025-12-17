@@ -26,10 +26,8 @@ export const validation = () => {
         const memberDetail = await getMemberDetail();
         dispatch(setDetail(memberDetail));
         
-        // Fetch all lookups if user is already authenticated
-        fetchAllLookupsOnLogin().catch(error => {
-          console.error('Failed to fetch lookups on validation:', error);
-        });
+        // Lookups will be fetched by LookupProvider on mount and Dashboard on navigation
+        // No need to fetch here to avoid redundant calls
       } else {
         dispatch(setSignedIn(false));
       }
