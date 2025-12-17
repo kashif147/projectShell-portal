@@ -155,7 +155,8 @@ export const LookupProvider = ({ children }) => {
         sanitizedCountryLookups.length > 0 ||
         sanitizedCategoryLookups.length > 0;
 
-      if (hasDataToLoad || forceLoad) {
+      // Only update state if we have data to load, or if forced AND we don't have fresh data
+      if (hasDataToLoad || (forceLoad && !hasFreshDataRef.current)) {
         setGenderLookups(sanitizedGenderLookups);
         setCityLookups(sanitizedCityLookups);
         setTitleLookups(sanitizedTitleLookups);
@@ -255,38 +256,14 @@ export const LookupProvider = ({ children }) => {
           }
         }
 
-        setPaymentLooups(paymentData);
-        setGenderLookups(genderData);
-        setCityLookups(cityData);
-        setTitleLookups(titleData);
-        setSecondarySectionLookups(secondarySectionData);
-        setPrimarySectionLookups(sectionData);
-        setGradeLookups(gradeData);
-        setStudyLocationLookups(studyLocationData);
-        setWorkLocationLookups(workLocationData);
-        setCountryLookups(countryData);
-        setCategoryLookups(categoryData);
-
-        hasFreshDataRef.current = true;
-
+        // Small delay to ensure localStorage is flushed
         await new Promise(resolve => setTimeout(resolve, 50));
 
         return true;
       } catch (error) {
-        console.error('❌ Error saving lookups to storage and state:', error);
+        console.error('❌ Error saving lookups to storage:', error);
         setError(error.message);
-        setPaymentLooups(paymentData);
-        setGenderLookups(genderData);
-        setCityLookups(cityData);
-        setTitleLookups(titleData);
-        setSecondarySectionLookups(secondarySectionData);
-        setPrimarySectionLookups(sectionData);
-        setGradeLookups(gradeData);
-        setStudyLocationLookups(studyLocationData);
-        setWorkLocationLookups(workLocationData);
-        setCountryLookups(countryData);
-        setCategoryLookups(categoryData);
-        hasFreshDataRef.current = true;
+        // Don't update state here - it's already updated in fetchAllLookups
         return false;
       }
     },
@@ -315,6 +292,9 @@ export const LookupProvider = ({ children }) => {
     isFetchingRef.current = true;
     setLoading(true);
     setError(null);
+    
+    // Reset fresh data flag before fetching new data
+    hasFreshDataRef.current = false;
 
     const fetchPromise = (async () => {
       try {
@@ -378,6 +358,7 @@ export const LookupProvider = ({ children }) => {
           categoryData = categoryResult.value;
         }
 
+        // Update all state immediately - don't defer
         setPaymentLooups(paymentData);
         setGenderLookups(genderData);
         setCityLookups(cityData);
@@ -390,6 +371,7 @@ export const LookupProvider = ({ children }) => {
         setCountryLookups(countryData);
         setCategoryLookups(categoryData);
 
+        // Mark fresh data immediately
         hasFreshDataRef.current = true;
 
         saveLookupsToStorageAndState({
@@ -431,10 +413,15 @@ export const LookupProvider = ({ children }) => {
   useEffect(() => {
     const initializeLookups = async () => {
       try {
+        // Reset flag before initialization
+        hasFreshDataRef.current = false;
+        
+        // Load from localStorage first for immediate UI rendering
         await loadLookupsFromStorage(true);
 
         const headers = getHeaders();
         if (headers.token) {
+          // Fetch fresh data - this will update state immediately and set hasFreshDataRef
           await fetchAllLookups();
         }
       } catch (error) {
@@ -464,7 +451,7 @@ export const LookupProvider = ({ children }) => {
     };
   }, [loadLookupsFromStorage]);
 
-  const value = {
+  const value = React.useMemo(() => ({
     lookups,
     genderLookups,
     cityLookups,
@@ -481,7 +468,24 @@ export const LookupProvider = ({ children }) => {
     error,
     fetchAllLookups,
     refreshLookupsFromStorage,
-  };
+  }), [
+    lookups,
+    genderLookups,
+    cityLookups,
+    titleLookups,
+    primarySectionLookups,
+    secondarySectionLookups,
+    workLocationLookups,
+    countryLookups,
+    categoryLookups,
+    gradeLookups,
+    paymentLooups,
+    studyLocationLookups,
+    loading,
+    error,
+    fetchAllLookups,
+    refreshLookupsFromStorage,
+  ]);
 
   return (
     <LookupContext.Provider value={value}>{children}</LookupContext.Provider>
