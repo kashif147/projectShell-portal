@@ -15,6 +15,7 @@ import {
   EnvironmentOutlined,
   MenuOutlined,
 } from '@ant-design/icons';
+import { Logo } from '../../assets/images';
 
 const Sidebar = ({ collapsed, isMobile = false }) => {
   const navigate = useNavigate();
@@ -358,14 +359,38 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
 
   return (
     <div className="h-full bg-white flex flex-col">
-      <div className={`${collapsed ? 'p-4' : 'p-6'} text-center border-b border-gray-200`}>
-        {!collapsed && (
-          <>
-            <h1 className="text-xl font-bold text-gray-900">Member Portal</h1>
-            <p className="text-sm text-gray-500 mt-1">organization.com</p>
-          </>
-        )}
-        {collapsed && <h1 className="text-xl font-bold text-gray-900">MP</h1>}
+      <div className={`${collapsed ? 'p-4' : 'p-6'} text-center border-b border-gray-200 transition-all duration-300`}>
+        <div className="flex flex-col items-center justify-center">
+          {/* Logo with smooth transitions */}
+          <div 
+            className={`relative transition-all duration-300 mb-3 ${
+              collapsed ? 'w-12 h-12' : 'w-20 h-20'
+            }`}
+          >
+            <img 
+              src={Logo} 
+              alt="Logo" 
+              className="w-full h-full object-contain transition-transform duration-300 hover:scale-105"
+            />
+            {/* Subtle glow effect */}
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-100/50 to-purple-100/50 rounded-full blur-xl opacity-0 hover:opacity-100 transition-opacity duration-300 -z-10" />
+          </div>
+          
+          {/* Title and subtitle - only show when not collapsed */}
+          {!collapsed && (
+            <div className="animate-fade-in">
+              <h1 className="text-xl font-bold text-gray-900 mb-1">Member Portal</h1>
+              <p className="text-sm text-gray-500">organization.com</p>
+            </div>
+          )}
+          
+          {/* Collapsed state - show initials */}
+          {collapsed && (
+            <div className="animate-fade-in">
+              <h1 className="text-lg font-bold text-gray-900">MP</h1>
+            </div>
+          )}
+        </div>
       </div>
       <div className="flex-1 overflow-y-auto">
         <Menu
@@ -408,6 +433,19 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
         }
         .sidebar-menu .ant-menu-item-icon {
           font-size: 18px !important;
+        }
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(-4px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out;
         }
       `}</style>
     </div>

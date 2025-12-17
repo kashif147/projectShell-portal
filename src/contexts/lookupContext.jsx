@@ -2,8 +2,51 @@ import React, { createContext, useContext, useEffect, useCallback, useRef } from
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { getHeaders } from '../helpers/auth.helper';
 import { fetchAllCountry, fetchAllLookupRequest, fetchLookupHierarchyByType } from '../api/lookup.api';
-import { fetchAllCategoryRequest, fetchCategoryByTypeId } from '../api/category.api';
+import { fetchCategoryByTypeId } from '../api/category.api';
 import { toast } from 'react-toastify';
+
+const globalFetchLock = { isFetching: false, promise: null };
+
+const verifyLocalStorageSave = (key, expectedValue) => {
+  try {
+    const saved = window.localStorage.getItem(key);
+    if (saved === null) {
+      return expectedValue.length === 0;
+    }
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed) && Array.isArray(expectedValue)) {
+      return parsed.length === expectedValue.length;
+    }
+    return false;
+  } catch (error) {
+    console.error(`Error verifying localStorage save for ${key}:`, error);
+    return false;
+  }
+};
+
+const retrySaveWithBackoff = async (saveFn, verifyFn, maxRetries = 3) => {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      await saveFn();
+      if (verifyFn && !verifyFn()) {
+        if (attempt === maxRetries - 1) {
+          throw new Error('Save verification failed after retries');
+        }
+        const delay = 50 * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      return true;
+    } catch (error) {
+      if (attempt === maxRetries - 1) {
+        throw error;
+      }
+      const delay = 50 * Math.pow(2, attempt);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  return false;
+};
 
 const getAllLookups = async () => {
   try {
@@ -49,10 +92,14 @@ export const LookupProvider = ({ children }) => {
   const [error, setError] = React.useState(null);
   const isInitialMount = useRef(true);
   const isFetchingRef = useRef(false);
+  const hasFreshDataRef = useRef(false);
 
-  // Load lookups from localStorage on initial render
-  const loadLookupsFromStorage = useCallback(async () => {
+  const loadLookupsFromStorage = useCallback(async (forceLoad = false) => {
     try {
+      if (!forceLoad && hasFreshDataRef.current) {
+        return;
+      }
+
       const [
         genderLookupsData,
         cityLookupsData,
@@ -79,25 +126,66 @@ export const LookupProvider = ({ children }) => {
         fetchLocal('studyLocationLookups'),
       ]);
 
-      // Update all states in a batch
-      setGenderLookups(genderLookupsData || []);
-      setCityLookups(cityLookupsData || []);
-      setTitleLookups(titleLookupsData || []);
-      setPrimarySectionLookups(primarySectionData || []);
-      setSecondarySectionLookups(secondarySectionData || []);
-      setWorkLocationLookups(workLocationLookupsData || []);
-      setCountryLookups(countryLookupsData || []);
-      setCategoryLookups(categoryLookupsData || []);
-      setGradeLookups(gradeLookupsData || []);
-      setPaymentLooups(paymentLookupsData || []);
-      setStudyLocationLookups(studyLocationLookupsData || []);
+      const sanitizeData = (data, key) => {
+        if (data === null || data === undefined) {
+          return [];
+        }
+        if (!Array.isArray(data)) {
+          return [];
+        }
+        return data;
+      };
+
+      const sanitizedGenderLookups = sanitizeData(genderLookupsData, 'genderLookups');
+      const sanitizedCityLookups = sanitizeData(cityLookupsData, 'cityLookups');
+      const sanitizedTitleLookups = sanitizeData(titleLookupsData, 'titleLookups');
+      const sanitizedPrimarySection = sanitizeData(primarySectionData, 'primarySection');
+      const sanitizedSecondarySection = sanitizeData(secondarySectionData, 'secondarySection');
+      const sanitizedWorkLocationLookups = sanitizeData(workLocationLookupsData, 'workLocationLookups');
+      const sanitizedCountryLookups = sanitizeData(countryLookupsData, 'countries');
+      const sanitizedCategoryLookups = sanitizeData(categoryLookupsData, 'categories');
+      const sanitizedGradeLookups = sanitizeData(gradeLookupsData, 'gradeLookups');
+      const sanitizedPaymentLookups = sanitizeData(paymentLookupsData, 'paymentLookups');
+      const sanitizedStudyLocationLookups = sanitizeData(studyLocationLookupsData, 'studyLocationLookups');
+
+      const hasDataToLoad = 
+        sanitizedGenderLookups.length > 0 ||
+        sanitizedCityLookups.length > 0 ||
+        sanitizedTitleLookups.length > 0 ||
+        sanitizedCountryLookups.length > 0 ||
+        sanitizedCategoryLookups.length > 0;
+
+      // Only update state if we have data to load, or if forced AND we don't have fresh data
+      if (hasDataToLoad || (forceLoad && !hasFreshDataRef.current)) {
+        setGenderLookups(sanitizedGenderLookups);
+        setCityLookups(sanitizedCityLookups);
+        setTitleLookups(sanitizedTitleLookups);
+        setPrimarySectionLookups(sanitizedPrimarySection);
+        setSecondarySectionLookups(sanitizedSecondarySection);
+        setWorkLocationLookups(sanitizedWorkLocationLookups);
+        setCountryLookups(sanitizedCountryLookups);
+        setCategoryLookups(sanitizedCategoryLookups);
+        setGradeLookups(sanitizedGradeLookups);
+        setPaymentLooups(sanitizedPaymentLookups);
+        setStudyLocationLookups(sanitizedStudyLocationLookups);
+      }
     } catch (error) {
-      console.error('Error loading lookups from storage:', error);
+      console.error('❌ Error loading lookups from storage:', error);
       setError(error.message);
+      setGenderLookups([]);
+      setCityLookups([]);
+      setTitleLookups([]);
+      setPrimarySectionLookups([]);
+      setSecondarySectionLookups([]);
+      setWorkLocationLookups([]);
+      setCountryLookups([]);
+      setCategoryLookups([]);
+      setGradeLookups([]);
+      setPaymentLooups([]);
+      setStudyLocationLookups([]);
     }
   }, [fetchLocal]);
 
-  // Unified function to save lookups to both localStorage and state atomically
   const saveLookupsToStorageAndState = useCallback(
     async (lookupData) => {
       const {
@@ -114,23 +202,163 @@ export const LookupProvider = ({ children }) => {
         categoryData = [],
       } = lookupData;
 
+      const lookupKeys = [
+        { key: 'paymentLookups', data: paymentData },
+        { key: 'genderLookups', data: genderData },
+        { key: 'cityLookups', data: cityData },
+        { key: 'titleLookups', data: titleData },
+        { key: 'secondarySection', data: secondarySectionData },
+        { key: 'primarySection', data: sectionData },
+        { key: 'gradeLookups', data: gradeData },
+        { key: 'studyLocationLookups', data: studyLocationData },
+        { key: 'workLocationLookups', data: workLocationData },
+        { key: 'countries', data: countryData },
+        { key: 'categories', data: categoryData },
+      ];
+
       try {
-        // Save all to localStorage in parallel
-        await Promise.all([
-          saveLocal('paymentLookups', paymentData),
-          saveLocal('genderLookups', genderData),
-          saveLocal('cityLookups', cityData),
-          saveLocal('titleLookups', titleData),
-          saveLocal('secondarySection', secondarySectionData),
-          saveLocal('primarySection', sectionData),
-          saveLocal('gradeLookups', gradeData),
-          saveLocal('studyLocationLookups', studyLocationData),
-          saveLocal('workLocationLookups', workLocationData),
-          saveLocal('countries', countryData),
-          saveLocal('categories', categoryData),
+        const savePromises = lookupKeys.map(({ key, data }) =>
+          retrySaveWithBackoff(
+            async () => {
+              const json = JSON.stringify(data);
+              window.localStorage.setItem(key, json);
+            },
+            () => verifyLocalStorageSave(key, data),
+            3
+          )
+        );
+
+        await Promise.allSettled(savePromises);
+
+        const verificationResults = lookupKeys.map(({ key, data }) => ({
+          key,
+          verified: verifyLocalStorageSave(key, data),
+        }));
+
+        const failedVerifications = verificationResults.filter(result => !result.verified);
+        if (failedVerifications.length > 0) {
+          for (const { key, data } of lookupKeys) {
+            const result = verificationResults.find(r => r.key === key);
+            if (!result?.verified) {
+              try {
+                await retrySaveWithBackoff(
+                  async () => {
+                    const json = JSON.stringify(data);
+                    window.localStorage.setItem(key, json);
+                  },
+                  () => verifyLocalStorageSave(key, data),
+                  3
+                );
+              } catch (retryError) {
+                console.error(`Failed to save ${key} after retries:`, retryError);
+              }
+            }
+          }
+        }
+
+        // Small delay to ensure localStorage is flushed
+        await new Promise(resolve => setTimeout(resolve, 50));
+
+        return true;
+      } catch (error) {
+        console.error('❌ Error saving lookups to storage:', error);
+        setError(error.message);
+        // Don't update state here - it's already updated in fetchAllLookups
+        return false;
+      }
+    },
+    [saveLocal, fetchLocal]
+  );
+
+  const fetchAllLookups = useCallback(async () => {
+    if (globalFetchLock.isFetching) {
+      if (globalFetchLock.promise) {
+        await globalFetchLock.promise;
+      }
+      return;
+    }
+
+    if (isFetchingRef.current) {
+      return;
+    }
+
+    const headers = getHeaders();
+    if (!headers.token) {
+      await loadLookupsFromStorage();
+      return;
+    }
+
+    globalFetchLock.isFetching = true;
+    isFetchingRef.current = true;
+    setLoading(true);
+    setError(null);
+    
+    // Reset fresh data flag before fetching new data
+    hasFreshDataRef.current = false;
+
+    const fetchPromise = (async () => {
+      try {
+        const [allLookupsResult, workLocationResult, countryResult, categoryResult] = await Promise.allSettled([
+          getAllLookups(),
+          (async () => {
+            try {
+              const response = await fetchLookupHierarchyByType('68d036e2662428d1c504b3ad');
+              return response?.data?.results || [];
+            } catch (error) {
+              console.error('❌ Failed to fetch work location lookups:', error);
+              return [];
+            }
+          })(),
+          getAllCountry(),
+          (async () => {
+            try {
+              const response = await fetchCategoryByTypeId('68dae613c5b15073d66b891f');
+              return response?.data?.data?.products || [];
+            } catch (error) {
+              console.error('❌ Failed to fetch category lookups:', error);
+              return [];
+            }
+          })(),
         ]);
 
-        // Update all states in a batch (after localStorage is saved)
+        let genderData = [];
+        let cityData = [];
+        let titleData = [];
+        let secondarySectionData = [];
+        let sectionData = [];
+        let gradeData = [];
+        let paymentData = [];
+        let studyLocationData = [];
+        let workLocationData = [];
+        let countryData = [];
+        let categoryData = [];
+
+        if (allLookupsResult.status === 'fulfilled' && allLookupsResult.value) {
+          const result = allLookupsResult.value;
+
+          genderData = result.filter(item => item.lookuptypeId?.lookuptype === 'Gender');
+          cityData = result.filter(item => item.lookuptypeId?.lookuptype === 'City');
+          titleData = result.filter(item => item.lookuptypeId?.lookuptype === 'Title');
+          secondarySectionData = result.filter(item => item.lookuptypeId?.lookuptype === 'Secondary Section');
+          sectionData = result.filter(item => item.lookuptypeId?.lookuptype === 'Section');
+          gradeData = result.filter(item => item.lookuptypeId?.lookuptype === 'Grade');
+          paymentData = result.filter(item => item.lookuptypeId?.lookuptype === 'Payment Type');
+          studyLocationData = result.filter(item => item.lookuptypeId?.lookuptype === 'Study Location');
+        }
+
+        if (workLocationResult.status === 'fulfilled' && workLocationResult.value) {
+          workLocationData = workLocationResult.value;
+        }
+
+        if (countryResult.status === 'fulfilled' && countryResult.value) {
+          countryData = countryResult.value;
+        }
+
+        if (categoryResult.status === 'fulfilled' && categoryResult.value) {
+          categoryData = categoryResult.value;
+        }
+
+        // Update all state immediately - don't defer
         setPaymentLooups(paymentData);
         setGenderLookups(genderData);
         setCityLookups(cityData);
@@ -143,146 +371,62 @@ export const LookupProvider = ({ children }) => {
         setCountryLookups(countryData);
         setCategoryLookups(categoryData);
 
-        return true;
+        // Mark fresh data immediately
+        hasFreshDataRef.current = true;
+
+        saveLookupsToStorageAndState({
+          genderData,
+          cityData,
+          titleData,
+          secondarySectionData,
+          sectionData,
+          gradeData,
+          paymentData,
+          studyLocationData,
+          workLocationData,
+          countryData,
+          categoryData,
+        }).catch(error => {
+          console.error('Failed to save lookups to localStorage:', error);
+        });
       } catch (error) {
-        console.error('Error saving lookups to storage and state:', error);
-        return false;
+        console.error('Error fetching all lookups:', error);
+        setError(error.message);
+        toast.error(error.response?.data?.message ?? 'Failed to fetch lookups');
+        await loadLookupsFromStorage();
+      } finally {
+        setLoading(false);
+        isFetchingRef.current = false;
+        globalFetchLock.isFetching = false;
+        globalFetchLock.promise = null;
       }
-    },
-    [saveLocal]
-  );
+    })();
 
-  // Unified function to fetch all lookups and update both localStorage and state
-  const fetchAllLookups = useCallback(async () => {
-    // Prevent multiple simultaneous fetches
-    if (isFetchingRef.current) {
-      console.log('Lookup fetch already in progress, skipping...');
-      return;
-    }
-
-    const headers = getHeaders();
-    if (!headers.token) {
-      console.warn('No token found, skipping lookup fetch');
-      // Still load from localStorage if token is not available
-      await loadLookupsFromStorage();
-      return;
-    }
-
-    isFetchingRef.current = true;
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Fetch all lookups in parallel
-      const [allLookupsResult, workLocationResult, countryResult, categoryResult] = await Promise.allSettled([
-        getAllLookups(),
-        (async () => {
-          try {
-            const response = await fetchLookupHierarchyByType('68d036e2662428d1c504b3ad');
-            return response?.data?.results || [];
-          } catch (error) {
-            console.error('Failed to fetch work location lookups:', error);
-            return [];
-          }
-        })(),
-        getAllCountry(),
-        (async () => {
-          try {
-            const response = await fetchCategoryByTypeId('68dae613c5b15073d66b891f');
-            return response?.data?.data?.products || [];
-          } catch (error) {
-            console.error('Failed to fetch category lookups:', error);
-            return [];
-          }
-        })(),
-      ]);
-
-      // Process all lookups
-      let genderData = [];
-      let cityData = [];
-      let titleData = [];
-      let secondarySectionData = [];
-      let sectionData = [];
-      let gradeData = [];
-      let paymentData = [];
-      let studyLocationData = [];
-      let workLocationData = [];
-      let countryData = [];
-      let categoryData = [];
-
-      // Process main lookups
-      if (allLookupsResult.status === 'fulfilled' && allLookupsResult.value) {
-        const result = allLookupsResult.value;
-
-        genderData = result.filter(item => item.lookuptypeId?.lookuptype === 'Gender');
-        cityData = result.filter(item => item.lookuptypeId?.lookuptype === 'City');
-        titleData = result.filter(item => item.lookuptypeId?.lookuptype === 'Title');
-        secondarySectionData = result.filter(item => item.lookuptypeId?.lookuptype === 'Secondary Section');
-        sectionData = result.filter(item => item.lookuptypeId?.lookuptype === 'Section');
-        gradeData = result.filter(item => item.lookuptypeId?.lookuptype === 'Grade');
-        paymentData = result.filter(item => item.lookuptypeId?.lookuptype === 'Payment Type');
-        studyLocationData = result.filter(item => item.lookuptypeId?.lookuptype === 'Study Location');
-      }
-
-      // Process work location lookups
-      if (workLocationResult.status === 'fulfilled' && workLocationResult.value) {
-        workLocationData = workLocationResult.value;
-      }
-
-      // Process country lookups
-      if (countryResult.status === 'fulfilled' && countryResult.value) {
-        countryData = countryResult.value;
-      }
-
-      // Process category lookups
-      if (categoryResult.status === 'fulfilled' && categoryResult.value) {
-        categoryData = categoryResult.value;
-      }
-
-      // Save all lookups to localStorage and state atomically
-      await saveLookupsToStorageAndState({
-        genderData,
-        cityData,
-        titleData,
-        secondarySectionData,
-        sectionData,
-        gradeData,
-        paymentData,
-        studyLocationData,
-        workLocationData,
-        countryData,
-        categoryData,
-      });
-
-      console.log('All lookups fetched and saved successfully');
-    } catch (error) {
-      console.error('Error fetching all lookups:', error);
-      setError(error.message);
-      toast.error(error.response?.data?.message ?? 'Failed to fetch lookups');
-    } finally {
-      setLoading(false);
-      isFetchingRef.current = false;
-    }
+    globalFetchLock.promise = fetchPromise;
+    await fetchPromise;
   }, [saveLookupsToStorageAndState, loadLookupsFromStorage]);
 
-  // Function to refresh lookups from localStorage
   const refreshLookupsFromStorage = useCallback(() => {
     loadLookupsFromStorage();
   }, [loadLookupsFromStorage]);
 
-  // Load lookups on mount: first from localStorage, then fetch fresh data if token exists
   useEffect(() => {
     const initializeLookups = async () => {
-      // Always load from localStorage first for immediate UI rendering
-      await loadLookupsFromStorage();
+      try {
+        // Reset flag before initialization
+        hasFreshDataRef.current = false;
+        
+        // Load from localStorage first for immediate UI rendering
+        await loadLookupsFromStorage(true);
 
-      // Then fetch fresh data if token exists
-      const headers = getHeaders();
-      if (headers.token) {
-        // Small delay to ensure localStorage is loaded first
-        setTimeout(() => {
-          fetchAllLookups();
-        }, 100);
+        const headers = getHeaders();
+        if (headers.token) {
+          // Fetch fresh data - this will update state immediately and set hasFreshDataRef
+          await fetchAllLookups();
+        }
+      } catch (error) {
+        console.error('Error initializing lookups:', error);
+        setError(error.message);
       }
     };
 
@@ -292,10 +436,13 @@ export const LookupProvider = ({ children }) => {
     }
   }, [loadLookupsFromStorage, fetchAllLookups]);
 
-  // Listen for custom event to refresh lookups when fetchAllLookupsOnLogin is called
   useEffect(() => {
-    const handleLookupUpdate = () => {
-      loadLookupsFromStorage();
+    const handleLookupUpdate = async () => {
+      await new Promise(resolve => setTimeout(resolve, 200));
+      await loadLookupsFromStorage(true);
+      setTimeout(() => {
+        hasFreshDataRef.current = false;
+      }, 500);
     };
 
     window.addEventListener('lookupsUpdated', handleLookupUpdate);
@@ -304,7 +451,7 @@ export const LookupProvider = ({ children }) => {
     };
   }, [loadLookupsFromStorage]);
 
-  const value = {
+  const value = React.useMemo(() => ({
     lookups,
     genderLookups,
     cityLookups,
@@ -319,35 +466,59 @@ export const LookupProvider = ({ children }) => {
     studyLocationLookups,
     loading,
     error,
-    fetchAllLookups, // Export the fetch function
-    refreshLookupsFromStorage, // Export refresh function
-  };
+    fetchAllLookups,
+    refreshLookupsFromStorage,
+  }), [
+    lookups,
+    genderLookups,
+    cityLookups,
+    titleLookups,
+    primarySectionLookups,
+    secondarySectionLookups,
+    workLocationLookups,
+    countryLookups,
+    categoryLookups,
+    gradeLookups,
+    paymentLooups,
+    studyLocationLookups,
+    loading,
+    error,
+    fetchAllLookups,
+    refreshLookupsFromStorage,
+  ]);
 
   return (
     <LookupContext.Provider value={value}>{children}</LookupContext.Provider>
   );
 };
 
-// Standalone function to fetch and save all lookups - can be called from anywhere
-// This saves to localStorage and dispatches an event to update context state
 export const fetchAllLookupsOnLogin = async () => {
+  if (globalFetchLock.isFetching) {
+    if (globalFetchLock.promise) {
+      await globalFetchLock.promise;
+    }
+    return;
+  }
+
   try {
     const headers = getHeaders();
     if (!headers.token) {
-      console.warn('No token found, skipping lookup fetch');
       return;
     }
 
-    // Helper function to save to localStorage
-    const saveToLocalStorage = (key, value) => {
-      try {
-        window.localStorage.setItem(key, JSON.stringify(value));
-      } catch (error) {
-        console.error(`Failed to save ${key} to localStorage:`, error);
-      }
+    globalFetchLock.isFetching = true;
+
+    const saveToLocalStorage = async (key, value) => {
+      return retrySaveWithBackoff(
+        async () => {
+          const json = JSON.stringify(value);
+          window.localStorage.setItem(key, json);
+        },
+        () => verifyLocalStorageSave(key, value),
+        3
+      );
     };
 
-    // Fetch all lookups in parallel
     const [allLookupsResult, workLocationResult, countryResult, categoryResult] = await Promise.allSettled([
       getAllLookups(),
       (async () => {
@@ -355,7 +526,7 @@ export const fetchAllLookupsOnLogin = async () => {
           const response = await fetchLookupHierarchyByType('68d036e2662428d1c504b3ad');
           return response?.data?.results || [];
         } catch (error) {
-          console.error('Failed to fetch work location lookups:', error);
+          console.error('❌ Failed to fetch work location lookups:', error);
           return [];
         }
       })(),
@@ -365,13 +536,14 @@ export const fetchAllLookupsOnLogin = async () => {
           const response = await fetchCategoryByTypeId('68dae613c5b15073d66b891f');
           return response?.data?.data?.products || [];
         } catch (error) {
-          console.error('Failed to fetch category lookups:', error);
+          console.error('❌ Failed to fetch category lookups:', error);
           return [];
         }
       })(),
     ]);
 
-    // Process and save all lookups
+    const lookupKeys = [];
+
     if (allLookupsResult.status === 'fulfilled' && allLookupsResult.value) {
       const result = allLookupsResult.value;
 
@@ -384,37 +556,66 @@ export const fetchAllLookupsOnLogin = async () => {
       const paymentData = result.filter(item => item.lookuptypeId?.lookuptype === 'Payment Type');
       const studyLocationData = result.filter(item => item.lookuptypeId?.lookuptype === 'Study Location');
 
-      saveToLocalStorage('paymentLookups', paymentData);
-      saveToLocalStorage('genderLookups', genderData);
-      saveToLocalStorage('cityLookups', cityData);
-      saveToLocalStorage('titleLookups', titleData);
-      saveToLocalStorage('secondarySection', secondarySectionData);
-      saveToLocalStorage('primarySection', sectionData);
-      saveToLocalStorage('gradeLookups', gradeData);
-      saveToLocalStorage('studyLocationLookups', studyLocationData);
+      lookupKeys.push(
+        { key: 'paymentLookups', data: paymentData },
+        { key: 'genderLookups', data: genderData },
+        { key: 'cityLookups', data: cityData },
+        { key: 'titleLookups', data: titleData },
+        { key: 'secondarySection', data: secondarySectionData },
+        { key: 'primarySection', data: sectionData },
+        { key: 'gradeLookups', data: gradeData },
+        { key: 'studyLocationLookups', data: studyLocationData }
+      );
     }
 
-    // Save work location lookups
     if (workLocationResult.status === 'fulfilled' && workLocationResult.value) {
-      saveToLocalStorage('workLocationLookups', workLocationResult.value);
+      lookupKeys.push({ key: 'workLocationLookups', data: workLocationResult.value });
     }
 
-    // Save country lookups
     if (countryResult.status === 'fulfilled' && countryResult.value) {
-      saveToLocalStorage('countries', countryResult.value);
+      lookupKeys.push({ key: 'countries', data: countryResult.value });
     }
 
-    // Save category lookups
     if (categoryResult.status === 'fulfilled' && categoryResult.value) {
-      saveToLocalStorage('categories', categoryResult.value);
+      lookupKeys.push({ key: 'categories', data: categoryResult.value });
     }
 
-    // Dispatch event to notify context to refresh from localStorage
-    window.dispatchEvent(new CustomEvent('lookupsUpdated'));
+    const savePromises = lookupKeys.map(({ key, data }) =>
+      saveToLocalStorage(key, data).catch(error => {
+        console.error(`Failed to save ${key} after retries:`, error);
+        return false;
+      })
+    );
 
-    console.log('All lookups fetched and saved successfully');
+    await Promise.allSettled(savePromises);
+
+    const verificationResults = lookupKeys.map(({ key, data }) => ({
+      key,
+      verified: verifyLocalStorageSave(key, data),
+    }));
+
+    const failedVerifications = verificationResults.filter(result => !result.verified);
+    if (failedVerifications.length > 0) {
+      for (const { key, data } of lookupKeys) {
+        const result = verificationResults.find(r => r.key === key);
+        if (!result?.verified) {
+          try {
+            await saveToLocalStorage(key, data);
+          } catch (retryError) {
+            console.error(`Failed to save ${key} after final retry:`, retryError);
+          }
+        }
+      }
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 150));
+
+    window.dispatchEvent(new CustomEvent('lookupsUpdated'));
   } catch (error) {
     console.error('Error fetching all lookups on login:', error);
+  } finally {
+    globalFetchLock.isFetching = false;
+    globalFetchLock.promise = null;
   }
 };
 

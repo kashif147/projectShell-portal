@@ -71,6 +71,19 @@ const ApplicationForm = () => {
 
   console.log('Application ID', personalDetail?.applicationId);
 
+  // Fetch personal detail on mount
+  useEffect(() => {
+    getPersonalDetail();
+  }, []);
+
+  // Fetch professional and subscription details if personal detail exists
+  useEffect(() => {
+    if (personalDetail?.applicationId) {
+      getProfessionalDetail(personalDetail.applicationId);
+      getSubscriptionDetail(personalDetail.applicationId);
+    }
+  }, [personalDetail?.applicationId]);
+
   useEffect(() => {
     if (personalDetail?.applicationId) {
       // Reset payment intent state for new application
@@ -163,7 +176,7 @@ const ApplicationForm = () => {
         };
       });
     }
-  }, [personalDetail?.applicationId]);
+  }, [personalDetail]);
 
   useEffect(() => {
     if (professionalDetail?.applicationId) {
@@ -273,7 +286,7 @@ const ApplicationForm = () => {
       }
     }
   }, [
-    professionalDetail?.applicationId,
+    professionalDetail,
     professionalDetail?.professionalDetails?.membershipCategory,
   ]);
 
@@ -366,7 +379,7 @@ const ApplicationForm = () => {
         },
       }));
     }
-  }, [subscriptionDetail?.applicationId]);
+  }, [subscriptionDetail]);
 
   // Show modal after subscription detail is created/updated
   useEffect(() => {

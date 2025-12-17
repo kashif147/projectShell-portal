@@ -16,11 +16,11 @@ const Application = () => {
 
 
   // Fetch category lookups on mount
-  useEffect(() => {
-    if (!categoryLookups || categoryLookups.length === 0) {
-      fetchLookups('category');
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (!categoryLookups || categoryLookups.length === 0) {
+  //     fetchLookups('category');
+  //   }
+  // }, []);
 
   const hasData = personalDetail || professionalDetail || subscriptionDetail;
   const application = hasData

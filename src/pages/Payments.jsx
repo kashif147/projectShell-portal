@@ -18,11 +18,11 @@ const Payments = () => {
   const [pageSize, setPageSize] = useState(5);
 
   // Fetch category lookups on mount
-  useEffect(() => {
-    if (!categoryLookups || categoryLookups.length === 0) {
-      fetchLookups('category');
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (!categoryLookups || categoryLookups.length === 0) {
+  //     fetchLookups('category');
+  //   }
+  // }, []);
 
   useEffect(() => {
     if (subscriptionDetail) {
