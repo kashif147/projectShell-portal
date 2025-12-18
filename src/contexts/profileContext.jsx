@@ -34,6 +34,7 @@ export const ProfileProvider = ({ children }) => {
     fetchProfileByIdRequest(id)
       .then(res => {
         if (res.status === 200) {
+          console.log('profileByIdDetail response=======>',res)
           setProfileByIdDetail(res?.data?.data);
           setLoading(false);
         } else {

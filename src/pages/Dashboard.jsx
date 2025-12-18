@@ -19,6 +19,7 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { applicationConfirmationRequest } from '../api/application.api';
 import { fetchCategoryByCategoryId } from '../api/category.api';
+import { fetchAllLookups } from '../contexts/lookupContext';
 
 const stripePromise = loadStripe(
   'pk_test_51SBAG4FTlZb0wcbr19eI8nC5u62DfuaUWRVS51VTERBocxSM9JSEs4ubrW57hYTCAHK9d6jrarrT4SAViKFMqKjT00TrEr3PNV',
@@ -63,6 +64,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     getProfileDetail();
+    fetchAllLookups();
   }, []);
 
   useEffect(() => {
