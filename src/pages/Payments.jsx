@@ -26,29 +26,38 @@ const Payments = () => {
 
   useEffect(() => {
     if (subscriptionDetail) {
-      const amount = subscriptionDetail?.subscriptionDetails?.totalAmount || '92';
-      const categoryId = professionalDetail?.professionalDetails?.membershipCategory;
-      
+      const amount =
+        subscriptionDetail?.subscriptionDetails?.totalAmount || '92';
+      const categoryId =
+        professionalDetail?.professionalDetails?.membershipCategory;
+
       // Get category name for receipt
       const category = categoryLookups?.find(
-        cat => (cat?._id === categoryId || cat?.id === categoryId)
+        cat => cat?._id === categoryId || cat?.id === categoryId,
       );
       const categoryName = category?.name || categoryId;
-      
+
       // Handle multiple payments - check if payments is an array or single payment
-      const payments = subscriptionDetail?.subscriptionDetails?.payments || 
-                       subscriptionDetail?.payments || 
-                       [subscriptionDetail?.subscriptionDetails];
-      
+      const payments = subscriptionDetail?.subscriptionDetails?.payments ||
+        subscriptionDetail?.payments || [
+          subscriptionDetail?.subscriptionDetails,
+        ];
+
       // Ensure payments is an array
-      const paymentsArray = Array.isArray(payments) ? payments : [subscriptionDetail?.subscriptionDetails];
-      
+      const paymentsArray = Array.isArray(payments)
+        ? payments
+        : [subscriptionDetail?.subscriptionDetails];
+
       // Map payments to rows
       const mappedPayments = paymentsArray
         .filter(payment => payment) // Filter out null/undefined
         .map((payment, index) => ({
           key: payment.id || payment.key || index + 1,
-          date: formatToDDMMYYYY(payment.submissionDate || payment.date || subscriptionDetail?.subscriptionDetails?.submissionDate),
+          date: formatToDDMMYYYY(
+            payment.submissionDate ||
+              payment.date ||
+              subscriptionDetail?.subscriptionDetails?.submissionDate,
+          ),
           description: payment.membershipCategory || categoryId,
           amount: payment.totalAmount || payment.amount || amount,
           status: payment.status || 'Paid',
@@ -58,15 +67,23 @@ const Payments = () => {
             ...professionalDetail?.professionalDetails,
             membershipCategoryName: categoryName,
             paymentData: {
-              paymentMethod: payment.paymentType || subscriptionDetail?.subscriptionDetails?.paymentType === 'Card Payment' ? 'card' : subscriptionDetail?.subscriptionDetails?.paymentType,
+              paymentMethod:
+                payment.paymentType ||
+                subscriptionDetail?.subscriptionDetails?.paymentType ===
+                  'Card Payment'
+                  ? 'card'
+                  : subscriptionDetail?.subscriptionDetails?.paymentType,
               total: payment.totalAmount || payment.amount || amount,
-              date: payment.submissionDate || payment.date || subscriptionDetail?.subscriptionDetails?.submissionDate,
+              date:
+                payment.submissionDate ||
+                payment.date ||
+                subscriptionDetail?.subscriptionDetails?.submissionDate,
             },
           },
         }));
-      
+
       setPaymentRows(mappedPayments);
-      
+
       // Reset to first page when payments change
       setCurrentPage(1);
     } else {
@@ -78,14 +95,14 @@ const Payments = () => {
   console.log('Payment==================>', paymentRows);
 
   // Get category name by ID from dynamic lookup
-  const getMembershipCategoryLabel = (categoryId) => {
+  const getMembershipCategoryLabel = categoryId => {
     if (!categoryId) return 'N/A';
-    
+
     // Find category in the lookup by _id or id
     const category = categoryLookups?.find(
-      cat => (cat?._id === categoryId || cat?.id === categoryId)
+      cat => cat?._id === categoryId || cat?.id === categoryId,
     );
-    
+
     return category?.name || 'N/A';
   };
 
@@ -99,15 +116,19 @@ const Payments = () => {
       title: 'Description',
       dataIndex: 'description',
       key: 'description',
-      render: description =>
-        getMembershipCategoryLabel(description)
-      ,
+      render: description => getMembershipCategoryLabel(description),
     },
     {
       title: 'Amount',
       dataIndex: 'amount',
       key: 'amount',
-      render: amount => `$${amount}`,
+      render: amount => {
+        // Convert from cents to euros and format with € sign
+        const amountInEuros = amount
+          ? ((amount * 100) / 100).toFixed(2)
+          : '0.00';
+        return `€${amountInEuros}`;
+      },
     },
     {
       title: 'Status',
@@ -138,7 +159,7 @@ const Payments = () => {
   const endIndex = startIndex + pageSize;
   const paginatedRows = paymentRows.slice(startIndex, endIndex);
   const totalPages = Math.ceil(paymentRows.length / pageSize);
-  
+
   // Reset to page 1 if current page is out of bounds
   useEffect(() => {
     if (paymentRows.length > 0 && currentPage > totalPages) {
@@ -147,7 +168,7 @@ const Payments = () => {
   }, [paymentRows.length, totalPages, currentPage]);
 
   // Render mobile card view
-  const renderMobileCard = (record) => {
+  const renderMobileCard = record => {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm mb-3">
         <div className="space-y-2.5">
@@ -159,28 +180,32 @@ const Payments = () => {
               </p>
             </div>
           </div>
-          
+
           <div className="border-t border-gray-100 pt-2.5">
             <p className="text-xs text-gray-500 mb-1">Description</p>
             <p className="text-sm font-medium text-gray-800">
               {getMembershipCategoryLabel(record.description)}
             </p>
           </div>
-          
+
           <div className="border-t border-gray-100 pt-2.5">
             <p className="text-xs text-gray-500 mb-1">Amount</p>
             <p className="text-sm font-medium text-gray-800">
-              ${record.amount || '0.00'}
+              {record.amount
+                ? `€${((record.amount * 100) / 100).toFixed(2)}`
+                : '€0.00'}
             </p>
           </div>
-          
+
           <div className="border-t border-gray-100 pt-2.5">
             <p className="text-xs text-gray-500 mb-1">Status</p>
-            <Tag color={record.status === 'Paid' ? 'green' : 'red'} className="mt-1">
+            <Tag
+              color={record.status === 'Paid' ? 'green' : 'red'}
+              className="mt-1">
               {record.status}
             </Tag>
           </div>
-          
+
           <div className="border-t border-gray-100 pt-2.5">
             <Button
               size="small"
@@ -199,10 +224,7 @@ const Payments = () => {
 
   return (
     <div className="px-1 sm:px-6 py-4 sm:py-6">
-      <Card 
-        title="Payment History"
-        bodyStyle={{ padding: '8px' }}
-      >
+      <Card title="Payment History" bodyStyle={{ padding: '8px' }}>
         {paymentRows.length === 0 ? (
           <Empty
             description="No payment history found."
@@ -215,12 +237,10 @@ const Payments = () => {
             <div className="block md:hidden">
               {paginatedRows.length > 0 ? (
                 <>
-                  {paginatedRows.map((record) => (
-                    <div key={record.key}>
-                      {renderMobileCard(record)}
-                    </div>
+                  {paginatedRows.map(record => (
+                    <div key={record.key}>{renderMobileCard(record)}</div>
                   ))}
-                  
+
                   {/* Mobile Pagination - Show if more than pageSize items */}
                   {paymentRows.length > pageSize && (
                     <div className="mt-4 flex flex-col items-center gap-2">
@@ -228,20 +248,21 @@ const Payments = () => {
                         current={currentPage}
                         total={paymentRows.length}
                         pageSize={pageSize}
-                        onChange={(page) => {
+                        onChange={page => {
                           setCurrentPage(page);
                           // Scroll to top when page changes
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
                         showSizeChanger={false}
-                        showTotal={(total, range) => 
+                        showTotal={(total, range) =>
                           `${range[0]}-${range[1]} of ${total} payment${total > 1 ? 's' : ''}`
                         }
                         size="small"
                         simple={false}
                       />
                       <p className="text-xs text-gray-500">
-                        Page {currentPage} of {Math.ceil(paymentRows.length / pageSize)}
+                        Page {currentPage} of{' '}
+                        {Math.ceil(paymentRows.length / pageSize)}
                       </p>
                     </div>
                   )}
@@ -254,7 +275,7 @@ const Payments = () => {
                 />
               )}
             </div>
-            
+
             {/* Desktop Table View */}
             <div className="hidden md:block">
               <Table
@@ -266,7 +287,7 @@ const Payments = () => {
                   pageSize: pageSize,
                   total: paymentRows.length,
                   showSizeChanger: true,
-                  showTotal: (total, range) => 
+                  showTotal: (total, range) =>
                     `${range[0]}-${range[1]} of ${total} payments`,
                   onChange: (page, size) => {
                     setCurrentPage(page);
@@ -282,7 +303,7 @@ const Payments = () => {
           </>
         )}
       </Card>
-      
+
       <Modal
         open={receiptVisible}
         onCancel={() => setReceiptVisible(false)}
@@ -299,7 +320,21 @@ const Payments = () => {
           </PDFDownloadLink>,
         ]}
         title="Payment Receipt"
-        width={750}
+        width={800}
+        style={{ 
+          maxWidth: '90vw',
+          maxHeight: '90vh',
+          paddingBottom: 0
+        }}
+        bodyStyle={{ 
+          padding: '0', 
+          height: 'calc(90vh - 120px)',
+          maxHeight: 'calc(90vh - 120px)', 
+          overflow: 'auto',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'flex-start'
+        }}
         centered>
         {receiptData && <Receipt data={receiptData} />}
       </Modal>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tag } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -9,11 +9,90 @@ import {
   FileTextOutlined,
 } from '@ant-design/icons';
 import { formatToDDMMYYYY } from '../helpers/date.helper';
+import { fetchCategoryByCategoryId } from '../api/category.api';
+import Spinner from '../components/common/Spinner';
+import moment from 'moment';
 
 const ApplicationDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const application = location.state?.application;
+  const [categoryLoading, setCategoryLoading] = useState(false);
+  const [categoryData, setCategoryData] = useState(null);
+
+  // Helper function to format phone numbers
+  const formatPhoneNumber = (phoneNumber) => {
+    if (!phoneNumber) return phoneNumber;
+    
+    const phoneStr = String(phoneNumber).trim();
+    const digits = phoneStr.replace(/\D/g, ''); // Remove all non-digits
+    
+    // If it starts with +353 or has country code 353, format as +353 XX XXX XXXX
+    if (phoneStr.startsWith('+353') || digits.startsWith('353')) {
+      if (digits.startsWith('353') && digits.length >= 10) {
+        const countryCode = '+353';
+        const rest = digits.substring(3); // Remove country code (353)
+        // Format: +353 XX XXX XXXX (e.g., +353 87 900 0538)
+        if (rest.length >= 7) {
+          const part1 = rest.substring(0, 2); // First 2 digits
+          const part2 = rest.substring(2, 5); // Next 3 digits
+          const part3 = rest.substring(5); // Remaining digits
+          return `${countryCode} ${part1} ${part2} ${part3}`;
+        }
+      }
+      return phoneStr; // Return as is if can't format
+    }
+    
+    // Otherwise, format as 0XX XXX XXXX (e.g., 087 900 0538)
+    if (digits.length >= 7) {
+      let numberToFormat = digits;
+      
+      // If it doesn't start with 0, add it
+      if (!digits.startsWith('0')) {
+        numberToFormat = '0' + digits;
+      }
+      
+      // Format: 0XX XXX XXXX
+      if (numberToFormat.length >= 9) {
+        const part1 = numberToFormat.substring(0, 3); // 0XX
+        const part2 = numberToFormat.substring(3, 6); // XXX
+        const part3 = numberToFormat.substring(6); // XXXX
+        return `${part1} ${part2} ${part3}`;
+      } else if (numberToFormat.length >= 7) {
+        // Handle shorter numbers
+        const part1 = numberToFormat.substring(0, 3);
+        const part2 = numberToFormat.substring(3, 6);
+        const part3 = numberToFormat.substring(6);
+        return `${part1} ${part2} ${part3}`;
+      }
+    }
+    
+    return phoneStr; // Return as is if can't format
+  };
+
+  // Helper function to check if a value is a date
+  const isDateValue = (value) => {
+    if (!value || typeof value !== 'string') return false;
+    // Check if it's an ISO date string or contains date-like patterns
+    return moment(value, moment.ISO_8601, true).isValid() || 
+           /^\d{4}-\d{2}-\d{2}/.test(value) ||
+           /T\d{2}:\d{2}:\d{2}/.test(value);
+  };
+
+  // Helper function to check if a key is a phone number field
+  const isPhoneField = (key) => {
+    const phoneKeywords = ['mobilenumber', 'telephonenumber', 'phonenumber', 'mobile', 'telephone', 'phone', 'tel'];
+    const lowerKey = key.toLowerCase().replace(/\s/g, '');
+    
+    // Check for exact matches or contains phone keywords
+    const isPhone = phoneKeywords.some(keyword => lowerKey === keyword || lowerKey.includes(keyword));
+    
+    // Exclude fields that contain "number" but aren't phone numbers
+    const excludeKeywords = ['id', 'payrollno', 'pensionno', 'pension', 'payroll', 'applicationid', 'memberid'];
+    const shouldExclude = excludeKeywords.some(keyword => lowerKey.includes(keyword));
+    
+    return isPhone && !shouldExclude;
+  };
 
   if (!application) {
     return (
@@ -48,6 +127,23 @@ const ApplicationDetail = () => {
 
   const { personalDetail, professionalDetail, subscriptionDetail } =
     application;
+
+    useEffect(() => {
+      const fetchProduct = async () => {
+        if (!application?.subscriptionDetail?.subscriptionDetails?.membershipCategory) return;
+        setCategoryLoading(true);
+        try {
+          const res = await fetchCategoryByCategoryId(application?.subscriptionDetail?.subscriptionDetails?.membershipCategory);
+          const payload = res?.data?.data || res?.data;
+          setCategoryData(payload || null);
+        } catch (e) {
+          setCategoryData(null);
+        } finally {
+          setCategoryLoading(false);
+        }
+      };
+      fetchProduct();
+    }, [application?.subscriptionDetail?.subscriptionDetails?.membershipCategory]);
 
   const getIconConfig = (type) => {
     const configs = {
@@ -103,32 +199,92 @@ const ApplicationDetail = () => {
         {/* Section Body */}
         <div className="p-3 sm:p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-            {nonNullData.map(([key, value]) => (
-              <div key={key} className="space-y-1">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                  {key
-                    .replace(/([A-Z])/g, ' $1')
-                    .replace(/^./, s => s.toUpperCase())}
-                </p>
-                <div className="text-sm font-semibold text-gray-900">
-                  {typeof value === 'boolean' ? (
-                    <Tag
-                      color={value ? 'success' : 'error'}
-                      className="px-2 py-1 text-xs font-medium rounded-md">
-                      {value ? 'Yes' : 'No'}
-                    </Tag>
-                  ) : typeof value === 'string' && value.includes('_') ? (
-                    <span className="capitalize">
-                      {value
-                        .replace(/_/g, ' ')
-                        .replace(/\b\w/g, l => l.toUpperCase())}
-                    </span>
-                  ) : (
-                    <span>{String(value)}</span>
-                  )}
+            {nonNullData.map(([key, value]) => {
+              // Handle membershipCategory - show category name instead of ID
+              if (key === 'membershipCategory' || key.toLowerCase() === 'membershipcategory') {
+                return (
+                  <div key={key} className="space-y-1">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      {key
+                        .replace(/([A-Z])/g, ' $1')
+                        .replace(/^./, s => s.toUpperCase())}
+                    </p>
+                    <div className="text-sm font-semibold text-gray-900">
+                      {categoryLoading ? (
+                        <span className="flex items-center gap-2">
+                          <Spinner />
+                          Loading...
+                        </span>
+                      ) : (
+                        <span>{categoryData?.name || value || 'N/A'}</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+
+              // Handle date fields
+              if (isDateValue(value)) {
+                const formattedDate = formatToDDMMYYYY(value);
+                return (
+                  <div key={key} className="space-y-1">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      {key
+                        .replace(/([A-Z])/g, ' $1')
+                        .replace(/^./, s => s.toUpperCase())}
+                    </p>
+                    <div className="text-sm font-semibold text-gray-900">
+                      <span>{formattedDate || value}</span>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Handle phone number fields
+              if (isPhoneField(key)) {
+                const formattedPhone = formatPhoneNumber(value);
+                return (
+                  <div key={key} className="space-y-1">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      {key
+                        .replace(/([A-Z])/g, ' $1')
+                        .replace(/^./, s => s.toUpperCase())}
+                    </p>
+                    <div className="text-sm font-semibold text-gray-900">
+                      <span>{formattedPhone}</span>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Default rendering for other fields
+              return (
+                <div key={key} className="space-y-1">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    {key
+                      .replace(/([A-Z])/g, ' $1')
+                      .replace(/^./, s => s.toUpperCase())}
+                  </p>
+                  <div className="text-sm font-semibold text-gray-900">
+                    {typeof value === 'boolean' ? (
+                      <Tag
+                        color={value ? 'success' : 'error'}
+                        className="px-2 py-1 text-xs font-medium rounded-md">
+                        {value ? 'Yes' : 'No'}
+                      </Tag>
+                    ) : typeof value === 'string' && value.includes('_') ? (
+                      <span className="capitalize">
+                        {value
+                          .replace(/_/g, ' ')
+                          .replace(/\b\w/g, l => l.toUpperCase())}
+                      </span>
+                    ) : (
+                      <span>{String(value)}</span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
@@ -165,6 +321,18 @@ const ApplicationDetail = () => {
     );
   };
 
+  // Show full-screen loading overlay
+  if (categoryLoading) {
+    return (
+      <div className="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+        <div className="text-center">
+          <Spinner />
+          <p className="mt-4 text-gray-600 text-sm sm:text-base">Loading application details...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="px-1 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
       {/* Back Button */}
@@ -175,21 +343,6 @@ const ApplicationDetail = () => {
         <span className="text-sm font-medium">Back to Applications</span>
       </button>
 
-      {/* Header */}
-      {/* <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3 sm:gap-4">
-          <div className="w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg">
-            <FileTextOutlined className="text-2xl sm:text-3xl text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-3xl font-bold text-gray-900">Application Details</h1>
-            <p className="text-xs sm:text-sm text-gray-600 mt-1">
-              Complete overview of your membership application
-            </p>
-          </div>
-        </div>
-      </div> */}
-
       {/* Application Overview Card */}
       <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-lg p-3 sm:p-6 border border-blue-200">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
@@ -199,7 +352,7 @@ const ApplicationDetail = () => {
             </div>
             <div className="min-w-0">
               <h3 className="text-base sm:text-lg font-bold text-gray-900">
-                Application #{application?.id || 'N/A'}
+                {categoryData?.name || 'N/A'}
               </h3>
               <p className="text-xs sm:text-sm text-gray-600">
                 {application?.submissionDate 
