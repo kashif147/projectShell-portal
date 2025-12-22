@@ -1,5 +1,5 @@
 import React, { useMemo, useRef } from 'react';
-import { Card, List, Button, Tag, Space, Empty } from 'antd';
+import { Card, Button, Tag, Empty } from 'antd';
 import { FileOutlined, DownloadOutlined, LinkOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useApplication } from '../contexts/applicationContext';
 
@@ -108,66 +108,119 @@ const Resources = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <Card title="Membership Card">
-        {!hasApplication ? (
-          <Empty description="No application data" />
-        ) : (
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div ref={cardRef} id="membership-card" className="border rounded-lg p-4 w-full md:w-2/3 bg-white">
-              <div className="text-center mb-2">
-                <div className="text-xl font-bold">MEMBERSHIP CARD</div>
-                <div className="text-sm text-gray-500">{membershipCategoryLabels[membershipCategory] || membershipCategory}</div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        {/* Membership Card Section */}
+        <Card 
+          title={<span className="text-lg sm:text-xl font-bold">Membership Card</span>}
+          className="shadow-sm"
+          bodyStyle={{ padding: '16px' }}
+        >
+          {!hasApplication ? (
+            <Empty description="No application data" />
+          ) : (
+            <div className="flex flex-col gap-4">
+              <div ref={cardRef} id="membership-card" className="border-2 border-blue-200 rounded-xl p-4 sm:p-6 bg-gradient-to-br from-white to-blue-50 shadow-sm">
+                <div className="text-center mb-3 sm:mb-4">
+                  <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">MEMBERSHIP CARD</div>
+                  <div className="text-xs sm:text-sm text-gray-500 mt-1">{membershipCategoryLabels[membershipCategory] || membershipCategory}</div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
+                  <div className="font-semibold text-gray-600 py-1">Name</div>
+                  <div className="text-gray-800 py-1 break-words">{memberName || 'N/A'}</div>
+                  <div className="font-semibold text-gray-600 py-1">Membership Number</div>
+                  <div className="text-gray-800 py-1 break-words">{membershipNumber || 'N/A'}</div>
+                  <div className="font-semibold text-gray-600 py-1">Branch</div>
+                  <div className="text-gray-800 py-1 break-words">{branch || 'N/A'}</div>
+                  <div className="font-semibold text-gray-600 py-1">Section</div>
+                  <div className="text-gray-800 py-1 break-words">{section || 'N/A'}</div>
+                </div>
+                <div className="mt-4 sm:mt-5 text-center sm:text-right text-xs text-gray-500">Digital Card Preview</div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                <div className="font-semibold text-gray-600">Name</div>
-                <div className="text-gray-800">{memberName}</div>
-                <div className="font-semibold text-gray-600">Membership Number</div>
-                <div className="text-gray-800">{membershipNumber}</div>
-                <div className="font-semibold text-gray-600">Branch</div>
-                <div className="text-gray-800">{branch}</div>
-                <div className="font-semibold text-gray-600">Section</div>
-                <div className="text-gray-800">{section}</div>
+              <div className="flex justify-center sm:justify-start">
+                <Button 
+                  type="primary" 
+                  size="large"
+                  icon={<DownloadOutlined />} 
+                  onClick={handleDownloadMembershipCard}
+                  className="w-full sm:w-auto touch-manipulation"
+                  style={{ minHeight: '44px' }}
+                >
+                  Download PDF
+                </Button>
               </div>
-              <div className="mt-4 text-right text-xs text-gray-500">Digital Card Preview</div>
             </div>
-            <Space>
-              <Button type="primary" icon={<DownloadOutlined />} onClick={handleDownloadMembershipCard}>
-                Download PDF
-              </Button>
-            </Space>
-          </div>
-        )}
-      </Card>
-
-      <Card title="Resources Library">
-        <List
-          dataSource={educationalResources}
-          locale={{ emptyText: <Empty description="No resources" /> }}
-          renderItem={item => (
-            <List.Item
-              actions={[
-                <Button key="action" type="primary" icon={
-                  item.type === 'PDF' ? <DownloadOutlined /> : item.type === 'Video' ? <PlayCircleOutlined /> : <LinkOutlined />
-                } onClick={() => handleResourceAction(item)}>
-                  {item.type === 'PDF' ? 'Download' : 'Open'}
-                </Button>,
-              ]}
-            >
-              <List.Item.Meta
-                avatar={<FileOutlined style={{ fontSize: 24 }} />}
-                title={item.title}
-                description={
-                  <>
-                    <Tag color="blue">{item.category}</Tag>
-                    <Tag color={item.type === 'PDF' ? 'green' : item.type === 'Video' ? 'purple' : 'geekblue'}>{item.type}</Tag>
-                  </>
-                }
-              />
-            </List.Item>
           )}
-        />
-      </Card>
+        </Card>
+
+        {/* Resources Library Section */}
+        <Card 
+          title={<span className="text-lg sm:text-xl font-bold">Resources Library</span>}
+          className="shadow-sm"
+          bodyStyle={{ padding: '16px' }}
+        >
+          {educationalResources.length === 0 ? (
+            <Empty description="No resources available" />
+          ) : (
+            <div className="space-y-3 sm:space-y-4">
+              {educationalResources.map(item => (
+                <div
+                  key={item.id}
+                  className="bg-white border border-gray-200 rounded-lg sm:rounded-xl p-3 sm:p-4 hover:shadow-md transition-all duration-300 active:scale-[0.99]"
+                >
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    {/* Icon */}
+                    <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg sm:rounded-xl flex items-center justify-center">
+                      <FileOutlined className="text-lg sm:text-xl text-blue-600" />
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-2 break-words">
+                        {item.title}
+                      </h3>
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
+                        <Tag color="blue" className="text-xs sm:text-sm m-0">
+                          {item.category}
+                        </Tag>
+                        <Tag 
+                          color={item.type === 'PDF' ? 'green' : item.type === 'Video' ? 'purple' : 'geekblue'}
+                          className="text-xs sm:text-sm m-0"
+                        >
+                          {item.type}
+                        </Tag>
+                      </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <div className="flex-shrink-0">
+                      <Button
+                        type="primary"
+                        size="small"
+                        icon={
+                          item.type === 'PDF' ? <DownloadOutlined /> : 
+                          item.type === 'Video' ? <PlayCircleOutlined /> : 
+                          <LinkOutlined />
+                        }
+                        onClick={() => handleResourceAction(item)}
+                        className="touch-manipulation"
+                        style={{ minHeight: '36px', minWidth: '80px' }}
+                      >
+                        <span className="hidden sm:inline">
+                          {item.type === 'PDF' ? 'Download' : 'Open'}
+                        </span>
+                        <span className="sm:hidden">
+                          {item.type === 'PDF' ? 'DL' : 'Open'}
+                        </span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
     </div>
   );
 };

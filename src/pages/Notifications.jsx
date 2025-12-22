@@ -90,12 +90,12 @@ const Notifications = () => {
   const getIcon = (iconType) => {
     switch (iconType) {
       case 'success':
-        return <CheckCircleOutlined className="text-2xl" />;
+        return <CheckCircleOutlined className="text-xl sm:text-2xl" />;
       case 'warning':
-        return <WarningOutlined className="text-2xl" />;
+        return <WarningOutlined className="text-xl sm:text-2xl" />;
       case 'info':
       default:
-        return <InfoCircleOutlined className="text-2xl" />;
+        return <InfoCircleOutlined className="text-xl sm:text-2xl" />;
     }
   };
 
@@ -132,18 +132,29 @@ const Notifications = () => {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50">
+      <style>{`
+        @media (max-width: 640px) {
+          .filter-tabs-scroll::-webkit-scrollbar {
+            display: none;
+          }
+          .filter-tabs-scroll {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        }
+      `}</style>
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <BellOutlined className="text-3xl text-white" />
+        <div className="mb-4 sm:mb-6 md:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+                <BellOutlined className="text-2xl sm:text-3xl text-white" />
               </div>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
-                <p className="text-sm text-gray-600 mt-1">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Notifications</h1>
+                <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1">
                   {unreadCount > 0 ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}` : 'All caught up!'}
                 </p>
               </div>
@@ -151,84 +162,88 @@ const Notifications = () => {
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors">
+                className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors touch-manipulation">
                 Mark all as read
               </button>
             )}
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex flex-wrap gap-2 bg-white rounded-xl p-2 shadow-sm border border-gray-200">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                filter === 'all'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}>
-              All ({notifications.length})
-            </button>
-            <button
-              onClick={() => setFilter('unread')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                filter === 'unread'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}>
-              Unread ({unreadCount})
-            </button>
-            <button
-              onClick={() => setFilter('payment')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                filter === 'payment'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}>
-              Payments ({notifications.filter(n => n.type === 'payment').length})
-            </button>
-            <button
-              onClick={() => setFilter('subscription')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                filter === 'subscription'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}>
-              Subscription ({notifications.filter(n => n.type === 'subscription').length})
-            </button>
+          <div className="bg-white rounded-xl p-1.5 sm:p-2 shadow-sm border border-gray-200 overflow-x-auto filter-tabs-scroll">
+            <div className="flex gap-1.5 sm:gap-2 min-w-max sm:min-w-0">
+              <button
+                onClick={() => setFilter('all')}
+                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap touch-manipulation ${
+                  filter === 'all'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                }`}>
+                All ({notifications.length})
+              </button>
+              <button
+                onClick={() => setFilter('unread')}
+                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap touch-manipulation ${
+                  filter === 'unread'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                }`}>
+                Unread ({unreadCount})
+              </button>
+              <button
+                onClick={() => setFilter('payment')}
+                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap touch-manipulation ${
+                  filter === 'payment'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                }`}>
+                Payments ({notifications.filter(n => n.type === 'payment').length})
+              </button>
+              <button
+                onClick={() => setFilter('subscription')}
+                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap touch-manipulation ${
+                  filter === 'subscription'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                }`}>
+                Subscription ({notifications.filter(n => n.type === 'subscription').length})
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Notifications List */}
-        <div className="space-y-3">
+        <div className="space-y-2.5 sm:space-y-3">
           {filteredNotifications.length > 0 ? (
             filteredNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`bg-white rounded-xl border transition-all duration-300 hover:shadow-md ${
+                className={`bg-white rounded-lg sm:rounded-xl border transition-all duration-300 hover:shadow-md active:scale-[0.99] ${
                   notification.read
                     ? 'border-gray-200'
                     : 'border-blue-200 shadow-sm'
                 }`}>
-                <div className="p-5">
-                  <div className="flex items-start gap-4">
+                <div className="p-3 sm:p-4 md:p-5">
+                  <div className="flex items-start gap-2.5 sm:gap-3 md:gap-4">
                     {/* Icon */}
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${getIconBgColor(notification.color)}`}>
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ${getIconBgColor(notification.color)}`}>
                       {getIcon(notification.icon)}
                     </div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4 mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className={`text-base font-semibold ${notification.read ? 'text-gray-900' : 'text-gray-900'}`}>
+                      <div className="flex items-start justify-between gap-2 sm:gap-3 mb-1.5 sm:mb-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+                            <h3 className={`text-sm sm:text-base font-semibold text-gray-900 truncate pr-1 ${
+                              notification.read ? '' : ''
+                            }`}>
                               {notification.title}
                             </h3>
                             {!notification.read && (
-                              <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                              <span className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0"></span>
                             )}
                           </div>
-                          <p className="text-sm text-gray-600 leading-relaxed">
+                          <p className="text-xs sm:text-sm text-gray-600 leading-relaxed break-words">
                             {notification.message}
                           </p>
                         </div>
@@ -236,16 +251,16 @@ const Notifications = () => {
                         {/* Delete Button */}
                         <button
                           onClick={() => deleteNotification(notification.id)}
-                          className="text-gray-400 hover:text-red-500 transition-colors p-1 hover:bg-red-50 rounded-lg">
-                          <CloseOutlined className="text-sm" />
+                          className="text-gray-400 hover:text-red-500 active:text-red-600 transition-colors p-1.5 hover:bg-red-50 active:bg-red-100 rounded-lg touch-manipulation flex-shrink-0">
+                          <CloseOutlined className="text-base sm:text-lg" />
                         </button>
                       </div>
 
                       {/* Footer */}
-                      <div className="flex items-center justify-between mt-3">
-                        <div className="flex items-center gap-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mt-2.5 sm:mt-3">
+                        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                           <span className="text-xs text-gray-500">{notification.time}</span>
-                          <span className={`px-2 py-1 text-xs font-medium rounded-md ${
+                          <span className={`px-2 py-0.5 sm:py-1 text-xs font-medium rounded-md whitespace-nowrap ${
                             notification.type === 'payment'
                               ? 'bg-emerald-100 text-emerald-700'
                               : 'bg-purple-100 text-purple-700'
@@ -257,7 +272,7 @@ const Notifications = () => {
                         {!notification.read && (
                           <button
                             onClick={() => markAsRead(notification.id)}
-                            className="text-xs font-medium text-blue-600 hover:text-blue-700 px-3 py-1 hover:bg-blue-50 rounded-lg transition-colors">
+                            className="w-full sm:w-auto text-xs font-medium text-blue-600 hover:text-blue-700 active:text-blue-800 px-3 py-1.5 sm:py-1 hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors touch-manipulation text-left sm:text-center">
                             Mark as read
                           </button>
                         )}
@@ -268,12 +283,12 @@ const Notifications = () => {
               </div>
             ))
           ) : (
-            <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <BellOutlined className="text-4xl text-gray-400" />
+            <div className="bg-white rounded-xl border border-gray-200 p-8 sm:p-12 text-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <BellOutlined className="text-3xl sm:text-4xl text-gray-400" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No notifications</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">No notifications</h3>
+              <p className="text-xs sm:text-sm text-gray-600 px-4">
                 {filter === 'unread'
                   ? "You're all caught up! No unread notifications."
                   : `No ${filter === 'all' ? '' : filter} notifications to display.`}

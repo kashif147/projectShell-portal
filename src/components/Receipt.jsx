@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useEffect, useState, useRef } from 'react';
 import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
 
 const styles = StyleSheet.create({
@@ -148,26 +148,157 @@ const getMembershipCategoryLabel = (data) => {
 };
 
 const formatCurrency = (amount) => {
-  if (!amount) return '$0.00';
+  if (!amount) return '€0.00';
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-  return `$${num.toFixed(2)}`;
+  return `€${num.toFixed(2)}`;
 };
 
-const Receipt = forwardRef(({ data }, ref) => (
-  <div ref={ref} style={{ width: 650, margin: '0 auto', background: '#fff', padding: 40, fontFamily: 'Arial, sans-serif', color: '#222', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+const Receipt = forwardRef(({ data }, ref) => {
+  const FIXED_WIDTH = 650;
+  const FIXED_PADDING = 40;
+  const TOTAL_WIDTH = FIXED_WIDTH + (FIXED_PADDING * 2);
+  const wrapperRef = useRef(null);
+  const containerRef = useRef(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const calculateScale = () => {
+      if (wrapperRef.current && containerRef.current) {
+        const containerWidth = wrapperRef.current.offsetWidth || wrapperRef.current.clientWidth;
+        const containerHeight = wrapperRef.current.offsetHeight || wrapperRef.current.clientHeight;
+        
+        // Get actual receipt height (before scaling)
+        const receiptHeight = containerRef.current.scrollHeight;
+        
+        // Account for wrapper padding (16px on each side = 32px total)
+        const availableWidth = Math.max(100, containerWidth - 32);
+        const availableHeight = Math.max(100, containerHeight - 32);
+        
+        // Calculate scale based on both width and height
+        const widthScale = availableWidth / TOTAL_WIDTH;
+        const heightScale = availableHeight / receiptHeight;
+        
+        // Use the smaller scale to ensure it fits both dimensions
+        const calculatedScale = Math.min(1, Math.min(widthScale, heightScale));
+        setScale(Math.max(0.25, calculatedScale)); // Minimum scale of 0.25 for readability
+      }
+    };
+
+    // Initial calculation with delay to ensure DOM is ready
+    const timeoutId = setTimeout(calculateScale, 150);
+    
+    // Use ResizeObserver for accurate container size detection
+    let resizeObserver;
+    if (window.ResizeObserver) {
+      resizeObserver = new ResizeObserver(() => {
+        setTimeout(calculateScale, 10);
+      });
+      
+      if (wrapperRef.current) {
+        resizeObserver.observe(wrapperRef.current);
+      }
+    }
+
+    // Also listen to window resize for modal size changes
+    window.addEventListener('resize', calculateScale);
+
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', calculateScale);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+    };
+  }, [data]);
+
+  return (
+    <div 
+      ref={(node) => {
+        wrapperRef.current = node;
+        if (typeof ref === 'function') {
+          ref(node);
+        } else if (ref) {
+          ref.current = node;
+        }
+      }}
+      className="receipt-wrapper"
+      style={{ 
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        padding: '16px',
+        overflow: 'auto',
+        boxSizing: 'border-box'
+      }}
+    >
+      <div 
+        ref={containerRef}
+        className="receipt-container"
+        style={{ 
+          width: `${FIXED_WIDTH}px`,
+          margin: '0 auto', 
+          background: '#fff', 
+          padding: `${FIXED_PADDING}px`,
+          fontFamily: 'Arial, sans-serif', 
+          color: '#222', 
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          transformOrigin: 'top center',
+          transform: `scale(${scale})`,
+          flexShrink: 0
+        }}>
+        <style>{`
+          .receipt-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+          }
+          .receipt-title {
+            font-size: 28px;
+            margin: 0;
+          }
+          .receipt-subtitle {
+            font-size: 12px;
+            margin: 8px 0 0 0;
+          }
+          .receipt-date {
+            text-align: right;
+            margin-bottom: 20px;
+            font-size: 11px;
+          }
+          .receipt-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 24px;
+            border: 1px solid #d1d5db;
+            display: table;
+            table-layout: fixed;
+          }
+          .receipt-table th,
+          .receipt-table td {
+            padding: 12px;
+            word-wrap: break-word;
+          }
+          .receipt-signature-line {
+            width: 100%;
+            max-width: 300px;
+          }
+        `}</style>
     {/* Header */}
     <div style={{ borderBottom: '3px solid #4f46e5', marginBottom: 20, paddingBottom: 12, textAlign: 'center' }}>
-      <h1 style={{ margin: 0, fontSize: 28, color: '#1a1a1a', fontWeight: 'bold' }}>Payment Receipt</h1>
-      <p style={{ margin: '8px 0 0 0', fontSize: 12, color: '#666' }}>Membership Subscription Payment</p>
+      <h1 className="receipt-title" style={{ color: '#1a1a1a', fontWeight: 'bold' }}>Payment Receipt</h1>
+      <p className="receipt-subtitle" style={{ color: '#666' }}>Membership Subscription Payment</p>
     </div>
 
     {/* Date */}
-    <div style={{ textAlign: 'right', marginBottom: 20, fontSize: 11, color: '#666' }}>
+    <div className="receipt-date" style={{ color: '#666' }}>
       <b>Date:</b> {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
     </div>
 
     {/* Member Information Section */}
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+    <div className="receipt-grid">
       {/* Bill To */}
       <div>
         <h3 style={{ margin: '0 0 10px 0', fontSize: 13, color: '#4f46e5', textTransform: 'uppercase', fontWeight: 'bold' }}>Bill To</h3>
@@ -199,7 +330,7 @@ const Receipt = forwardRef(({ data }, ref) => (
     {(data.membershipCategory || data.membershipCategoryName || data.grade || data.workLocation) && (
       <div style={{ marginBottom: 24, padding: 16, background: '#f9fafb', borderRadius: 8, border: '1px solid #e5e7eb' }}>
         <h3 style={{ margin: '0 0 10px 0', fontSize: 13, color: '#4f46e5', textTransform: 'uppercase', fontWeight: 'bold' }}>Professional Information</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: 11, color: '#444' }}>
+        <div className="receipt-grid" style={{ gap: 12, fontSize: 11, color: '#444' }}>
           {(data.membershipCategory || data.membershipCategoryName) && (
             <div>
               <b>Membership Category:</b>
@@ -237,7 +368,7 @@ const Receipt = forwardRef(({ data }, ref) => (
     </div>
 
     {/* Payment Details Table */}
-    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 24, border: '1px solid #d1d5db' }}>
+    <table className="receipt-table">
       <thead>
         <tr>
           <th style={{ border: '1px solid #d1d5db', padding: 12, background: '#f3f4f6', textAlign: 'left', fontSize: 12, fontWeight: 'bold' }}>Description</th>
@@ -269,7 +400,7 @@ const Receipt = forwardRef(({ data }, ref) => (
     <div style={{ marginTop: 40, paddingTop: 20, borderTop: '1px solid #e5e7eb' }}>
       <div style={{ fontSize: 11, color: '#444' }}>
         <b>Authorized Signature:</b>
-        <div style={{ borderBottom: '1px solid #444', width: 300, marginTop: 20 }}></div>
+        <div className="receipt-signature-line" style={{ borderBottom: '1px solid #444', marginTop: 20 }}></div>
       </div>
     </div>
 
@@ -278,14 +409,16 @@ const Receipt = forwardRef(({ data }, ref) => (
       <p style={{ margin: 0 }}>Thank you for your payment. This is an official receipt for your records.</p>
       <p style={{ margin: '4px 0 0 0' }}>For any queries, please contact the membership office.</p>
     </div>
-  </div>
-));
+      </div>
+    </div>
+  );
+});
 
 export const ReceiptPDF = ({ data }) => {
   const formatAmount = (amount) => {
-    if (!amount) return '$0.00';
+    if (!amount) return '€0.00';
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-    return `$${num.toFixed(2)}`;
+    return `€${num.toFixed(2)}`;
   };
 
   return (

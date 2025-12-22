@@ -19,6 +19,7 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { applicationConfirmationRequest } from '../api/application.api';
 import { fetchCategoryByCategoryId } from '../api/category.api';
+// import { fetchAllLookups } from '../contexts/lookupContext';
 
 const stripePromise = loadStripe(
   'pk_test_51SBAG4FTlZb0wcbr19eI8nC5u62DfuaUWRVS51VTERBocxSM9JSEs4ubrW57hYTCAHK9d6jrarrT4SAViKFMqKjT00TrEr3PNV',
@@ -63,6 +64,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     getProfileDetail();
+    // fetchAllLookups();
   }, []);
 
   useEffect(() => {
@@ -692,15 +694,24 @@ const Dashboard = () => {
               </div>
             </div>
             <button
+              disabled={
+                loading ||
+                appicationLoader ||
+                applicationStatus === null
+              }
               onClick={() =>
                 navigate(
                   isApplicationSubmitted ? '/profile' : '/applicationForm',
                 )
               }
               className={`w-full px-4 py-2.5 sm:py-3 rounded-lg transition-colors font-medium text-sm sm:text-base ${
-                isApplicationSubmitted
-                  ? 'bg-green-600 text-white hover:bg-green-700'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                loading ||
+                appicationLoader ||
+                applicationStatus === null
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
+                  : isApplicationSubmitted
+                    ? 'bg-green-600 text-white hover:bg-green-700 active:bg-green-800'
+                    : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
               }`}>
               {isApplicationSubmitted ? 'View Profile' : 'Complete Profile'}
             </button>
@@ -765,7 +776,7 @@ const Dashboard = () => {
           onSuccess={handleSubscriptionSuccess}
           onFailure={handleSubscriptionFailure}
           formData={formData}
-          membershipCategory={formData.subscriptionDetails.membershipCategory}
+          membershipCategory={formData?.subscriptionDetails?.membershipCategory}
         />
       </Elements>
     </div>

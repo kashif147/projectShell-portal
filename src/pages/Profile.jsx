@@ -5,49 +5,109 @@ import { useSelector } from 'react-redux';
 import PersonalInformation from '../components/application/PersonalInformation';
 import Button from '../components/common/Button';
 import { useApplication } from '../contexts/applicationContext';
+import { useProfile } from '../contexts/profileContext';
 import { updatePersonalDetailRequest } from '../api/application.api';
+import { updateProfileRequest } from '../api/profile.api';
 import Spinner from '../components/common/Spinner';
+import { toast } from 'react-toastify';
 import { isDataFormat } from '../helpers/date.helper';
 
 const Profile = () => {
   const { user } = useSelector(state => state.auth);
-  const { personalDetail, getPersonalDetail } = useApplication()
+  const { personalDetail, getPersonalDetail } = useApplication();
+  const { profileByIdDetail, getProfileByIdDetail, profileDetail } = useProfile();
   const [loading, setLoading] = React.useState(false);
   const [personalInfo, setPersonalInfo] = useState({});
   const [showValidation, setShowValidation] = useState(false);
 
-
   useEffect(() => {
-    if (personalDetail) {
-      setPersonalInfo({
-        title: personalDetail?.personalInfo?.title || '',
-        surname: personalDetail?.personalInfo?.surname || '',
-        forename: personalDetail?.personalInfo?.forename || '',
-        gender: personalDetail?.personalInfo?.gender || '',
-        dateOfBirth: personalDetail?.personalInfo?.dateOfBirth || '',
-        countryPrimaryQualification: personalDetail?.personalInfo?.countryPrimaryQualification || '',
-        personalEmail: personalDetail?.contactInfo?.personalEmail || '',
-        mobileNo: personalDetail?.contactInfo?.mobileNumber || '',
-        consent: personalDetail?.contactInfo?.consent ?? false,
-        addressLine1: personalDetail?.contactInfo?.buildingOrHouse || '',
-        addressLine2: personalDetail?.contactInfo?.streetOrRoad || '',
-        addressLine3: personalDetail?.contactInfo?.areaOrTown || '',
-        addressLine4: personalDetail?.contactInfo?.countyCityOrPostCode || '',
-        eircode: personalDetail?.contactInfo?.eircode || '',
-        preferredAddress: personalDetail?.contactInfo?.preferredAddress || '',
-        preferredEmail: personalDetail?.contactInfo?.preferredEmail || '',
-        homeWorkTelNo: personalDetail?.contactInfo?.telephoneNumber || '',
-        country: personalDetail?.contactInfo?.country || '',
-      });
-    }
-  }, [personalDetail])
+    if (!personalDetail && !profileByIdDetail) return;
+
+    const profilePersonalInfo = profileByIdDetail?.personalInfo || {};
+    const profileContactInfo = profileByIdDetail?.contactInfo || {};
+    const profilePreferences = profileByIdDetail?.preferences || {};
+
+    const appPersonalInfo = personalDetail?.personalInfo || {};
+    const appContactInfo = personalDetail?.contactInfo || {};
+
+    setPersonalInfo({
+      // Personal info - prefer profile, fallback to application
+      title: profilePersonalInfo.title ?? appPersonalInfo.title ?? '',
+      surname: profilePersonalInfo.surname ?? appPersonalInfo.surname ?? '',
+      forename: profilePersonalInfo.forename ?? appPersonalInfo.forename ?? '',
+      gender: profilePersonalInfo.gender ?? appPersonalInfo.gender ?? '',
+      dateOfBirth:
+        profilePersonalInfo.dateOfBirth ??
+        appPersonalInfo.dateOfBirth ??
+        '',
+      countryPrimaryQualification:
+        profilePersonalInfo.countryPrimaryQualification ??
+        appPersonalInfo.countryPrimaryQualification ??
+        '',
+
+      // Contact info - prefer profile, fallback to application
+      personalEmail:
+        profileContactInfo.personalEmail ??
+        appContactInfo.personalEmail ??
+        '',
+      mobileNo:
+        profileContactInfo.mobileNumber ??
+        appContactInfo.mobileNumber ??
+        '',
+      consent:
+        profilePreferences.consent ??
+        appContactInfo.consent ??
+        false,
+      addressLine1:
+        profileContactInfo.buildingOrHouse ??
+        appContactInfo.buildingOrHouse ??
+        '',
+      addressLine2:
+        profileContactInfo.streetOrRoad ??
+        appContactInfo.streetOrRoad ??
+        '',
+      addressLine3:
+        profileContactInfo.areaOrTown ??
+        appContactInfo.areaOrTown ??
+        '',
+      addressLine4:
+        profileContactInfo.countyCityOrPostCode ??
+        appContactInfo.countyCityOrPostCode ??
+        '',
+      eircode:
+        profileContactInfo.eircode ??
+        appContactInfo.eircode ??
+        '',
+      preferredAddress:
+        profileContactInfo.preferredAddress ??
+        appContactInfo.preferredAddress ??
+        '',
+      preferredEmail:
+        profileContactInfo.preferredEmail ??
+        appContactInfo.preferredEmail ??
+        '',
+      homeWorkTelNo:
+        profileContactInfo.telephoneNumber ??
+        appContactInfo.telephoneNumber ??
+        '',
+      country:
+        profileContactInfo.country ??
+        appContactInfo.country ??
+        '',
+      workEmail:
+        profileContactInfo.workEmail ??
+        appContactInfo.workEmail ??
+        '',
+    });
+  }, [personalDetail, profileByIdDetail]);
 
   const handleCancel = () => {
     setShowValidation(false);
   };
 
   const updatePersonalDetail = () => {
-    setLoading(true)
+    setLoading(true);
+
     const personalInfoData = {};
 
     const personalFields = {
@@ -55,8 +115,10 @@ const Profile = () => {
       surname: personalInfo.surname,
       forename: personalInfo.forename,
       gender: personalInfo.gender,
-      dateOfBirth: personalInfo.dateOfBirth && isDataFormat(personalInfo.dateOfBirth),
-      countryPrimaryQualification: personalInfo.countryPrimaryQualification ?? '',
+      dateOfBirth:
+        personalInfo.dateOfBirth && isDataFormat(personalInfo.dateOfBirth),
+      countryPrimaryQualification:
+        personalInfo.countryPrimaryQualification ?? '',
     };
 
     personalInfoData.personalInfo = {};
@@ -89,20 +151,78 @@ const Profile = () => {
       }
     });
 
-    updatePersonalDetailRequest(personalDetail?.ApplicationId, personalInfoData)
-      .then(res => {
-        if (res.status === 200) {
-          getPersonalDetail();
-          setLoading(false)
+    // Build payload for profile update API (preferences.consent)
+    const profileContactFields = {
+      preferredAddress: personalInfo.preferredAddress,
+      buildingOrHouse: personalInfo.addressLine1,
+      streetOrRoad: personalInfo.addressLine2 ?? '',
+      areaOrTown: personalInfo.addressLine3 ?? '',
+      eircode: personalInfo.eircode ?? '',
+      countyCityOrPostCode: personalInfo.addressLine4,
+      country: personalInfo.country ?? '',
+      mobileNumber: personalInfo.mobileNo,
+      telephoneNumber: personalInfo.homeWorkTelNo ?? '',
+      preferredEmail: personalInfo.preferredEmail,
+      personalEmail: personalInfo.personalEmail ?? '',
+      workEmail: personalInfo.workEmail ?? '',
+    };
+
+    const profilePayload = {
+      personalInfo: personalInfoData.personalInfo,
+      contactInfo: {},
+      preferences: {
+        consent: !!personalInfo.consent,
+      },
+    };
+
+    Object.entries(profileContactFields).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        profilePayload.contactInfo[key] = value;
+      }
+    });
+
+    const requests = [];
+
+    if (personalDetail?.ApplicationId) {
+      requests.push(
+        updatePersonalDetailRequest(personalDetail.ApplicationId, personalInfoData),
+      );
+    }
+
+    if (profileByIdDetail) {
+      requests.push(updateProfileRequest(profilePayload));
+    }
+
+    if (!requests.length) {
+      setLoading(false);
+      toast.error('No application or profile found to update');
+      return;
+    }
+
+    Promise.all(requests)
+      .then(responses => {
+        const allOk = responses.every(res => res.status === 200);
+
+        if (allOk) {
+          if (personalDetail?.ApplicationId) {
+            getPersonalDetail();
+          }
+          if (profileDetail?.profileId) {
+            getProfileByIdDetail(profileDetail?.profileId);
+          }
           toast.success('Personal Detail update successfully');
         } else {
-          setLoading(false)
-          toast.error(res.data.message ?? 'Unable to update personal detail');
+          const firstError = responses.find(r => r.status !== 200);
+          toast.error(
+            firstError?.data?.message ?? 'Unable to update personal detail',
+          );
         }
       })
       .catch(() => {
-        setLoading(false)
-        toast.error('Something went wrong')
+        toast.error('Something went wrong');
+      })
+      .finally(() => {
+        setLoading(false);
       });
   };
 
@@ -116,7 +236,7 @@ const Profile = () => {
             <h2 className="mt-4 text-xl font-bold">
               {user?.userFirstName || ''} {user?.userLastName || ''}
             </h2>
-            <p className="text-gray-500">{user?.role ?? 'Non Member'}</p>
+            <p className="text-gray-500">{profileDetail?.profileId ?'Member' : 'Non Member'}</p>
           </div>
         </Card>
       </Col>

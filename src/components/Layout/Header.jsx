@@ -114,7 +114,7 @@ const Header = ({
                 <span className="sm:hidden">Member #</span>
               </p>
               <p className="text-xs md:text-sm font-semibold text-green-900 leading-tight">
-                {profileDetail.membershipNumber}
+                {profileDetail?.membershipNumber}
               </p>
             </div>
           </div>
@@ -147,9 +147,9 @@ const Header = ({
             />
             <div className="hidden sm:flex flex-col items-start">
               <span className="text-sm font-semibold text-gray-900">
-                {user?.userFirstName || 'Maria'}
+                {user?.userFirstName || ''} {user?.userLastName || ''}
               </span>
-              <span className="text-xs text-gray-500">Member</span>
+              <span className="text-xs text-gray-500">{profileDetail?.profileId ?'Member' : 'Non Member'}</span>
             </div>
           </div>
         </Dropdown>

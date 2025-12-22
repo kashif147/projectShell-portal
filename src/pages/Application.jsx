@@ -5,22 +5,19 @@ import { useNavigate } from 'react-router-dom';
 import Button from '../components/common/Button';
 import { useApplication } from '../contexts/applicationContext';
 import { useLookup } from '../contexts/lookupContext';
+import { useProfile } from '../contexts/profileContext';
 import { formatToDDMMYYYY } from '../helpers/date.helper';
+import { fetchCategoryByCategoryId } from '../api/category.api';
+import Spinner from '../components/common/Spinner';
 
 const Application = () => {
   const { personalDetail, professionalDetail, subscriptionDetail } =
     useApplication();
+  const { profileDetail } = useProfile();
   const { categoryLookups, fetchLookups } = useLookup();
   const navigate = useNavigate();
   const [categoryData, setCategoryData] = useState(null);
-
-
-  // Fetch category lookups on mount
-  // useEffect(() => {
-  //   if (!categoryLookups || categoryLookups.length === 0) {
-  //     fetchLookups('category');
-  //   }
-  // }, []);
+  const [categoryLoading, setCategoryLoading] = useState(false);
 
   const hasData = personalDetail || professionalDetail || subscriptionDetail;
   const application = hasData
@@ -38,17 +35,22 @@ const Application = () => {
     navigate('/application/detail', { state: { application: record } });
   };
 
-  // Get category name by ID from dynamic lookup
-  const getMembershipCategoryLabel = (categoryId) => {
-    if (!categoryId) return 'N/A';
-    
-    // Find category in the lookup by _id or id
-    const category = categoryLookups?.find(
-      cat => (cat?._id === categoryId || cat?.id === categoryId)
-    );
-    
-    return category?.name || categoryId;
-  };
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!subscriptionDetail?.subscriptionDetails?.membershipCategory) return;
+      setCategoryLoading(true);
+      try {
+        const res = await fetchCategoryByCategoryId(subscriptionDetail?.subscriptionDetails?.membershipCategory);
+        const payload = res?.data?.data || res?.data;
+        setCategoryData(payload || null);
+      } catch (e) {
+        setCategoryData(null);
+      } finally {
+        setCategoryLoading(false);
+      }
+    };
+    fetchProduct();
+  }, [subscriptionDetail?.subscriptionDetails?.membershipCategory]);
 
   const columns = [
     {
@@ -56,16 +58,10 @@ const Application = () => {
       dataIndex: 'membershipCategory',
       key: 'membershipCategory',
       render: (_, record) => {
-        const category =
-          record.professionalDetail?.professionalDetails?.membershipCategory ||
-          '';
-        return category ? (
+        return (
           <span className="text-gray-700">
-            {getMembershipCategoryLabel(category)
-            }
+            {categoryData?.name || 'N/A'}
           </span>
-        ) : (
-          <span className="text-gray-400">N/A</span>
         );
       },
     },
@@ -81,14 +77,19 @@ const Application = () => {
         ),
     },
     {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
+      title: 'Work Location',
+      dataIndex: 'workLocation',
+      key: 'workLocation',
       render: (_, record) => {
-        const status =
-          record.subscriptionDetail?.subscriptionDetails?.memberStatus || '';
-        return status ? (
-          <span className="text-gray-700">{status}</span>
+        const workLocation =
+          record.professionalDetail?.professionalDetails?.workLocation || '';
+        const otherWorkLocation =
+          record.professionalDetail?.professionalDetails?.otherWorkLocation || '';
+        const displayLocation = workLocation === 'other' && otherWorkLocation 
+          ? otherWorkLocation 
+          : workLocation;
+        return displayLocation ? (
+          <span className="text-gray-700">{displayLocation}</span>
         ) : (
           <span className="text-gray-400">N/A</span>
         );
@@ -112,11 +113,15 @@ const Application = () => {
 
   // Render mobile card view
   const renderMobileCard = (record) => {
-    const category =
-      record.professionalDetail?.professionalDetails?.membershipCategory || '';
-    const categoryLabel = category ? getMembershipCategoryLabel(category) : 'N/A';
+    const category = categoryData?.name || 'N/A';
     const submissionDate = record.submissionDate;
-    const status = record.subscriptionDetail?.subscriptionDetails?.memberStatus || 'N/A';
+    const workLocation =
+      record.professionalDetail?.professionalDetails?.workLocation || '';
+    const otherWorkLocation =
+      record.professionalDetail?.professionalDetails?.otherWorkLocation || '';
+    const displayLocation = workLocation === 'other' && otherWorkLocation 
+      ? otherWorkLocation 
+      : workLocation || 'N/A';
 
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-4 shadow-sm mb-3">
@@ -124,8 +129,8 @@ const Application = () => {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-xs text-gray-500 mb-1">Membership Category</p>
-              <p className={`text-sm font-medium ${category ? 'text-gray-800' : 'text-gray-400'}`}>
-                {categoryLabel}
+              <p className={`text-sm font-medium ${category !== 'N/A' ? 'text-gray-800' : 'text-gray-400'}`}>
+                {category}
               </p>
             </div>
           </div>
@@ -138,9 +143,9 @@ const Application = () => {
           </div>
           
           <div className="border-t border-gray-100 pt-2.5 sm:pt-3">
-            <p className="text-xs text-gray-500 mb-1">Status</p>
-            <p className={`text-sm font-medium ${status !== 'N/A' ? 'text-gray-800' : 'text-gray-400'}`}>
-              {status}
+            <p className="text-xs text-gray-500 mb-1">Work Location</p>
+            <p className={`text-sm font-medium ${displayLocation !== 'N/A' ? 'text-gray-800' : 'text-gray-400'}`}>
+              {displayLocation}
             </p>
           </div>
           
@@ -159,8 +164,45 @@ const Application = () => {
     );
   };
 
+  // Get member status based on profileId (same logic as Profile.jsx)
+  const memberStatus = profileDetail?.profileId ? 'Member' : 'Non Member';
+  const isMember = profileDetail?.profileId;
+
+  // Show full-screen loading overlay
+  if (categoryLoading) {
+    return (
+      <div className="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+        <div className="text-center">
+          <Spinner />
+          <p className="mt-4 text-gray-600 text-sm sm:text-base">Loading application data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="px-1 sm:px-6 py-4 sm:py-6">
+      <div className={`mb-4 sm:mb-6 border rounded-lg p-3 sm:p-4 ${
+        isMember 
+          ? 'bg-blue-50 border-blue-200' 
+          : 'bg-gray-50 border-gray-200'
+      }`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className={`text-xs mb-1 ${isMember ? 'text-blue-600' : 'text-gray-600'}`}>
+              Member Status
+            </p>
+            <p className={`text-base sm:text-lg font-semibold ${
+              isMember ? 'text-blue-900' : 'text-gray-700'
+            }`}>
+              {memberStatus}
+            </p>
+          </div>
+          <Tag color={isMember ? 'blue' : 'default'} className="text-sm">
+            {memberStatus}
+          </Tag>
+        </div>
+      </div>
       <Card 
         title="Application History"
         // className="shadow-sm"
