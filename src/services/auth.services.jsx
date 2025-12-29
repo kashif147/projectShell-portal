@@ -63,7 +63,6 @@ export const signInMicrosoft = data => {
     signInMicrosoftRequest(data)
       .then(async res => {
         if (res.status === 200) {
-          console.log('resonse=================>', res);
           setHeaders(res.data);
           saveUser(res.data.user);
           deleteVerifier();
