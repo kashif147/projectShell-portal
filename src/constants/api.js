@@ -1,8 +1,15 @@
-const DOMAIN = 'userserviceshell-aqf6f0b8fqgmagch.canadacentral-01.azurewebsites.net';
+// const DOMAIN = 'userserviceshell-aqf6f0b8fqgmagch.canadacentral-01.azurewebsites.net';
+// const BASE_URL = `https://${DOMAIN}`;
+// const LOOKUP_URL = `https://projectshellapi-c0hqhbdwaaahbcab.northeurope-01.azurewebsites.net`;
+// const PORTAL_URL = `https://testportal-dabravg2h3hfbke9.canadacentral-01.azurewebsites.net`;
+// const ACCOUNT_URL = `https://accountsservieshell-azezcecrecgkd6cm.northeurope-01.azurewebsites.net`;
+// const PROFILE_URL = `https://profileserviceshell-bqfmh8apf9erf0b0.northeurope-01.azurewebsites.net`;
+
+const DOMAIN = 'projectshell-vm.northeurope.cloudapp.azure.com/user-service';
 const BASE_URL = `https://${DOMAIN}`;
-const LOOKUP_URL = `https://projectshellapi-c0hqhbdwaaahbcab.northeurope-01.azurewebsites.net`;
-const PORTAL_URL = `https://testportal-dabravg2h3hfbke9.canadacentral-01.azurewebsites.net`;
-const ACCOUNT_URL = `https://accountsservieshell-azezcecrecgkd6cm.northeurope-01.azurewebsites.net`;
-const PROFILE_URL = `https://profileserviceshell-bqfmh8apf9erf0b0.northeurope-01.azurewebsites.net`;
+const LOOKUP_URL = `https://projectshell-vm.northeurope.cloudapp.azure.com/user-service`;
+const PORTAL_URL = `https://projectshell-vm.northeurope.cloudapp.azure.com/portal-service`;
+const ACCOUNT_URL = `https://projectshell-vm.northeurope.cloudapp.azure.com/account-service`;
+const PROFILE_URL = `https://projectshell-vm.northeurope.cloudapp.azure.com/profile-service`;
 
 export { BASE_URL, LOOKUP_URL, PORTAL_URL ,ACCOUNT_URL, PROFILE_URL};
