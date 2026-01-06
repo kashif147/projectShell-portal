@@ -558,13 +558,13 @@ const Dashboard = () => {
                 }
                 icon={FormOutlined}
                 onClick={() => navigate('/applicationForm')}
-                disabled={
-                  loading ||
-                  appicationLoader ||
-                  applicationStatus === null ||
-                  applicationStatus === 'submitted' ||
-                  applicationStatus === 'approved'
-                }
+                // disabled={
+                //   loading ||
+                //   appicationLoader ||
+                //   applicationStatus === null ||
+                //   applicationStatus === 'submitted' ||
+                //   applicationStatus === 'approved'
+                // }
                 colorScheme={
                   applicationStatus === 'approved'
                     ? 'green'
