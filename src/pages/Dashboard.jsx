@@ -13,7 +13,6 @@ import { Elements } from '@stripe/react-stripe-js';
 import {
   PaymentStatusModal,
 } from '../components/modals';
-import PaymentMethodSelectionModal from '../components/modals/PaymentMethodSelectionModal';
 import { loadStripe } from '@stripe/stripe-js';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -39,7 +38,6 @@ const Dashboard = () => {
   const { profileDetail, getProfileDetail } = useProfile();
   const { user } = useSelector(state => state.auth);
   const navigate = useNavigate();
-  const [isPaymentMethodModalVisible, setIsPaymentMethodModalVisible] = useState(false);
   const [statusModal, setStatusModal] = useState({
     open: false,
     status: 'success',
@@ -413,13 +411,13 @@ const Dashboard = () => {
   }, [professionalDetail?.professionalDetails?.membershipCategory]);
 
   const handleNext = () => {
-    // Check if payment method selection modal should be shown
+    // Check if payment method selection should be shown
     // Skip for undergraduate students based on category code
     const isUndergraduateStudent =
       categoryData?.code === 'undergraduate_student';
 
     if (currentStep === 3 && !isUndergraduateStudent) {
-      setIsPaymentMethodModalVisible(true);
+      navigate('/payments/method');
     }
   };
 
@@ -746,10 +744,6 @@ const Dashboard = () => {
         }}
       />
 
-      <PaymentMethodSelectionModal
-        isVisible={isPaymentMethodModalVisible}
-        onClose={() => setIsPaymentMethodModalVisible(false)}
-      />
     </div>
   );
 };

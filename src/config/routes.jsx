@@ -19,6 +19,8 @@ import Notifications from '../pages/Notifications';
 import CreditCardPaymentWrapper from '../pages/payments/CreditCardPaymentWrapper';
 import StandingBankersOrder from '../pages/payments/StandingBankersOrder';
 import DirectDebit from '../pages/payments/DirectDebit';
+import SalaryDeduction from '../pages/payments/SalaryDeduction';
+import PaymentMethod from '../pages/payments/PaymentMethod';
 
 export const publicRoutes = [
   {
@@ -65,6 +67,10 @@ export const privateRoutes = [
         element: <Payments />,
       },
       {
+        path: 'payments/method',
+        element: <PaymentMethod />,
+      },
+      {
         path: 'payments/credit-card',
         element: <CreditCardPaymentWrapper />,
       },
@@ -75,6 +81,10 @@ export const privateRoutes = [
       {
         path: 'payments/direct-debit',
         element: <DirectDebit />,
+      },
+      {
+        path: 'payments/salary-deduction',
+        element: <SalaryDeduction />,
       },
       {
         path: 'events',

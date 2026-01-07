@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
@@ -12,7 +12,6 @@ const SubscriptionDetails = ({
   showValidation = false,
   categoryData = null,
 }) => {
-  const [isStandingOrderModalVisible, setIsStandingOrderModalVisible] = useState(false);
   const { primarySectionLookups, secondarySectionLookups, paymentLooups } =
     useLookup();
 
@@ -42,23 +41,6 @@ const SubscriptionDetails = ({
       // Clear payrollNo when switching to a payment type that doesn't require it
       const newPaymentType = value;
       const oldPaymentType = formData?.paymentType;
-
-      // Check if "Standing Bankers Order" is selected (case-insensitive, handles variations)
-      const standingOrderVariations = [
-        'Standing Bankers Order',
-        'Standing Banker\'s Order',
-        'Standing Bank Order',
-        'Bankers Order',
-        'Standing Order',
-      ];
-      const isStandingOrder = standingOrderVariations.some(
-        variant => value?.toLowerCase().includes(variant.toLowerCase()) ||
-        variant.toLowerCase().includes(value?.toLowerCase())
-      );
-
-      if (isStandingOrder) {
-        setIsStandingOrderModalVisible(true);
-      }
 
       if (
         requiresPayrollNo(oldPaymentType) &&
@@ -682,19 +664,6 @@ const SubscriptionDetails = ({
           </div>
         </div>
       </div>
-
-      {/* Standing Bankers Order Modal */}
-      <StandingBankersOrderModal
-        isVisible={isStandingOrderModalVisible}
-        onClose={() => setIsStandingOrderModalVisible(false)}
-        formData={formData}
-        categoryData={categoryData}
-        onSave={(orderData) => {
-          console.log('Standing Order saved:', orderData);
-          // You can add API call here to save the order
-          setIsStandingOrderModalVisible(false);
-        }}
-      />
     </div>
   );
 };

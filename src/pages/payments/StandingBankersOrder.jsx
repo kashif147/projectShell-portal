@@ -18,6 +18,7 @@ const StandingBankersOrder = () => {
   const { user } = useSelector(state => state.auth);
   const { subscriptionDetail } = useApplication();
   const printRef = useRef(null);
+  const ibanInputRef = useRef(null);
 
   // Get category data
   const membershipCategory =
@@ -121,11 +122,32 @@ const StandingBankersOrder = () => {
   }, [formState.bankName]);
 
   // IBAN formatting function - adds spaces every 4 characters
-  const formatIBAN = value => {
+  const formatIBAN = (value, cursorPosition = null) => {
     // Remove all spaces and convert to uppercase
     const cleaned = value.replace(/\s/g, '').toUpperCase();
+    
+    // Calculate cursor position in cleaned string (before spaces)
+    let cursorInCleaned = cursorPosition;
+    if (cursorPosition !== null && cursorPosition >= 0) {
+      // Count spaces before cursor position in original value
+      const beforeCursor = value.substring(0, cursorPosition);
+      const spacesBefore = (beforeCursor.match(/\s/g) || []).length;
+      cursorInCleaned = Math.max(0, cursorPosition - spacesBefore);
+    }
+    
     // Add space every 4 characters
-    return cleaned.replace(/(.{4})/g, '$1 ').trim();
+    const formatted = cleaned.replace(/(.{4})/g, '$1 ').trim();
+    
+    // Calculate new cursor position
+    if (cursorPosition !== null && cursorInCleaned !== null && cursorInCleaned >= 0) {
+      // Count how many spaces would be before the cursor position in formatted string
+      // Each group of 4 characters gets a space after it
+      const groupsBeforeCursor = Math.floor(Math.max(0, cursorInCleaned) / 4);
+      const newCursorPosition = Math.min(cursorInCleaned + groupsBeforeCursor, formatted.length);
+      return { formatted, cursorPosition: Math.max(0, newCursorPosition) };
+    }
+    
+    return { formatted, cursorPosition: null };
   };
 
   // IBAN validation function
@@ -182,12 +204,25 @@ const StandingBankersOrder = () => {
 
     // Special handling for IBAN field
     if (name === 'iban') {
+      // Get current cursor position
+      const cursorPosition = e.target.selectionStart;
+      
       // Format IBAN as user types
-      const formatted = formatIBAN(value);
+      const { formatted, cursorPosition: newCursorPosition } = formatIBAN(value, cursorPosition);
+      
       setFormState(prev => ({
         ...prev,
         [name]: formatted,
       }));
+
+      // Restore cursor position after state update
+      if (newCursorPosition !== null && ibanInputRef.current) {
+        setTimeout(() => {
+          if (ibanInputRef.current) {
+            ibanInputRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
+          }
+        }, 0);
+      }
 
       // Validate IBAN in real-time
       if (formatted) {
@@ -382,31 +417,14 @@ const StandingBankersOrder = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4">
-          <div className="flex items-center gap-2 sm:gap-4">
-            <button
-              onClick={() => navigate('/')}
-              className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0">
-              <svg
-                className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </button>
+        <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-2.5 sm:py-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <div className="min-w-0 flex-1">
-              <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 truncate">
+              <h1 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
                 Standing Banking Order Setup
               </h1>
-              <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">
-                Please complete the form below to authorize a new standing
-                order.
+              <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">
+                Please complete the form below to authorize a new standing order
               </p>
             </div>
           </div>
@@ -685,6 +703,7 @@ const StandingBankersOrder = () => {
 
                 <div>
                   <Input
+                    ref={ibanInputRef}
                     label="IBAN"
                     name="iban"
                     required
@@ -846,11 +865,11 @@ const StandingBankersOrder = () => {
                   disableAgeValidation={true}
                 />
 
-                <div className="mb-3 sm:mb-4 p-3 sm:p-4 md:p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                     Number of Payments
                   </label>
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3 sm:mb-4 p-3 sm:p-4 md:p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
                     <label className="flex items-center cursor-pointer">
                       <input
                         type="checkbox"

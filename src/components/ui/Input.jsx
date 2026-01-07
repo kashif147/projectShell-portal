@@ -1,7 +1,7 @@
 import React from 'react';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 
-export const Input = ({
+export const Input = React.forwardRef(({
   label,
   name,
   required = false,
@@ -13,7 +13,7 @@ export const Input = ({
   showValidation = false,
   onChange,
   ...props
-}) => {
+}, ref) => {
   const isEmpty = required && !value && showValidation;
   const hasValue = value && value.toString().length > 0;
 
@@ -57,6 +57,7 @@ export const Input = ({
         )}
         <div className="relative">
           <textarea
+            ref={ref}
             id={name}
             name={name}
             readOnly={readOnly}
@@ -98,6 +99,7 @@ export const Input = ({
       )}
       <div className="relative">
         <input
+          ref={ref}
           type={type}
           id={name}
           name={name}
@@ -127,6 +129,8 @@ export const Input = ({
       </div>
     </div>
   );
-};
+});
+
+Input.displayName = 'Input';
 
 export default Input; 
