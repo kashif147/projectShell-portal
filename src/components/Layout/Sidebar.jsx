@@ -14,6 +14,8 @@ import {
   AppstoreOutlined,
   EnvironmentOutlined,
   MenuOutlined,
+  PrinterOutlined,
+  SwapOutlined,
 } from '@ant-design/icons';
 import { Logo } from '../../assets/images';
 
@@ -42,6 +44,16 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
       key: '/payments',
       icon: <CreditCardOutlined style={{ color: '#10b981' }} />,
       label: 'Payments',
+    },
+    {
+      key: '/payments/standing-order',
+      icon: <PrinterOutlined style={{ color: '#f97316' }} />,
+      label: 'Standing Bankers Order',
+    },
+    {
+      key: '/payments/direct-debit',
+      icon: <SwapOutlined style={{ color: '#06b6d4' }} />,
+      label: 'Direct Debit',
     },
     {
       key: '/membership',
@@ -120,6 +132,18 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
       icon: <FormOutlined />,
       label: 'Application',
       color: '#8b5cf6',
+    },
+    {
+      key: '/payments/standing-order',
+      icon: <PrinterOutlined />,
+      label: 'Standing Bankers Order',
+      color: '#f97316',
+    },
+    {
+      key: '/payments/direct-debit',
+      icon: <SwapOutlined />,
+      label: 'Direct Debit',
+      color: '#06b6d4',
     },
     {
       key: '/membership',

@@ -1,25 +1,28 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Modal } from 'antd';
-import { Input } from '../ui/Input';
-import { Select } from '../ui/Select';
-import { Checkbox } from '../ui/Checkbox';
-import { DatePicker } from '../ui/DatePicker';
-import SignaturePad from '../common/SignaturePad';
-import Button from '../common/Button';
+import { useNavigate } from 'react-router-dom';
+import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
+import { Checkbox } from '../../components/ui/Checkbox';
+import { DatePicker } from '../../components/ui/DatePicker';
+import SignaturePad from '../../components/common/SignaturePad';
+import Button from '../../components/common/Button';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { useSelector } from 'react-redux';
+import { useApplication } from '../../contexts/applicationContext';
+import { fetchCategoryByCategoryId } from '../../api/category.api';
 import dayjs from 'dayjs';
 
-const StandingBankersOrderModal = ({
-  isVisible,
-  onClose,
-  formData,
-  categoryData,
-  onSave,
-}) => {
+const StandingBankersOrder = () => {
+  const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
+  const { subscriptionDetail } = useApplication();
   const printRef = useRef(null);
+
+  // Get category data
+  const membershipCategory =
+    subscriptionDetail?.subscriptionDetails?.membershipCategory;
+  const [categoryData, setCategoryData] = useState(null);
 
   // Form state
   const [formState, setFormState] = useState({
@@ -43,58 +46,37 @@ const StandingBankersOrderModal = ({
   });
 
   const [showValidation, setShowValidation] = useState(false);
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [ibanError, setIbanError] = useState('');
 
-  // Initialize form with default values
+  // Fetch category data
   useEffect(() => {
-    if (isVisible && categoryData) {
-      const priceInEuros = categoryData?.currentPricing?.price
-        ? categoryData.currentPricing.price / 100
-        : 0;
-      setFormState(prev => ({
-        ...prev,
-        amount: priceInEuros.toFixed(2),
-        accountName: user?.userFirstName && user?.userLastName
-          ? `${user.userFirstName} ${user.userLastName}`
-          : user?.userName || '',
-      }));
-    } else if (!isVisible) {
-      // Reset form and validation when modal closes
-      setShowValidation(false);
-      setFormState({
-        bankName: '',
-        branchAddress: '',
-        authorization: false,
-        accountName: '',
-        accountNumber: '',
-        bic: '',
-        iban: '',
-        message: '',
-        frequency: 'Monthly',
-        amount: '',
-        startDate: '',
-        numberOfPayments: 'indefinite',
-        specificNumberOfPayments: '',
-        accountHolderSignature: null,
-        accountHolderSignatureDate: '',
-        secondSignature: null,
-        secondSignatureDate: '',
-      });
-    }
-  }, [isVisible, categoryData, user]);
+    const fetchCategory = async () => {
+      if (!membershipCategory) return;
+      try {
+        const res = await fetchCategoryByCategoryId(membershipCategory);
+        const payload = res?.data?.data || res?.data;
+        setCategoryData(payload);
 
-  // Handle window resize
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
+        if (payload?.currentPricing?.price) {
+          const priceInEuros = payload.currentPricing.price / 100;
+          setFormState(prev => ({
+            ...prev,
+            amount: priceInEuros.toFixed(2),
+            accountName:
+              user?.userFirstName && user?.userLastName
+                ? `${user.userFirstName} ${user.userLastName}`
+                : user?.userName || '',
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to fetch category:', error);
+      }
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    fetchCategory();
+  }, [membershipCategory, user]);
 
-  // Bank list (can be moved to lookup context later)
+  // Bank list
   const bankOptions = [
     { value: 'AIB', label: 'Allied Irish Banks (AIB)' },
     { value: 'BOI', label: 'Bank of Ireland' },
@@ -112,7 +94,7 @@ const StandingBankersOrderModal = ({
     { value: 'Annually', label: 'Annually' },
   ];
 
-  // Beneficiary details (from Figma)
+  // Beneficiary details
   const beneficiaryDetails = {
     accountName: 'Irish Nurses and Midwives Organization (INMO)',
     iban: 'IE99 BOFI 9000 1234 5678 99',
@@ -122,12 +104,11 @@ const StandingBankersOrderModal = ({
   // Auto-populate branch address based on bank selection
   useEffect(() => {
     if (formState.bankName) {
-      // Mock branch address - in production, this would come from an API
       const branchAddresses = {
         AIB: '12 Main St, Dublin (Auto-filled)',
         BOI: '15 Grafton St, Dublin (Auto-filled)',
         ULSTER: '20 College Green, Dublin (Auto-filled)',
-        PERMANENT: '25 O\'Connell St, Dublin (Auto-filled)',
+        PERMANENT: "25 O'Connell St, Dublin (Auto-filled)",
         KBC: '30 Dame St, Dublin (Auto-filled)',
         REVOLUT: 'Online Banking (Auto-filled)',
         OTHER: 'Please enter branch address',
@@ -196,7 +177,7 @@ const StandingBankersOrderModal = ({
     return { isValid: true, message: '' };
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
 
     // Special handling for IBAN field
@@ -241,37 +222,37 @@ const StandingBankersOrderModal = ({
   };
 
   const validateForm = () => {
-    const errors = [];
-    if (!formState.bankName) errors.push('Bank Name');
-    if (!formState.branchAddress) errors.push('Branch Address');
-    if (!formState.authorization) errors.push('Authorization');
-    if (!formState.accountName) errors.push('Account Name');
-    if (!formState.accountNumber) errors.push('Account Number');
-    if (!formState.iban) errors.push('IBAN');
+    if (!formState.bankName) return false;
+    if (!formState.branchAddress) return false;
+    if (!formState.authorization) return false;
+    if (!formState.accountName) return false;
+    if (!formState.accountNumber) return false;
+    if (!formState.iban) return false;
 
     // Validate IBAN format
     const ibanValidation = validateIBAN(formState.iban);
     if (!ibanValidation.isValid) {
-      errors.push('IBAN');
       setIbanError(ibanValidation.message);
-    } else {
-      setIbanError('');
+      return false;
     }
+    setIbanError('');
 
-    if (!formState.frequency) errors.push('Frequency');
-    if (!formState.amount) errors.push('Amount');
-    if (!formState.startDate) errors.push('Start Date');
-    if (!formState.accountHolderSignature) errors.push('Account Holder Signature');
-    if (formState.numberOfPayments === 'specific' && !formState.specificNumberOfPayments) {
-      errors.push('Number of Payments');
+    if (!formState.frequency) return false;
+    if (!formState.amount) return false;
+    if (!formState.startDate) return false;
+    if (!formState.accountHolderSignature) return false;
+    if (
+      formState.numberOfPayments === 'specific' &&
+      !formState.specificNumberOfPayments
+    ) {
+      return false;
     }
-    return errors.length === 0;
+    return true;
   };
 
   const handleSaveOrder = () => {
     setShowValidation(true);
     if (!validateForm()) {
-      // Scroll to first error field
       const firstErrorField = document.querySelector('.border-red-500');
       if (firstErrorField) {
         firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -283,21 +264,18 @@ const StandingBankersOrderModal = ({
       ...formState,
       beneficiaryDetails,
       userDetails: {
-        name: user?.userFirstName && user?.userLastName
-          ? `${user.userFirstName} ${user.userLastName}`
-          : user?.userName || '',
+        name:
+          user?.userFirstName && user?.userLastName
+            ? `${user.userFirstName} ${user.userLastName}`
+            : user?.userName || '',
         email: user?.userEmail || user?.email || '',
       },
     };
 
-    if (onSave) {
-      onSave(orderData);
-    } else {
-      console.log('Standing Order Data:', orderData);
-      // Close modal after save
-      setShowValidation(false);
-      onClose();
-    }
+    console.log('Standing Order Data:', orderData);
+    // TODO: Add API call to save order
+    alert('Order saved successfully!');
+    navigate('/');
   };
 
   const handlePrint = async () => {
@@ -307,8 +285,7 @@ const StandingBankersOrderModal = ({
 
     try {
       const printElement = printRef.current;
-      
-      // Temporarily make the element visible for html2canvas
+
       const originalStyle = {
         visibility: printElement.style.visibility,
         position: printElement.style.position,
@@ -318,7 +295,6 @@ const StandingBankersOrderModal = ({
         zIndex: printElement.style.zIndex,
       };
 
-      // Make element visible but off-screen
       printElement.style.visibility = 'visible';
       printElement.style.position = 'fixed';
       printElement.style.left = '-9999px';
@@ -326,7 +302,6 @@ const StandingBankersOrderModal = ({
       printElement.style.opacity = '1';
       printElement.style.zIndex = '-1';
 
-      // Wait for images to load
       const images = printElement.querySelectorAll('img');
       await Promise.all(
         Array.from(images).map(
@@ -337,14 +312,12 @@ const StandingBankersOrderModal = ({
               } else {
                 img.onload = resolve;
                 img.onerror = reject;
-                // Timeout after 5 seconds
                 setTimeout(() => reject(new Error('Image load timeout')), 5000);
               }
-            })
-        )
+            }),
+        ),
       );
 
-      // Small delay to ensure rendering
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const canvas = await html2canvas(printElement, {
@@ -356,7 +329,6 @@ const StandingBankersOrderModal = ({
         height: printElement.scrollHeight,
       });
 
-      // Restore original styles
       Object.keys(originalStyle).forEach(key => {
         if (originalStyle[key]) {
           printElement.style[key] = originalStyle[key];
@@ -398,82 +370,103 @@ const StandingBankersOrderModal = ({
   };
 
   const handleEmailToBank = () => {
-    // This would typically send an email or trigger an API call
     console.log('Email to Bank functionality - to be implemented with backend');
-    alert('Email to Bank functionality will be implemented with backend integration');
+    alert(
+      'Email to Bank functionality will be implemented with backend integration',
+    );
   };
 
   const isFormValid = validateForm();
 
   return (
-    <>
-      <Modal
-        title={null}
-        open={isVisible}
-        onCancel={onClose}
-        footer={null}
-        width={windowWidth <= 768 ? '95%' : '900px'}
-        centered
-        closeIcon={
-          <span className="text-gray-400 hover:text-gray-600 transition-colors">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </span>
-        }
-        className="standing-order-modal">
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Standing Banking Order Setup
-            </h2>
-            <p className="text-sm text-gray-600">
-              Please complete the form below to authorize a new standing order.
-            </p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <button
+              onClick={() => navigate('/')}
+              className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0">
+              <svg
+                className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 truncate">
+                Standing Banking Order Setup
+              </h1>
+              <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">
+                Please complete the form below to authorize a new standing
+                order.
+              </p>
+            </div>
           </div>
+        </div>
+      </div>
 
+      {/* Main Content */}
+      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+        <div className="space-y-4 sm:space-y-6">
           {/* Print Content (hidden visually, used for PDF generation) */}
-          <div 
-            ref={printRef} 
-            className="fixed left-[-9999px] top-0 w-[210mm] bg-white p-8" 
-            style={{ 
+          <div
+            ref={printRef}
+            className="fixed left-[-9999px] top-0 w-[210mm] bg-white p-8"
+            style={{
               opacity: 0,
               visibility: 'hidden',
               zIndex: -1,
-              pointerEvents: 'none'
+              pointerEvents: 'none',
             }}>
-            <div className="p-8 space-y-6 bg-white" style={{ minHeight: '297mm' }}>
+            <div
+              className="p-8 space-y-6 bg-white"
+              style={{ minHeight: '297mm' }}>
               <h2 className="text-2xl font-bold text-center mb-6">
                 Standing Banking Order Setup
               </h2>
               <p className="text-center text-sm text-gray-600 mb-6">
-                Please complete the form below to authorize a new standing order.
+                Please complete the form below to authorize a new standing
+                order.
               </p>
-              
+
               {/* Your Account Details */}
               <div className="border-b pb-4">
                 <h3 className="font-semibold mb-3">Your Account Details</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <strong>Bank Name:</strong> {formState.bankName || 'Not provided'}
+                    <strong>Bank Name:</strong>{' '}
+                    {formState.bankName || 'Not provided'}
                   </div>
                   <div className="col-span-2">
-                    <strong>Branch Address:</strong> {formState.branchAddress || 'Not provided'}
+                    <strong>Branch Address:</strong>{' '}
+                    {formState.branchAddress || 'Not provided'}
                   </div>
                   <div>
                     <strong>Authorization:</strong>{' '}
                     {formState.authorization ? (
-                      <span className="text-green-600">✓ Authorized - I/We hereby authorise and request you to debit my/our account.</span>
+                      <span className="text-green-600">
+                        ✓ Authorized - I/We hereby authorise and request you to
+                        debit my/our account.
+                      </span>
                     ) : (
                       <span className="text-red-600">Not authorized</span>
                     )}
                   </div>
                   <div>
-                    <strong>Account Name:</strong> {formState.accountName || 'Not provided'}
+                    <strong>Account Name:</strong>{' '}
+                    {formState.accountName || 'Not provided'}
                   </div>
                   <div>
-                    <strong>Account Number:</strong> {formState.accountNumber || 'Not provided'}
+                    <strong>Account Number:</strong>{' '}
+                    {formState.accountNumber || 'Not provided'}
                   </div>
                   <div>
                     <strong>BIC:</strong> {formState.bic || 'Not provided'}
@@ -494,7 +487,8 @@ const StandingBankersOrderModal = ({
                 <h3 className="font-semibold mb-3">Beneficiary Details</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <strong>Account Name:</strong> {beneficiaryDetails.accountName}
+                    <strong>Account Name:</strong>{' '}
+                    {beneficiaryDetails.accountName}
                   </div>
                   <div>
                     <strong>IBAN:</strong> {beneficiaryDetails.iban}
@@ -535,13 +529,19 @@ const StandingBankersOrderModal = ({
               {/* Signatures */}
               <div className="grid grid-cols-2 gap-6 mt-6">
                 <div className="border border-gray-300 p-4 rounded">
-                  <h4 className="font-semibold mb-3 text-base">Account Holder Signature</h4>
+                  <h4 className="font-semibold mb-3 text-base">
+                    Account Holder Signature
+                  </h4>
                   {formState.accountHolderSignature ? (
                     <img
                       src={formState.accountHolderSignature}
                       alt="Account Holder Signature"
                       className="border border-gray-300 p-2 bg-white"
-                      style={{ maxHeight: '150px', width: 'auto', display: 'block' }}
+                      style={{
+                        maxHeight: '150px',
+                        width: 'auto',
+                        display: 'block',
+                      }}
                       crossOrigin="anonymous"
                     />
                   ) : (
@@ -553,19 +553,27 @@ const StandingBankersOrderModal = ({
                     <strong>Date:</strong>{' '}
                     {formState.accountHolderSignatureDate
                       ? dayjs(formState.accountHolderSignatureDate).isValid()
-                        ? dayjs(formState.accountHolderSignatureDate).format('DD/MM/YYYY')
+                        ? dayjs(formState.accountHolderSignatureDate).format(
+                            'DD/MM/YYYY',
+                          )
                         : formState.accountHolderSignatureDate
                       : 'Not set'}
                   </div>
                 </div>
                 <div className="border border-gray-300 p-4 rounded">
-                  <h4 className="font-semibold mb-3 text-base">Second Signature (If Joint)</h4>
+                  <h4 className="font-semibold mb-3 text-base">
+                    Second Signature (If Joint)
+                  </h4>
                   {formState.secondSignature ? (
                     <img
                       src={formState.secondSignature}
                       alt="Second Signature"
                       className="border border-gray-300 p-2 bg-white"
-                      style={{ maxHeight: '150px', width: 'auto', display: 'block' }}
+                      style={{
+                        maxHeight: '150px',
+                        width: 'auto',
+                        display: 'block',
+                      }}
                       crossOrigin="anonymous"
                     />
                   ) : (
@@ -577,7 +585,9 @@ const StandingBankersOrderModal = ({
                     <strong>Date:</strong>{' '}
                     {formState.secondSignatureDate
                       ? dayjs(formState.secondSignatureDate).isValid()
-                        ? dayjs(formState.secondSignatureDate).format('DD/MM/YYYY')
+                        ? dayjs(formState.secondSignatureDate).format(
+                            'DD/MM/YYYY',
+                          )
                         : formState.secondSignatureDate
                       : 'Not set'}
                   </div>
@@ -587,11 +597,11 @@ const StandingBankersOrderModal = ({
           </div>
 
           {/* Your Account Details Section */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+            <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                 <svg
-                  className="w-6 h-6 text-blue-600"
+                  className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24">
@@ -603,33 +613,37 @@ const StandingBankersOrderModal = ({
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Your Account Details</h3>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                Your Account Details
+              </h3>
             </div>
 
-            <div className="space-y-4">
-              <Select
-                label="Bank Name"
-                name="bankName"
-                required
-                value={formState.bankName}
-                onChange={handleInputChange}
-                showValidation={showValidation}
-                placeholder="Select your bank..."
-                options={bankOptions}
-                tooltip="System will attempt to lookup branch details."
-              />
+            <div className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Select
+                  label="Bank Name"
+                  name="bankName"
+                  required
+                  value={formState.bankName}
+                  onChange={handleInputChange}
+                  showValidation={showValidation}
+                  placeholder="Select your bank..."
+                  options={bankOptions}
+                  tooltip="System will attempt to lookup branch details."
+                />
 
-              <Input
-                label="Branch Address"
-                name="branchAddress"
-                required
-                readOnly
-                value={formState.branchAddress}
-                showValidation={showValidation}
-                placeholder="Auto-populated from system"
-              />
-
-              <div>
+                <Input
+                  label="Branch Address"
+                  name="branchAddress"
+                  required
+                  readOnly
+                  value={formState.branchAddress}
+                  onChange={handleInputChange}
+                  showValidation={showValidation}
+                  placeholder="Auto-populated from system"
+                />
+              </div>
+              <div className="mb-3 sm:mb-4 p-3 sm:p-4 md:p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
                 <Checkbox
                   label="I/We hereby authorise and request you to debit my/our account."
                   name="authorization"
@@ -639,26 +653,27 @@ const StandingBankersOrderModal = ({
                   showValidation={showValidation}
                 />
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  label="Account Name"
+                  name="accountName"
+                  required
+                  value={formState.accountName}
+                  onChange={handleInputChange}
+                  showValidation={showValidation}
+                  placeholder="e.g. John Doe"
+                />
 
-              <Input
-                label="Account Name"
-                name="accountName"
-                required
-                value={formState.accountName}
-                onChange={handleInputChange}
-                showValidation={showValidation}
-                placeholder="e.g. John Doe"
-              />
-
-              <Input
-                label="Account Number"
-                name="accountNumber"
-                required
-                value={formState.accountNumber}
-                onChange={handleInputChange}
-                showValidation={showValidation}
-                placeholder="e.g. 12345678"
-              />
+                <Input
+                  label="Account Number"
+                  name="accountNumber"
+                  required
+                  value={formState.accountNumber}
+                  onChange={handleInputChange}
+                  showValidation={showValidation}
+                  placeholder="e.g. 12345678"
+                />
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
@@ -732,11 +747,11 @@ const StandingBankersOrderModal = ({
           </div>
 
           {/* Beneficiary Details Section */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+            <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
                 <svg
-                  className="w-6 h-6 text-green-600"
+                  className="w-4 h-4 sm:w-6 sm:h-6 text-green-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24">
@@ -748,12 +763,12 @@ const StandingBankersOrderModal = ({
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                 Beneficiary (Receivers) Details
               </h3>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <Input
                 label="Account Name"
                 name="beneficiaryAccountName"
@@ -778,11 +793,11 @@ const StandingBankersOrderModal = ({
           </div>
 
           {/* Payment Details Section */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+            <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
                 <svg
-                  className="w-6 h-6 text-emerald-600"
+                  className="w-4 h-4 sm:w-6 sm:h-6 text-emerald-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24">
@@ -794,10 +809,12 @@ const StandingBankersOrderModal = ({
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Payment Details</h3>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                Payment Details
+              </h3>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Select
                   label="Frequency"
@@ -818,50 +835,57 @@ const StandingBankersOrderModal = ({
                   placeholder="€ 50.00"
                 />
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <DatePicker
+                  label="Start Date"
+                  name="startDate"
+                  required
+                  value={formState.startDate}
+                  onChange={handleInputChange}
+                  showValidation={showValidation}
+                  disableAgeValidation={true}
+                />
 
-              <DatePicker
-                label="Start Date"
-                name="startDate"
-                required
-                value={formState.startDate}
-                onChange={handleInputChange}
-                showValidation={showValidation}
-                disableAgeValidation={true}
-              />
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Number of Payments
-                </label>
-                <div className="flex flex-wrap items-center gap-3">
-                  <label className="flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      name="numberOfPayments"
-                      checked={formState.numberOfPayments === 'indefinite'}
-                      onChange={(e) => {
-                        setFormState(prev => ({
-                          ...prev,
-                          numberOfPayments: e.target.checked ? 'indefinite' : 'specific',
-                          specificNumberOfPayments: e.target.checked ? '' : prev.specificNumberOfPayments,
-                        }));
-                      }}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Indefinite</span>
+                <div className="mb-3 sm:mb-4 p-3 sm:p-4 md:p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                    Number of Payments
                   </label>
-                  <span className="text-sm text-gray-500">or</span>
-                  <div className="flex items-center">
-                    <Input
-                      name="specificNumberOfPayments"
-                      type="number"
-                      value={formState.specificNumberOfPayments}
-                      onChange={handleInputChange}
-                      disabled={formState.numberOfPayments === 'indefinite'}
-                      placeholder="#"
-                      className="w-20"
-                      min="1"
-                    />
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="numberOfPayments"
+                        checked={formState.numberOfPayments === 'indefinite'}
+                        onChange={e => {
+                          setFormState(prev => ({
+                            ...prev,
+                            numberOfPayments: e.target.checked
+                              ? 'indefinite'
+                              : 'specific',
+                            specificNumberOfPayments: e.target.checked
+                              ? ''
+                              : prev.specificNumberOfPayments,
+                          }));
+                        }}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <span className="ml-2 text-xs sm:text-sm text-gray-700">
+                        Indefinite
+                      </span>
+                    </label>
+                    <span className="text-xs sm:text-sm text-gray-500">or</span>
+                    <div className="flex items-center">
+                      <Input
+                        name="specificNumberOfPayments"
+                        type="number"
+                        value={formState.specificNumberOfPayments}
+                        onChange={handleInputChange}
+                        disabled={formState.numberOfPayments === 'indefinite'}
+                        placeholder="#"
+                        className="w-16 sm:w-20"
+                        min="1"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -869,12 +893,12 @@ const StandingBankersOrderModal = ({
           </div>
 
           {/* Signatures Section */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 gap-2">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
                   <svg
-                    className="w-6 h-6 text-orange-600"
+                    className="w-4 h-4 sm:w-6 sm:h-6 text-orange-600"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24">
@@ -886,19 +910,23 @@ const StandingBankersOrderModal = ({
                     />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Signatures</h3>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                  Signatures
+                </h3>
               </div>
-              <span className="text-xs text-gray-500">For printing or digital sign</span>
+              <span className="text-xs text-gray-500">
+                For printing or digital sign
+              </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               {/* Account Holder Signature */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-gray-700 uppercase">
+              <div className="space-y-2 sm:space-y-3">
+                <h4 className="text-xs sm:text-sm font-semibold text-gray-700 uppercase">
                   Account Holder Signature
                 </h4>
                 <SignaturePad
-                  onSignatureChange={(signature) =>
+                  onSignatureChange={signature =>
                     handleSignatureChange('accountHolderSignature', signature)
                   }
                   value={formState.accountHolderSignature}
@@ -915,12 +943,12 @@ const StandingBankersOrderModal = ({
               </div>
 
               {/* Second Signature */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-gray-700 uppercase">
+              <div className="space-y-2 sm:space-y-3">
+                <h4 className="text-xs sm:text-sm font-semibold text-gray-700 uppercase">
                   Second Signature (If Joint)
                 </h4>
                 <SignaturePad
-                  onSignatureChange={(signature) =>
+                  onSignatureChange={signature =>
                     handleSignatureChange('secondSignature', signature)
                   }
                   value={formState.secondSignature}
@@ -937,14 +965,19 @@ const StandingBankersOrderModal = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4 border-t">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-end pt-3 sm:pt-4 border-t bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
             <Button
               type="default"
               onClick={handlePrint}
               loading={isGeneratingPDF}
               disabled={isGeneratingPDF}
+              className="w-full sm:w-auto !text-sm sm:!text-base !h-10 sm:!h-11"
               icon={
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -958,8 +991,13 @@ const StandingBankersOrderModal = ({
             <Button
               type="default"
               onClick={handleEmailToBank}
+              className="w-full sm:w-auto !text-sm sm:!text-base !h-10 sm:!h-11"
               icon={
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -974,8 +1012,13 @@ const StandingBankersOrderModal = ({
               type="primary"
               onClick={handleSaveOrder}
               disabled={!isFormValid}
+              className="w-full sm:w-auto !text-sm sm:!text-base !h-10 sm:!h-11"
               icon={
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -988,23 +1031,9 @@ const StandingBankersOrderModal = ({
             </Button>
           </div>
         </div>
-      </Modal>
-
-      {/* Print Styles */}
-      <style>{`
-        @media print {
-          .ant-modal-mask,
-          .ant-modal-wrap {
-            display: none !important;
-          }
-          .standing-order-modal .ant-modal-content {
-            box-shadow: none;
-            border: none;
-          }
-        }
-      `}</style>
-    </>
+      </div>
+    </div>
   );
 };
 
-export default StandingBankersOrderModal;
+export default StandingBankersOrder;
