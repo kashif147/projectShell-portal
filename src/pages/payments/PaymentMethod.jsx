@@ -2,21 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApplication } from '../../contexts/applicationContext';
 import { applicationConfirmationRequest } from '../../api/application.api';
-import CreditCardPaymentWrapper from './CreditCardPaymentWrapper';
 import StandingBankersOrder from './StandingBankersOrder';
 import DirectDebit from './DirectDebit';
-import SalaryDeduction from './SalaryDeduction';
 
 const PaymentMethod = () => {
   const navigate = useNavigate();
   const { personalDetail, subscriptionDetail } = useApplication();
-  const [selectedPaymentType, setSelectedPaymentType] = useState('Credit Card');
+  const [selectedPaymentType, setSelectedPaymentType] = useState(null);
   const [applicationStatus, setApplicationStatus] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Normalize payment type to match component mapping
   const normalizePaymentType = (paymentType) => {
-    if (!paymentType) return 'Credit Card';
+    if (!paymentType) return null;
     
     const normalized = paymentType.toString().toLowerCase();
     
@@ -33,18 +31,8 @@ const PaymentMethod = () => {
       return 'Direct Debit';
     }
     
-    // Handle Salary Deduction
-    if (normalized.includes('salary') || normalized.includes('deduction')) {
-      return 'Salary Deduction';
-    }
-    
-    // Handle Credit Card
-    if (normalized.includes('credit') || normalized.includes('card')) {
-      return 'Credit Card';
-    }
-    
-    // Default fallback
-    return 'Credit Card';
+    // Return null for unrecognized payment types (Credit Card, Salary Deduction, etc.)
+    return null;
   };
 
   // Get default payment type based on application status
@@ -52,10 +40,14 @@ const PaymentMethod = () => {
     if (applicationStatus === 'approved' || applicationStatus === 'submitted') {
       const paymentType = subscriptionDetail?.subscriptionDetails?.paymentType;
       if (paymentType) {
-        return normalizePaymentType(paymentType);
+        const normalized = normalizePaymentType(paymentType);
+        // Only return if it's a valid payment type (Standing Banking Order or Direct Debit)
+        if (normalized) {
+          return normalized;
+        }
       }
     }
-    return 'Credit Card'; // Default fallback
+    return null; // No default payment type
   };
 
   // Check application status on mount
@@ -96,27 +88,25 @@ const PaymentMethod = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applicationStatus, subscriptionDetail?.subscriptionDetails?.paymentType, loading]);
 
-  // Payment type options
+  // Payment type options - only Standing Banking Order and Direct Debit
   const paymentTypes = [
-    { value: 'Credit Card', label: 'Credit Card' },
     { value: 'Standing Banking Order', label: 'Standing Banking Order' },
     { value: 'Direct Debit', label: 'Direct Debit' },
-    { value: 'Salary Deduction', label: 'Salary Deduction' },
   ];
 
   // Render the appropriate payment component
   const renderPaymentComponent = () => {
+    if (!selectedPaymentType) {
+      return null;
+    }
+
     switch (selectedPaymentType) {
-      case 'Credit Card':
-        return <CreditCardPaymentWrapper />;
       case 'Standing Banking Order':
         return <StandingBankersOrder />;
       case 'Direct Debit':
         return <DirectDebit />;
-      case 'Salary Deduction':
-        return <SalaryDeduction />;
       default:
-        return <CreditCardPaymentWrapper />;
+        return null;
     }
   };
 
@@ -181,12 +171,13 @@ const PaymentMethod = () => {
             </div>
           </div>
 
-          {/* Payment Type Selector - Mobile Dropdown */}
+            {/* Payment Type Selector - Mobile Dropdown */}
           <div className="md:hidden pb-3 -mt-1">
             <select
-              value={selectedPaymentType}
-              onChange={(e) => setSelectedPaymentType(e.target.value)}
+              value={selectedPaymentType || ''}
+              onChange={(e) => setSelectedPaymentType(e.target.value || null)}
               className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all">
+              <option value="">Select payment method</option>
               {paymentTypes.map((type) => (
                 <option key={type.value} value={type.value}>
                   {type.label}
@@ -199,7 +190,34 @@ const PaymentMethod = () => {
 
       {/* Payment Component Container */}
       <div className="relative">
-        {renderPaymentComponent()}
+        {selectedPaymentType ? (
+          renderPaymentComponent()
+        ) : (
+          <div className="min-h-[60vh] flex items-center justify-center px-4">
+            <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg
+                  className="w-8 h-8 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                  />
+                </svg>
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                Change Your Payment Method
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Please select a payment method from the options above to continue.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

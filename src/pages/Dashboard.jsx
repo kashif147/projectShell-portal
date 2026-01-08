@@ -12,6 +12,7 @@ import { useProfile } from '../contexts/profileContext';
 import { Elements } from '@stripe/react-stripe-js';
 import {
   PaymentStatusModal,
+  DashboardPaymentModal,
 } from '../components/modals';
 import { loadStripe } from '@stripe/stripe-js';
 import { useSelector } from 'react-redux';
@@ -38,6 +39,7 @@ const Dashboard = () => {
   const { profileDetail, getProfileDetail } = useProfile();
   const { user } = useSelector(state => state.auth);
   const navigate = useNavigate();
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [statusModal, setStatusModal] = useState({
     open: false,
     status: 'success',
@@ -410,14 +412,37 @@ const Dashboard = () => {
     }
   }, [professionalDetail?.professionalDetails?.membershipCategory]);
 
+  const handleModalClose = () => {
+    setIsModalVisible(false);
+  };
+
+  const handleSubscriptionSuccess = paymentData => {
+    console.log('Payment Success from Dashboard:', paymentData);
+    setIsModalVisible(false);
+    setStatusModal({
+      open: true,
+      status: 'success',
+      message: 'Payment completed successfully!',
+    });
+  };
+
+  const handleSubscriptionFailure = errorMessage => {
+    setIsModalVisible(false);
+    setStatusModal({ open: true, status: 'error', message: errorMessage });
+    setTimeout(() => {
+      setStatusModal({ open: false, status: 'error', message: '' });
+      // navigate('/');
+    }, 2500);
+  };
+
   const handleNext = () => {
-    // Check if payment method selection should be shown
+    // Check if payment modal should be shown
     // Skip for undergraduate students based on category code
     const isUndergraduateStudent =
       categoryData?.code === 'undergraduate_student';
 
     if (currentStep === 3 && !isUndergraduateStudent) {
-      navigate('/payments/method');
+      setIsModalVisible(true);
     }
   };
 
@@ -533,13 +558,13 @@ const Dashboard = () => {
                 }
                 icon={FormOutlined}
                 onClick={() => navigate('/applicationForm')}
-                // disabled={
-                //   loading ||
-                //   appicationLoader ||
-                //   applicationStatus === null ||
-                //   applicationStatus === 'submitted' ||
-                //   applicationStatus === 'approved'
-                // }
+                disabled={
+                  loading ||
+                  appicationLoader ||
+                  applicationStatus === null ||
+                  applicationStatus === 'submitted' ||
+                  applicationStatus === 'approved'
+                }
                 colorScheme={
                   applicationStatus === 'approved'
                     ? 'green'
@@ -744,6 +769,16 @@ const Dashboard = () => {
         }}
       />
 
+      <Elements stripe={stripePromise}>
+        <DashboardPaymentModal
+          isVisible={isModalVisible}
+          onClose={handleModalClose}
+          onSuccess={handleSubscriptionSuccess}
+          onFailure={handleSubscriptionFailure}
+          formData={formData}
+          membershipCategory={formData?.subscriptionDetails?.membershipCategory}
+        />
+      </Elements>
     </div>
   );
 };

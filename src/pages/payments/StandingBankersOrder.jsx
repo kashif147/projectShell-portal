@@ -125,7 +125,7 @@ const StandingBankersOrder = () => {
   const formatIBAN = (value, cursorPosition = null) => {
     // Remove all spaces and convert to uppercase
     const cleaned = value.replace(/\s/g, '').toUpperCase();
-    
+
     // Calculate cursor position in cleaned string (before spaces)
     let cursorInCleaned = cursorPosition;
     if (cursorPosition !== null && cursorPosition >= 0) {
@@ -134,19 +134,26 @@ const StandingBankersOrder = () => {
       const spacesBefore = (beforeCursor.match(/\s/g) || []).length;
       cursorInCleaned = Math.max(0, cursorPosition - spacesBefore);
     }
-    
+
     // Add space every 4 characters
     const formatted = cleaned.replace(/(.{4})/g, '$1 ').trim();
-    
+
     // Calculate new cursor position
-    if (cursorPosition !== null && cursorInCleaned !== null && cursorInCleaned >= 0) {
+    if (
+      cursorPosition !== null &&
+      cursorInCleaned !== null &&
+      cursorInCleaned >= 0
+    ) {
       // Count how many spaces would be before the cursor position in formatted string
       // Each group of 4 characters gets a space after it
       const groupsBeforeCursor = Math.floor(Math.max(0, cursorInCleaned) / 4);
-      const newCursorPosition = Math.min(cursorInCleaned + groupsBeforeCursor, formatted.length);
+      const newCursorPosition = Math.min(
+        cursorInCleaned + groupsBeforeCursor,
+        formatted.length,
+      );
       return { formatted, cursorPosition: Math.max(0, newCursorPosition) };
     }
-    
+
     return { formatted, cursorPosition: null };
   };
 
@@ -206,10 +213,13 @@ const StandingBankersOrder = () => {
     if (name === 'iban') {
       // Get current cursor position
       const cursorPosition = e.target.selectionStart;
-      
+
       // Format IBAN as user types
-      const { formatted, cursorPosition: newCursorPosition } = formatIBAN(value, cursorPosition);
-      
+      const { formatted, cursorPosition: newCursorPosition } = formatIBAN(
+        value,
+        cursorPosition,
+      );
+
       setFormState(prev => ({
         ...prev,
         [name]: formatted,
@@ -219,7 +229,10 @@ const StandingBankersOrder = () => {
       if (newCursorPosition !== null && ibanInputRef.current) {
         setTimeout(() => {
           if (ibanInputRef.current) {
-            ibanInputRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
+            ibanInputRef.current.setSelectionRange(
+              newCursorPosition,
+              newCursorPosition,
+            );
           }
         }, 0);
       }
