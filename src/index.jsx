@@ -23,6 +23,11 @@ import './config/globals.js';
 import { ErrorPage } from './pages/errorPage';
 import { getVerifier } from './helpers/verifier.helper.js';
 import { ContextProvider } from './contexts/ContextProvider';
+import {
+  getFcmToken,
+  registerListenerWithFcm,
+  unRegisterAppWithFcm,
+} from './services/firebase.services';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
@@ -94,6 +99,15 @@ const App = () => {
   const auth = useSelector(state => state.auth);
   const queryParams = new URLSearchParams(location.search);
   const authCode = queryParams.get('code');
+  const notificationUnsubscribeRef = React.useRef(null);
+
+  // Store navigate function globally for notification handlers
+  React.useEffect(() => {
+    window.__navigate = navigate;
+    return () => {
+      delete window.__navigate;
+    };
+  }, [navigate]);
 
   React.useEffect(() => {
     const handleAuthentication = async () => {
@@ -117,6 +131,51 @@ const App = () => {
     handleAuthentication();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authCode, dispatch, location, navigate]);
+
+  // Initialize FCM when user is signed in
+  React.useEffect(() => {
+    if (auth.isSignedIn) {
+      const initializeNotifications = async () => {
+        try {
+          console.log('Initializing FCM notifications...');
+          const token = await getFcmToken();
+          console.log('FCM Token retrieved in App:', token);
+          
+          // Also log from localStorage
+          const storedToken = localStorage.getItem('fcmToken');
+          console.log('FCM Token from localStorage:', storedToken);
+
+          // Wait a bit for navigation to be ready
+          setTimeout(() => {
+            const unsubscribe = registerListenerWithFcm(navigate);
+            notificationUnsubscribeRef.current = unsubscribe;
+          }, 500);
+        } catch (error) {
+          // Error handled silently
+          console.log('Error initializing notifications', error);
+          console.error('FCM Initialization Error:', error);
+        }
+      };
+
+      initializeNotifications();
+    } else {
+      // Clean up on logout
+      if (notificationUnsubscribeRef.current) {
+        notificationUnsubscribeRef.current();
+        notificationUnsubscribeRef.current = null;
+      }
+      unRegisterAppWithFcm().catch(() => {
+        // Error handled silently
+      });
+    }
+
+    return () => {
+      if (notificationUnsubscribeRef.current) {
+        notificationUnsubscribeRef.current();
+        notificationUnsubscribeRef.current = null;
+      }
+    };
+  }, [auth.isSignedIn, navigate]);
 
   // console.log('auth========>', auth);
 
