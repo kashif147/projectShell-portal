@@ -4,6 +4,7 @@ import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
 import { Radio } from '../ui/Radio';
 import { useLookup } from '../../contexts/lookupContext';
+import StandingBankersOrderModal from '../modals/StandingBankersOrderModal';
 
 const SubscriptionDetails = ({
   formData,
@@ -81,6 +82,7 @@ const SubscriptionDetails = ({
   };
 
   // Get pricing from currentPricing
+
   const currentPrice = categoryData?.currentPricing?.price;
   const currency = categoryData?.currentPricing?.currency || 'EUR';
 

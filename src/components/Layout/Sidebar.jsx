@@ -44,6 +44,11 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
       label: 'Payments',
     },
     {
+      key: '/payments/method',
+      icon: <CreditCardOutlined style={{ color: '#3b82f6' }} />,
+      label: 'Payment Method',
+    },
+    {
       key: '/membership',
       icon: <AppstoreOutlined style={{ color: '#f59e0b' }} />,
       label: 'Change of Category',
@@ -120,6 +125,12 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
       icon: <FormOutlined />,
       label: 'Application',
       color: '#8b5cf6',
+    },
+    {
+      key: '/payments/method',
+      icon: <CreditCardOutlined />,
+      label: 'Payment Method',
+      color: '#3b82f6',
     },
     {
       key: '/membership',
