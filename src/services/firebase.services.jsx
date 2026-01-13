@@ -1,15 +1,89 @@
 import { getToken, onMessage, deleteToken } from 'firebase/messaging';
-import { messaging } from '../config/firebase.config';
+import { messaging, VAPID_KEY } from '../config/firebase.config';
+import { registerToken } from '../api/notification.api';
+import { v4 as uuidv4 } from 'uuid';
+import { toast } from 'react-toastify';
 
 // Store navigate function globally for notification handlers
 let globalNavigate = null;
+
+// Store notification context methods globally
+let notificationContextMethods = null;
+
+// Function to set notification context methods (called from component)
+export const setNotificationContextMethods = (methods) => {
+  notificationContextMethods = methods;
+};
 
 // Check if browser supports notifications
 const isNotificationSupported = () => {
   return typeof window !== 'undefined' && 'Notification' in window;
 };
 
-const getFcmToken = async () => {
+// Generate or retrieve persistent device ID
+const getOrCreateDeviceId = () => {
+  const STORAGE_KEY = 'fcmDeviceId';
+  
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  
+  let deviceId = localStorage.getItem(STORAGE_KEY);
+  
+  if (!deviceId) {
+    // Generate new device ID using UUID
+    deviceId = uuidv4();
+    localStorage.setItem(STORAGE_KEY, deviceId);
+    console.log('Generated new device ID:', deviceId);
+  } else {
+    console.log('Retrieved existing device ID:', deviceId);
+  }
+  
+  return deviceId;
+};
+
+// Register FCM token with backend
+const registerFcmTokenWithBackend = async (fcmToken, userId, tenantId, deviceId, platform = 'web') => {
+  if (!fcmToken || !userId || !tenantId || !deviceId) {
+    console.warn('Missing required data for FCM token registration:', {
+      hasToken: !!fcmToken,
+      hasUserId: !!userId,
+      hasTenantId: !!tenantId,
+      hasDeviceId: !!deviceId,
+    });
+    return false;
+  }
+
+  try {
+    const registrationData = {
+      fcmToken,
+      userId,
+      tenantId,
+      deviceId,
+      platform,
+    };
+
+    console.log('Registering FCM token with backend:', {
+      ...registrationData,
+      fcmToken: fcmToken.substring(0, 20) + '...', // Log partial token for debugging
+    });
+
+    const response = await registerToken(registrationData);
+    
+    if (response?.status === 200 || response?.data?.status === 'success') {
+      console.log('FCM token registered successfully');
+      return true;
+    } else {
+      console.error('FCM token registration failed:', response?.data?.message || 'Unknown error');
+      return false;
+    }
+  } catch (error) {
+    console.error('Error registering FCM token with backend:', error);
+    return false;
+  }
+};
+
+const getFcmToken = async (userData = null) => {
   let token = null;
   
   if (!isNotificationSupported() || !messaging) {
@@ -22,14 +96,45 @@ const getFcmToken = async () => {
   
   try {
     token = await getToken(messaging, {
-      vapidKey: undefined, // VAPID key is optional for web, can be added if needed
+      vapidKey: VAPID_KEY,
     });
     console.log('FCM token=========>', token);
     console.log('FCM Token (for API):', token);
-    // Store token in localStorage for future API integration
+    
+    // Store token in localStorage
     if (token) {
       localStorage.setItem('fcmToken', token);
       console.log('FCM token stored in localStorage');
+      
+      // Register token with backend if user data is provided
+      if (userData) {
+        const userId = userData.userId;
+        const tenantId = userData.tenantId;
+        const deviceId = getOrCreateDeviceId();
+        
+        if (userId && tenantId && deviceId) {
+          // Register token asynchronously (don't block token retrieval)
+          registerFcmTokenWithBackend(token, userId, tenantId, deviceId, 'web')
+            .then(success => {
+              if (success) {
+                console.log('FCM token registration completed successfully');
+              } else {
+                console.warn('FCM token registration failed, but token is still available');
+              }
+            })
+            .catch(error => {
+              console.error('FCM token registration error:', error);
+            });
+        } else {
+          console.warn('User data incomplete, skipping FCM token registration:', {
+            hasUserId: !!userId,
+            hasTenantId: !!tenantId,
+            hasDeviceId: !!deviceId,
+          });
+        }
+      } else {
+        console.log('User data not provided, FCM token will be registered later');
+      }
     } else {
       console.log('No FCM token received');
     }
@@ -102,10 +207,41 @@ const registerListenerWithFcm = (navigate) => {
   const unsubscribe = onMessage(messaging, async (payload) => {
     console.log('Foreground message received', payload);
     
-    if (payload?.notification?.title && payload?.notification?.body) {
+    // Handle new payload structure: { from, messageId, notification: { title, body } }
+    const notificationTitle = payload?.notification?.title;
+    const notificationBody = payload?.notification?.body;
+    const messageId = payload?.messageId;
+    const from = payload?.from;
+    
+    if (notificationTitle && notificationBody) {
+      // Show toast notification with title
+      toast.info(notificationTitle, {
+        position: 'top-right',
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+
+      // Increment unread count and add notification
+      if (notificationContextMethods) {
+        notificationContextMethods.incrementUnreadCount();
+        notificationContextMethods.addNotification({
+          messageId: messageId || Date.now().toString(),
+          from: from,
+          title: notificationTitle,
+          body: notificationBody,
+          read: false,
+          timestamp: new Date().toISOString(),
+          data: payload.data || {},
+        });
+      }
+
+      // Also show browser notification
       onDisplayNotification(
-        payload.notification.title,
-        payload.notification.body,
+        notificationTitle,
+        notificationBody,
         payload.data || {},
       );
     }

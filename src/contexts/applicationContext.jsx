@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import {
   fetchPersonalDetail,
   fetchProfessionalDetail,
   fetchSubscriptionDetail,
 } from '../api/application.api';
+import { fetchCategoryByCategoryId } from '../api/category.api';
 import { getHeaders } from '../helpers/auth.helper';
 
 const ApplicationContext = createContext();
@@ -14,6 +15,8 @@ export const ApplicationProvider = ({ children }) => {
   const [professionalDetail, setProfessionalDetail] = useState(null);
   const [subscriptionDetail, setSubscriptionDetail] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
+  const [categoryData, setCategoryData] = useState(null);
+  const [categoryLoading, setCategoryLoading] = useState(false);
   const { token } = getHeaders();
 
   const getPersonalDetail = () => {
@@ -72,6 +75,64 @@ export const ApplicationProvider = ({ children }) => {
       });
   };
 
+  const getCategoryData = useCallback((categoryNameOrId, categoryLookups = []) => {
+    if (!categoryNameOrId) {
+      setCategoryData(null);
+      return;
+    }
+
+    setCategoryLoading(true);
+
+    // Helper function to check if input looks like an ID (MongoDB ObjectId format)
+    const isObjectId = (str) => {
+      return /^[0-9a-fA-F]{24}$/.test(str);
+    };
+
+    // Determine if we need to find category by name from lookup
+    let categoryId = categoryNameOrId;
+    
+    // If it doesn't look like an ID and we have categoryLookups, find by name
+    if (!isObjectId(categoryNameOrId) && categoryLookups.length > 0) {
+      const foundCategory = categoryLookups.find(item => {
+        const itemName =
+          item?.name ||
+          item?.DisplayName ||
+          item?.label ||
+          item?.productType?.name ||
+          item?.code;
+        return String(itemName || '') === String(categoryNameOrId);
+      });
+      
+      if (foundCategory) {
+        categoryId = foundCategory?._id || foundCategory?.id;
+      } else {
+        // Category name not found in lookup
+        console.warn(`Category with name "${categoryNameOrId}" not found in lookup`);
+        setCategoryData(null);
+        setCategoryLoading(false);
+        return;
+      }
+    }
+
+    if (!categoryId) {
+      setCategoryData(null);
+      setCategoryLoading(false);
+      return;
+    }
+
+    fetchCategoryByCategoryId(categoryId)
+      .then(res => {
+        const payload = res?.data?.data || res?.data;
+        setCategoryData(payload || null);
+        setCategoryLoading(false);
+      })
+      .catch(error => {
+        console.error('Failed to fetch category data:', error);
+        setCategoryData(null);
+        setCategoryLoading(false);
+      });
+  }, []);
+
   useEffect(() => {
     if (token) {
       if (personalDetail?.applicationId) {
@@ -86,6 +147,9 @@ export const ApplicationProvider = ({ children }) => {
     }
   }, [personalDetail?.applicationId]);
 
+  // Note: Auto-fetch removed - components should handle fetching with categoryLookups
+  // since membershipCategory is now stored as name and requires lookup to find the ID
+
   const value = {
     loading,
     personalDetail,
@@ -93,9 +157,12 @@ export const ApplicationProvider = ({ children }) => {
     setCurrentStep,
     professionalDetail,
     subscriptionDetail,
+    categoryData,
+    categoryLoading,
     getPersonalDetail,
     getProfessionalDetail,
     getSubscriptionDetail,
+    getCategoryData,
   };
 
   return (

@@ -5,7 +5,7 @@ import SubscriptionModal from './SubscriptionModal';
 import { createPaymentIntentRequest } from '../../api/payment.api';
 import { useSelector } from 'react-redux';
 import { useApplication } from '../../contexts/applicationContext';
-import { fetchCategoryByCategoryId } from '../../api/category.api';
+import { useLookup } from '../../contexts/lookupContext';
 
 const stripePromise = loadStripe(
   'pk_test_51SBAG4FTlZb0wcbr19eI8nC5u62DfuaUWRVS51VTERBocxSM9JSEs4ubrW57hYTCAHK9d6jrarrT4SAViKFMqKjT00TrEr3PNV',
@@ -24,20 +24,25 @@ const SubscriptionWrapper = ({
 
   // ✅ Access user and application context data
   const { userDetail } = useSelector(state => state.auth);
-  const { personalDetail, subscriptionDetail } = useApplication();
+  const { personalDetail, subscriptionDetail, categoryData, categoryLoading, getCategoryData } = useApplication();
+  const { categoryLookups } = useLookup();
+
+  // Fetch category data when membershipCategory changes
+  useEffect(() => {
+    if (membershipCategory && isVisible) {
+      getCategoryData(membershipCategory, categoryLookups);
+    }
+  }, [membershipCategory, getCategoryData, categoryLookups, isVisible]);
 
   useEffect(() => {
     const initPayment = async () => {
-      if (!isVisible || !personalDetail?.applicationId || !membershipCategory)
+      if (!isVisible || !personalDetail?.applicationId || !membershipCategory || !categoryData)
         return;
 
       setLoading(true);
 
       try {
-        // ✅ Step 1: Fetch category details
-        const categoryRes = await fetchCategoryByCategoryId(membershipCategory);
-        const categoryData = categoryRes?.data?.data || categoryRes?.data;
-        // console.log('CategoryData========>', categoryData);
+        // ✅ Step 1: Use category data from context
         const currentPricing = categoryData?.currentPricing || {};
 
         const basePrice = currentPricing?.price; // Stripe expects amount in cents
@@ -100,11 +105,11 @@ const SubscriptionWrapper = ({
     };
 
     initPayment();
-  }, [isVisible, membershipCategory]);
+  }, [isVisible, membershipCategory, categoryData, personalDetail?.applicationId, formData?.subscriptionDetails?.paymentType, userDetail, onFailure]);
 
   if (!isVisible) return null;
 
-  if (loading || !clientSecret) {
+  if (categoryLoading || loading || !clientSecret || !categoryData) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
         <div className="bg-white rounded-lg shadow-2xl p-8 flex flex-col items-center gap-4">
@@ -113,7 +118,7 @@ const SubscriptionWrapper = ({
             <div className="absolute inset-0 border-4 border-t-blue-600 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
           </div>
           <p className="text-gray-700 font-medium text-lg">
-            Initializing payment form...
+            {categoryLoading ? 'Loading category details...' : 'Initializing payment form...'}
           </p>
           <p className="text-gray-500 text-sm">
             Please wait while we prepare your payment
@@ -135,6 +140,7 @@ const SubscriptionWrapper = ({
         formData={formData}
         membershipCategory={membershipCategory}
         clientSecret={clientSecret}
+        categoryData={categoryData}
       />
     </Elements>
   );

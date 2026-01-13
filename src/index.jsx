@@ -23,10 +23,12 @@ import './config/globals.js';
 import { ErrorPage } from './pages/errorPage';
 import { getVerifier } from './helpers/verifier.helper.js';
 import { ContextProvider } from './contexts/ContextProvider';
+import NotificationSetup from './components/NotificationSetup';
 import {
   getFcmToken,
   registerListenerWithFcm,
   unRegisterAppWithFcm,
+  setNotificationContextMethods,
 } from './services/firebase.services';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -138,7 +140,23 @@ const App = () => {
       const initializeNotifications = async () => {
         try {
           console.log('Initializing FCM notifications...');
-          const token = await getFcmToken();
+          
+          // Extract user data from Redux state
+          const user = auth.user || auth.userDetail;
+          const userId = user?.id || user?._id || auth.userDetail?.id || auth.userDetail?._id;
+          const tenantId = user?.tenantId || user?.userTenantId || auth.userDetail?.tenantId || auth.userDetail?.userTenantId;
+          
+          console.log('User data for FCM registration:', {
+            hasUserId: !!userId,
+            hasTenantId: !!tenantId,
+            userId: userId ? userId.substring(0, 10) + '...' : 'N/A',
+            tenantId: tenantId ? tenantId.substring(0, 10) + '...' : 'N/A',
+          });
+          
+          // Prepare user data for token registration
+          const userData = userId && tenantId ? { userId, tenantId } : null;
+          
+          const token = await getFcmToken(userData);
           console.log('FCM Token retrieved in App:', token);
           
           // Also log from localStorage
@@ -175,7 +193,7 @@ const App = () => {
         notificationUnsubscribeRef.current = null;
       }
     };
-  }, [auth.isSignedIn, navigate]);
+  }, [auth.isSignedIn, auth.user, auth.userDetail, navigate]);
 
   // console.log('auth========>', auth);
 
@@ -188,6 +206,7 @@ root.render(
       <BrowserRouter>
         <ConfigProvider>
           <ContextProvider>
+            <NotificationSetup />
             <ToastContainer />
             <App />
           </ContextProvider>

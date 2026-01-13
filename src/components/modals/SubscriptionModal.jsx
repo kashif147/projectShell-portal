@@ -9,7 +9,6 @@ import {
   CardCvcElement,
 } from '@stripe/react-stripe-js';
 import Button from '../common/Button';
-import { fetchCategoryByCategoryId } from '../../api/category.api';
 import { useSelector } from 'react-redux';
 import Spinner from '../common/Spinner';
 
@@ -21,14 +20,13 @@ const SubscriptionModal = ({
   formData,
   membershipCategory,
   clientSecret,
+  categoryData,
 }) => {
   const [form] = Form.useForm();
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [customPrice, setCustomPrice] = useState(null);
-  const [product, setProduct] = useState(null);
-  const [productLoading, setProductLoading] = useState(false);
   const [cardComplete, setCardComplete] = useState({
     cardNumber: false,
     cardExpiry: false,
@@ -75,17 +73,17 @@ const SubscriptionModal = ({
   };
 
   const priceInfo = useMemo(() => {
-    const cents = product?.currentPricing?.price;
+    const cents = categoryData?.currentPricing?.price;
     if (typeof cents === 'number' && !Number.isNaN(cents)) {
       const full = cents / 100;
       const monthly = full / 4;
       return { full, monthly };
     }
     return { full: 0, monthly: 0 };
-  }, [product]);
+  }, [categoryData]);
 
   const formatCurrency = value => {
-    const currency = (product?.currentPricing?.currency || 'EUR').toUpperCase();
+    const currency = (categoryData?.currentPricing?.currency || 'EUR').toUpperCase();
     try {
       return new Intl.NumberFormat('en-IE', {
         style: 'currency',
@@ -96,25 +94,8 @@ const SubscriptionModal = ({
     }
   };
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      if (!membershipCategory) return;
-      setProductLoading(true);
-      try {
-        const res = await fetchCategoryByCategoryId(membershipCategory);
-        const payload = res?.data?.data || res?.data;
-        setProduct(payload || null);
-      } catch (e) {
-        setProduct(null);
-      } finally {
-        setProductLoading(false);
-      }
-    };
-    fetchProduct();
-  }, [membershipCategory]);
-
   const getDisplayPrice = () => {
-    const defaultPrice = product?.name === 'Retired Associate'
+    const defaultPrice = categoryData?.name === 'Retired Associate'
       ? priceInfo.full // Full price for Retired Associate
       : formData?.subscriptionDetails?.paymentType === 'Credit Card'
         ? priceInfo.full
@@ -260,65 +241,57 @@ const SubscriptionModal = ({
         </div>
       </div>
 
-      {productLoading ? (
-        <div className="text-center py-12">
-          <Spinner />
-          <p className="text-gray-500 mt-4 font-medium">
-            Loading payment details...
-          </p>
-        </div>
-      ) : (
-        <Form form={form} layout="vertical" className="space-y-5">
-          {/* Membership Category Details - Modern Card */}
-          {product && (
-            <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border border-indigo-200 shadow-sm">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 rounded-full -mr-16 -mt-16"></div>
-              <div className="relative p-5">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <h3 className="font-bold text-lg text-gray-800 mb-1">
-                      {product?.name || 'Membership Category'}
-                    </h3>
-                    {formData?.subscriptionDetails?.paymentType !== 'Credit Card' ? (
+      <Form form={form} layout="vertical" className="space-y-5">
+        {/* Membership Category Details - Modern Card */}
+        {categoryData && (
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border border-indigo-200 shadow-sm">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 rounded-full -mr-16 -mt-16"></div>
+            <div className="relative p-5">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1">
+                  <h3 className="font-bold text-lg text-gray-800 mb-1">
+                    {categoryData?.name || 'Membership Category'}
+                  </h3>
+                  {formData?.subscriptionDetails?.paymentType !== 'Credit Card' ? (
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      Your annual membership fee is {formatCurrency(priceInfo.full)}. For now, we are only collecting {formatCurrency(priceInfo.monthly)} as the application processing amount. The remaining balance will be applied when your membership is approved.
+                    </p>
+                  ) : (
+                    categoryData?.description && (
                       <p className="text-sm text-gray-600 leading-relaxed">
-                        Your annual membership fee is {formatCurrency(priceInfo.full)}. For now, we are only collecting {formatCurrency(priceInfo.monthly)} as the application processing amount. The remaining balance will be applied when your membership is approved.
+                        {categoryData.description}
                       </p>
-                    ) : (
-                      product?.description && (
-                        <p className="text-sm text-gray-600 leading-relaxed">
-                          {product.description}
-                        </p>
-                      )
-                    )}
-                  </div>
-                  <div className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-semibold ml-3">
-                    Active
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-indigo-200/60 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600 font-medium">
-                      Category Price
-                    </span>
-                    <span className="text-xl font-bold text-indigo-600">
-                      {formatCurrency(getDisplayPrice())}
-                    </span>
-                  </div>
-                  {product?.currentPricing?.frequency && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">
-                        Payment Frequency
-                      </span>
-                      <span className="text-sm font-semibold text-gray-700 bg-white px-3 py-1 rounded-full">
-                        {product.currentPricing.frequency}
-                      </span>
-                    </div>
+                    )
                   )}
                 </div>
+                <div className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-semibold ml-3">
+                  Active
+                </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-indigo-200/60 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600 font-medium">
+                    Category Price
+                  </span>
+                  <span className="text-xl font-bold text-indigo-600">
+                    {formatCurrency(getDisplayPrice())}
+                  </span>
+                </div>
+                {categoryData?.currentPricing?.frequency && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-500">
+                      Payment Frequency
+                    </span>
+                    <span className="text-sm font-semibold text-gray-700 bg-white px-3 py-1 rounded-full">
+                      {categoryData.currentPricing.frequency}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
-          )}
+          </div>
+        )}
 
           {/* Name on Card - Modern Style */}
           <div>
@@ -632,7 +605,6 @@ const SubscriptionModal = ({
             Secure payment powered by Stripe
           </div>
         </Form>
-      )}
     </Modal>
   );
 };

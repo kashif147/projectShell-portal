@@ -17,8 +17,8 @@ import {
   updateProfessionalDetailRequest,
   updateSubscriptionDetailRequest,
 } from '../api/application.api';
-import { fetchCategoryByCategoryId } from '../api/category.api';
 import { useApplication } from '../contexts/applicationContext';
+import { useLookup } from '../contexts/lookupContext';
 import Spinner from '../components/common/Spinner';
 import { isDataFormat } from '../helpers/date.helper';
 import SubscriptionWrapper from '../components/modals/SubscriptionWrapper';
@@ -42,7 +42,10 @@ const ApplicationForm = () => {
     getSubscriptionDetail,
     setCurrentStep,
     currentStep,
+    categoryData,
+    getCategoryData,
   } = useApplication();
+  const { categoryLookups } = useLookup();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [statusModal, setStatusModal] = useState({
@@ -51,7 +54,6 @@ const ApplicationForm = () => {
     message: '',
   });
   const [showValidation, setShowValidation] = useState(false);
-  const [categoryData, setCategoryData] = useState(null);
   const [paymentIntentCreated, setPaymentIntentCreated] = useState(false);
   const [shouldShowModal, setShouldShowModal] = useState(false);
   const [isNextLoading, setIsNextLoading] = useState(false);
@@ -275,19 +277,14 @@ const ApplicationForm = () => {
 
       // Fetch category data when professional details are available
       if (membershipCategory) {
-        fetchCategoryByCategoryId(membershipCategory)
-          .then(res => {
-            const payload = res?.data?.data || res?.data;
-            setCategoryData(payload);
-          })
-          .catch(error => {
-            console.error('Failed to fetch category data:', error);
-          });
+        getCategoryData(membershipCategory, categoryLookups);
       }
     }
   }, [
     professionalDetail,
     professionalDetail?.professionalDetails?.membershipCategory,
+    getCategoryData,
+    categoryLookups,
   ]);
 
   useEffect(() => {

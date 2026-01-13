@@ -18,7 +18,6 @@ import { loadStripe } from '@stripe/stripe-js';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { applicationConfirmationRequest } from '../api/application.api';
-import { fetchCategoryByCategoryId } from '../api/category.api';
 // import { fetchAllLookups } from '../contexts/lookupContext';
 
 const stripePromise = loadStripe(
@@ -35,6 +34,7 @@ const Dashboard = () => {
     professionalDetail,
     getSubscriptionDetail,
     loading,
+    categoryData,
   } = useApplication();
   const { profileDetail, getProfileDetail } = useProfile();
   const { user } = useSelector(state => state.auth);
@@ -47,7 +47,6 @@ const Dashboard = () => {
   });
   const [isApplicationSubmitted, setIsApplicationSubmitted] = useState(false);
   const [applicationStatus, setApplicationStatus] = useState(null);
-  const [categoryData, setCategoryData] = useState(null);
   const [appicationLoader, setApplicationLoader] = useState(true);
   const [formData, setFormData] = useState({
     personalInfo: {
@@ -396,21 +395,6 @@ const Dashboard = () => {
     professionalDetail?.applicationId,
     subscriptionDetail?.applicationId,
   ]);
-  useEffect(() => {
-    const membershipCategory =
-      subscriptionDetail?.subscriptionDetails?.membershipCategory;
-    if (membershipCategory) {
-      fetchCategoryByCategoryId(membershipCategory)
-        .then(res => {
-          const payload = res?.data?.data || res?.data;
-          console.log('Category Data:', payload);
-          setCategoryData(payload);
-        })
-        .catch(error => {
-          console.error('Failed to fetch category data:', error);
-        });
-    }
-  }, [professionalDetail?.professionalDetails?.membershipCategory]);
 
   const handleModalClose = () => {
     setIsModalVisible(false);
@@ -572,7 +556,6 @@ const Dashboard = () => {
                       ? 'blue'
                       : 'blue'
                 }
-                loading={appicationLoader}
               />
 
               {/* Profile Action */}

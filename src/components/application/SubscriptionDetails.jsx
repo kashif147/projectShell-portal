@@ -89,6 +89,8 @@ const SubscriptionDetails = ({
   // Create pricing entries array to display
   const pricingEntries = currentPrice ? [['Annual Fee', currentPrice]] : [];
 
+  console.log('categoryData', categoryData);
+
   return (
     <div className="space-y-6">
       {/* Your Subscription Fees Section */}
@@ -115,7 +117,7 @@ const SubscriptionDetails = ({
                   Your Subscription Fees
                 </h2>
                 <p className="text-xs text-gray-500">
-                  Based on your selected membership category
+                  Based on the {categoryData?.name} membership
                 </p>
               </div>
             </div>

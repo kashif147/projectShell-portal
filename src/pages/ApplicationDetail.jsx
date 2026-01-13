@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Tag } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -9,7 +9,8 @@ import {
   FileTextOutlined,
 } from '@ant-design/icons';
 import { formatToDDMMYYYY } from '../helpers/date.helper';
-import { fetchCategoryByCategoryId } from '../api/category.api';
+import { useApplication } from '../contexts/applicationContext';
+import { useLookup } from '../contexts/lookupContext';
 import Spinner from '../components/common/Spinner';
 import moment from 'moment';
 
@@ -17,8 +18,8 @@ const ApplicationDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const application = location.state?.application;
-  const [categoryLoading, setCategoryLoading] = useState(false);
-  const [categoryData, setCategoryData] = useState(null);
+  const { categoryData, categoryLoading, getCategoryData } = useApplication();
+  const { categoryLookups } = useLookup();
 
   // Helper function to format phone numbers
   const formatPhoneNumber = (phoneNumber) => {
@@ -128,22 +129,13 @@ const ApplicationDetail = () => {
   const { personalDetail, professionalDetail, subscriptionDetail } =
     application;
 
-    useEffect(() => {
-      const fetchProduct = async () => {
-        if (!application?.subscriptionDetail?.subscriptionDetails?.membershipCategory) return;
-        setCategoryLoading(true);
-        try {
-          const res = await fetchCategoryByCategoryId(application?.subscriptionDetail?.subscriptionDetails?.membershipCategory);
-          const payload = res?.data?.data || res?.data;
-          setCategoryData(payload || null);
-        } catch (e) {
-          setCategoryData(null);
-        } finally {
-          setCategoryLoading(false);
-        }
-      };
-      fetchProduct();
-    }, [application?.subscriptionDetail?.subscriptionDetails?.membershipCategory]);
+  // Fetch category data when application subscription detail membershipCategory is available
+  useEffect(() => {
+    const membershipCategory = application?.subscriptionDetail?.subscriptionDetails?.membershipCategory;
+    if (membershipCategory) {
+      getCategoryData(membershipCategory, categoryLookups);
+    }
+  }, [application?.subscriptionDetail?.subscriptionDetails?.membershipCategory, getCategoryData, categoryLookups]);
 
   const getIconConfig = (type) => {
     const configs = {

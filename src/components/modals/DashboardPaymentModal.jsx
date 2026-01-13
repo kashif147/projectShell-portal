@@ -14,10 +14,10 @@ import {
   CardCvcElement,
 } from '@stripe/react-stripe-js';
 import Button from '../common/Button';
-import { fetchCategoryByCategoryId } from '../../api/category.api';
 import { createPaymentIntentRequest } from '../../api/payment.api';
 import { useSelector } from 'react-redux';
 import { useApplication } from '../../contexts/applicationContext';
+import { useLookup } from '../../contexts/lookupContext';
 import Spinner from '../common/Spinner';
 
 const DashboardPaymentModal = ({
@@ -33,8 +33,6 @@ const DashboardPaymentModal = ({
   const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [editablePrice, setEditablePrice] = useState(0);
-  const [product, setProduct] = useState(null);
-  const [productLoading, setProductLoading] = useState(false);
   const [clientSecret, setClientSecret] = useState(null);
   const [cardComplete, setCardComplete] = useState({
     cardNumber: false,
@@ -48,7 +46,8 @@ const DashboardPaymentModal = ({
   const cardCvcRef = useRef(null);
 
   const { userDetail, user } = useSelector(state => state.auth);
-  const { personalDetail } = useApplication();
+  const { personalDetail, categoryData, categoryLoading, getCategoryData } = useApplication();
+  const { categoryLookups } = useLookup();
 
   // Debug: Log user data structure
   useEffect(() => {
@@ -93,33 +92,23 @@ const DashboardPaymentModal = ({
     },
   };
 
-  // Fetch category data to get default price
+  // Fetch category data when membershipCategory changes
   useEffect(() => {
-    const fetchProduct = async () => {
-      if (!membershipCategory || !isVisible) return;
-      setProductLoading(true);
-      try {
-        const res = await fetchCategoryByCategoryId(membershipCategory);
-        const payload = res?.data?.data || res?.data;
-        setProduct(payload || null);
-        
-        // Set default price from category
-        if (payload?.currentPricing?.price) {
-          const priceInEuros = payload.currentPricing.price / 100;
-          setEditablePrice(priceInEuros);
-        }
-      } catch (e) {
-        console.error('Failed to fetch category:', e);
-        setProduct(null);
-      } finally {
-        setProductLoading(false);
-      }
-    };
-    fetchProduct();
-  }, [membershipCategory, isVisible]);
+    if (membershipCategory && isVisible) {
+      getCategoryData(membershipCategory, categoryLookups);
+    }
+  }, [membershipCategory, isVisible, getCategoryData, categoryLookups]);
+
+  // Set default price from category when categoryData is available
+  useEffect(() => {
+    if (categoryData?.currentPricing?.price) {
+      const priceInEuros = categoryData.currentPricing.price / 100;
+      setEditablePrice(priceInEuros);
+    }
+  }, [categoryData]);
 
   const formatCurrency = value => {
-    const currency = (product?.currentPricing?.currency || 'EUR').toUpperCase();
+    const currency = (categoryData?.currentPricing?.currency || 'EUR').toUpperCase();
     try {
       return new Intl.NumberFormat('en-IE', {
         style: 'currency',
@@ -164,7 +153,7 @@ const DashboardPaymentModal = ({
     try {
       // Step 1: Create Payment Intent with the edited price
       const amountInCents = Math.round(editablePrice * 100); // Convert to cents
-      const currency = product?.currentPricing?.currency || 'eur';
+      const currency = categoryData?.currentPricing?.currency || 'eur';
       const applicationId = personalDetail?.ApplicationId;
       const userId = userDetail?.id || userDetail?._id;
       const tenantId = userDetail?.tenantId || userDetail?.userTenantId;
@@ -285,7 +274,7 @@ const DashboardPaymentModal = ({
         </div>
       </div>
 
-      {productLoading ? (
+      {categoryLoading ? (
         <div className="text-center py-12">
           <Spinner />
           <p className="text-gray-500 mt-4 font-medium">Loading payment details...</p>
@@ -297,18 +286,18 @@ const DashboardPaymentModal = ({
           className="space-y-5">
           
           {/* Membership Category Details - Modern Card */}
-          {product && (
+          {categoryData && (
             <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border border-indigo-200 shadow-sm">
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 rounded-full -mr-16 -mt-16"></div>
               <div className="relative p-5">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <h3 className="font-bold text-lg text-gray-800 mb-1">
-                      {product?.name || 'Membership Category'}
+                      {categoryData?.name || 'Membership Category'}
                     </h3>
-                    {product?.description && (
+                    {categoryData?.description && (
                       <p className="text-sm text-gray-600 leading-relaxed">
-                        {product.description}
+                        {categoryData.description}
                       </p>
                     )}
                   </div>
@@ -321,14 +310,14 @@ const DashboardPaymentModal = ({
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600 font-medium">Category Price</span>
                     <span className="text-xl font-bold text-indigo-600">
-                      {formatCurrency(product?.currentPricing?.price / 100 || 0)}
+                      {formatCurrency(categoryData?.currentPricing?.price / 100 || 0)}
                     </span>
                   </div>
-                  {product?.currentPricing?.frequency && (
+                  {categoryData?.currentPricing?.frequency && (
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-gray-500">Payment Frequency</span>
                       <span className="text-sm font-semibold text-gray-700 bg-white px-3 py-1 rounded-full">
-                        {product.currentPricing.frequency}
+                        {categoryData.currentPricing.frequency}
                       </span>
                     </div>
                   )}
@@ -375,7 +364,7 @@ const DashboardPaymentModal = ({
               <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Default price: {formatCurrency(product?.currentPricing?.price / 100 || 0)}
+              Default price: {formatCurrency(categoryData?.currentPricing?.price / 100 || 0)}
             </div>
           </div>
 
