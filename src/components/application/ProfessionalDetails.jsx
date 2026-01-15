@@ -36,8 +36,7 @@ const ProfessionalDetails = ({
   });
 
   const membershipCategoryOptions = (categoryLookups || []).map(item => {
-    // Use _id as the value to store
-    const id = item?._id || item?.id;
+    // Use name as the value to store
     const label =
       item?.name ||
       item?.DisplayName ||
@@ -45,7 +44,7 @@ const ProfessionalDetails = ({
       item?.productType?.name ||
       item?.code;
     return {
-      value: String(id || ''),
+      value: String(label || ''),
       label: String(label || ''),
       rawItem: item, // Keep reference to original item
     };
@@ -116,14 +115,21 @@ const ProfessionalDetails = ({
       nurseType: e.target.value,
     });
   };
-  // Helper function to check category type based on _id
+  // Helper function to check category type based on name
   const isCategoryType = categoryType => {
     if (!formData?.membershipCategory) return false;
 
-    // Find the selected category by _id
+    // Find the selected category by name
     const selectedCategory = (categoryLookups || []).find(
-      item =>
-        String(item?._id || item?.id) === String(formData.membershipCategory),
+      item => {
+        const itemName =
+          item?.name ||
+          item?.DisplayName ||
+          item?.label ||
+          item?.productType?.name ||
+          item?.code;
+        return String(itemName || '') === String(formData.membershipCategory);
+      }
     );
 
     if (!selectedCategory) return false;

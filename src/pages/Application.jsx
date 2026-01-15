@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Table, Empty, Tag, Card } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
@@ -7,17 +7,22 @@ import { useApplication } from '../contexts/applicationContext';
 import { useLookup } from '../contexts/lookupContext';
 import { useProfile } from '../contexts/profileContext';
 import { formatToDDMMYYYY } from '../helpers/date.helper';
-import { fetchCategoryByCategoryId } from '../api/category.api';
 import Spinner from '../components/common/Spinner';
 
 const Application = () => {
-  const { personalDetail, professionalDetail, subscriptionDetail } =
+  const { personalDetail, professionalDetail, subscriptionDetail, categoryData, categoryLoading, getCategoryData } =
     useApplication();
   const { profileDetail } = useProfile();
   const { categoryLookups, fetchLookups } = useLookup();
   const navigate = useNavigate();
-  const [categoryData, setCategoryData] = useState(null);
-  const [categoryLoading, setCategoryLoading] = useState(false);
+
+  // Fetch category data when subscriptionDetail membershipCategory changes
+  useEffect(() => {
+    const membershipCategory = subscriptionDetail?.subscriptionDetails?.membershipCategory;
+    if (membershipCategory) {
+      getCategoryData(membershipCategory, categoryLookups);
+    }
+  }, [subscriptionDetail?.subscriptionDetails?.membershipCategory, getCategoryData, categoryLookups]);
 
   const hasData = personalDetail || professionalDetail || subscriptionDetail;
   const application = hasData
@@ -34,23 +39,6 @@ const Application = () => {
   const handleViewApplication = record => {
     navigate('/application/detail', { state: { application: record } });
   };
-
-  useEffect(() => {
-    const fetchProduct = async () => {
-      if (!subscriptionDetail?.subscriptionDetails?.membershipCategory) return;
-      setCategoryLoading(true);
-      try {
-        const res = await fetchCategoryByCategoryId(subscriptionDetail?.subscriptionDetails?.membershipCategory);
-        const payload = res?.data?.data || res?.data;
-        setCategoryData(payload || null);
-      } catch (e) {
-        setCategoryData(null);
-      } finally {
-        setCategoryLoading(false);
-      }
-    };
-    fetchProduct();
-  }, [subscriptionDetail?.subscriptionDetails?.membershipCategory]);
 
   const columns = [
     {

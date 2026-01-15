@@ -13,6 +13,10 @@ const firebaseConfig = {
   measurementId: 'G-3F413XVYM2',
 };
 
+// VAPID key for web push notifications
+// Obtained from Firebase Console > Project Settings > Cloud Messaging > Web Push certificates
+export const VAPID_KEY = 'BMm1rpCLM2ow0HQp4oalzITS81O-4zoG46-Jyn8IXk901_TCXrCwmZr9E6J9dy0WqN1-fZPqkmcUaJ-5gDuhN0o';
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 

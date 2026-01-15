@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useLookup } from '../../contexts/lookupContext';
 import { useProfile } from '../../contexts/profileContext';
+import { useNotification } from '../../contexts/notificationContext';
 
 const Header = ({
   collapsed,
@@ -25,6 +26,7 @@ const Header = ({
   const { user } = useSelector(state => state.auth);
   const {  fetchAllLookups } = useLookup();
   const { profileDetail } = useProfile();
+  const { unreadCount } = useNotification();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState('');
@@ -121,7 +123,7 @@ const Header = ({
         )}
 
         {/* Notification Bell */}
-        <Badge count={3} size="small" offset={[-2, 2]}>
+        <Badge count={unreadCount > 0 ? unreadCount : 0} size="small" offset={[-2, 2]}>
           <Button
             type="text"
             icon={

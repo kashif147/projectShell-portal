@@ -171,7 +171,7 @@ const PaymentMethod = () => {
             </div>
           </div>
 
-            {/* Payment Type Selector - Mobile Dropdown */}
+          {/* Payment Type Selector - Mobile Dropdown */}
           <div className="md:hidden pb-3 -mt-1">
             <select
               value={selectedPaymentType || ''}
