@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from 'react';
 import {
   fetchPersonalDetail,
   fetchProfessionalDetail,
@@ -6,6 +12,11 @@ import {
 } from '../api/application.api';
 import { fetchCategoryByCategoryId } from '../api/category.api';
 import { getHeaders } from '../helpers/auth.helper';
+import {
+  getPersonalDetailFromCrmCreateRequest,
+  getProfessionalDetailFromCrmCreateRequest,
+  getSubscriptionDetailFromCrmCreateRequest,
+} from '../api/profile.api';
 
 const ApplicationContext = createContext();
 
@@ -17,126 +28,237 @@ export const ApplicationProvider = ({ children }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [categoryData, setCategoryData] = useState(null);
   const [categoryLoading, setCategoryLoading] = useState(false);
+  const [isCrmUser, setIsCrmUser] = useState(false);
   const { token } = getHeaders();
 
   const getPersonalDetail = () => {
     setLoading(true);
 
-    fetchPersonalDetail()
+    // First Priority: Try CRM API
+    getPersonalDetailFromCrmCreateRequest()
       .then(res => {
-        if (res.status === 200) {
-          setPersonalDetail(res?.data?.data);
+        console.log('response===============>', res);
+        if (res?.status === 200 && res?.data?.data) {
+          // CRM data exists, use it exclusively
+          setPersonalDetail(res.data.data);
+          setIsCrmUser(true);
           setLoading(false);
+          return Promise.resolve(); // Prevent fallback execution
         } else {
+          // CRM API failed or returned empty, fallback to portal API
+          return fetchPersonalDetail();
+        }
+      })
+      .then(res => {
+        // This will only execute if CRM API failed and portal API was called
+        if (res && res?.status === 200) {
+          setPersonalDetail(res?.data?.data);
+          setIsCrmUser(false);
+          setLoading(false);
+        } else if (res) {
           setLoading(false);
           // toast.error(res.data.message ?? 'Unable to get personal datail');
         }
       })
       .catch(() => {
-        setLoading(false);
+        // If CRM API throws error, try portal API as fallback
+        fetchPersonalDetail()
+          .then(res => {
+            if (res?.status === 200) {
+              setPersonalDetail(res?.data?.data);
+              setIsCrmUser(false);
+            }
+            setLoading(false);
+          })
+          .catch(() => {
+            setLoading(false);
+          });
       });
   };
 
   const getProfessionalDetail = applicationId => {
-    const appId = applicationId || personalDetail?.applicationId;
-    if (!appId) return;
-
     setLoading(true);
-    fetchProfessionalDetail(appId)
+
+    // First Priority: Try CRM API (doesn't require applicationId)
+    getProfessionalDetailFromCrmCreateRequest()
       .then(res => {
-        if (res.status === 200) {
-          setProfessionalDetail(res?.data?.data);
+        if (res?.status === 200 && res?.data?.data) {
+          // CRM data exists, use it exclusively
+          setProfessionalDetail(res.data.data);
+          setIsCrmUser(true);
           setLoading(false);
+          return Promise.resolve(); // Prevent fallback execution
         } else {
+          // CRM API failed or returned empty, fallback to portal API
+          const appId = applicationId || personalDetail?.applicationId;
+          if (!appId) {
+            setLoading(false);
+            return Promise.resolve();
+          }
+          return fetchProfessionalDetail(appId);
+        }
+      })
+      .then(res => {
+        // This will only execute if CRM API failed and portal API was called
+        if (res && res?.status === 200) {
+          setProfessionalDetail(res?.data?.data);
+          setIsCrmUser(false);
+          setLoading(false);
+        } else if (res) {
           setLoading(false);
         }
       })
       .catch(() => {
-        setLoading(false);
+        // If CRM API throws error, try portal API as fallback
+        const appId = applicationId || personalDetail?.applicationId;
+        if (!appId) {
+          setLoading(false);
+          return;
+        }
+        fetchProfessionalDetail(appId)
+          .then(res => {
+            if (res?.status === 200) {
+              setProfessionalDetail(res?.data?.data);
+              setIsCrmUser(false);
+            }
+            setLoading(false);
+          })
+          .catch(() => {
+            setLoading(false);
+          });
       });
   };
 
   const getSubscriptionDetail = applicationId => {
-    const appId = applicationId || personalDetail?.applicationId;
-    if (!appId) return;
-
     setLoading(true);
-    fetchSubscriptionDetail(appId)
+
+    // First Priority: Try CRM API (doesn't require applicationId)
+    getSubscriptionDetailFromCrmCreateRequest()
       .then(res => {
-        if (res.status === 200) {
-          setSubscriptionDetail(res?.data?.data);
+        if (res?.status === 200 && res?.data?.data) {
+          // CRM data exists, use it exclusively
+          setSubscriptionDetail(res.data.data);
+          setIsCrmUser(true);
           setLoading(false);
+          return Promise.resolve(); // Prevent fallback execution
         } else {
+          // CRM API failed or returned empty, fallback to portal API
+          const appId = applicationId || personalDetail?.applicationId;
+          if (!appId) {
+            setLoading(false);
+            return Promise.resolve();
+          }
+          return fetchSubscriptionDetail(appId);
+        }
+      })
+      .then(res => {
+        // This will only execute if CRM API failed and portal API was called
+        if (res && res?.status === 200) {
+          setSubscriptionDetail(res?.data?.data);
+          setIsCrmUser(false);
+          setLoading(false);
+        } else if (res) {
           setLoading(false);
         }
       })
       .catch(() => {
-        setLoading(false);
+        // If CRM API throws error, try portal API as fallback
+        const appId = applicationId || personalDetail?.applicationId;
+        if (!appId) {
+          setLoading(false);
+          return;
+        }
+        fetchSubscriptionDetail(appId)
+          .then(res => {
+            if (res?.status === 200) {
+              setSubscriptionDetail(res?.data?.data);
+              setIsCrmUser(false);
+            }
+            setLoading(false);
+          })
+          .catch(() => {
+            setLoading(false);
+          });
       });
   };
 
-  const getCategoryData = useCallback((categoryNameOrId, categoryLookups = []) => {
-    if (!categoryNameOrId) {
-      setCategoryData(null);
-      return;
-    }
+  const getCategoryData = useCallback(
+    (categoryNameOrId, categoryLookups = []) => {
+      if (!categoryNameOrId) {
+        setCategoryData(null);
+        return;
+      }
 
-    setCategoryLoading(true);
+      setCategoryLoading(true);
 
-    // Helper function to check if input looks like an ID (MongoDB ObjectId format)
-    const isObjectId = (str) => {
-      return /^[0-9a-fA-F]{24}$/.test(str);
-    };
+      // Helper function to check if input looks like an ID (MongoDB ObjectId format)
+      const isObjectId = str => {
+        return /^[0-9a-fA-F]{24}$/.test(str);
+      };
 
-    // Determine if we need to find category by name from lookup
-    let categoryId = categoryNameOrId;
-    
-    // If it doesn't look like an ID and we have categoryLookups, find by name
-    if (!isObjectId(categoryNameOrId) && categoryLookups.length > 0) {
-      const foundCategory = categoryLookups.find(item => {
-        const itemName =
-          item?.name ||
-          item?.DisplayName ||
-          item?.label ||
-          item?.productType?.name ||
-          item?.code;
-        return String(itemName || '') === String(categoryNameOrId);
-      });
-      
-      if (foundCategory) {
-        categoryId = foundCategory?._id || foundCategory?.id;
-      } else {
-        // Category name not found in lookup
-        console.warn(`Category with name "${categoryNameOrId}" not found in lookup`);
+      // Determine if we need to find category by name from lookup
+      let categoryId = categoryNameOrId;
+
+      // If it doesn't look like an ID and we have categoryLookups, find by name
+      if (!isObjectId(categoryNameOrId) && categoryLookups.length > 0) {
+        const foundCategory = categoryLookups.find(item => {
+          const itemName =
+            item?.name ||
+            item?.DisplayName ||
+            item?.label ||
+            item?.productType?.name ||
+            item?.code;
+          return String(itemName || '') === String(categoryNameOrId);
+        });
+
+        if (foundCategory) {
+          categoryId = foundCategory?._id || foundCategory?.id;
+        } else {
+          // Category name not found in lookup
+          console.warn(
+            `Category with name "${categoryNameOrId}" not found in lookup`,
+          );
+          setCategoryData(null);
+          setCategoryLoading(false);
+          return;
+        }
+      }
+
+      if (!categoryId) {
         setCategoryData(null);
         setCategoryLoading(false);
         return;
       }
-    }
 
-    if (!categoryId) {
-      setCategoryData(null);
-      setCategoryLoading(false);
-      return;
-    }
-
-    fetchCategoryByCategoryId(categoryId)
-      .then(res => {
-        const payload = res?.data?.data || res?.data;
-        setCategoryData(payload || null);
-        setCategoryLoading(false);
-      })
-      .catch(error => {
-        console.error('Failed to fetch category data:', error);
-        setCategoryData(null);
-        setCategoryLoading(false);
-      });
-  }, []);
+      fetchCategoryByCategoryId(categoryId)
+        .then(res => {
+          const payload = res?.data?.data || res?.data;
+          setCategoryData(payload || null);
+          setCategoryLoading(false);
+        })
+        .catch(error => {
+          console.error('Failed to fetch category data:', error);
+          setCategoryData(null);
+          setCategoryLoading(false);
+        });
+    },
+    [],
+  );
 
   useEffect(() => {
     if (token) {
-      if (personalDetail?.applicationId) {
-        // Only fetch if we don't already have the data
+      // For CRM users, professional and subscription details don't require applicationId
+      // For portal users, we need applicationId from personalDetail
+      if (isCrmUser) {
+        // CRM user: fetch professional and subscription details without applicationId
+        if (!professionalDetail) {
+          getProfessionalDetail();
+        }
+        if (!subscriptionDetail) {
+          getSubscriptionDetail();
+        }
+      } else if (personalDetail?.applicationId) {
+        // Portal user: fetch with applicationId
         if (!professionalDetail) {
           getProfessionalDetail(personalDetail.applicationId);
         }
@@ -145,10 +267,22 @@ export const ApplicationProvider = ({ children }) => {
         }
       }
     }
-  }, [personalDetail?.applicationId]);
+  }, [personalDetail?.applicationId, isCrmUser]);
 
   // Note: Auto-fetch removed - components should handle fetching with categoryLookups
   // since membershipCategory is now stored as name and requires lookup to find the ID
+
+  // Helper function to check if user has CRM data
+  const isCrmUserCheck = () => {
+    return (
+      isCrmUser ||
+      Boolean(
+        (personalDetail && !personalDetail?.applicationId) ||
+          (professionalDetail && !professionalDetail?.applicationId) ||
+          (subscriptionDetail && !subscriptionDetail?.applicationId),
+      )
+    );
+  };
 
   const value = {
     loading,
@@ -163,6 +297,7 @@ export const ApplicationProvider = ({ children }) => {
     getProfessionalDetail,
     getSubscriptionDetail,
     getCategoryData,
+    isCrmUser: isCrmUserCheck(),
   };
 
   return (

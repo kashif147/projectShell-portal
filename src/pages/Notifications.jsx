@@ -4,7 +4,7 @@ import { BellOutlined, CheckCircleOutlined, InfoCircleOutlined, WarningOutlined,
 import { Pagination } from 'antd';
 import moment from 'moment';
 import { toast } from 'react-toastify';
-import { fetchNotiticationRequest, readNotificationRequest } from '../api/notification.api';
+import { fetchNotiticationRequest, readNotificationRequest, deleteNotificationRequest, deleteAllNotificationRequest } from '../api/notification.api';
 import { useNotification } from '../contexts/notificationContext';
 import Spinner from '../components/common/Spinner';
 
@@ -26,6 +26,7 @@ const Notifications = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [unreadCount, setUnreadCount] = useState(0);
   const [markingAsRead, setMarkingAsRead] = useState(false);
+  const [deletingNotification, setDeletingNotification] = useState(false);
 
   // Format relative time helper
   const formatRelativeTime = (dateString) => {
@@ -190,9 +191,83 @@ const Notifications = () => {
     }
   };
 
-  const deleteNotification = (id) => {
-    // Note: Delete functionality not in API, keeping for UI consistency
+  // Delete single notification
+  const deleteNotification = async (id) => {
+    if (!userId || !tenantId || deletingNotification) return;
+
+    // Optimistic update
+    const previousNotifications = [...notifications];
     setNotifications(prev => prev.filter(notif => notif.id !== id));
+    setTotal(prev => Math.max(0, prev - 1));
+
+    setDeletingNotification(true);
+    try {
+      const response = await deleteNotificationRequest(id);
+
+      if (response?.status === 200 && response?.data?.success) {
+        toast.success('Notification deleted successfully');
+        // Refresh notifications to get latest state
+        await fetchNotifications();
+      } else {
+        // Revert optimistic update on error
+        setNotifications(previousNotifications);
+        setTotal(prev => prev + 1);
+        toast.error(response?.data?.message || 'Failed to delete notification');
+      }
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      // Revert optimistic update on error
+      setNotifications(previousNotifications);
+      setTotal(prev => prev + 1);
+      toast.error('Failed to delete notification. Please try again.');
+    } finally {
+      setDeletingNotification(false);
+    }
+  };
+
+  // Delete all notifications
+  const deleteAllNotifications = async () => {
+    if (!userId || !tenantId || deletingNotification) return;
+
+    if (notifications.length === 0) return;
+
+    // Confirm before deleting all
+    if (!window.confirm('Are you sure you want to delete all notifications? This action cannot be undone.')) {
+      return;
+    }
+
+    // Optimistic update
+    const previousNotifications = [...notifications];
+    const previousTotal = total;
+    setNotifications([]);
+    setTotal(0);
+    setUnreadCount(0);
+
+    setDeletingNotification(true);
+    try {
+      const response = await deleteAllNotificationRequest();
+
+      if (response?.status === 200 && response?.data?.success) {
+        toast.success('All notifications deleted successfully');
+        // Refresh notifications to get latest state
+        await fetchNotifications();
+      } else {
+        // Revert optimistic update on error
+        setNotifications(previousNotifications);
+        setTotal(previousTotal);
+        toast.error(response?.data?.message || 'Failed to delete all notifications');
+        await fetchNotifications();
+      }
+    } catch (error) {
+      console.error('Error deleting all notifications:', error);
+      // Revert optimistic update on error
+      setNotifications(previousNotifications);
+      setTotal(previousTotal);
+      toast.error('Failed to delete all notifications. Please try again.');
+      await fetchNotifications();
+    } finally {
+      setDeletingNotification(false);
+    }
   };
 
   const filteredNotifications = notifications.filter(notif => {
@@ -237,14 +312,24 @@ const Notifications = () => {
                 </p>
               </div>
             </div>
-            {unreadCount > 0 && !loading && (
-              <button
-                onClick={markAllAsRead}
-                disabled={markingAsRead}
-                className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed">
-                {markingAsRead ? 'Marking...' : 'Mark all as read'}
-              </button>
-            )}
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              {unreadCount > 0 && !loading && (
+                <button
+                  onClick={markAllAsRead}
+                  disabled={markingAsRead || deletingNotification}
+                  className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed">
+                  {markingAsRead ? 'Marking...' : 'Mark all as read'}
+                </button>
+              )}
+              {notifications.length > 0 && !loading && (
+                <button
+                  onClick={deleteAllNotifications}
+                  disabled={deletingNotification || markingAsRead}
+                  className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 active:bg-red-100 rounded-lg transition-colors touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed">
+                  {deletingNotification ? 'Deleting...' : 'Delete all'}
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Filter Tabs */}
@@ -344,7 +429,8 @@ const Notifications = () => {
                             {/* Delete Button */}
                             <button
                               onClick={() => deleteNotification(notification.id)}
-                              className="text-gray-400 hover:text-red-500 active:text-red-600 transition-colors p-1.5 hover:bg-red-50 active:bg-red-100 rounded-lg touch-manipulation flex-shrink-0">
+                              disabled={deletingNotification || markingAsRead}
+                              className="text-gray-400 hover:text-red-500 active:text-red-600 transition-colors p-1.5 hover:bg-red-50 active:bg-red-100 rounded-lg touch-manipulation flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
                               <CloseOutlined className="text-base sm:text-lg" />
                             </button>
                           </div>

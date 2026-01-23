@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import SubscriptionModal from './SubscriptionModal';
@@ -27,6 +27,12 @@ const SubscriptionWrapper = ({
   const { personalDetail, subscriptionDetail, categoryData, categoryLoading, getCategoryData } = useApplication();
   const { categoryLookups } = useLookup();
 
+  // ✅ Extract specific values to avoid unnecessary re-renders
+  const userId = useMemo(() => userDetail?.id || userDetail?._id, [userDetail?.id, userDetail?._id]);
+  const tenantId = useMemo(() => userDetail?.tenantId || userDetail?.userTenantId, [userDetail?.tenantId, userDetail?.userTenantId]);
+  const applicationId = personalDetail?.applicationId;
+  const paymentType = formData?.subscriptionDetails?.paymentType;
+
   // Fetch category data when membershipCategory changes
   useEffect(() => {
     if (membershipCategory && isVisible) {
@@ -36,7 +42,7 @@ const SubscriptionWrapper = ({
 
   useEffect(() => {
     const initPayment = async () => {
-      if (!isVisible || !personalDetail?.applicationId || !membershipCategory || !categoryData)
+      if (!isVisible || !applicationId || !membershipCategory || !categoryData)
         return;
 
       setLoading(true);
@@ -51,7 +57,6 @@ const SubscriptionWrapper = ({
         if (!basePrice) throw new Error('Invalid category price data');
 
         // Calculate amount based on payment type
-        const paymentType = formData?.subscriptionDetails?.paymentType;
         // Retired Associate gets full price regardless of payment type (special offer)
         const isRetiredAssociate = categoryData?.name === 'Retired Associate';
         const amountInCents = isRetiredAssociate
@@ -60,13 +65,7 @@ const SubscriptionWrapper = ({
             ? basePrice 
             : Math.round(basePrice / 4); // Divide by 4 for other payment types
 
-        // ✅ Step 2: Prepare dynamic data
-        // console.log('userDetail=======>', userDetail);
-        const applicationId = personalDetail?.applicationId;
-        const userId = userDetail?.id || userDetail?._id;
-        const tenantId = userDetail?.tenantId || userDetail?.userTenantId;
-
-        // ✅ Step 3: Create Payment Intent
+        // ✅ Step 2: Create Payment Intent
         const paymentData = {
           purpose: 'subscriptionFee',
           amount: amountInCents, // Stripe amount is in smallest currency unit
@@ -79,7 +78,7 @@ const SubscriptionWrapper = ({
             tenantId,
             userId,
             membershipCategory,
-            paymentType: formData?.subscriptionDetails?.paymentType,
+            paymentType,
           },
         };
 
@@ -105,7 +104,9 @@ const SubscriptionWrapper = ({
     };
 
     initPayment();
-  }, [isVisible, membershipCategory, categoryData, personalDetail?.applicationId, formData?.subscriptionDetails?.paymentType, userDetail, onFailure]);
+    // ✅ Only track the specific primitive values that affect payment intent creation
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isVisible, membershipCategory, categoryData, applicationId, paymentType, userId, tenantId]);
 
   if (!isVisible) return null;
 
