@@ -19,3 +19,15 @@ export const fetchTransferRequest = () => {
 export const updateProfileRequest = data => {
   return profile_request.put('/api/profile/my-profile', data);
 };
+
+export const getPersonalDetailFromCrmCreateRequest = () => {
+  return profile_request.get('/api/personal-details/');
+};
+
+export const getProfessionalDetailFromCrmCreateRequest = () => {
+  return profile_request.get('/api/professional-details/');
+};
+
+export const getSubscriptionDetailFromCrmCreateRequest = () => {
+  return profile_request.get('/api/profile/my-subscription-details');
+};
