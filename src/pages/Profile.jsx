@@ -234,7 +234,7 @@ const Profile = () => {
           <div className="text-center">
             <Avatar size={120} src={user?.avatar} icon={<UserOutlined />} />
             <h2 className="mt-4 text-xl font-bold">
-              {user?.userFirstName || ''} {user?.userLastName || ''}
+              {user?.userFirstName || user?.firstName || ''} {user?.userLastName || user?.lastName || ''}
             </h2>
             <p className="text-gray-500">{profileDetail?.profileId ?'Member' : 'Non Member'}</p>
           </div>

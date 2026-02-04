@@ -149,7 +149,6 @@ const Header = ({
             />
             <div className="hidden sm:flex flex-col items-start">
               <span className="text-sm font-semibold text-gray-900">
-                {user?.userFirstName || ''} {user?.userLastName || ''}
               </span>
               <span className="text-xs text-gray-500">{profileDetail?.profileId ?'Member' : 'Non Member'}</span>
             </div>
