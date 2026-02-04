@@ -1,10 +1,9 @@
 import axios from 'axios';
-import { signInMicrosoftRequest } from '../api/auth.api';
+import { signInMicrosoftRequest, validationRequest } from '../api/auth.api';
 import {
   deleteHeaders,
   deleteUser,
   getHeaders,
-  getUser,
   saveUser,
   setHeaders,
 } from '../helpers/auth.helper';
@@ -15,24 +14,47 @@ import { getMemberDetail } from '../helpers/decode.helper';
 import { toast } from 'react-toastify';
 import { fetchAllLookupsOnLogin } from '../contexts/lookupContext';
 
+const performLogoutCleanup = dispatch => {
+  deleteHeaders();
+  deleteUser();
+  deleteVerifier();
+  dispatch(setSignedIn(false));
+  dispatch(setUser({}));
+};
+
 export const validation = () => {
   return async dispatch => {
     try {
       const res = getHeaders();
-      const user = getUser();
-      if (res?.token && user?.user) {
+      const hasToken =
+        res?.token &&
+        typeof res.token === 'string' &&
+        res.token.trim().length > 0;
+
+      if (!hasToken) {
+        dispatch(setSignedIn(false));
+        dispatch(setUser({}));
+        return;
+      }
+
+      const meRes = await validationRequest();
+      const isSuccess = meRes?.status >= 200 && meRes?.status < 300;
+
+      if (isSuccess) {
+        const meUser = meRes.data?.data ?? meRes.data;
+        if (meUser) {
+          saveUser(meUser);
+        }
         dispatch(setSignedIn(true));
-        dispatch(setUser(JSON.parse(user?.user)));
+        dispatch(setUser(meUser ?? {}));
         const memberDetail = await getMemberDetail();
         dispatch(setDetail(memberDetail));
-        
-        // Lookups will be fetched by LookupProvider on mount and Dashboard on navigation
-        // No need to fetch here to avoid redundant calls
       } else {
-        dispatch(setSignedIn(false));
+        performLogoutCleanup(dispatch);
       }
     } catch (error) {
-      dispatch(setSignedIn(false));
+      console.error('Validation error:', error);
+      performLogoutCleanup(dispatch);
     }
   };
 };

@@ -165,27 +165,31 @@ const PersonalInformation = ({
           const getComponentShortName = type =>
             components.find(c => c.types.includes(type))?.short_name || '';
 
-          const streetNumber = getComponent('street_number');
+          const premise = getComponent('premise');
           const route = getComponent('route');
-          const neighborhood = getComponent('neighborhood') || '';
-          const sublocality = getComponent('sublocality') || '';
-          const town =
-            getComponent('locality') || getComponent('postal_town') || '';
-          const county = getComponent('administrative_area_level_1') || '';
+          const sublocalityLevel1 = getComponent('sublocality_level_1');
+          const sublocality = getComponent('sublocality');
+          const locality = getComponent('locality');
+          const postalTown = getComponent('postal_town');
+          const administrativeAreaLevel1 = getComponent('administrative_area_level_1');
           const postalCode = getComponent('postal_code');
           const countryLongName = getComponent('country');
           const countryShortName = getComponentShortName('country');
 
-          const addressLine1 = `${streetNumber} ${route}`.trim();
-          const addressLine2 = neighborhood || sublocality; // Use neighborhood first, fallback to sublocality
-          const addressLine3 = town;
-          const addressLine4 = `${county}`.trim();
-          const eircode = `${postalCode}`.trim();
+          // Address Line 1: premise if exists, else route
+          const addressLine1 = (premise || route || '').trim();
+          // Address Line 2: route only when premise exists, otherwise empty
+          const addressLine2 = premise ? (route || '') : '';
+          // Address Line 3: sublocality_level_1, sublocality, or locality (Area/Town)
+          const addressLine3 = sublocalityLevel1 || sublocality || locality || '';
+          // Address Line 4: postal_town or administrative_area_level_1 (County, City or Postcode)
+          const addressLine4 = (postalTown || administrativeAreaLevel1 || '').trim();
+          const eircode = (postalCode || '').trim();
 
           // Find the country displayname from countryLookups based on the country name or code
           let countryDisplayName = formData?.country || 'Ireland'; // Default to Ireland if not found
           if (countryLongName || countryShortName) {
-            console.log(
+            console.log(  
               'Country from API - Long Name:',
               countryLongName,
               'Short Name:',
@@ -473,25 +477,25 @@ const PersonalInformation = ({
             onChange={handleInputChange}
           />
           <Input
-            label="Town/City"
+            label="Address line 3 (Area or Town)"
             name="addressLine3"
-            placeholder="Enter town/city"
+            placeholder="Enter area or town"
             value={formData?.addressLine3 || ''}
             onChange={handleInputChange}
           />
           <Input
-            label="County/State"
+            label="Address line 4 (County, City or Postcode)"
             name="addressLine4"
             required
-            placeholder="Enter county/state"
+            placeholder="Enter county, city or postcode"
             value={formData?.addressLine4 || ''}
             onChange={handleInputChange}
             showValidation={showValidation}
           />
           <Input
-            label="Eircode/Postcode"
+            label="Eircode"
             name="eircode"
-            placeholder="Enter eircode/postcode"
+            placeholder="Enter eircode"
             value={formData?.eircode || ''}
             onChange={handleInputChange}
           />

@@ -8,6 +8,7 @@ import {
   FormOutlined,
 } from '@ant-design/icons';
 import { useApplication } from '../contexts/applicationContext';
+import { useLookup } from '../contexts/lookupContext';
 import { useProfile } from '../contexts/profileContext';
 import { Elements } from '@stripe/react-stripe-js';
 import {
@@ -18,7 +19,6 @@ import { loadStripe } from '@stripe/stripe-js';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { applicationConfirmationRequest } from '../api/application.api';
-// import { fetchAllLookups } from '../contexts/lookupContext';
 
 const stripePromise = loadStripe(
   'pk_test_51SBAG4FTlZb0wcbr19eI8nC5u62DfuaUWRVS51VTERBocxSM9JSEs4ubrW57hYTCAHK9d6jrarrT4SAViKFMqKjT00TrEr3PNV',
@@ -35,8 +35,10 @@ const Dashboard = () => {
     getSubscriptionDetail,
     loading,
     categoryData,
+    getCategoryData,
   } = useApplication();
   const { profileDetail, getProfileDetail } = useProfile();
+  const { categoryLookups } = useLookup();
   const { user } = useSelector(state => state.auth);
   const navigate = useNavigate();
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -306,6 +308,22 @@ const Dashboard = () => {
       }));
     }
   }, [subscriptionDetail?.applicationId]);
+
+  // Fetch category data when subscription detail is available
+  useEffect(() => {
+    if (
+      subscriptionDetail?.subscriptionDetails?.membershipCategory &&
+      categoryLookups?.length > 0
+    ) {
+      getCategoryData(
+        subscriptionDetail.subscriptionDetails.membershipCategory,
+        categoryLookups,
+      );
+    }
+  }, [
+    subscriptionDetail?.subscriptionDetails?.membershipCategory,
+    categoryLookups,
+  ]);
 
   // Fetch personal detail on mount
   useEffect(() => {

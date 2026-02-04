@@ -31,7 +31,7 @@ const SubscriptionDetails = ({
 
   // Helper function to check if payment type requires payroll number
   const requiresPayrollNo = paymentType => {
-    const paymentTypesRequiringPayroll = ['Direct Debit', 'Salary Deduction'];
+    const paymentTypesRequiringPayroll = ['Salary Deduction'];
     return paymentTypesRequiringPayroll.includes(paymentType);
   };
 
