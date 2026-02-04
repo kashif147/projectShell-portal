@@ -60,10 +60,10 @@ const ApplicationForm = () => {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [formData, setFormData] = useState({
     personalInfo: {
-      forename: user?.userFirstName || '',
-      surname: user?.userLastName || '',
-      personalEmail: user?.userEmail || '',
-      mobileNo: user?.userMobilePhone || '',
+      forename: user?.userFirstName || user?.firstName || '',
+      surname: user?.userLastName || user?.lastName || '',
+      personalEmail: user?.userEmail || user?.email || '',
+      mobileNo: user?.userMobilePhone || user?.mobilePhone || '',
       country: 'Ireland',
       consent: true,
     },
@@ -867,19 +867,34 @@ const ApplicationForm = () => {
           gender,
           dateOfBirth,
           personalEmail,
+          workEmail,
           mobileNo,
           addressLine1,
           addressLine4,
           preferredAddress,
+          preferredEmail,
           countryPrimaryQualification,
         } = formData.personalInfo || {};
+        
+        // Validate preferredEmail is set
+        if (!preferredEmail) {
+          return false;
+        }
+        
+        // Validate email field based on preferredEmail selection
+        const emailFieldRequired = preferredEmail === 'personal' 
+          ? !personalEmail 
+          : preferredEmail === 'work' 
+            ? !workEmail 
+            : true; // If preferredEmail has unexpected value, fail validation
+        
         if (
           !title ||
           !forename ||
           !surname ||
           !gender ||
           !dateOfBirth ||
-          !personalEmail ||
+          emailFieldRequired ||
           !mobileNo ||
           !addressLine1 ||
           !addressLine4 ||
