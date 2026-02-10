@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import SubscriptionModal from './SubscriptionModal';
@@ -21,6 +21,7 @@ const SubscriptionWrapper = ({
 }) => {
   const [clientSecret, setClientSecret] = useState(null);
   const [loading, setLoading] = useState(false);
+  const paymentIntentCreatedRef = useRef(false);
 
   // ✅ Access user and application context data
   const { userDetail } = useSelector(state => state.auth);
@@ -41,11 +42,22 @@ const SubscriptionWrapper = ({
   }, [membershipCategory, getCategoryData, categoryLookups, isVisible]);
 
   useEffect(() => {
+    if (!isVisible) {
+      paymentIntentCreatedRef.current = false;
+      setClientSecret(null);
+      return;
+    }
+
     const initPayment = async () => {
       if (!isVisible || !applicationId || !membershipCategory || !categoryData)
         return;
 
       setLoading(true);
+      if (paymentIntentCreatedRef.current) {
+        setLoading(false);
+        return;
+      }
+      paymentIntentCreatedRef.current = true;
 
       try {
         // ✅ Step 1: Use category data from context
@@ -97,6 +109,7 @@ const SubscriptionWrapper = ({
         setClientSecret(secret);
       } catch (error) {
         console.error('❌ Payment initialization error:', error);
+        paymentIntentCreatedRef.current = false;
         onFailure?.(error.message || 'Payment initialization failed');
       } finally {
         setLoading(false);

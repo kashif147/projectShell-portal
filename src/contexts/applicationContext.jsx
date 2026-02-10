@@ -37,7 +37,7 @@ export const ApplicationProvider = ({ children }) => {
     // First Priority: Try CRM API
     getPersonalDetailFromCrmCreateRequest()
       .then(res => {
-        console.log('response===============>', res);
+        console.log('response from crm side member===============>', res);
         if (res?.status === 200 && res?.data?.data) {
           // CRM data exists, use it exclusively
           setPersonalDetail(res.data.data);
