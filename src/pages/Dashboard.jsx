@@ -19,6 +19,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { applicationConfirmationRequest } from '../api/application.api';
+import { getAccountNetBalanceRequest } from '../api/account.api';
 import { useMemberRole } from '../hooks/useMemberRole';
 
 const stripePromise = loadStripe(
@@ -53,6 +54,8 @@ const Dashboard = () => {
   const [isApplicationSubmitted, setIsApplicationSubmitted] = useState(false);
   const [applicationStatus, setApplicationStatus] = useState(null);
   const [appicationLoader, setApplicationLoader] = useState(true);
+  const [accountNetBalance, setAccountNetBalance] = useState(null);
+  const [accountNetBalanceLoading, setAccountNetBalanceLoading] = useState(false);
   const [formData, setFormData] = useState({
     personalInfo: {
       forename: user?.userFirstName || '',
@@ -392,6 +395,27 @@ const Dashboard = () => {
 
     checkApplicationStatus();
   }, [personalDetail?.applicationId, loading, contextApplicationStatus]);
+
+  // Fetch account statement when member has membership number
+  useEffect(() => {
+    const memberId = profileDetail?.membershipNumber;
+    // if (!memberId || !isMember) {
+    //   return;
+    // }
+    setAccountNetBalanceLoading(true);
+    getAccountNetBalanceRequest(memberId)
+      .then(res => {
+        if (res?.status === 200 && res?.data?.data) {
+            setAccountNetBalance(res.data.data);
+        }
+      })
+      .catch(() => {
+        setAccountNetBalance(null);
+      })
+      .finally(() => {
+        setAccountNetBalanceLoading(false);
+      });
+  }, [profileDetail?.membershipNumber, isMember]);
 
   // Update current step based on application progress
   useEffect(() => {
@@ -739,6 +763,25 @@ const Dashboard = () => {
               Payments & Billing
             </h2>
             <div className="space-y-2.5 sm:space-y-4">
+              {/* {isMember && ( */}
+                <div>
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1">
+                    Account Balance
+                    {accountNetBalance?.year && (
+                      <span className="ml-1">({accountNetBalance.year})</span>
+                    )}
+                  </p>
+                  {accountNetBalanceLoading ? (
+                    <p className="text-base sm:text-lg font-semibold text-gray-500 animate-pulse">
+                      Loading...
+                    </p>
+                  ) : (
+                    <p className="text-base sm:text-lg font-semibold text-gray-800">
+                      {formatCurrency(accountNetBalance?.net ?? 0)}
+                    </p>
+                  )}
+                </div>
+              {/* )} */}
               <div>
                 <p className="text-xs sm:text-sm text-gray-600 mb-1">
                   Next Payment Due
