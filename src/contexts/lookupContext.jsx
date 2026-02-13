@@ -57,7 +57,7 @@ const getAllLookups = async () => {
     const response = await fetchAllLookupRequest();
     return response.data;
   } catch (error) {
-    toast.error(error.response?.data?.message ?? 'Failed to fetch lookups');
+    // toast.error(error.response?.data?.message ?? 'Failed to fetch lookups');
     throw error;
   }
 };

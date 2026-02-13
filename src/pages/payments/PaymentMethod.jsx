@@ -7,7 +7,11 @@ import DirectDebit from './DirectDebit';
 
 const PaymentMethod = () => {
   const navigate = useNavigate();
-  const { personalDetail, subscriptionDetail } = useApplication();
+  const {
+    personalDetail,
+    subscriptionDetail,
+    applicationStatus: contextApplicationStatus,
+  } = useApplication();
   const [selectedPaymentType, setSelectedPaymentType] = useState(null);
   const [applicationStatus, setApplicationStatus] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -50,15 +54,21 @@ const PaymentMethod = () => {
     return null; // No default payment type
   };
 
-  // Check application status on mount
+  // Use context applicationStatus when available (from aggregated CRM), else fetch
   useEffect(() => {
+    if (contextApplicationStatus != null) {
+      setApplicationStatus(contextApplicationStatus);
+      setLoading(false);
+      return;
+    }
+
     const checkApplicationStatus = async () => {
       if (personalDetail?.applicationId) {
         try {
           const response = await applicationConfirmationRequest(
             personalDetail.applicationId,
           );
-          
+
           if (
             response?.status === 200 ||
             response?.data?.status === 'success'
@@ -77,7 +87,7 @@ const PaymentMethod = () => {
     };
 
     checkApplicationStatus();
-  }, [personalDetail?.applicationId]);
+  }, [personalDetail?.applicationId, contextApplicationStatus]);
 
   // Set default payment type once status is checked
   useEffect(() => {

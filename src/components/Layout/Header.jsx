@@ -15,6 +15,8 @@ import { useSelector } from 'react-redux';
 import { useLookup } from '../../contexts/lookupContext';
 import { useProfile } from '../../contexts/profileContext';
 import { useNotification } from '../../contexts/notificationContext';
+import { useApplication } from '../../contexts/applicationContext';
+import { useMemberRole } from '../../hooks/useMemberRole';
 
 const Header = ({
   collapsed,
@@ -24,9 +26,11 @@ const Header = ({
   pageTitle,
 }) => {
   const { user } = useSelector(state => state.auth);
-  const {  fetchAllLookups } = useLookup();
+  const { fetchAllLookups } = useLookup();
   const { profileDetail } = useProfile();
   const { unreadCount } = useNotification();
+  const { isCrmUser } = useApplication();
+  const { isMember } = useMemberRole();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState('');
@@ -151,7 +155,7 @@ const Header = ({
               <span className="text-sm font-semibold text-gray-900">
                 {user?.userFirstName || ''} {user?.userLastName || user?.fullName||  ''}
               </span>
-              <span className="text-xs text-gray-500">{profileDetail?.profileId ?'Member' : 'Non Member'}</span>
+              <span className="text-xs text-gray-500">{isMember || isCrmUser ? 'Member' : 'Non Member'}</span>
             </div>
           </div>
         </Dropdown>

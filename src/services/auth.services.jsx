@@ -20,6 +20,7 @@ const performLogoutCleanup = dispatch => {
   deleteVerifier();
   dispatch(setSignedIn(false));
   dispatch(setUser({}));
+  dispatch(setDetail(null));
 };
 
 export const validation = () => {
@@ -141,6 +142,7 @@ export const signOut = navigate => {
       // Dispatch state changes
       dispatch(setSignedIn(false));
       dispatch(setUser({}));
+      dispatch(setDetail(null));
       
       // Use setTimeout to allow React to finish unmounting before navigation
       // This prevents the "removeChild" error during component cleanup

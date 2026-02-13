@@ -19,6 +19,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { applicationConfirmationRequest } from '../api/application.api';
+import { useMemberRole } from '../hooks/useMemberRole';
 
 const stripePromise = loadStripe(
   'pk_test_51SBAG4FTlZb0wcbr19eI8nC5u62DfuaUWRVS51VTERBocxSM9JSEs4ubrW57hYTCAHK9d6jrarrT4SAViKFMqKjT00TrEr3PNV',
@@ -36,7 +37,9 @@ const Dashboard = () => {
     loading,
     categoryData,
     getCategoryData,
+    applicationStatus: contextApplicationStatus,
   } = useApplication();
+  const { isMember } = useMemberRole();
   const { profileDetail, getProfileDetail } = useProfile();
   const { categoryLookups } = useLookup();
   const { user } = useSelector(state => state.auth);
@@ -332,10 +335,19 @@ const Dashboard = () => {
     getPersonalDetail();
   }, []);
 
-  // Check application status
+  // Check application status (use context when available from aggregated CRM response, else fetch)
   useEffect(() => {
-    // Don't check status if personalDetail is still loading
     if (loading) {
+      return;
+    }
+
+    if (contextApplicationStatus != null) {
+      setApplicationStatus(contextApplicationStatus);
+      setIsApplicationSubmitted(
+        contextApplicationStatus === 'submitted' ||
+          contextApplicationStatus === 'approved',
+      );
+      setApplicationLoader(false);
       return;
     }
 
@@ -373,14 +385,13 @@ const Dashboard = () => {
           setApplicationLoader(false);
         }
       } else {
-        // No application exists, enable the button
         setApplicationStatus('none');
         setApplicationLoader(false);
       }
     };
 
     checkApplicationStatus();
-  }, [personalDetail?.applicationId, loading]);
+  }, [personalDetail?.applicationId, loading, contextApplicationStatus]);
 
   // Update current step based on application progress
   useEffect(() => {
@@ -576,14 +587,16 @@ const Dashboard = () => {
                 }
               />
 
-              {/* Profile Action */}
-              <QuickActionButton
-                title="My Profile"
-                subtitle="View Profile"
-                icon={UserOutlined}
-                onClick={() => navigate('/profile')}
-                colorScheme="purple"
-              />
+              {/* Profile Action - show when member */}
+              {isMember && (
+                <QuickActionButton
+                  title="My Profile"
+                  subtitle="View Profile"
+                  icon={UserOutlined}
+                  onClick={() => navigate('/profile')}
+                  colorScheme="purple"
+                />
+              )}
 
               {/* Events Action */}
               <QuickActionButton
@@ -694,28 +707,30 @@ const Dashboard = () => {
                   style={{ width: `${getProfileCompletion()}%` }}></div>
               </div>
             </div>
-            <button
-              disabled={
-                loading ||
-                appicationLoader ||
-                applicationStatus === null
-              }
-              onClick={() =>
-                navigate(
-                  isApplicationSubmitted ? '/profile' : '/applicationForm',
-                )
-              }
-              className={`w-full px-4 py-2.5 sm:py-3 rounded-lg transition-colors font-medium text-sm sm:text-base ${
-                loading ||
-                appicationLoader ||
-                applicationStatus === null
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
-                  : isApplicationSubmitted
-                    ? 'bg-green-600 text-white hover:bg-green-700 active:bg-green-800'
-                    : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
-              }`}>
-              {isApplicationSubmitted ? 'View Profile' : 'Complete Profile'}
-            </button>
+            {isMember && (
+              <button
+                disabled={
+                  loading ||
+                  appicationLoader ||
+                  applicationStatus === null
+                }
+                onClick={() =>
+                  navigate(
+                    isApplicationSubmitted ? '/profile' : '/applicationForm',
+                  )
+                }
+                className={`w-full px-4 py-2.5 sm:py-3 rounded-lg transition-colors font-medium text-sm sm:text-base ${
+                  loading ||
+                  appicationLoader ||
+                  applicationStatus === null
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
+                    : isApplicationSubmitted
+                      ? 'bg-green-600 text-white hover:bg-green-700 active:bg-green-800'
+                      : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
+                }`}>
+                {isApplicationSubmitted ? 'View Profile' : 'Complete Profile'}
+              </button>
+            )}
           </div>
 
           {/* Payments & Billing Section */}
