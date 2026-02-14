@@ -1,56 +1,107 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Modal, Empty, Pagination } from 'antd';
+import { Card, Table, Tag, Modal, Empty, Pagination, Spin } from 'antd';
 import Button from '../components/common/Button';
 import Receipt, { ReceiptPDF } from '../components/Receipt';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { useApplication } from '../contexts/applicationContext';
 import { useLookup } from '../contexts/lookupContext';
+import { useProfile } from '../contexts/profileContext';
+import { getAccountStatementRequest } from '../api/account.api';
 import { formatToDDMMYYYY } from '../helpers/date.helper';
 
 const Payments = () => {
   const { subscriptionDetail, personalDetail, professionalDetail } =
     useApplication();
-  const { categoryLookups, fetchLookups } = useLookup();
+  const { categoryLookups } = useLookup();
+  const { profileDetail, getProfileDetail } = useProfile();
   const [paymentRows, setPaymentRows] = useState([]);
+  const [statementData, setStatementData] = useState(null);
+  const [statementLoading, setStatementLoading] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
   const [receiptVisible, setReceiptVisible] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
 
-  // Fetch category lookups on mount
-  // useEffect(() => {
-  //   if (!categoryLookups || categoryLookups.length === 0) {
-  //     fetchLookups('category');
-  //   }
-  // }, []);
-
+  // Ensure profile is loaded for membership number
   useEffect(() => {
-    if (subscriptionDetail) {
+    getProfileDetail();
+  }, [getProfileDetail]);
+
+  // Fetch account statement when membership number is available
+  useEffect(() => {
+    const memberId = profileDetail?.membershipNumber;
+    if (!memberId) {
+      return;
+    }
+    setStatementLoading(true);
+    getAccountStatementRequest(memberId)
+      .then(res => {
+        if (res?.status === 200 && res?.data?.data) {
+          setStatementData(res.data.data);
+        }
+      })
+      .catch(() => {
+        setStatementData(null);
+      })
+      .finally(() => {
+        setStatementLoading(false);
+      });
+  }, [profileDetail?.membershipNumber]);
+
+  // Build payment rows: prefer statement txns, fall back to subscription-based
+  useEffect(() => {
+    const txns = statementData?.txns;
+    if (Array.isArray(txns) && txns.length > 0) {
+      const category = categoryLookups?.find(
+        cat =>
+          cat?._id === professionalDetail?.professionalDetails?.membershipCategory ||
+          cat?.id === professionalDetail?.professionalDetails?.membershipCategory,
+      );
+      const categoryName = category?.name || 'N/A';
+      const mappedTxns = txns.map((txn, index) => ({
+        key: txn.id || txn.key || `txn-${index}`,
+        date: txn.date
+          ? formatToDDMMYYYY(txn.date)
+          : txn.transactionDate
+            ? formatToDDMMYYYY(txn.transactionDate)
+            : 'N/A',
+        description:
+          txn.description || txn.type || txn.descriptionLabel || 'Transaction',
+        amount: txn.amount ?? txn.total ?? 0,
+        status: txn.status || 'Paid',
+        details: {
+          ...personalDetail?.personalInfo,
+          ...personalDetail?.contactInfo,
+          ...professionalDetail?.professionalDetails,
+          membershipCategoryName: categoryName,
+          paymentData: {
+            paymentMethod: txn.paymentMethod || txn.paymentType || 'N/A',
+            total: txn.amount ?? txn.total ?? 0,
+            date: txn.date || txn.transactionDate,
+          },
+          ...txn,
+        },
+      }));
+      setPaymentRows(mappedTxns);
+    } else if (subscriptionDetail) {
       const amount =
         subscriptionDetail?.subscriptionDetails?.totalAmount || '92';
       const categoryId =
         professionalDetail?.professionalDetails?.membershipCategory;
-
-      // Get category name for receipt
       const category = categoryLookups?.find(
         cat => cat?._id === categoryId || cat?.id === categoryId,
       );
       const categoryName = category?.name || categoryId;
-
-      // Handle multiple payments - check if payments is an array or single payment
-      const payments = subscriptionDetail?.subscriptionDetails?.payments ||
+      const payments =
+        subscriptionDetail?.subscriptionDetails?.payments ||
         subscriptionDetail?.payments || [
           subscriptionDetail?.subscriptionDetails,
         ];
-
-      // Ensure payments is an array
       const paymentsArray = Array.isArray(payments)
         ? payments
         : [subscriptionDetail?.subscriptionDetails];
-
-      // Map payments to rows
       const mappedPayments = paymentsArray
-        .filter(payment => payment) // Filter out null/undefined
+        .filter(payment => payment)
         .map((payment, index) => ({
           key: payment.id || payment.key || index + 1,
           date: formatToDDMMYYYY(
@@ -58,7 +109,7 @@ const Payments = () => {
               payment.date ||
               subscriptionDetail?.subscriptionDetails?.submissionDate,
           ),
-          description: payment.membershipCategory || categoryId,
+          description: categoryName,
           amount: payment.totalAmount || payment.amount || amount,
           status: payment.status || 'Paid',
           details: {
@@ -81,18 +132,18 @@ const Payments = () => {
             },
           },
         }));
-
       setPaymentRows(mappedPayments);
-
-      // Reset to first page when payments change
-      setCurrentPage(1);
     } else {
       setPaymentRows([]);
-      setCurrentPage(1);
     }
-  }, [subscriptionDetail, personalDetail, professionalDetail, categoryLookups]);
-
-  console.log('Payment==================>', paymentRows);
+    setCurrentPage(1);
+  }, [
+    statementData,
+    subscriptionDetail,
+    personalDetail,
+    professionalDetail,
+    categoryLookups,
+  ]);
 
   // Get category name by ID from dynamic lookup
   const getMembershipCategoryLabel = categoryId => {
@@ -116,7 +167,8 @@ const Payments = () => {
       title: 'Description',
       dataIndex: 'description',
       key: 'description',
-      render: description => getMembershipCategoryLabel(description),
+      render: description =>
+        description || getMembershipCategoryLabel(description) || 'N/A',
     },
     {
       title: 'Amount',
@@ -184,7 +236,9 @@ const Payments = () => {
           <div className="border-t border-gray-100 pt-2.5">
             <p className="text-xs text-gray-500 mb-1">Description</p>
             <p className="text-sm font-medium text-gray-800">
-              {getMembershipCategoryLabel(record.description)}
+              {record.description ||
+                getMembershipCategoryLabel(record.description) ||
+                'N/A'}
             </p>
           </div>
 
@@ -225,9 +279,17 @@ const Payments = () => {
   return (
     <div className="px-1 sm:px-6 py-4 sm:py-6">
       <Card title="Payment History" bodyStyle={{ padding: '8px' }}>
-        {paymentRows.length === 0 ? (
+        {statementLoading && profileDetail?.membershipNumber ? (
+          <div className="py-12 flex justify-center items-center">
+            <Spin size="large" tip="Loading transactions..." />
+          </div>
+        ) : paymentRows.length === 0 ? (
           <Empty
-            description="No payment history found."
+            description={
+              profileDetail?.membershipNumber
+                ? 'No transactions found.'
+                : 'No payment history found.'
+            }
             className="py-12"
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           />

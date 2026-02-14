@@ -55,7 +55,8 @@ const Dashboard = () => {
   const [applicationStatus, setApplicationStatus] = useState(null);
   const [appicationLoader, setApplicationLoader] = useState(true);
   const [accountNetBalance, setAccountNetBalance] = useState(null);
-  const [accountNetBalanceLoading, setAccountNetBalanceLoading] = useState(false);
+  const [accountNetBalanceLoading, setAccountNetBalanceLoading] =
+    useState(false);
   const [formData, setFormData] = useState({
     personalInfo: {
       forename: user?.userFirstName || '',
@@ -73,6 +74,8 @@ const Dashboard = () => {
     getProfileDetail();
     // fetchAllLookups();
   }, []);
+
+  console.log('user=============>', user);
 
   useEffect(() => {
     if (personalDetail?.applicationId) {
@@ -399,14 +402,14 @@ const Dashboard = () => {
   // Fetch account statement when member has membership number
   useEffect(() => {
     const memberId = profileDetail?.membershipNumber;
-    // if (!memberId || !isMember) {
-    //   return;
-    // }
+    if (!memberId || !isMember) {
+      return;
+    }
     setAccountNetBalanceLoading(true);
     getAccountNetBalanceRequest(memberId)
       .then(res => {
         if (res?.status === 200 && res?.data?.data) {
-            setAccountNetBalance(res.data.data);
+          setAccountNetBalance(res.data.data);
         }
       })
       .catch(() => {
@@ -562,7 +565,7 @@ const Dashboard = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold mb-2">
-              Welcome back, {user?.userFirstName || 'Member'}!
+              Welcome back, {user?.userFirstName || user?.fullName || 'Member'}!
             </h1>
             <p className="text-sm sm:text-base text-gray-600">
               Here's a quick overview of your member account.
@@ -632,13 +635,15 @@ const Dashboard = () => {
               />
 
               {/* Payments Action */}
-              <QuickActionButton
-                title="Payments"
-                subtitle="Pay Now"
-                icon={CreditCardOutlined}
-                onClick={handleNext}
-                colorScheme="teal"
-              />
+              {isMember && (
+                <QuickActionButton
+                  title="Payments"
+                  subtitle="Pay Now"
+                  icon={CreditCardOutlined}
+                  onClick={handleNext}
+                  colorScheme="teal"
+                />
+              )}
             </div>
           </div>
 
@@ -734,9 +739,7 @@ const Dashboard = () => {
             {isMember && (
               <button
                 disabled={
-                  loading ||
-                  appicationLoader ||
-                  applicationStatus === null
+                  loading || appicationLoader || applicationStatus === null
                 }
                 onClick={() =>
                   navigate(
@@ -744,9 +747,7 @@ const Dashboard = () => {
                   )
                 }
                 className={`w-full px-4 py-2.5 sm:py-3 rounded-lg transition-colors font-medium text-sm sm:text-base ${
-                  loading ||
-                  appicationLoader ||
-                  applicationStatus === null
+                  loading || appicationLoader || applicationStatus === null
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
                     : isApplicationSubmitted
                       ? 'bg-green-600 text-white hover:bg-green-700 active:bg-green-800'
@@ -763,54 +764,34 @@ const Dashboard = () => {
               Payments & Billing
             </h2>
             <div className="space-y-2.5 sm:space-y-4">
-              {/* {isMember && ( */}
-                <div>
+              {isMember && (
+                <div className="text-right">
                   <p className="text-xs sm:text-sm text-gray-600 mb-1">
-                    Account Balance
+                    Net Balance
                     {accountNetBalance?.year && (
                       <span className="ml-1">({accountNetBalance.year})</span>
                     )}
                   </p>
                   {accountNetBalanceLoading ? (
-                    <p className="text-base sm:text-lg font-semibold text-gray-500 animate-pulse">
+                    <p className="text-2xl sm:text-3xl font-bold text-gray-500 animate-pulse">
                       Loading...
                     </p>
                   ) : (
-                    <p className="text-base sm:text-lg font-semibold text-gray-800">
+                    <p className="text-2xl sm:text-3xl font-bold text-blue-600">
                       {formatCurrency(accountNetBalance?.net ?? 0)}
                     </p>
                   )}
                 </div>
-              {/* )} */}
-              <div>
-                <p className="text-xs sm:text-sm text-gray-600 mb-1">
-                  Next Payment Due
-                </p>
-                <p className="text-base sm:text-lg font-semibold text-gray-800">
-                  Dec 1, 2025
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-2xl sm:text-3xl font-bold text-blue-600">
-                  {categoryData ? formatCurrency(getPaymentAmount()) : '€0.00'}
-                </p>
-                {categoryData &&
-                  subscriptionDetail?.subscriptionDetails?.paymentType && (
-                    <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                      {subscriptionDetail.subscriptionDetails.paymentType ===
-                      'deduction'
-                        ? 'Monthly Payment'
-                        : 'Annual Payment'}
-                    </p>
-                  )}
-              </div>
+              )}
               <button
                 onClick={handleNext}
-                disabled={!categoryData}
+                disabled={!isMember || accountNetBalanceLoading}
                 className={`w-full px-4 py-2.5 sm:py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm sm:text-base ${
-                  !categoryData ? 'opacity-50 cursor-not-allowed' : ''
+                  !isMember || accountNetBalanceLoading
+                    ? 'opacity-50 cursor-not-allowed'
+                    : ''
                 }`}>
-                {categoryData ? 'Pay Now' : 'View History'}
+                Pay Now
               </button>
             </div>
           </div>
