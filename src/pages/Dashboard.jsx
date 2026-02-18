@@ -75,8 +75,6 @@ const Dashboard = () => {
     // fetchAllLookups();
   }, []);
 
-  console.log('user=============>', user);
-
   useEffect(() => {
     if (personalDetail?.applicationId) {
       setFormData(prev => ({
