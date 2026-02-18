@@ -167,6 +167,7 @@ const PersonalInformation = ({
 
           const premise = getComponent('premise');
           const route = getComponent('route');
+          const streetNumber = getComponent('street_number');
           const sublocalityLevel1 = getComponent('sublocality_level_1');
           const sublocality = getComponent('sublocality');
           const locality = getComponent('locality');
@@ -176,8 +177,10 @@ const PersonalInformation = ({
           const countryLongName = getComponent('country');
           const countryShortName = getComponentShortName('country');
 
-          // Address Line 1: premise if exists, else route
-          const addressLine1 = (premise || route || '').trim();
+          // Address Line 1: street_number (if exists) + premise or route
+          const addressLine1 = (
+            (streetNumber ? streetNumber + ' ' : '') + (premise || route || '')
+          ).trim();
           // Address Line 2: route only when premise exists, otherwise empty
           const addressLine2 = premise ? (route || '') : '';
           // Address Line 3: sublocality_level_1, sublocality, or locality (Area/Town)

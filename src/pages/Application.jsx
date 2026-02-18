@@ -8,10 +8,12 @@ import { useLookup } from '../contexts/lookupContext';
 import { useProfile } from '../contexts/profileContext';
 import { formatToDDMMYYYY } from '../helpers/date.helper';
 import Spinner from '../components/common/Spinner';
+import { useMemberRole } from '../hooks/useMemberRole';
 
 const Application = () => {
-  const { personalDetail, professionalDetail, subscriptionDetail, categoryData, categoryLoading, getCategoryData } =
+  const { personalDetail, professionalDetail, subscriptionDetail, categoryData, categoryLoading, getCategoryData, isCrmUser } =
     useApplication();
+  const { isMember: hasMemberRole } = useMemberRole();
   const { profileDetail } = useProfile();
   const { categoryLookups, fetchLookups } = useLookup();
   const navigate = useNavigate();
@@ -152,9 +154,9 @@ const Application = () => {
     );
   };
 
-  // Get member status based on profileId (same logic as Profile.jsx)
-  const memberStatus = profileDetail?.profileId ? 'Member' : 'Non Member';
-  const isMember = profileDetail?.profileId;
+  // Get member status: Member if token has MEMBER role or user is from CRM
+  const isMember = hasMemberRole || isCrmUser;
+  const memberStatus = isMember ? 'Member' : 'Non Member';
 
   // Show full-screen loading overlay
   if (categoryLoading) {

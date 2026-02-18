@@ -16,11 +16,13 @@ import {
   MenuOutlined,
 } from '@ant-design/icons';
 import { Logo } from '../../assets/images';
+import { useMemberRole } from '../../hooks/useMemberRole';
 
 const Sidebar = ({ collapsed, isMobile = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [moreMenuVisible, setMoreMenuVisible] = useState(false);
+  const { isMember } = useMemberRole();
 
   const menuItems = [
     {
@@ -88,7 +90,7 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
       icon: <BookOutlined style={{ color: '#a855f7' }} />,
       label: 'Resources',
     },
-  ];
+  ].filter(item => !(item.key === '/profile' && !isMember));
 
   // Mobile bottom tab items - only show 4 main items + More button
   const mobileTabItems = [
@@ -116,7 +118,7 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
       label: 'Payments',
       color: '#10b981',
     },
-  ];
+  ].filter(item => !(item.key === '/profile' && !isMember));
 
   // Items shown in "More" menu
   const moreMenuItems = [
@@ -176,97 +178,61 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
     },
   ];
 
+  // Mobile tab bar colors (match mobile app: white bar, black inactive, primary active + underline)
+  const MOBILE_PRIMARY = '#3A7BF6';
+  const MOBILE_INACTIVE = '#1A1A1A';
+
   // Mobile Bottom Navigation Bar
   if (isMobile) {
     return (
       <>
-        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-200/50 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-          {/* Safe area padding for devices with bottom notch */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
           <div className="safe-area-bottom">
             <div className="flex justify-around items-center h-16 px-1">
               {mobileTabItems.map((item) => {
                 const isActive = location.pathname === item.key;
+                const iconAndLabelColor = isActive ? MOBILE_PRIMARY : MOBILE_INACTIVE;
                 return (
                   <button
                     key={item.key}
                     onClick={() => navigate(item.key)}
-                    className="relative flex flex-col items-center justify-center flex-1 h-full transition-all duration-300 ease-out group"
+                    className="relative flex flex-col items-center justify-center flex-1 h-full transition-colors duration-200"
                   >
-                    {/* Active background pill */}
-                    {isActive && (
-                      <div 
-                        className="absolute inset-x-1 top-1/2 -translate-y-1/2 h-10 rounded-2xl transition-all duration-300 opacity-10"
-                        style={{ backgroundColor: item.color }}
-                      />
-                    )}
-                    
-                    {/* Icon container with gradient background */}
-                    <div className="relative">
-                      <div 
-                        className={`w-12 h-12 rounded-xl flex items-center justify-center mb-0.5 transition-all duration-300 ${
-                          isActive 
-                            ? 'scale-110 -translate-y-0.5 shadow-lg' 
-                            : 'scale-95 group-active:scale-90 opacity-60'
-                        }`}
-                        style={isActive ? { 
-                          background: `linear-gradient(135deg, ${item.color} 0%, ${item.color}dd 100%)`,
-                          boxShadow: `0 4px 12px ${item.color}50`
-                        } : {
-                          background: 'transparent'
-                        }}
-                      >
-                        <div 
-                          className="text-xl"
-                          style={{ color: isActive ? '#ffffff' : item.color }}
-                      >
-                        {item.icon}
-                        </div>
-                      </div>
-                      
-                      {/* Active dot indicator */}
-                      {isActive && (
-                        <div 
-                          className="absolute -top-1 -right-1 w-2 h-2 rounded-full animate-pulse bg-white border-2"
-                          style={{ borderColor: item.color }}
-                        />
-                      )}
+                    <div className="text-xl mb-0.5" style={{ color: iconAndLabelColor }}>
+                      {item.icon}
                     </div>
-                    
-                    {/* Label with fade effect */}
-                    <span 
-                      className={`text-[10px] font-semibold transition-all duration-300 ${
-                        isActive ? 'opacity-100' : 'opacity-70'
-                      }`}
-                      style={{ color: item.color }}
+                    <span
+                      className="text-[10px] transition-colors duration-200"
+                      style={{
+                        color: iconAndLabelColor,
+                        fontWeight: isActive ? 600 : 500,
+                      }}
                     >
                       {item.label}
                     </span>
-                    
-                    {/* Ripple effect on tap */}
-                    <span className="absolute inset-0 overflow-hidden rounded-xl">
-                      <span className="absolute inset-0 transform scale-0 group-active:scale-100 bg-gray-200 rounded-full transition-transform duration-300 opacity-30" />
-                    </span>
+                    {isActive && (
+                      <div
+                        className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full"
+                        style={{ backgroundColor: MOBILE_PRIMARY }}
+                      />
+                    )}
                   </button>
                 );
               })}
-              
-              {/* More Menu Button with enhanced styling */}
+
+              {/* More Menu Button - same inactive style as other tabs */}
               <button
                 onClick={() => setMoreMenuVisible(true)}
-                className="relative flex flex-col items-center justify-center flex-1 h-full transition-all duration-300 group"
+                className="relative flex flex-col items-center justify-center flex-1 h-full transition-colors duration-200"
               >
-                <div className="relative">
-                  <div className="text-2xl mb-0.5 transition-all duration-300 group-active:scale-90" style={{ color: '#8b5cf6', opacity: 0.7 }}>
-                    <MenuOutlined />
-                  </div>
+                <div className="text-xl mb-0.5" style={{ color: MOBILE_INACTIVE }}>
+                  <MenuOutlined />
                 </div>
-                <span className="text-[10px] font-semibold opacity-70" style={{ color: '#8b5cf6' }}>
+                <span
+                  className="text-[10px] font-medium"
+                  style={{ color: MOBILE_INACTIVE }}
+                >
                   More
-                </span>
-                
-                {/* Ripple effect */}
-                <span className="absolute inset-0 overflow-hidden rounded-xl">
-                  <span className="absolute inset-0 transform scale-0 group-active:scale-100 bg-gray-200 rounded-full transition-transform duration-300 opacity-30" />
                 </span>
               </button>
             </div>

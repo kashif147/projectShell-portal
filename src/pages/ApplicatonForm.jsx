@@ -812,6 +812,13 @@ const ApplicationForm = () => {
       }
       // Remove automatic step increment - it will be handled by API success callbacks
       setShowValidation(false);
+    } else {
+      const missing = getMissingRequiredFields();
+      const message =
+        missing.length > 0
+          ? `Please fill in the required fields: ${missing.join(', ')}`
+          : 'Please complete all required fields.';
+      toast.error(message);
     }
   };
 
@@ -949,6 +956,81 @@ const ApplicationForm = () => {
         break;
     }
     return true;
+  };
+
+  const getMissingRequiredFields = () => {
+    const missing = [];
+    switch (currentStep) {
+      case 1: {
+        const {
+          title,
+          forename,
+          surname,
+          gender,
+          dateOfBirth,
+          personalEmail,
+          workEmail,
+          mobileNo,
+          addressLine1,
+          addressLine4,
+          preferredAddress,
+          preferredEmail,
+          countryPrimaryQualification,
+        } = formData.personalInfo || {};
+
+        if (!preferredEmail) missing.push('Preferred email');
+        if (!title) missing.push('Title');
+        if (!forename) missing.push('Forename');
+        if (!surname) missing.push('Surname');
+        if (!gender) missing.push('Gender');
+        if (!dateOfBirth) missing.push('Date of Birth');
+        if (preferredEmail === 'personal' && !personalEmail)
+          missing.push('Personal email');
+        if (preferredEmail === 'work' && !workEmail) missing.push('Work email');
+        if (preferredEmail && preferredEmail !== 'personal' && preferredEmail !== 'work' && (!personalEmail && !workEmail))
+          missing.push('Preferred email');
+        if (!mobileNo) missing.push('Mobile number');
+        if (!addressLine1) missing.push('Address Line 1');
+        if (!addressLine4) missing.push('Address Line 4');
+        if (!preferredAddress) missing.push('Preferred address');
+        if (!countryPrimaryQualification)
+          missing.push('Country of primary qualification');
+        break;
+      }
+      case 2: {
+        const {
+          workLocation,
+          grade,
+          membershipCategory,
+          nursingAdaptationProgramme,
+          nurseType,
+          nmbiNumber,
+        } = formData.professionalDetails || {};
+
+        if (!membershipCategory) missing.push('Membership category');
+        if (!workLocation) missing.push('Work location');
+        if (!grade) missing.push('Grade');
+        if (nursingAdaptationProgramme === 'yes') {
+          if (!nurseType) missing.push('Nurse type');
+          if (!nmbiNumber) missing.push('NMBI number');
+        }
+        break;
+      }
+      case 3: {
+        const sub = formData.subscriptionDetails || {};
+        if (!sub.paymentType) missing.push('Payment type');
+        if (sub.paymentType === 'deduction' && !sub.payrollNo)
+          missing.push('Payroll number');
+        if (!sub.memberStatus) missing.push('Member status');
+        if (!sub.otherIrishTradeUnion) missing.push('Other Irish trade union');
+        if (!sub.otherScheme) missing.push('Other scheme');
+        if (!sub.termsAndConditions) missing.push('Terms and conditions');
+        break;
+      }
+      default:
+        break;
+    }
+    return missing;
   };
 
   const handleModalClose = () => {

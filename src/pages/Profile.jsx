@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Card, Descriptions, Avatar, Row, Col } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import PersonalInformation from '../components/application/PersonalInformation';
 import Button from '../components/common/Button';
 import { useApplication } from '../contexts/applicationContext';
 import { useProfile } from '../contexts/profileContext';
+import { useMemberRole } from '../hooks/useMemberRole';
 import { updatePersonalDetailRequest } from '../api/application.api';
 import { updateProfileRequest } from '../api/profile.api';
 import Spinner from '../components/common/Spinner';
@@ -14,11 +16,19 @@ import { isDataFormat } from '../helpers/date.helper';
 
 const Profile = () => {
   const { user } = useSelector(state => state.auth);
+  const navigate = useNavigate();
+  const { isMember } = useMemberRole();
   const { personalDetail, getPersonalDetail } = useApplication();
   const { profileByIdDetail, getProfileByIdDetail, profileDetail } = useProfile();
   const [loading, setLoading] = React.useState(false);
   const [personalInfo, setPersonalInfo] = useState({});
   const [showValidation, setShowValidation] = useState(false);
+
+  useEffect(() => {
+    if (!isMember) {
+      navigate('/');
+    }
+  }, [isMember, navigate]);
 
   useEffect(() => {
     if (!personalDetail && !profileByIdDetail) return;
@@ -226,6 +236,9 @@ const Profile = () => {
       });
   };
 
+  if (!isMember) {
+    return null;
+  }
 
   return (
     <Row gutter={[16, 16]}>
@@ -236,7 +249,7 @@ const Profile = () => {
             <h2 className="mt-4 text-xl font-bold">
               {user?.userFirstName || user?.firstName || ''} {user?.userLastName || user?.lastName || ''}
             </h2>
-            <p className="text-gray-500">{profileDetail?.profileId ?'Member' : 'Non Member'}</p>
+            <p className="text-gray-500">{isMember ? 'Member' : 'Non Member'}</p>
           </div>
         </Card>
       </Col>
