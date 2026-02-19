@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useCallback, useEffect, useState } from 'react';
 import {
   fetchProfileByIdRequest,
   fetchProfileRequest,
@@ -12,7 +12,7 @@ export const ProfileProvider = ({ children }) => {
   const [profileDetail, setProfileDetail] = useState(null);
   const [profileByIdDetail, setProfileByIdDetail] = useState(null);
   const { token } = getHeaders();
-  const getProfileDetail = () => {
+  const getProfileDetail = useCallback(() => {
     setLoading(true);
     fetchProfileRequest()
       .then(res => {
@@ -28,8 +28,8 @@ export const ProfileProvider = ({ children }) => {
         setLoading(false);
         toast.error('Something went wrong');
       });
-  };
-  const getProfileByIdDetail = id => {
+  }, []);
+  const getProfileByIdDetail = useCallback(id => {
     setLoading(true);
     fetchProfileByIdRequest(id)
       .then(res => {
@@ -46,7 +46,7 @@ export const ProfileProvider = ({ children }) => {
         setLoading(false);
         toast.error('Something went wrong');
       });
-  };
+  }, []);
 
   useEffect(() => {
     if (token) {

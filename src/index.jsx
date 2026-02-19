@@ -102,6 +102,7 @@ const App = () => {
   const queryParams = new URLSearchParams(location.search);
   const authCode = queryParams.get('code');
   const notificationUnsubscribeRef = React.useRef(null);
+  const fcmInitializedRef = React.useRef(false);
 
   // Store navigate function globally for notification handlers
   React.useEffect(() => {
@@ -134,9 +135,13 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authCode, dispatch, location, navigate]);
 
-  // Initialize FCM when user is signed in
+  // Initialize FCM when user is signed in (once per session)
   React.useEffect(() => {
     if (auth.isSignedIn) {
+      if (fcmInitializedRef.current) {
+        return;
+      }
+      fcmInitializedRef.current = true;
       const initializeNotifications = async () => {
         try {
           console.log('Initializing FCM notifications...');
@@ -178,6 +183,7 @@ const App = () => {
       initializeNotifications();
     } else {
       // Clean up on logout
+      fcmInitializedRef.current = false;
       if (notificationUnsubscribeRef.current) {
         notificationUnsubscribeRef.current();
         notificationUnsubscribeRef.current = null;
@@ -193,7 +199,7 @@ const App = () => {
         notificationUnsubscribeRef.current = null;
       }
     };
-  }, [auth.isSignedIn, auth.user, auth.userDetail, navigate]);
+  }, [auth.isSignedIn]);
 
   // console.log('auth========>', auth);
 
