@@ -23,7 +23,7 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
   const location = useLocation();
   const [moreMenuVisible, setMoreMenuVisible] = useState(false);
   const { isMember } = useMemberRole();
-  const MEMBER_ONLY_KEYS = ['/payments', '/payments/method', '/membership', '/work-location', '/queries'];
+  const MEMBER_ONLY_KEYS = ['/payments/method', '/membership', '/work-location', '/queries', '/voting', '/communications'];
 
   const menuItems = [
     {

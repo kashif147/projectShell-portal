@@ -6,6 +6,7 @@ import Payments from '../pages/Payments';
 import Events from '../pages/Events';
 import Communications from '../pages/Communications';
 import Queries from '../pages/Queries';
+import QueriesCreate from '../pages/QueriesCreate';
 import Voting from '../pages/Voting';
 import Resources from '../pages/Resources';
 import LandingPage from '../pages/landingPage';
@@ -97,6 +98,10 @@ export const privateRoutes = [
       {
         path: 'queries',
         element: <Queries />,
+      },
+      {
+        path: 'queries/create',
+        element: <QueriesCreate />,
       },
       {
         path: 'voting',
