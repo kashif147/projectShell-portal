@@ -1,7 +1,13 @@
 import React, { useMemo, useRef } from 'react';
 import { Card, Button, Tag, Empty } from 'antd';
-import { FileOutlined, DownloadOutlined, LinkOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import {
+  FileOutlined,
+  DownloadOutlined,
+  LinkOutlined,
+  PlayCircleOutlined,
+} from '@ant-design/icons';
 import { useApplication } from '../contexts/applicationContext';
+import { useProfile } from '../contexts/profileContext';
 
 const membershipCategoryLabels = {
   general: 'General (all grades)',
@@ -16,7 +22,8 @@ const membershipCategoryLabels = {
 };
 
 const Resources = () => {
-  const { personalDetail, professionalDetail } = useApplication();
+  const { personalDetail, professionalDetail, subscriptionDetail } = useApplication();
+  const { profileDetail } = useProfile();
   const hasApplication = Boolean(personalDetail && professionalDetail);
 
   const membershipCategory = hasApplication
@@ -25,9 +32,14 @@ const Resources = () => {
   const memberName = hasApplication
     ? `${personalDetail?.personalInfo?.forename ?? ''} ${personalDetail?.personalInfo?.surname ?? ''}`.trim()
     : '';
-  const membershipNumber = hasApplication ? personalDetail?.ApplicationId || '' : '';
+  const membershipNumber = hasApplication
+    ? profileDetail?.membershipNumber ||
+      personalDetail?.ApplicationId ||
+      personalDetail?.applicationId ||
+      ''
+    : '';
   const branch = hasApplication ? professionalDetail?.professionalDetails?.branch || '' : '';
-  const section = hasApplication ? professionalDetail?.professionalDetails?.section || '' : '';
+  const section = hasApplication ? subscriptionDetail?.subscriptionDetails?.primarySection || '' : '';
 
   const cardRef = useRef(null);
 

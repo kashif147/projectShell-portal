@@ -25,7 +25,7 @@ const Payments = () => {
   // Ensure profile is loaded for membership number
   useEffect(() => {
     getProfileDetail();
-  }, [getProfileDetail]);
+  }, []);
 
   // Fetch account statement when membership number is available
   useEffect(() => {

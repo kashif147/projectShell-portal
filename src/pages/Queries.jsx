@@ -1,8 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, Table, Tag } from 'antd';
 import Button from '../components/common/Button';
 
 const Queries = () => {
+  const navigate = useNavigate();
   const dummyQueries = [
     {
       id: 1,
@@ -63,7 +65,7 @@ const Queries = () => {
     <div>
       <Card 
         title="Queries & Cases" 
-        extra={<Button type="primary">New Query</Button>}
+        extra={<Button type="primary" onClick={() => navigate('/queries/create')}>New Query</Button>}
       >
         <Table
           dataSource={dummyQueries}

@@ -1,37 +1,82 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { Card, Table, Empty } from 'antd';
 import { useApplication } from '../contexts/applicationContext';
-
-const membershipCategoryOptions = [
-  { value: 'general', label: 'General (all grades)' },
-  { value: 'postgraduate_student', label: 'Postgraduate Student' },
-  { value: 'short_term_relief', label: 'Short-term/ Relief (under 15 hrs/wk average)' },
-  { value: 'private_nursing_home', label: 'Private nursing home' },
-  { value: 'affiliate_non_practicing', label: 'Affiliate members (non-practicing)' },
-  { value: 'lecturing', label: 'Lecturing (employed in universities and IT institutes)' },
-  { value: 'associate', label: 'Associate (not currently employed as a nurse/midwife)' },
-  { value: 'retired_associate', label: 'Retired Associate' },
-  { value: 'undergraduate_student', label: 'Undergraduate Student' },
-];
+import { useProfile } from '../contexts/profileContext';
+import { useLookup } from '../contexts/lookupContext';
 
 const Subscriptions = () => {
-  const { personalDetail, professionalDetail } = useApplication();
+  const {
+    personalDetail,
+    professionalDetail,
+    subscriptionDetail,
+    categoryData,
+    getCategoryData,
+  } = useApplication();
+  const { profileDetail } = useProfile();
+  const { categoryLookups } = useLookup();
 
-  const hasApplication = Boolean(personalDetail || professionalDetail);
+  const hasApplication = Boolean(
+    personalDetail || professionalDetail || subscriptionDetail,
+  );
 
-  const getMembershipCategoryLabel = value => {
-    const option = membershipCategoryOptions.find(opt => opt.value === value);
-    return option ? option.label : 'N/A';
+  useEffect(() => {
+    const membershipCategoryId =
+      subscriptionDetail?.subscriptionDetails?.membershipCategory ||
+      professionalDetail?.professionalDetails?.membershipCategory;
+
+    if (membershipCategoryId) {
+      getCategoryData(membershipCategoryId, categoryLookups || []);
+    }
+  }, [
+    subscriptionDetail?.subscriptionDetails?.membershipCategory,
+    professionalDetail?.professionalDetails?.membershipCategory,
+    getCategoryData,
+    categoryLookups,
+  ]);
+
+  const getMembershipCategoryLabel = categoryIdOrName => {
+    if (!categoryIdOrName) return 'N/A';
+
+    // First try to match by id/_id like Payments page
+    let category =
+      categoryLookups?.find(
+        cat => cat?._id === categoryIdOrName || cat?.id === categoryIdOrName,
+      ) || null;
+
+    // If not found, try to match by name/label (handles when value is already a name)
+    if (!category && Array.isArray(categoryLookups)) {
+      category = categoryLookups.find(item => {
+        const itemName =
+          item?.name ||
+          item?.DisplayName ||
+          item?.label ||
+          item?.productType?.name ||
+          item?.code;
+        return String(itemName || '') === String(categoryIdOrName);
+      }) || null;
+    }
+
+    // Fallback to raw value so we never show N/A if a value exists
+    return category?.name || categoryIdOrName || 'N/A';
   };
 
   const dataSource = useMemo(() => {
-    const membershipNo = personalDetail?.ApplicationId ?? 'N/A';
-    const nameRaw = `${personalDetail?.personalInfo?.forename ?? ''} ${personalDetail?.personalInfo?.surname ?? ''}`.trim();
+    const membershipNo =
+      profileDetail?.membershipNumber ??
+      personalDetail?.ApplicationId ??
+      personalDetail?.applicationId ??
+      'N/A';
+
+    const nameRaw = `${personalDetail?.personalInfo?.forename ?? ''} ${
+      personalDetail?.personalInfo?.surname ?? ''
+    }`.trim();
     const name = nameRaw || 'N/A';
-    const category = getMembershipCategoryLabel(
-      professionalDetail?.professionalDetails?.membershipCategory,
-    );
-    const section = professionalDetail?.professionalDetails?.section ?? 'N/A';
+    const membershipCategoryId =
+      professionalDetail?.professionalDetails?.membershipCategory ||
+      subscriptionDetail?.subscriptionDetails?.membershipCategory;
+    const category =
+      categoryData?.name || getMembershipCategoryLabel(membershipCategoryId);
+    const section = subscriptionDetail?.subscriptionDetails?.primarySection ?? 'N/A';
     const branch = professionalDetail?.professionalDetails?.branch ?? 'N/A';
 
     return [
@@ -44,7 +89,14 @@ const Subscriptions = () => {
         branch,
       },
     ];
-  }, [personalDetail, professionalDetail]);
+  }, [
+    personalDetail,
+    professionalDetail,
+    subscriptionDetail,
+    profileDetail,
+    categoryLookups,
+    categoryData,
+  ]);
 
   const columns = [
     {

@@ -10,7 +10,7 @@ import Spinner from '../components/common/Spinner';
 
 const Notifications = () => {
   const auth = useSelector(state => state.auth);
-  const { setUnreadCountValue } = useNotification();
+  const { unreadCount, setUnreadCountValue } = useNotification();
   
   // Get userId and tenantId from Redux auth state
   const user = auth.user || auth.userDetail;
@@ -24,7 +24,6 @@ const Notifications = () => {
   const [pageSize, setPageSize] = useState(50);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [markingAsRead, setMarkingAsRead] = useState(false);
   const [deletingNotification, setDeletingNotification] = useState(false);
 
@@ -72,7 +71,7 @@ const Notifications = () => {
         setNotifications(notificationsList);
         setTotal(data.pagination?.total || 0);
         setTotalPages(data.pagination?.totalPages || 1);
-        setUnreadCount(data.unreadCount || 0);
+        // setUnreadCount(data.unreadCount || 0);
         
         // Sync with NotificationContext
         if (setUnreadCountValue) {
@@ -126,7 +125,6 @@ const Notifications = () => {
     setNotifications(prev =>
       prev.map(notif => (notif.id === id ? { ...notif, read: true } : notif))
     );
-    setUnreadCount(prev => Math.max(0, prev - 1));
 
     setMarkingAsRead(true);
     try {
@@ -163,7 +161,6 @@ const Notifications = () => {
 
     // Optimistic update
     setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
-    setUnreadCount(0);
 
     setMarkingAsRead(true);
     try {
@@ -241,7 +238,6 @@ const Notifications = () => {
     const previousTotal = total;
     setNotifications([]);
     setTotal(0);
-    setUnreadCount(0);
 
     setDeletingNotification(true);
     try {

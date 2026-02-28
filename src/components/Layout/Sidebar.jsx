@@ -23,6 +23,7 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
   const location = useLocation();
   const [moreMenuVisible, setMoreMenuVisible] = useState(false);
   const { isMember } = useMemberRole();
+  const MEMBER_ONLY_KEYS = ['/payments/method', '/membership', '/work-location', '/queries', '/voting', '/communications'];
 
   const menuItems = [
     {
@@ -90,7 +91,7 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
       icon: <BookOutlined style={{ color: '#a855f7' }} />,
       label: 'Resources',
     },
-  ].filter(item => !(item.key === '/profile' && !isMember));
+  ].filter(item => !(item.key === '/profile' && !isMember) && !(MEMBER_ONLY_KEYS.includes(item.key) && !isMember));
 
   // Mobile bottom tab items - only show 4 main items + More button
   const mobileTabItems = [
@@ -118,7 +119,7 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
       label: 'Payments',
       color: '#10b981',
     },
-  ].filter(item => !(item.key === '/profile' && !isMember));
+  ].filter(item => !(item.key === '/profile' && !isMember) && !(MEMBER_ONLY_KEYS.includes(item.key) && !isMember));
 
   // Items shown in "More" menu
   const moreMenuItems = [
@@ -176,7 +177,7 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
       label: 'Resources',
       color: '#a855f7',
     },
-  ];
+  ].filter(item => !(MEMBER_ONLY_KEYS.includes(item.key) && !isMember));
 
   // Mobile tab bar colors (match mobile app: white bar, black inactive, primary active + underline)
   const MOBILE_PRIMARY = '#3A7BF6';

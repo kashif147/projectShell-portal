@@ -67,7 +67,7 @@ const getAllCountry = async () => {
     const response = await fetchAllCountry();
     return response?.data?.data;
   } catch (error) {
-    toast.error(error.response?.data?.message ?? 'Failed to fetch country');
+    console.log('❌ Failed to fetch country:', error.response?.data?.message ?? 'Failed to fetch country');
     throw error;
   }
 };
@@ -392,7 +392,7 @@ export const LookupProvider = ({ children }) => {
       } catch (error) {
         console.error('Error fetching all lookups:', error);
         setError(error.message);
-        toast.error(error.response?.data?.message ?? 'Failed to fetch lookups');
+        console.error('Error fetching all lookups:', error.response?.data?.message ?? 'Failed to fetch lookups');
         await loadLookupsFromStorage();
       } finally {
         setLoading(false);
