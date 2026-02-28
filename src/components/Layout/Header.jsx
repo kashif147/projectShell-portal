@@ -155,7 +155,7 @@ const Header = ({
               <span className="text-sm font-semibold text-gray-900">
                 {user?.userFirstName || ''} {user?.userLastName || user?.fullName||  ''}
               </span>
-              <span className="text-xs text-gray-500">{isMember || isCrmUser ? 'Member' : 'Non Member'}</span>
+              <span className="text-xs text-gray-500">{isMember ? 'Member' : 'Non Member'}</span>
             </div>
           </div>
         </Dropdown>

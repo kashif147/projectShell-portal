@@ -22,7 +22,7 @@ const membershipCategoryLabels = {
 };
 
 const Resources = () => {
-  const { personalDetail, professionalDetail } = useApplication();
+  const { personalDetail, professionalDetail, subscriptionDetail } = useApplication();
   const { profileDetail } = useProfile();
   const hasApplication = Boolean(personalDetail && professionalDetail);
 
@@ -39,7 +39,7 @@ const Resources = () => {
       ''
     : '';
   const branch = hasApplication ? professionalDetail?.professionalDetails?.branch || '' : '';
-  const section = hasApplication ? professionalDetail?.professionalDetails?.section || '' : '';
+  const section = hasApplication ? subscriptionDetail?.subscriptionDetails?.primarySection || '' : '';
 
   const cardRef = useRef(null);
 

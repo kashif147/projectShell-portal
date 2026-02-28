@@ -76,7 +76,7 @@ const Subscriptions = () => {
       subscriptionDetail?.subscriptionDetails?.membershipCategory;
     const category =
       categoryData?.name || getMembershipCategoryLabel(membershipCategoryId);
-    const section = professionalDetail?.professionalDetails?.section ?? 'N/A';
+    const section = subscriptionDetail?.subscriptionDetails?.primarySection ?? 'N/A';
     const branch = professionalDetail?.professionalDetails?.branch ?? 'N/A';
 
     return [
