@@ -498,19 +498,20 @@ const Dashboard = () => {
     return stepToButtonText[currentStep] || 'Continue';
   };
 
-  // Format currency for display
-  const formatCurrency = value => {
+  // Format currency for display (use cents → euros logic like SubscriptionDetails)
+  const formatCurrency = valueInCents => {
     const currency = (
       categoryData?.currentPricing?.currency || 'EUR'
     ).toUpperCase();
-    try {
-      return new Intl.NumberFormat('en-IE', {
-        style: 'currency',
-        currency,
-      }).format(value || 0);
-    } catch {
-      return `€${(value || 0).toFixed(2)}`;
+
+    if (!valueInCents || valueInCents === 0) {
+      return currency === 'EUR' ? '€0.00' : `${currency}0.00`;
     }
+
+    const amountInEuros = valueInCents / 100;
+    const currencySymbol = currency === 'EUR' ? '€' : currency;
+
+    return `${currencySymbol}${amountInEuros.toFixed(2)}`;
   };
 
   // Get payment amount based on payment type
@@ -815,6 +816,7 @@ const Dashboard = () => {
           onFailure={handleSubscriptionFailure}
           formData={formData}
           membershipCategory={formData?.subscriptionDetails?.membershipCategory}
+          netAmountInCents={accountNetBalance?.net ?? 0}
         />
       </Elements>
     </div>

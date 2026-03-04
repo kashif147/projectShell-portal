@@ -20,7 +20,7 @@ export const ProfileProvider = ({ children }) => {
           setProfileDetail(res?.data?.data);
           setLoading(false);
         } else {
-          setLoading(false);
+          setLoading(false) ;
           //   toast.error(res.data.message ?? 'Unable to get profile datail');
         }
       })

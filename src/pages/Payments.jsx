@@ -51,6 +51,11 @@ const Payments = () => {
   // Build payment rows: prefer statement txns, fall back to subscription-based
   useEffect(() => {
     const txns = statementData?.txns;
+    const subscriptionStartDate =
+      subscriptionDetail?.subscriptionDetails?.dateJoined
+        ? formatToDDMMYYYY(subscriptionDetail.subscriptionDetails.dateJoined)
+        : 'N/A';
+
     if (Array.isArray(txns) && txns.length > 0) {
       const category = categoryLookups?.find(
         cat =>
@@ -65,6 +70,7 @@ const Payments = () => {
           : txn.transactionDate
             ? formatToDDMMYYYY(txn.transactionDate)
             : 'N/A',
+        subscriptionStartDate,
         description:
           txn.description || txn.type || txn.descriptionLabel || 'Transaction',
         amount: txn.amount ?? txn.total ?? 0,
@@ -109,6 +115,7 @@ const Payments = () => {
               payment.date ||
               subscriptionDetail?.subscriptionDetails?.submissionDate,
           ),
+          subscriptionStartDate,
           description: categoryName,
           amount: payment.totalAmount || payment.amount || amount,
           status: payment.status || 'Paid',
@@ -162,6 +169,11 @@ const Payments = () => {
       title: 'Date',
       dataIndex: 'date',
       key: 'date',
+    },
+    {
+      title: 'Subscription Start Date',
+      dataIndex: 'subscriptionStartDate',
+      key: 'subscriptionStartDate',
     },
     {
       title: 'Description',
@@ -231,6 +243,13 @@ const Payments = () => {
                 {record.date || 'N/A'}
               </p>
             </div>
+          </div>
+
+          <div className="border-t border-gray-100 pt-2.5">
+            <p className="text-xs text-gray-500 mb-1">Subscription Start Date</p>
+            <p className="text-sm font-medium text-gray-800">
+              {record.subscriptionStartDate || 'N/A'}
+            </p>
           </div>
 
           <div className="border-t border-gray-100 pt-2.5">
