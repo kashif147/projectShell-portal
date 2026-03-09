@@ -1,5 +1,6 @@
 import { io } from 'socket.io-client';
 import { NOTIFICATION_URL } from '../constants/api';
+import { decryptToken } from '../helpers/crypt.helper';
 
 let notificationSocket = null;
 let handlers = {
@@ -13,10 +14,10 @@ const getBaseSocketUrl = () => {
   }
 
   // Strip any trailing slash so socket.io can append its own path
-  return NOTIFICATION_URL.replace(/\/$/, '');
+  return NOTIFICATION_URL;
 };
 
-export const initNotificationSocket = ({
+export const initNotificationSocket = async({
   token,
   userId,
   tenantId,
@@ -36,12 +37,8 @@ export const initNotificationSocket = ({
     });
     return;
   }
-
-  const baseUrl = getBaseSocketUrl();
-  if (!baseUrl) {
-    console.error('NOTIFICATION_URL is not configured; cannot initialize socket');
-    return;
-  }
+  const decryptoken = await decryptToken(token);
+  console.log('dectoken==========>',decryptoken)
 
   // Always keep latest handlers so components can update callbacks without recreating socket
   handlers.onNotification = onNotification;
@@ -53,12 +50,10 @@ export const initNotificationSocket = ({
   }
 
   try {
-    notificationSocket = io(baseUrl, {
+    notificationSocket = io(`${NOTIFICATION_URL}/api/socket.io`, {
       transports: ['websocket', 'polling'],
       auth: {
-        token,
-        userId,
-        tenantId,
+        token: decryptoken
       },
       reconnection: true,
       reconnectionAttempts: 5,
