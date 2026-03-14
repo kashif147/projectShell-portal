@@ -147,10 +147,21 @@ const getMembershipCategoryLabel = (data) => {
   return categories[value] || value || 'N/A';
 };
 
-const formatCurrency = (amount) => {
-  if (!amount) return '€0.00';
-  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-  return `€${num.toFixed(2)}`;
+// Normalize amount that may be in cents (from API) or euros (legacy)
+const normalizeAmount = amount => {
+  if (!amount) return 0;
+  let num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  if (!Number.isFinite(num)) return 0;
+  // If the number is large (e.g. 32600) assume it's cents and convert to euros
+  if (num > 1000) {
+    num = num / 100;
+  }
+  return num;
+};
+
+const formatCurrency = amount => {
+  const value = normalizeAmount(amount);
+  return `€${value.toFixed(2)}`;
 };
 
 const Receipt = forwardRef(({ data }, ref) => {
@@ -416,9 +427,8 @@ const Receipt = forwardRef(({ data }, ref) => {
 
 export const ReceiptPDF = ({ data }) => {
   const formatAmount = (amount) => {
-    if (!amount) return '€0.00';
-    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-    return `€${num.toFixed(2)}`;
+    const value = normalizeAmount(amount);
+    return `€${value.toFixed(2)}`;
   };
 
   return (

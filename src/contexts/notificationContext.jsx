@@ -19,11 +19,10 @@ export const NotificationProvider = ({ children }) => {
     setUnreadCount(prev => prev + 1);
   }, []);
 
-  // Add a new notification
+  // Add a new notification (unread count is managed by callers)
   const addNotification = useCallback((notification) => {
     setNotifications(prev => [notification, ...prev]);
-    incrementUnreadCount();
-  }, [incrementUnreadCount]);
+  }, []);
 
   // Mark notification as read
   const markAsRead = useCallback((messageId) => {

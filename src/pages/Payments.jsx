@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Modal, Empty, Pagination, Spin } from 'antd';
+import { Card, Table, Modal, Empty, Pagination, Spin } from 'antd';
 import Button from '../components/common/Button';
 import Receipt, { ReceiptPDF } from '../components/Receipt';
 import { PDFDownloadLink } from '@react-pdf/renderer';
@@ -48,70 +48,78 @@ const Payments = () => {
       });
   }, [profileDetail?.membershipNumber]);
 
-  // Build payment rows: prefer statement txns, fall back to subscription-based
+  // Helper to derive amount (in cents) from transaction entries
+  const getTxnAmountInCents = tx => {
+    if (!tx) return 0;
+
+    // Prefer explicit amount/total if API provides it
+    if (typeof tx.amount === 'number') return Math.abs(tx.amount);
+    if (typeof tx.total === 'number') return Math.abs(tx.total);
+
+    const entries = Array.isArray(tx.entries) ? tx.entries : [];
+    if (!entries.length) return 0;
+
+    const memberId = statementData?.memberId;
+    const relevant = memberId
+      ? entries.filter(e => e.memberId === memberId)
+      : entries;
+
+    if (!relevant.length) return 0;
+
+    // Net for member: Debits positive, Credits negative; then show absolute value
+    const net = relevant.reduce((sum, e) => {
+      const amount = typeof e.amount === 'number' ? e.amount : 0;
+      if (!amount) return sum;
+      return sum + (e.dc === 'C' ? -amount : amount);
+    }, 0);
+
+    return Math.abs(net);
+  };
+
+  // Build payment rows from statement transactions
   useEffect(() => {
-    const txns = statementData?.txns;
-    if (Array.isArray(txns) && txns.length > 0) {
+    // Exclude Invoice documents from payment history
+    const txns = Array.isArray(statementData?.txns)
+      ? statementData.txns.filter(
+          txn => String(txn.docType || '').toLowerCase() !== 'invoice',
+        )
+      : [];
+
+    if (txns.length > 0) {
+      const membershipCategoryId =
+        professionalDetail?.professionalDetails?.membershipCategory ||
+        subscriptionDetail?.subscriptionDetails?.membershipCategory;
       const category = categoryLookups?.find(
-        cat =>
-          cat?._id === professionalDetail?.professionalDetails?.membershipCategory ||
-          cat?.id === professionalDetail?.professionalDetails?.membershipCategory,
+        cat => cat?._id === membershipCategoryId || cat?.id === membershipCategoryId,
       );
       const categoryName = category?.name || 'N/A';
-      const mappedTxns = txns.map((txn, index) => ({
-        key: txn.id || txn.key || `txn-${index}`,
-        date: txn.date
-          ? formatToDDMMYYYY(txn.date)
-          : txn.transactionDate
-            ? formatToDDMMYYYY(txn.transactionDate)
-            : 'N/A',
-        description:
-          txn.description || txn.type || txn.descriptionLabel || 'Transaction',
-        amount: txn.amount ?? txn.total ?? 0,
-        status: txn.status || 'Paid',
-        details: {
-          ...personalDetail?.personalInfo,
-          ...personalDetail?.contactInfo,
-          ...professionalDetail?.professionalDetails,
-          membershipCategoryName: categoryName,
-          paymentData: {
-            paymentMethod: txn.paymentMethod || txn.paymentType || 'N/A',
-            total: txn.amount ?? txn.total ?? 0,
-            date: txn.date || txn.transactionDate,
-          },
-          ...txn,
-        },
-      }));
-      setPaymentRows(mappedTxns);
-    } else if (subscriptionDetail) {
-      const amount =
-        subscriptionDetail?.subscriptionDetails?.totalAmount || '92';
-      const categoryId =
-        professionalDetail?.professionalDetails?.membershipCategory;
-      const category = categoryLookups?.find(
-        cat => cat?._id === categoryId || cat?.id === categoryId,
-      );
-      const categoryName = category?.name || categoryId;
-      const payments =
-        subscriptionDetail?.subscriptionDetails?.payments ||
-        subscriptionDetail?.payments || [
-          subscriptionDetail?.subscriptionDetails,
-        ];
-      const paymentsArray = Array.isArray(payments)
-        ? payments
-        : [subscriptionDetail?.subscriptionDetails];
-      const mappedPayments = paymentsArray
-        .filter(payment => payment)
-        .map((payment, index) => ({
-          key: payment.id || payment.key || index + 1,
-          date: formatToDDMMYYYY(
-            payment.submissionDate ||
-              payment.date ||
-              subscriptionDetail?.subscriptionDetails?.submissionDate,
-          ),
-          description: categoryName,
-          amount: payment.totalAmount || payment.amount || amount,
-          status: payment.status || 'Paid',
+
+      const mappedTxns = txns.map((txn, index) => {
+        const amountInCents = getTxnAmountInCents(txn);
+        const rawStatus = txn.settlement?.status || txn.status || 'PENDING';
+        const upperStatus = String(rawStatus).toUpperCase();
+        const status =
+          upperStatus === 'SETTLED' || upperStatus === 'PAID'
+            ? 'Paid'
+            : upperStatus === 'PENDING'
+              ? 'Pending'
+              : rawStatus;
+
+        return {
+          key: txn._id || txn.id || txn.key || `txn-${index}`,
+          date: txn.date
+            ? formatToDDMMYYYY(txn.date)
+            : txn.transactionDate
+              ? formatToDDMMYYYY(txn.transactionDate)
+              : 'N/A',
+          description:
+            txn.displayLabel ||
+            txn.memo ||
+            txn.description ||
+            txn.docType ||
+            'Transaction',
+          amount: amountInCents,
+          status,
           details: {
             ...personalDetail?.personalInfo,
             ...personalDetail?.contactInfo,
@@ -119,20 +127,21 @@ const Payments = () => {
             membershipCategoryName: categoryName,
             paymentData: {
               paymentMethod:
-                payment.paymentType ||
-                subscriptionDetail?.subscriptionDetails?.paymentType ===
-                  'Card Payment'
-                  ? 'card'
-                  : subscriptionDetail?.subscriptionDetails?.paymentType,
-              total: payment.totalAmount || payment.amount || amount,
-              date:
-                payment.submissionDate ||
-                payment.date ||
-                subscriptionDetail?.subscriptionDetails?.submissionDate,
+                txn.settlement?.provider ||
+                txn.paymentMethod ||
+                txn.paymentType ||
+                'N/A',
+              total: amountInCents,
+              date: txn.date || txn.transactionDate,
+              docNo: txn.docNo,
+              docType: txn.docType,
             },
+            ...txn,
           },
-        }));
-      setPaymentRows(mappedPayments);
+        };
+      });
+
+      setPaymentRows(mappedTxns);
     } else {
       setPaymentRows([]);
     }
@@ -175,20 +184,13 @@ const Payments = () => {
       dataIndex: 'amount',
       key: 'amount',
       render: amount => {
-        // Convert from cents to euros and format with € sign
-        const amountInEuros = amount
-          ? ((amount * 100) / 100).toFixed(2)
-          : '0.00';
+        // Amount is in cents from API; convert to euros
+        const amountInEuros =
+          typeof amount === 'number'
+            ? (amount / 100).toFixed(2)
+            : '0.00';
         return `€${amountInEuros}`;
       },
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: status => (
-        <Tag color={status === 'Paid' ? 'green' : 'red'}>{status}</Tag>
-      ),
     },
     {
       title: 'Action',
@@ -245,19 +247,10 @@ const Payments = () => {
           <div className="border-t border-gray-100 pt-2.5">
             <p className="text-xs text-gray-500 mb-1">Amount</p>
             <p className="text-sm font-medium text-gray-800">
-              {record.amount
-                ? `€${((record.amount * 100) / 100).toFixed(2)}`
+              {typeof record.amount === 'number'
+                ? `€${(record.amount / 100).toFixed(2)}`
                 : '€0.00'}
             </p>
-          </div>
-
-          <div className="border-t border-gray-100 pt-2.5">
-            <p className="text-xs text-gray-500 mb-1">Status</p>
-            <Tag
-              color={record.status === 'Paid' ? 'green' : 'red'}
-              className="mt-1">
-              {record.status}
-            </Tag>
           </div>
 
           <div className="border-t border-gray-100 pt-2.5">

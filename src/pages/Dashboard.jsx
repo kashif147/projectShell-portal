@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import DashboardCard from '../components/dashboard/DashboardCard';
 import QuickActionButton from '../components/dashboard/QuickActionButton';
 import {
@@ -70,9 +70,12 @@ const Dashboard = () => {
     subscriptionDetails: {},
   });
 
+  // Kick off profile and application data loading together when the dashboard mounts
   useEffect(() => {
     getProfileDetail();
-    // fetchAllLookups();
+    // Lookups are already fetched by LookupProvider on mount
+    // No need to fetch again here to avoid redundant calls
+    getPersonalDetail();
   }, []);
 
   useEffect(() => {
@@ -332,13 +335,6 @@ const Dashboard = () => {
     categoryLookups,
   ]);
 
-  // Fetch personal detail on mount
-  useEffect(() => {
-    // Lookups are already fetched by LookupProvider on mount
-    // No need to fetch again here to avoid redundant calls
-    getPersonalDetail();
-  }, []);
-
   // Check application status (use context when available from aggregated CRM response, else fetch)
   useEffect(() => {
     if (loading) {
@@ -498,19 +494,20 @@ const Dashboard = () => {
     return stepToButtonText[currentStep] || 'Continue';
   };
 
-  // Format currency for display
-  const formatCurrency = value => {
+  // Format currency for display (use cents → euros logic like SubscriptionDetails)
+  const formatCurrency = valueInCents => {
     const currency = (
       categoryData?.currentPricing?.currency || 'EUR'
     ).toUpperCase();
-    try {
-      return new Intl.NumberFormat('en-IE', {
-        style: 'currency',
-        currency,
-      }).format(value || 0);
-    } catch {
-      return `€${(value || 0).toFixed(2)}`;
+
+    if (!valueInCents || valueInCents === 0) {
+      return currency === 'EUR' ? '€0.00' : `${currency}0.00`;
     }
+
+    const amountInEuros = valueInCents / 100;
+    const currencySymbol = currency === 'EUR' ? '€' : currency;
+
+    return `${currencySymbol}${amountInEuros.toFixed(2)}`;
   };
 
   // Get payment amount based on payment type
@@ -556,6 +553,45 @@ const Dashboard = () => {
     return completionPercentage;
   };
 
+  const applicationQuickActionState = useMemo(
+    () => {
+      const subtitle =
+        applicationStatus === 'approved'
+          ? 'Approved'
+          : applicationStatus === 'submitted'
+          ? 'In Review'
+          : applicationStatus === 'in-progress'
+          ? 'In Progress'
+          : getApplicationButtonText();
+
+      const disabled =
+        loading ||
+        appicationLoader ||
+        applicationStatus === null ||
+        applicationStatus === 'submitted' ||
+        applicationStatus === 'approved';
+
+      const colorScheme =
+        applicationStatus === 'approved'
+          ? 'green'
+          : applicationStatus === 'submitted'
+          ? 'blue'
+          : 'blue';
+
+      return { subtitle, disabled, colorScheme };
+    },
+    [
+      applicationStatus,
+      loading,
+      appicationLoader,
+      isApplicationSubmitted,
+      currentStep,
+      personalDetail?.applicationId,
+      professionalDetail?.applicationId,
+      subscriptionDetail?.applicationId,
+    ],
+  );
+
   return (
     <div className="space-y-4 sm:space-y-6 px-2 sm:px-6 lg:px-8 py-3 sm:py-6">
       {/* Welcome Header */}
@@ -585,31 +621,11 @@ const Dashboard = () => {
               {/* Application Action */}
               <QuickActionButton
                 title="Application"
-                subtitle={
-                  applicationStatus === 'approved'
-                    ? 'Approved'
-                    : applicationStatus === 'submitted'
-                      ? 'In Review'
-                      : applicationStatus === 'in-progress'
-                        ? 'In Progress'
-                        : getApplicationButtonText()
-                }
+                subtitle={applicationQuickActionState.subtitle}
                 icon={FormOutlined}
                 onClick={() => navigate('/applicationForm')}
-                disabled={
-                  loading ||
-                  appicationLoader ||
-                  applicationStatus === null ||
-                  applicationStatus === 'submitted' ||
-                  applicationStatus === 'approved'
-                }
-                colorScheme={
-                  applicationStatus === 'approved'
-                    ? 'green'
-                    : applicationStatus === 'submitted'
-                      ? 'blue'
-                      : 'blue'
-                }
+                disabled={applicationQuickActionState.disabled}
+                colorScheme={applicationQuickActionState.colorScheme}
               />
 
               {/* Profile Action - show when member */}
@@ -640,6 +656,9 @@ const Dashboard = () => {
                   icon={CreditCardOutlined}
                   onClick={handleNext}
                   colorScheme="teal"
+                  disabled={
+                  (typeof accountNetBalance?.net === 'number' &&
+                    accountNetBalance.net <= 0)}
                 />
               )}
             </div>
@@ -783,9 +802,17 @@ const Dashboard = () => {
               )}
               <button
                 onClick={handleNext}
-                disabled={!isMember || accountNetBalanceLoading}
+                disabled={
+                  !isMember ||
+                  accountNetBalanceLoading ||
+                  (typeof accountNetBalance?.net === 'number' &&
+                    accountNetBalance.net <= 0)
+                }
                 className={`w-full px-4 py-2.5 sm:py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm sm:text-base ${
-                  !isMember || accountNetBalanceLoading
+                  !isMember ||
+                  accountNetBalanceLoading ||
+                  (typeof accountNetBalance?.net === 'number' &&
+                    accountNetBalance.net <= 0)
                     ? 'opacity-50 cursor-not-allowed'
                     : ''
                 }`}>
@@ -815,6 +842,7 @@ const Dashboard = () => {
           onFailure={handleSubscriptionFailure}
           formData={formData}
           membershipCategory={formData?.subscriptionDetails?.membershipCategory}
+          netAmountInCents={accountNetBalance?.net ?? 0}
         />
       </Elements>
     </div>

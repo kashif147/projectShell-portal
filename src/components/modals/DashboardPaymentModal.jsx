@@ -19,6 +19,7 @@ import { useSelector } from 'react-redux';
 import { useApplication } from '../../contexts/applicationContext';
 import { useLookup } from '../../contexts/lookupContext';
 import Spinner from '../common/Spinner';
+import { useProfile } from '../../contexts/profileContext';
 
 const DashboardPaymentModal = ({
   isVisible,
@@ -27,7 +28,9 @@ const DashboardPaymentModal = ({
   onFailure,
   formData,
   membershipCategory,
+  netAmountInCents,
 }) => {
+  const { profileDetail } = useProfile();
   const [form] = Form.useForm();
   const stripe = useStripe();
   const elements = useElements();
@@ -99,13 +102,17 @@ const DashboardPaymentModal = ({
     }
   }, [membershipCategory, isVisible, getCategoryData, categoryLookups]);
 
-  // Set default price from category when categoryData is available
+  // Set default price: prefer net balance magnitude, fallback to category price
   useEffect(() => {
-    if (categoryData?.currentPricing?.price) {
+    if (typeof netAmountInCents === 'number' && netAmountInCents !== 0) {
+      // Use absolute value so Amount to Pay / Total Amount are positive,
+      // while the Net Balance card above still shows the signed value.
+      setEditablePrice(Math.abs(netAmountInCents) / 100);
+    } else if (categoryData?.currentPricing?.price) {
       const priceInEuros = categoryData.currentPricing.price / 100;
       setEditablePrice(priceInEuros);
     }
-  }, [categoryData]);
+  }, [netAmountInCents, categoryData]);
 
   const formatCurrency = value => {
     const currency = (categoryData?.currentPricing?.currency || 'EUR').toUpperCase();
@@ -154,7 +161,7 @@ const DashboardPaymentModal = ({
       // Step 1: Create Payment Intent with the edited price
       const amountInCents = Math.round(editablePrice * 100); // Convert to cents
       const currency = categoryData?.currentPricing?.currency || 'eur';
-      const applicationId = personalDetail?.ApplicationId;
+      const memberId = profileDetail?.membershipNumber;
       const userId = userDetail?.id || userDetail?._id;
       const tenantId = userDetail?.tenantId || userDetail?.userTenantId;
 
@@ -163,7 +170,7 @@ const DashboardPaymentModal = ({
         amount: amountInCents,
         currency,
         metadata: {
-          memberId: applicationId,
+          memberId,
           description: 'Membership payment from dashboard',
           tenantId,
           userId,
@@ -258,17 +265,17 @@ const DashboardPaymentModal = ({
       }>
       
       {/* Modern Header with Gradient */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 -m-6 mb-6 p-6 rounded-t-lg">
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 -m-4 mb-4 px-4 py-3 rounded-t-lg">
         <div className="text-center text-white">
-          <div className="flex justify-center mb-3">
-            <div className="bg-white/20 backdrop-blur-sm p-3 rounded-full">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex justify-center mb-2">
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
               </svg>
             </div>
           </div>
-          <h2 className="text-2xl font-bold mb-2">Membership Subscription</h2>
-          <p className="text-indigo-100 text-sm">
+          <h2 className="text-xl font-semibold mb-1">Membership Subscription</h2>
+          <p className="text-indigo-100 text-xs">
             Review your membership and complete payment
           </p>
         </div>
@@ -308,9 +315,13 @@ const DashboardPaymentModal = ({
                 
                 <div className="mt-4 pt-4 border-t border-indigo-200/60 space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600 font-medium">Category Price</span>
+                    <span className="text-sm text-gray-600 font-medium">Net Balance</span>
                     <span className="text-xl font-bold text-indigo-600">
-                      {formatCurrency(categoryData?.currentPricing?.price / 100 || 0)}
+                      {formatCurrency(
+                        typeof netAmountInCents === 'number'
+                          ? netAmountInCents / 100
+                          : (categoryData?.currentPricing?.price || 0) / 100,
+                      )}
                     </span>
                   </div>
                   {categoryData?.currentPricing?.frequency && (
@@ -364,7 +375,7 @@ const DashboardPaymentModal = ({
               <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Default price: {formatCurrency(categoryData?.currentPricing?.price / 100 || 0)}
+              Default amount: {formatCurrency(editablePrice || 0)}
             </div>
           </div>
 

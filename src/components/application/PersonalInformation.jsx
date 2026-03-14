@@ -102,6 +102,34 @@ const PersonalInformation = ({
     });
   };
 
+  // Normalize stored mobile number so PhoneInput can format it correctly
+  const normalizedMobileNo = React.useMemo(() => {
+    const raw = formData?.mobileNo;
+    if (!raw) return '';
+
+    // If already in E.164 format, use as-is
+    if (typeof raw === 'string' && raw.startsWith('+')) {
+      return raw;
+    }
+
+    // Strip all non-digits
+    const digits = String(raw).replace(/\D/g, '');
+    if (!digits) return '';
+
+    // If it already starts with Irish country code 353, just add '+'
+    if (digits.startsWith('353')) {
+      return `+${digits}`;
+    }
+
+    // If it starts with a leading 0 (local Irish style), convert to +353 and drop the 0
+    if (digits.startsWith('0')) {
+      return `+353${digits.slice(1)}`;
+    }
+
+    // Fallback: assume it's an Irish number without leading 0 or country code
+    return `+353${digits}`;
+  }, [formData?.mobileNo]);
+
   // Handle numeric-only input fields
   const handleNumericInputChange = e => {
     const { name, value } = e.target;
@@ -311,7 +339,7 @@ const PersonalInformation = ({
             label="Date of Birth"
             name="dateOfBirth"
             required
-            placeholder="mm/dd/yyyy"
+            placeholder="dd/mm/yyyy"
             value={formData?.dateOfBirth || ''}
             onChange={handleInputChange}
             max={new Date().toISOString().split('T')[0]}
@@ -553,7 +581,8 @@ const PersonalInformation = ({
             </label>
             <PhoneInput
               defaultCountry="IE"
-              value={formData?.mobileNo || ''}
+              international={false}
+              value={normalizedMobileNo}
               onChange={handleMobileNumberChange}
               className={`phone-input-custom ${
                 showValidation && !formData?.mobileNo

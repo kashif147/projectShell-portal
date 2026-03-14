@@ -3,6 +3,7 @@ import { Card, Table, Empty } from 'antd';
 import { useApplication } from '../contexts/applicationContext';
 import { useProfile } from '../contexts/profileContext';
 import { useLookup } from '../contexts/lookupContext';
+import { formatToDDMMYYYY } from '../helpers/date.helper';
 
 const Subscriptions = () => {
   const {
@@ -63,8 +64,6 @@ const Subscriptions = () => {
   const dataSource = useMemo(() => {
     const membershipNo =
       profileDetail?.membershipNumber ??
-      personalDetail?.ApplicationId ??
-      personalDetail?.applicationId ??
       'N/A';
 
     const nameRaw = `${personalDetail?.personalInfo?.forename ?? ''} ${
@@ -76,6 +75,10 @@ const Subscriptions = () => {
       subscriptionDetail?.subscriptionDetails?.membershipCategory;
     const category =
       categoryData?.name || getMembershipCategoryLabel(membershipCategoryId);
+    const subscriptionStartDate =
+      subscriptionDetail?.subscriptionDetails?.dateJoined
+        ? formatToDDMMYYYY(subscriptionDetail.subscriptionDetails.dateJoined)
+        : 'N/A';
     const section = subscriptionDetail?.subscriptionDetails?.primarySection ?? 'N/A';
     const branch = professionalDetail?.professionalDetails?.branch ?? 'N/A';
 
@@ -85,6 +88,7 @@ const Subscriptions = () => {
         membershipNo,
         name,
         category,
+        subscriptionStartDate,
         section,
         branch,
       },
@@ -113,6 +117,11 @@ const Subscriptions = () => {
       title: 'Membership Category',
       dataIndex: 'category',
       key: 'category',
+    },
+    {
+      title: 'Subscription Start Date',
+      dataIndex: 'subscriptionStartDate',
+      key: 'subscriptionStartDate',
     },
     {
       title: 'Section',

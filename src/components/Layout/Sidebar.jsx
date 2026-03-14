@@ -72,6 +72,11 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
       label: 'Events & CPD',
     },
     {
+      key: '/courses',
+      icon: <BookOutlined style={{ color: '#2563eb' }} />,
+      label: 'Courses',
+    },
+    {
       key: '/communications',
       icon: <MessageOutlined style={{ color: '#14b8a6' }} />,
       label: 'Communications',
@@ -128,6 +133,12 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
       icon: <FormOutlined />,
       label: 'Application',
       color: '#8b5cf6',
+    },
+    {
+      key: '/courses',
+      icon: <BookOutlined />,
+      label: 'Courses',
+      color: '#2563eb',
     },
     {
       key: '/payments/method',

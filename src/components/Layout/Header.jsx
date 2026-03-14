@@ -111,21 +111,6 @@ const Header = ({
 
       {/* Right Section - Membership Number, Notifications and User Profile */}
       <div className="flex items-center space-x-4">
-        {/* Membership Number */}
-        {profileDetail?.membershipNumber && (
-          <div className="flex bg-green-50 border border-green-200 rounded-lg px-2 md:px-3 py-1 md:py-1.5">
-            <div className="flex flex-col">
-              <p className="text-[10px] md:text-xs text-green-600 font-medium leading-tight">
-                <span className="hidden sm:inline">Membership Number</span>
-                <span className="sm:hidden">Member #</span>
-              </p>
-              <p className="text-xs md:text-sm font-semibold text-green-900 leading-tight">
-                {profileDetail?.membershipNumber}
-              </p>
-            </div>
-          </div>
-        )}
-
         {/* Notification Bell */}
         <Badge count={unreadCount > 0 ? unreadCount : 0} size="small" offset={[-2, 2]}>
           <Button
@@ -155,7 +140,7 @@ const Header = ({
               <span className="text-sm font-semibold text-gray-900">
                 {user?.userFirstName || ''} {user?.userLastName || user?.fullName||  ''}
               </span>
-              <span className="text-xs text-gray-500">{isMember ? 'Member' : 'Non Member'}</span>
+                <span className="text-xs text-gray-500">{isMember ? profileDetail?.membershipNumber : 'Non Member'}</span>
             </div>
           </div>
         </Dropdown>
