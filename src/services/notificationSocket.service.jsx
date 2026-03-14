@@ -13,8 +13,14 @@ const getBaseSocketUrl = () => {
     return null;
   }
 
-  // Strip any trailing slash so socket.io can append its own path
-  return NOTIFICATION_URL;
+  try {
+    // Ensure we only pass the origin (protocol + host) to socket.io
+    const url = new URL(NOTIFICATION_URL);
+    return url.origin;
+  } catch {
+    // Fallback to the raw value if URL parsing fails
+    return NOTIFICATION_URL;
+  }
 };
 
 export const initNotificationSocket = async({
@@ -38,19 +44,35 @@ export const initNotificationSocket = async({
     return;
   }
   const decryptoken = await decryptToken(token);
-  console.log('dectoken==========>',decryptoken)
-
+  
   // Always keep latest handlers so components can update callbacks without recreating socket
   handlers.onNotification = onNotification;
   handlers.onUnreadCount = onUnreadCount;
-
+  
   // If socket already exists, don't recreate it
   if (notificationSocket) {
     return;
   }
-
+  
   try {
-    notificationSocket = io(`${NOTIFICATION_URL}/api/socket.io`, {
+    console.log('Connecting notification socket with token and URL', {
+      token: decryptoken,
+      NOTIFICATION_URL,
+    });
+    const baseSocketUrl = getBaseSocketUrl();
+    if (!baseSocketUrl) {
+      console.warn('Notification socket base URL is not configured');
+      return;
+    }
+
+    console.log('Connecting to notification socket', {
+      baseSocketUrl,
+      path: '/notification-service/api/socket.io',
+    });
+
+    notificationSocket = io(baseSocketUrl, {
+      // External Socket.IO endpoint exposed by the gateway
+      path: '/notification-service/api/socket.io',
       transports: ['websocket', 'polling'],
       auth: {
         token: decryptoken
@@ -61,7 +83,7 @@ export const initNotificationSocket = async({
       timeout: 20000,
     });
 
-    notificationSocket.on('connect', () => {
+    notificationSocket.on('connection', () => {
       console.log('Notification socket connected');
     });
 
@@ -80,16 +102,18 @@ export const initNotificationSocket = async({
       }
     });
 
-    // Unread count update handler
-    notificationSocket.on('notification:unreadCount', data => {
+    // Unread count update handler - align with server "unreadCount" event
+    notificationSocket.on('unreadCount', data => {
       if (!handlers.onUnreadCount) return;
 
       const count =
         typeof data === 'number'
           ? data
-          : typeof data?.unreadCount === 'number'
-            ? data.unreadCount
-            : 0;
+          : typeof data?.count === 'number'
+            ? data.count
+            : typeof data?.unreadCount === 'number'
+              ? data.unreadCount
+              : 0;
 
       handlers.onUnreadCount(count);
     });

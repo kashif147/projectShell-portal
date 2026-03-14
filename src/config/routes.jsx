@@ -4,6 +4,7 @@ import Profile from '../pages/Profile';
 import Subscriptions from '../pages/Subscriptions';
 import Payments from '../pages/Payments';
 import Events from '../pages/Events';
+import Courses from '../pages/Courses';
 import Communications from '../pages/Communications';
 import Queries from '../pages/Queries';
 import QueriesCreate from '../pages/QueriesCreate';
@@ -90,6 +91,10 @@ export const privateRoutes = [
       {
         path: 'events',
         element: <Events />,
+      },
+      {
+        path: 'courses',
+        element: <Courses />,
       },
       {
         path: 'communications',

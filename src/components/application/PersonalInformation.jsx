@@ -339,7 +339,7 @@ const PersonalInformation = ({
             label="Date of Birth"
             name="dateOfBirth"
             required
-            placeholder="mm/dd/yyyy"
+            placeholder="dd/mm/yyyy"
             value={formData?.dateOfBirth || ''}
             onChange={handleInputChange}
             max={new Date().toISOString().split('T')[0]}

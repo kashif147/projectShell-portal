@@ -13,6 +13,7 @@ const routeTitleMap = {
   '/application': 'Application',
   '/payments': 'Payments',
   '/events': 'Events',
+  '/courses': 'Courses',
   '/communications': 'Communications',
   '/queries': 'Queries',
   '/queries/create': 'New Query',

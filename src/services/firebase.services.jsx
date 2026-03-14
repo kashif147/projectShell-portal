@@ -224,9 +224,8 @@ const registerListenerWithFcm = (navigate) => {
         draggable: true,
       });
 
-      // Increment unread count and add notification
+      // Add notification (unread count is handled within context / socket logic)
       if (notificationContextMethods) {
-        notificationContextMethods.incrementUnreadCount();
         notificationContextMethods.addNotification({
           messageId: messageId || Date.now().toString(),
           from: from,
