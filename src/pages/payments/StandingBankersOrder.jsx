@@ -97,7 +97,7 @@ const StandingBankersOrder = () => {
 
   // Beneficiary details
   const beneficiaryDetails = {
-    accountName: 'Irish Nurses and Midwives Organization (INMO)',
+    accountName: 'Irish Nurses and Midwives Organization (CRM)',
     iban: 'IE99 BOFI 9000 1234 5678 99',
     reference: `MEMB-2023-${user?.id || '0000'}`,
   };

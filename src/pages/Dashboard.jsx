@@ -488,6 +488,9 @@ const Dashboard = () => {
 
   // Get button text based on application status
   const getApplicationButtonText = () => {
+    if (applicationStatus === 'rejected') {
+      return 'Re-apply';
+    }
     if (isApplicationSubmitted) {
       return 'Application Submitted';
     }
@@ -562,6 +565,8 @@ const Dashboard = () => {
           ? 'In Review'
           : applicationStatus === 'in-progress'
           ? 'In Progress'
+          : applicationStatus === 'rejected'
+          ? 'Start Application'
           : getApplicationButtonText();
 
       const disabled =
@@ -576,6 +581,8 @@ const Dashboard = () => {
           ? 'green'
           : applicationStatus === 'submitted'
           ? 'blue'
+          : applicationStatus === 'rejected'
+          ? 'red'
           : 'blue';
 
       return { subtitle, disabled, colorScheme };
@@ -730,6 +737,8 @@ const Dashboard = () => {
             <p className="text-gray-600 text-xs sm:text-sm mb-2.5 sm:mb-4">
               {isApplicationSubmitted
                 ? 'Your profile is complete! Well done.'
+                : applicationStatus === 'rejected'
+                ? 'Your application was rejected. Please re-apply to continue.'
                 : 'Complete your profile to get the most out of your membership.'}
             </p>
             <div className="mb-2.5 sm:mb-4">
@@ -770,7 +779,11 @@ const Dashboard = () => {
                       ? 'bg-green-600 text-white hover:bg-green-700 active:bg-green-800'
                       : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
                 }`}>
-                {isApplicationSubmitted ? 'View Profile' : 'Complete Profile'}
+                {isApplicationSubmitted
+                  ? 'View Profile'
+                  : applicationStatus === 'rejected'
+                  ? 'Re-apply'
+                  : 'Complete Profile'}
               </button>
             )}
           </div>

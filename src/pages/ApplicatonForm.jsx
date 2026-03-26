@@ -72,6 +72,7 @@ const ApplicationForm = () => {
   });
 
   console.log('Application ID', personalDetail?.applicationId);
+  console.log('user===========>',user)
 
   // Fetch personal detail on mount
   useEffect(() => {

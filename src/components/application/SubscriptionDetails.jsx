@@ -635,19 +635,19 @@ const SubscriptionDetails = ({
                     <a
                       href="#"
                       className="text-blue-600 underline hover:text-blue-800">
-                      INMO Data Protection Statement
+                      CRM Data Protection Statement
                     </a>
                     , the{' '}
                     <a
                       href="#"
                       className="text-blue-600 underline hover:text-blue-800">
-                      INMO Privacy Statement
+                      CRM Privacy Statement
                     </a>{' '}
                     and the{' '}
                     <a
                       href="#"
                       className="text-blue-600 underline hover:text-blue-800">
-                      INMO Conditions of Membership
+                      CRM Conditions of Membership
                     </a>
                   </span>
                   {!formData?.termsAndConditions && showValidation && (
