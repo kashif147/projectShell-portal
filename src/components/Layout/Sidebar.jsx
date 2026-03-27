@@ -198,7 +198,7 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
   if (isMobile) {
     return (
       <>
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div className="sidebar-mobile-nav fixed bottom-0 left-0 right-0 border-t border-blue-100 bg-gradient-to-r from-white via-blue-50 to-indigo-50 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
           <div className="safe-area-bottom">
             <div className="flex justify-around items-center h-16 px-1">
               {mobileTabItems.map((item) => {
@@ -266,13 +266,14 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
           closable={true}
           bodyStyle={{ 
             padding: '20px 16px', 
-            background: 'linear-gradient(to bottom, #f9fafb, #ffffff)',
+            background: 'linear-gradient(to bottom, #f8fbff, #eef4ff)',
             borderRadius: '24px 24px 0 0'
           }}
           headerStyle={{
-            borderBottom: '1px solid #e5e7eb',
+            borderBottom: '1px solid #dbeafe',
             paddingTop: '24px',
-            paddingBottom: '16px'
+            paddingBottom: '16px',
+            background: 'linear-gradient(180deg, #eff6ff 0%, #ffffff 100%)',
           }}
         >
           <div className="grid grid-cols-3 gap-3 px-2">
@@ -347,18 +348,21 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
   }
 
   return (
-    <div className="h-full bg-white flex flex-col">
-      <div className={`${collapsed ? 'p-4' : 'p-6'} text-center border-b border-gray-200 transition-all duration-300`}>
+    <div className="sidebar-shell h-full bg-gradient-to-b from-slate-50 via-blue-50/40 to-indigo-50/50 flex flex-col relative overflow-hidden">
+      <div className="pointer-events-none absolute -top-24 -right-20 h-56 w-56 rounded-full bg-blue-200/30 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-12 -left-20 h-56 w-56 rounded-full bg-indigo-200/30 blur-3xl" />
+      <div className={`sidebar-header ${collapsed ? 'p-4' : 'p-6'} text-center border-b border-blue-100/80 transition-all duration-300`}>
         <div className="flex flex-col items-center justify-center">
           {/* Logo with smooth transitions */}
-          <div 
+          <div
             className={`relative transition-all duration-300 mb-3 ${
               collapsed ? 'w-12 h-12' : 'w-20 h-20'
             }`}
           >
-            <img 
-              src={Logo} 
-              alt="Logo" 
+            <div className="absolute inset-0 rounded-full bg-white/80 ring-1 ring-blue-100 shadow-sm" />
+            <img
+              src={Logo}
+              alt="Logo"
               className="w-full h-full object-contain transition-transform duration-300 hover:scale-105"
             />
             {/* Subtle glow effect */}
@@ -370,6 +374,9 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
             <div className="animate-fade-in">
               <h1 className="text-xl font-bold text-gray-900 mb-1">Member Portal</h1>
               <p className="text-sm text-gray-500">organization.com</p>
+              <div className="mt-2 inline-flex items-center rounded-full border border-blue-100 bg-white/70 px-3 py-1 text-[11px] font-medium text-blue-700">
+                Secure CRM Workspace
+              </div>
             </div>
           )}
           
@@ -381,23 +388,23 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
           )}
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="sidebar-scroll relative flex-1 overflow-y-auto px-1 py-2">
         <Menu
           mode="inline"
           selectedKeys={[location.pathname]}
-          style={{ 
-            background: 'white',
+          style={{
+            background: 'transparent',
             border: 'none',
-            color: '#1f2937'
+            color: '#1f2937',
           }}
           className="sidebar-menu"
           onClick={({ key }) => navigate(key)}
           items={menuItems}
         />
       </div>
-      <div className="border-t border-gray-200 p-4">
-        <div 
-          className="flex items-center gap-3 cursor-pointer hover:text-blue-600 transition-colors"
+      <div className="sidebar-footer border-t border-blue-100/80 bg-white/50 backdrop-blur-sm p-4">
+        <div
+          className="flex items-center gap-3 cursor-pointer rounded-lg px-3 py-2 text-slate-700 hover:bg-white/80 hover:text-blue-600 transition-colors"
           onClick={() => navigate('/help')}
         >
           <QuestionCircleOutlined className="text-lg" />
@@ -408,20 +415,123 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
         .sidebar-menu .ant-menu-item {
           color: #1f2937 !important;
           font-weight: 500;
-          margin: 4px 8px;
-          border-radius: 8px;
-          padding-left: 16px !important;
+          margin: 6px 8px;
+          border-radius: 12px;
+          min-height: 42px;
+          display: flex !important;
+          align-items: center !important;
+          padding-left: 14px !important;
+          transition: all 0.22s ease;
+          border: 1px solid transparent;
         }
         .sidebar-menu .ant-menu-item-selected {
-          background-color: #f0f9ff !important;
-          color: #1f2937 !important;
+          background: linear-gradient(
+            90deg,
+            rgba(59, 130, 246, 0.16) 0%,
+            rgba(99, 102, 241, 0.1) 100%
+          ) !important;
+          color: #0f172a !important;
+          border-color: rgba(147, 197, 253, 0.7) !important;
+          box-shadow: 0 6px 16px rgba(59, 130, 246, 0.12);
         }
         .sidebar-menu .ant-menu-item:hover {
-          background-color: #f3f4f6 !important;
+          background-color: rgba(255, 255, 255, 0.82) !important;
           color: #1f2937 !important;
+          border-color: rgba(191, 219, 254, 0.65) !important;
+          transform: translateX(2px);
         }
         .sidebar-menu .ant-menu-item-icon {
           font-size: 18px !important;
+          transition: transform 0.22s ease;
+        }
+        .sidebar-menu .ant-menu-item:hover .ant-menu-item-icon,
+        .sidebar-menu .ant-menu-item-selected .ant-menu-item-icon {
+          transform: scale(1.08);
+        }
+        .sidebar-menu .ant-menu-item::after {
+          display: none !important;
+        }
+        .sidebar-scroll {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .sidebar-scroll::-webkit-scrollbar {
+          width: 0;
+          height: 0;
+          display: none;
+        }
+
+        .sidebar-shell {
+          --sidebar-fg: #1f2937;
+          --sidebar-header-border: rgba(191, 219, 254, 0.8);
+          --sidebar-footer-border: rgba(191, 219, 254, 0.8);
+          --sidebar-footer-bg: rgba(255, 255, 255, 0.5);
+          --sidebar-item-fg: #1f2937;
+          --sidebar-item-selected-fg: #0f172a;
+          --sidebar-item-hover-bg: rgba(255, 255, 255, 0.82);
+          --sidebar-item-hover-border: rgba(191, 219, 254, 0.65);
+          --sidebar-item-selected-border: rgba(147, 197, 253, 0.7);
+          --sidebar-item-selected-shadow: 0 6px 16px rgba(59, 130, 246, 0.12);
+        }
+
+        .sidebar-header {
+          border-bottom-color: var(--sidebar-header-border) !important;
+        }
+        .sidebar-footer {
+          border-top-color: var(--sidebar-footer-border) !important;
+          background: var(--sidebar-footer-bg) !important;
+        }
+        .sidebar-menu .ant-menu-item {
+          color: var(--sidebar-item-fg) !important;
+        }
+        .sidebar-menu .ant-menu-item-selected {
+          color: var(--sidebar-item-selected-fg) !important;
+          border-color: var(--sidebar-item-selected-border) !important;
+          box-shadow: var(--sidebar-item-selected-shadow) !important;
+        }
+        .sidebar-menu .ant-menu-item:hover {
+          background-color: var(--sidebar-item-hover-bg) !important;
+          border-color: var(--sidebar-item-hover-border) !important;
+        }
+
+        @media (prefers-color-scheme: dark) {
+          .sidebar-shell {
+            color: #e5e7eb;
+            background: linear-gradient(
+              180deg,
+              rgba(15, 23, 42, 0.98) 0%,
+              rgba(17, 24, 39, 0.96) 55%,
+              rgba(30, 41, 59, 0.95) 100%
+            ) !important;
+            --sidebar-header-border: rgba(71, 85, 105, 0.7);
+            --sidebar-footer-border: rgba(71, 85, 105, 0.7);
+            --sidebar-footer-bg: rgba(15, 23, 42, 0.55);
+            --sidebar-item-fg: #dbeafe;
+            --sidebar-item-selected-fg: #ffffff;
+            --sidebar-item-hover-bg: rgba(30, 41, 59, 0.7);
+            --sidebar-item-hover-border: rgba(71, 85, 105, 0.9);
+            --sidebar-item-selected-border: rgba(96, 165, 250, 0.55);
+            --sidebar-item-selected-shadow: 0 10px 20px rgba(2, 132, 199, 0.2);
+          }
+
+          .sidebar-shell h1 {
+            color: #f8fafc !important;
+          }
+          .sidebar-shell p {
+            color: #94a3b8 !important;
+          }
+          .sidebar-footer {
+            backdrop-filter: blur(8px);
+          }
+          .sidebar-mobile-nav {
+            border-top-color: rgba(71, 85, 105, 0.85) !important;
+            background: linear-gradient(
+              90deg,
+              rgba(15, 23, 42, 0.98) 0%,
+              rgba(30, 41, 59, 0.96) 50%,
+              rgba(17, 24, 39, 0.98) 100%
+            ) !important;
+          }
         }
         @keyframes fade-in {
           from {

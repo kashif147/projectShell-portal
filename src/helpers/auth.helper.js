@@ -12,16 +12,14 @@ export const deleteHeaders = () => {
   localStorage.removeItem('token');
 };
 
-export const saveUser = user => {
-  localStorage.setItem('user', JSON.stringify(user));
+export const setRefreshToken = refreshToken => {
+  localStorage.setItem('refreshToken', refreshToken);
 };
 
-export const getUser = () => {
-  return {
-    user: localStorage.getItem('user'),
-  };
+export const getRefreshToken = () => {
+  return localStorage.getItem('refreshToken');
 };
 
-export const deleteUser = () => {
-  localStorage.removeItem('user');
+export const deleteRefreshToken = () => {
+  localStorage.removeItem('refreshToken');
 };

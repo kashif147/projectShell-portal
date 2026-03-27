@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Layout, Avatar, Dropdown, Badge, Input } from 'antd';
 import {
   MenuFoldOutlined,
@@ -34,10 +34,17 @@ const Header = ({
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState('');
-
-  useEffect(() => {
-     fetchAllLookups()
-  }, []);
+  const userDisplayName = useMemo(
+    () =>
+      `${user?.userFirstName || ''} ${user?.userLastName || user?.fullName || ''}`.trim() ||
+      'Member User',
+    [user?.userFirstName, user?.userLastName, user?.fullName],
+  );
+  const userSubLabel = isMember
+    ? profileDetail?.membershipNumber || 'Membership Pending'
+    : isCrmUser
+      ? 'CRM User'
+      : 'Non Member';
 
   const items = [
     {
@@ -64,16 +71,19 @@ const Header = ({
   return (
     <Layout.Header
       style={{
-        padding: '0 24px',
-        background: '#fff',
+        padding: '0 16px',
+        background:
+          'linear-gradient(90deg, rgba(255,255,255,0.98) 0%, rgba(247,250,255,0.98) 45%, rgba(238,245,255,0.98) 100%)',
+        borderBottom: '1px solid rgba(219, 234, 254, 0.9)',
+        backdropFilter: 'blur(10px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         position: 'sticky',
         top: 0,
         zIndex: 99,
-        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-        height: '72px',
+        boxShadow: '0 6px 20px rgba(15, 23, 42, 0.06)',
+        height: '74px',
       }}>
       {/* Left Section - Menu Button, Title, and Search */}
       <div className="flex items-center flex-1">
@@ -82,43 +92,48 @@ const Header = ({
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => setCollapsed(!collapsed)}
-            className="ml-[-24px] w-16 h-16"
+            className="w-11 h-11 rounded-xl border border-blue-100 bg-white/80 text-slate-700 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all"
           />
         )}
-        <h1 className="header-title text-2xl ml-4 text-gray-800 tracking-tight">
+        <h1 className="header-title ml-3 text-xl sm:text-2xl font-semibold text-slate-800 tracking-tight">
           {pageTitle}
         </h1>
 
         {/* Search Bar */}
         <div
-          className="ml-8 hidden md:block"
-          style={{ maxWidth: '300px', width: '100%' }}>
+          className="ml-5 hidden lg:block"
+          style={{ maxWidth: '320px', width: '100%' }}>
           <Input
             placeholder="Search..."
-            prefix={<SearchOutlined className="text-gray-400" />}
+            prefix={<SearchOutlined className="text-slate-400" />}
             value={searchValue}
             onChange={e => setSearchValue(e.target.value)}
             onPressEnter={() => handleSearch(searchValue)}
             style={{
-              borderRadius: '8px',
-              backgroundColor: '#f5f5f5',
-              border: 'none',
+              borderRadius: '12px',
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.7)',
             }}
-            className="hover:bg-gray-100 transition-colors"
+            className="hover:bg-white hover:border-blue-200 transition-all"
           />
         </div>
       </div>
 
       {/* Right Section - Membership Number, Notifications and User Profile */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-2 sm:space-x-3">
+        
         {/* Notification Bell */}
-        <Badge count={unreadCount > 0 ? unreadCount : 0} size="small" offset={[-2, 2]}>
+        <Badge
+          count={unreadCount > 0 ? unreadCount : 0}
+          size="small"
+          offset={[-1, 2]}>
           <Button
             type="text"
             icon={
-              <BellOutlined style={{ fontSize: '20px', color: '#52525b' }} />
+              <BellOutlined style={{ fontSize: '20px', color: '#334155' }} />
             }
-            className="hover:bg-gray-50 transition-colors"
+            className="h-11 w-11 rounded-xl border border-blue-100 bg-white/80 hover:bg-blue-50 hover:border-blue-200 transition-all"
             onClick={() => navigate('/notifications')}
           />
         </Badge>
@@ -127,20 +142,23 @@ const Header = ({
         <Dropdown
           menu={{ items, onClick: handleMenuClick }}
           placement="bottomRight">
-          <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-lg px-3 py-2 transition-colors">
+          <div className="group flex items-center space-x-3 cursor-pointer rounded-xl border border-blue-100 bg-white/80 px-3 py-2 hover:bg-blue-50/60 hover:border-blue-200 transition-all">
             <Avatar
               icon={<UserOutlined />}
               style={{
-                backgroundColor: '#71717a',
-                width: '40px',
-                height: '40px',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+                width: '38px',
+                height: '38px',
+                boxShadow: '0 4px 10px rgba(59,130,246,0.3)',
               }}
             />
             <div className="hidden sm:flex flex-col items-start">
-              <span className="text-sm font-semibold text-gray-900">
-                {user?.userFirstName || ''} {user?.userLastName || user?.fullName||  ''}
+              <span className="text-sm font-semibold text-slate-900">
+                {userDisplayName}
               </span>
-                <span className="text-xs text-gray-500">{isMember ? profileDetail?.membershipNumber : 'Non Member'}</span>
+              <span className="text-xs text-slate-500">
+                {userSubLabel}
+              </span>
             </div>
           </div>
         </Dropdown>

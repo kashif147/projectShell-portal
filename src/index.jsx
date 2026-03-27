@@ -14,11 +14,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { publicRoutes, privateRoutes } from './config/routes';
 import './assets/theme/index.css';
-import {
-  getMemberRule,
-  signInMicrosoft,
-  validation,
-} from './services/auth.services';
+import { signInMicrosoft, validation } from './services/auth.services';
 import './config/globals.js';
 import { ErrorPage } from './pages/errorPage';
 import { getVerifier } from './helpers/verifier.helper.js';
@@ -124,7 +120,6 @@ const App = () => {
           dispatch(signInMicrosoft(data));
         } else {
           dispatch(validation());
-          // getMemberRule()
         }
       } catch (error) {
         toast.error('Authentication failed');
@@ -145,25 +140,33 @@ const App = () => {
       const initializeNotifications = async () => {
         try {
           console.log('Initializing FCM notifications...');
-          
+
           // Extract user data from Redux state
           const user = auth.user || auth.userDetail;
-          const userId = user?.id || user?._id || auth.userDetail?.id || auth.userDetail?._id;
-          const tenantId = user?.tenantId || user?.userTenantId || auth.userDetail?.tenantId || auth.userDetail?.userTenantId;
-          
+          const userId =
+            user?.id ||
+            user?._id ||
+            auth.userDetail?.id ||
+            auth.userDetail?._id;
+          const tenantId =
+            user?.tenantId ||
+            user?.userTenantId ||
+            auth.userDetail?.tenantId ||
+            auth.userDetail?.userTenantId;
+
           console.log('User data for FCM registration:', {
             hasUserId: !!userId,
             hasTenantId: !!tenantId,
             userId: userId ? userId.substring(0, 10) + '...' : 'N/A',
             tenantId: tenantId ? tenantId.substring(0, 10) + '...' : 'N/A',
           });
-          
+
           // Prepare user data for token registration
           const userData = userId && tenantId ? { userId, tenantId } : null;
-          
+
           const token = await getFcmToken(userData);
           console.log('FCM Token retrieved in App:', token);
-          
+
           // Also log from localStorage
           const storedToken = localStorage.getItem('fcmToken');
           console.log('FCM Token from localStorage:', storedToken);
@@ -200,8 +203,6 @@ const App = () => {
       }
     };
   }, [auth.isSignedIn]);
-
-  // console.log('auth========>', auth);
 
   return auth.isLoading ? <PulseLoader /> : <Router auth={auth} />;
 };

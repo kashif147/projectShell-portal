@@ -80,6 +80,23 @@ const ApplicationDetail = () => {
            /T\d{2}:\d{2}:\d{2}/.test(value);
   };
 
+  const getStatusTagColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'approved':
+        return 'success';
+      case 'submitted':
+        return 'processing';
+      case 'rejected':
+        return 'error';
+      case 'in-progress':
+        return 'warning';
+      default:
+        return 'default';
+    }
+  };
+
+
+  console.log('application',application);
   // Helper function to check if a key is a phone number field
   const isPhoneField = (key) => {
     const phoneKeywords = ['mobilenumber', 'telephonenumber', 'phonenumber', 'mobile', 'telephone', 'phone', 'tel'];
@@ -343,9 +360,19 @@ const ApplicationDetail = () => {
               <FileTextOutlined className="text-white text-lg sm:text-xl" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-base sm:text-lg font-bold text-gray-900">
-                {categoryData?.name || 'N/A'}
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-bold text-gray-900">
+                  {categoryData?.name || 'N/A'}
+                </h3>
+                {application?.personalDetail?.applicationStatus && (
+                  <Tag 
+                    color={getStatusTagColor(application?.personalDetail?.applicationStatus)} 
+                    className="rounded-full px-2 uppercase text-[10px] sm:text-[11px] font-bold"
+                  >
+                    {application?.personalDetail?.applicationStatus}
+                  </Tag>
+                )}
+              </div>
               <p className="text-xs sm:text-sm text-gray-600">
                 {application?.submissionDate 
                   ? `Submitted on ${formatToDDMMYYYY(application.submissionDate)}`

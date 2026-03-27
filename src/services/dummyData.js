@@ -36,17 +36,23 @@ export const dummyData = {
       id: 1,
       title: 'Professional Development Workshop',
       date: '2024-05-10',
+      time: '10:00 AM - 12:30 PM',
       location: 'Virtual',
       status: 'Upcoming',
       description: 'Learn about the latest industry trends and best practices.',
+      image:
+        'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=300&h=300&fit=crop',
     },
     {
       id: 2,
       title: 'Networking Event',
       date: '2024-06-15',
+      time: '6:00 PM - 9:00 PM',
       location: 'City Convention Center',
       status: 'Upcoming',
       description: 'Connect with industry professionals and expand your network.',
+      image:
+        'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=300&h=300&fit=crop',
     },
   ],
 

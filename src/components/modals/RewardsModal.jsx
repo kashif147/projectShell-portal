@@ -22,7 +22,7 @@ const RewardsModal = ({ isOpen, onClose }) => {
                 </svg>
               </div>
               <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">INMO</h2>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">CRM</h2>
                 <p className="text-xl font-semibold text-blue-600">REWARDS</p>
                 <p className="text-sm text-gray-600 mt-1">Supported by Cornmarket</p>
               </div>
@@ -41,7 +41,7 @@ const RewardsModal = ({ isOpen, onClose }) => {
           {/* Introduction */}
           <div className="bg-blue-50 p-6 rounded-lg mb-6">
             <p className="text-center text-gray-700">
-              Rewards offers new INMO members exclusive access to MyDoc, an online GP service, 
+              Rewards offers new CRM members exclusive access to MyDoc, an online GP service, 
               for 12 months and other discounts, offers, competitions and more (benefits).
             </p>
             <p className="text-center text-sm text-gray-600 mt-3">
@@ -151,7 +151,7 @@ const RewardsModal = ({ isOpen, onClose }) => {
           {/* Call to Action Footer */}
           <div className="mt-8 bg-blue-900 text-white p-6 rounded-lg text-center">
             <p className="text-xl font-bold mb-2">Don't miss out. Join Rewards today by ticking the box</p>
-            <p className="text-sm">on the INMO application form below</p>
+            <p className="text-sm">on the CRM application form below</p>
             <p className="text-xs mt-4 opacity-75">
               Cornmarket Group Financial Services Ltd. is regulated by the Central Bank of Ireland.<br/>
               A member of the Irish Life Group Ltd. which is part of the Great-West Lifeco Group of companies.
