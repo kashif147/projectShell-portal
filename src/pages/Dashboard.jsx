@@ -1,11 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import DashboardCard from '../components/dashboard/DashboardCard';
 import QuickActionButton from '../components/dashboard/QuickActionButton';
+import UpcomingEventCard from '../components/dashboard/UpcomingEventCard';
 import {
   UserOutlined,
   CalendarOutlined,
   CreditCardOutlined,
   FormOutlined,
+  EnvironmentOutlined,
+  ClockCircleOutlined,
 } from '@ant-design/icons';
 import { useApplication } from '../contexts/applicationContext';
 import { useLookup } from '../contexts/lookupContext';
@@ -21,6 +24,7 @@ import { useNavigate } from 'react-router-dom';
 import { applicationConfirmationRequest } from '../api/application.api';
 import { getAccountNetBalanceRequest } from '../api/account.api';
 import { useMemberRole } from '../hooks/useMemberRole';
+import { dummyData } from '../services/dummyData';
 
 const stripePromise = loadStripe(
   'pk_test_51SBAG4FTlZb0wcbr19eI8nC5u62DfuaUWRVS51VTERBocxSM9JSEs4ubrW57hYTCAHK9d6jrarrT4SAViKFMqKjT00TrEr3PNV',
@@ -46,6 +50,7 @@ const Dashboard = () => {
   const { user } = useSelector(state => state.auth);
   const navigate = useNavigate();
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
   const [statusModal, setStatusModal] = useState({
     open: false,
     status: 'success',
@@ -599,16 +604,24 @@ const Dashboard = () => {
     ],
   );
 
+  const upcomingEvents = useMemo(
+    () =>
+      (dummyData?.events || [])
+        .filter(event => event?.status?.toLowerCase() === 'upcoming')
+        .slice(0, 3),
+    [],
+  );
+
   return (
-    <div className="space-y-4 sm:space-y-6 px-2 sm:px-6 lg:px-8 py-3 sm:py-6">
+    <div className="space-y-5 px-3 py-4 sm:space-y-6 sm:px-6 lg:px-8 sm:py-6">
       {/* Welcome Header */}
-      <div className="mb-3 sm:mb-6 lg:mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+      <div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+            <h1 className="mb-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
               Welcome back, {user?.userFirstName || user?.fullName || 'Member'}!
             </h1>
-            <p className="text-sm sm:text-base text-gray-600">
+            <p className="text-sm text-slate-600 sm:text-base">
               Here's a quick overview of your member account.
             </p>
           </div>
@@ -616,15 +629,15 @@ const Dashboard = () => {
       </div>
 
       {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-6">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 sm:gap-6">
         {/* Left Column - Application Status & Events */}
-        <div className="lg:col-span-2 space-y-3 sm:space-y-6">
+        <div className="space-y-4 lg:col-span-2 sm:space-y-6">
           {/* Quick Actions Section */}
-          <div className="bg-white rounded-lg shadow-sm p-2 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+            <h2 className="mb-3 text-lg font-semibold text-slate-900 sm:mb-4 sm:text-xl">
               Quick Actions
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-2 lg:grid-cols-4 sm:gap-4">
               {/* Application Action */}
               <QuickActionButton
                 title="Application"
@@ -672,69 +685,44 @@ const Dashboard = () => {
           </div>
 
           {/* Upcoming Events Section */}
-          <div className="bg-white rounded-lg shadow-sm p-2 sm:p-6">
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <h2 className="text-lg sm:text-xl font-semibold">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+            <div className="mb-3 flex items-center justify-between sm:mb-4">
+              <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">
                 Upcoming Events
               </h2>
               <button
                 onClick={() => navigate('/events')}
-                className="text-blue-600 hover:text-blue-700 text-xs sm:text-sm font-medium">
+                className="text-xs font-medium text-blue-600 hover:text-blue-700 sm:text-sm">
                 View All
               </button>
             </div>
-            <div className="space-y-2.5 sm:space-y-4">
-              {/* Event 1 */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 p-2 sm:p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <CalendarOutlined className="text-blue-600 text-lg sm:text-xl" />
+            <div className="space-y-3 sm:space-y-4">
+              {upcomingEvents.length > 0 ? (
+                upcomingEvents.map(event => (
+                  <UpcomingEventCard
+                    key={event.id}
+                    event={event}
+                    onOpenDetail={setSelectedEvent}
+                    onRegister={() => navigate('/events')}
+                  />
+                ))
+              ) : (
+                <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center text-sm text-slate-600">
+                  No upcoming events available.
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm sm:text-base text-gray-800">
-                    Annual Member Mixer
-                  </h3>
-                  <p className="text-xs sm:text-sm text-gray-600">
-                    July 15, 2024 @ 6:00 PM
-                  </p>
-                </div>
-                <button
-                  onClick={() => navigate('/events')}
-                  className="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium">
-                  Register
-                </button>
-              </div>
-
-              {/* Event 2 */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 p-2 sm:p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <CalendarOutlined className="text-blue-600 text-lg sm:text-xl" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm sm:text-base text-gray-800">
-                    Workshop: Advanced Techniques
-                  </h3>
-                  <p className="text-xs sm:text-sm text-gray-600">
-                    August 2, 2024 @ 9:00 AM
-                  </p>
-                </div>
-                <button
-                  onClick={() => navigate('/events')}
-                  className="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-xs sm:text-sm font-medium">
-                  Learn More
-                </button>
-              </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Right Column - Profile & Payments */}
-        <div className="space-y-3 sm:space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Profile Completion Section */}
-          <div className="bg-white rounded-lg shadow-sm p-2 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+            <h2 className="mb-3 text-lg font-semibold text-slate-900 sm:mb-4 sm:text-xl">
               Profile Completion
             </h2>
-            <p className="text-gray-600 text-xs sm:text-sm mb-2.5 sm:mb-4">
+            <p className="mb-2.5 text-xs text-slate-600 sm:mb-4 sm:text-sm">
               {isApplicationSubmitted
                 ? 'Your profile is complete! Well done.'
                 : applicationStatus === 'rejected'
@@ -789,25 +777,25 @@ const Dashboard = () => {
           </div>
 
           {/* Payments & Billing Section */}
-          <div className="bg-white rounded-lg shadow-sm p-2 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+            <h2 className="mb-3 text-lg font-semibold text-slate-900 sm:mb-4 sm:text-xl">
               Payments & Billing
             </h2>
             <div className="space-y-2.5 sm:space-y-4">
               {isMember && (
-                <div className="text-right">
-                  <p className="text-xs sm:text-sm text-gray-600 mb-1">
+                <div className="rounded-lg bg-slate-50 p-4 text-right">
+                  <p className="mb-1 text-xs text-slate-600 sm:text-sm">
                     Net Balance
                     {accountNetBalance?.year && (
                       <span className="ml-1">({accountNetBalance.year})</span>
                     )}
                   </p>
                   {accountNetBalanceLoading ? (
-                    <p className="text-2xl sm:text-3xl font-bold text-gray-500 animate-pulse">
+                    <p className="animate-pulse text-2xl font-bold text-slate-500 sm:text-3xl">
                       Loading...
                     </p>
                   ) : (
-                    <p className="text-2xl sm:text-3xl font-bold text-blue-600">
+                    <p className="text-2xl font-bold text-blue-600 sm:text-3xl">
                       {formatCurrency(accountNetBalance?.net ?? 0)}
                     </p>
                   )}
@@ -858,6 +846,75 @@ const Dashboard = () => {
           netAmountInCents={accountNetBalance?.net ?? 0}
         />
       </Elements>
+
+      <div>
+        {selectedEvent && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            onClick={() => setSelectedEvent(null)}
+          >
+            <div
+              className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl sm:p-6"
+              onClick={e => e.stopPropagation()}
+            >
+              {selectedEvent.image && (
+                <img
+                  src={selectedEvent.image}
+                  alt={selectedEvent.title || 'Event'}
+                  className="mb-4 h-44 w-full rounded-lg object-cover"
+                />
+              )}
+              <div className="mb-4 flex items-start justify-between">
+                <h3 className="text-lg font-semibold text-slate-900 sm:text-xl">
+                  {selectedEvent.title}
+                </h3>
+                <button
+                  onClick={() => setSelectedEvent(null)}
+                  className="text-sm font-medium text-slate-500 hover:text-slate-700"
+                >
+                  Close
+                </button>
+              </div>
+              <p className="mb-4 text-sm text-slate-600">
+                {selectedEvent.description || 'No additional details available.'}
+              </p>
+              <div className="space-y-2 text-sm text-slate-700">
+                <p className="flex items-center gap-2">
+                  <CalendarOutlined className="text-blue-600" />
+                  <span>{selectedEvent.date || 'Date TBD'}</span>
+                </p>
+                {selectedEvent.time && (
+                  <p className="flex items-center gap-2">
+                    <ClockCircleOutlined className="text-blue-600" />
+                    <span>{selectedEvent.time}</span>
+                  </p>
+                )}
+                <p className="flex items-center gap-2">
+                  <EnvironmentOutlined className="text-blue-600" />
+                  <span>{selectedEvent.location || 'Location TBD'}</span>
+                </p>
+              </div>
+              <div className="mt-5 flex justify-end gap-2">
+                <button
+                  onClick={() => setSelectedEvent(null)}
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedEvent(null);
+                    navigate('/events');
+                  }}
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  Register
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
