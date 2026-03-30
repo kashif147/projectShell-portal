@@ -116,18 +116,31 @@ const PersonalInformation = ({
     const digits = String(raw).replace(/\D/g, '');
     if (!digits) return '';
 
+    // Common international format: 00<countryCode><number>
+    if (digits.startsWith('00')) {
+      return `+${digits.slice(2)}`;
+    }
+
     // If it already starts with Irish country code 353, just add '+'
     if (digits.startsWith('353')) {
       return `+${digits}`;
     }
 
-    // If it starts with a leading 0 (local Irish style), convert to +353 and drop the 0
-    if (digits.startsWith('0')) {
+    // For Ireland mobile numbers we expect local style starting with 08...
+    // (e.g. 087 123 4567). Convert to +353 and drop the leading 0.
+    if (digits.startsWith('08')) {
       return `+353${digits.slice(1)}`;
     }
 
-    // Fallback: assume it's an Irish number without leading 0 or country code
-    return `+353${digits}`;
+    // If a phone is stored as Irish national digits without the leading 0 or 353,
+    // it typically starts with 8 and is 9-10 digits long (e.g. 851234567).
+    if (digits.startsWith('8') && digits.length >= 9 && digits.length <= 10) {
+      return `+353${digits}`;
+    }
+
+    // Otherwise, don't force Ireland. Assume the stored digits already contain
+    // the country calling code (just missing the '+').
+    return `+${digits}`;
   }, [formData?.mobileNo]);
 
   // Handle numeric-only input fields

@@ -58,6 +58,7 @@ const Dashboard = () => {
   });
   const [isApplicationSubmitted, setIsApplicationSubmitted] = useState(false);
   const [applicationStatus, setApplicationStatus] = useState(null);
+  const [isApplicationActive, setIsApplicationActive] = useState(true);
   const [appicationLoader, setApplicationLoader] = useState(true);
   const [accountNetBalance, setAccountNetBalance] = useState(null);
   const [accountNetBalanceLoading, setAccountNetBalanceLoading] =
@@ -348,6 +349,7 @@ const Dashboard = () => {
 
     if (contextApplicationStatus != null) {
       setApplicationStatus(contextApplicationStatus);
+      setIsApplicationActive(true);
       setIsApplicationSubmitted(
         contextApplicationStatus === 'submitted' ||
           contextApplicationStatus === 'approved',
@@ -372,10 +374,15 @@ const Dashboard = () => {
             const status =
               response?.data?.data?.applicationStatus ||
               response?.data?.applicationStatus;
+            const isActive =
+              response?.data?.data?.meta?.isActive ??
+              response?.data?.meta?.isActive ??
+              true;
 
             setApplicationStatus(status);
+            setIsApplicationActive(Boolean(isActive));
             setApplicationLoader(false);
-            if (status === 'submitted' || status === 'approved') {
+            if (isActive && (status === 'submitted' || status === 'approved')) {
               setIsApplicationSubmitted(true);
             } else {
               setIsApplicationSubmitted(false);
@@ -387,10 +394,12 @@ const Dashboard = () => {
           console.error('Failed to fetch application status:', error);
           setIsApplicationSubmitted(false);
           setApplicationStatus(null);
+          setIsApplicationActive(true);
           setApplicationLoader(false);
         }
       } else {
         setApplicationStatus('none');
+        setIsApplicationActive(true);
         setApplicationLoader(false);
       }
     };
@@ -493,6 +502,9 @@ const Dashboard = () => {
 
   // Get button text based on application status
   const getApplicationButtonText = () => {
+    if (!isApplicationActive) {
+      return 'Start Application';
+    }
     if (applicationStatus === 'rejected') {
       return 'Re-apply';
     }
@@ -564,7 +576,9 @@ const Dashboard = () => {
   const applicationQuickActionState = useMemo(
     () => {
       const subtitle =
-        applicationStatus === 'approved'
+        !isApplicationActive
+          ? 'Start Application'
+          : applicationStatus === 'approved'
           ? 'Approved'
           : applicationStatus === 'submitted'
           ? 'In Review'
@@ -578,11 +592,14 @@ const Dashboard = () => {
         loading ||
         appicationLoader ||
         applicationStatus === null ||
-        applicationStatus === 'submitted' ||
-        applicationStatus === 'approved';
+        (isApplicationActive &&
+          (applicationStatus === 'submitted' ||
+            applicationStatus === 'approved'));
 
       const colorScheme =
-        applicationStatus === 'approved'
+        !isApplicationActive
+          ? 'blue'
+          : applicationStatus === 'approved'
           ? 'green'
           : applicationStatus === 'submitted'
           ? 'blue'
@@ -594,6 +611,7 @@ const Dashboard = () => {
     },
     [
       applicationStatus,
+      isApplicationActive,
       loading,
       appicationLoader,
       isApplicationSubmitted,
