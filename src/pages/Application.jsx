@@ -11,7 +11,16 @@ import Spinner from '../components/common/Spinner';
 import { useMemberRole } from '../hooks/useMemberRole';
 
 const Application = () => {
-  const { personalDetail, professionalDetail, subscriptionDetail, categoryData, categoryLoading, getCategoryData, isCrmUser } =
+  const {
+    personalDetail,
+    professionalDetail,
+    subscriptionDetail,
+    categoryData,
+    categoryLoading,
+    getCategoryData,
+    isCrmUser,
+    loading,
+  } =
     useApplication();
   const { isMember: hasMemberRole } = useMemberRole();
   const { profileDetail } = useProfile();
@@ -159,7 +168,7 @@ const Application = () => {
   const memberStatus = isMember ? 'Member' : 'Non Member';
 
   // Show full-screen loading overlay
-  if (categoryLoading) {
+  if (categoryLoading || loading) {
     return (
       <div className="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
         <div className="text-center">

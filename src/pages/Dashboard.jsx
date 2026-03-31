@@ -76,6 +76,9 @@ const Dashboard = () => {
     subscriptionDetails: {},
   });
 
+
+  console.log('member number=========>',profileDetail?.membershipNumber)
+
   // Kick off profile and application data loading together when the dashboard mounts
   useEffect(() => {
     getProfileDetail();
@@ -410,7 +413,7 @@ const Dashboard = () => {
   // Fetch account statement when member has membership number
   useEffect(() => {
     const memberId = profileDetail?.membershipNumber;
-    if (!memberId || !isMember) {
+    if (!memberId) {
       return;
     }
     setAccountNetBalanceLoading(true);
@@ -625,7 +628,7 @@ const Dashboard = () => {
   const upcomingEvents = useMemo(
     () =>
       (dummyData?.events || [])
-        .filter(event => event?.status?.toLowerCase() === 'upcoming')
+        .filter(event => event?.type?.toLowerCase() === 'upcoming')
         .slice(0, 3),
     [],
   );
@@ -800,7 +803,7 @@ const Dashboard = () => {
               Payments & Billing
             </h2>
             <div className="space-y-2.5 sm:space-y-4">
-              {isMember && (
+              {profileDetail?.membershipNumber && (
                 <div className="rounded-lg bg-slate-50 p-4 text-right">
                   <p className="mb-1 text-xs text-slate-600 sm:text-sm">
                     Net Balance
