@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tag } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import {
   UserOutlined,
   IdcardOutlined,
@@ -13,13 +14,88 @@ import { useApplication } from '../contexts/applicationContext';
 import { useLookup } from '../contexts/lookupContext';
 import Spinner from '../components/common/Spinner';
 import moment from 'moment';
+import {
+  normalizeApplicationDetailResponse,
+  applicationDetailHasSections,
+} from '../helpers/applicationPayload.helper';
+import { getApplicationById } from '../api/profile.api';
 
 const ApplicationDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const application = location.state?.application;
+  const routeApplicationId =
+    location.state?.applicationId ??
+    location.state?.application?.applicationId ??
+    null;
+  const stateApplication = location.state?.application ?? null;
+
+  const [application, setApplication] = useState(stateApplication);
+  const [detailFetchLoading, setDetailFetchLoading] = useState(() => {
+    if (!routeApplicationId) return false;
+    return !applicationDetailHasSections(stateApplication);
+  });
+
   const { categoryData, categoryLoading, getCategoryData } = useApplication();
   const { categoryLookups } = useLookup();
+
+  useEffect(() => {
+    const id =
+      location.state?.applicationId ??
+      location.state?.application?.applicationId;
+    const passedApp = location.state?.application;
+
+    if (!id) {
+      setApplication(null);
+      setDetailFetchLoading(false);
+      return;
+    }
+
+    if (passedApp && applicationDetailHasSections(passedApp)) {
+      setApplication(passedApp);
+      setDetailFetchLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setDetailFetchLoading(true);
+    getApplicationById(id)
+      .then(res => {
+        if (cancelled) return;
+        const normalized = normalizeApplicationDetailResponse(res, {
+          applicationId: id,
+        });
+        setApplication(normalized);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          toast.error('Failed to load application details.');
+          setApplication(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setDetailFetchLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    location.state?.applicationId,
+    location.state?.application,
+    location.key,
+  ]);
+
+  useEffect(() => {
+    const membershipCategory =
+      application?.subscriptionDetail?.subscriptionDetails?.membershipCategory;
+    if (membershipCategory) {
+      getCategoryData(membershipCategory, categoryLookups);
+    }
+  }, [
+    application?.subscriptionDetail?.subscriptionDetails?.membershipCategory,
+    getCategoryData,
+    categoryLookups,
+  ]);
 
   // Helper function to format phone numbers
   const formatPhoneNumber = (phoneNumber) => {
@@ -112,6 +188,19 @@ const ApplicationDetail = () => {
     return isPhone && !shouldExclude;
   };
 
+  if (detailFetchLoading) {
+    return (
+      <div className="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+        <div className="text-center">
+          <Spinner />
+          <p className="mt-4 text-gray-600 text-sm sm:text-base">
+            Loading application details...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (!application) {
     return (
       <div className="px-1 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
@@ -145,14 +234,6 @@ const ApplicationDetail = () => {
 
   const { personalDetail, professionalDetail, subscriptionDetail } =
     application;
-
-  // Fetch category data when application subscription detail membershipCategory is available
-  useEffect(() => {
-    const membershipCategory = application?.subscriptionDetail?.subscriptionDetails?.membershipCategory;
-    if (membershipCategory) {
-      getCategoryData(membershipCategory, categoryLookups);
-    }
-  }, [application?.subscriptionDetail?.subscriptionDetails?.membershipCategory, getCategoryData, categoryLookups]);
 
   const getIconConfig = (type) => {
     const configs = {

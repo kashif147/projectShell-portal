@@ -204,6 +204,16 @@ export const ApplicationProvider = ({ children }) => {
     [],
   );
 
+  // Global bootstrap: fetch application/member data once token is available.
+  // This prevents pages like Application from showing empty data after refresh.
+  useEffect(() => {
+    if (!token) return;
+
+    if (!personalDetail && !loading) {
+      getPersonalDetail();
+    }
+  }, [token]);
+
   useEffect(() => {
     if (token) {
       // For CRM users, professional and subscription details don't require applicationId

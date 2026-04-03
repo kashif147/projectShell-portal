@@ -44,7 +44,7 @@ export const validation = () => {
       }
       
       const refreshUser = await refreshTokenRequest({ refreshToken });
-      if (refreshUser.status === 200) {
+      if (refreshUser?.status === 200) {
         setHeaders(refreshUser?.data?.data);
         const refreshDectoken = await decryptToken(refreshUser?.data?.data?.refreshToken);
         setRefreshToken(refreshDectoken);

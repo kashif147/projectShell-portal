@@ -1,39 +1,39 @@
-import React, { useMemo, useEffect } from 'react';
-import { Card, Table, Empty } from 'antd';
-import { useApplication } from '../contexts/applicationContext';
+import React, { useMemo, useEffect, useState } from 'react';
+import { Card, Table, Empty, Tag, Spin } from 'antd';
 import { useProfile } from '../contexts/profileContext';
 import { useLookup } from '../contexts/lookupContext';
+import { useApplication } from '../contexts/applicationContext';
 import { formatToDDMMYYYY } from '../helpers/date.helper';
+import { getSubscriptionRequest } from '../api/subscription.api';
 
 const Subscriptions = () => {
   const {
     personalDetail,
     professionalDetail,
-    subscriptionDetail,
-    categoryData,
-    getCategoryData,
   } = useApplication();
   const { profileDetail } = useProfile();
   const { categoryLookups } = useLookup();
 
-  const hasApplication = Boolean(
-    personalDetail || professionalDetail || subscriptionDetail,
-  );
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [loadingSubscriptions, setLoadingSubscriptions] = useState(false);
 
   useEffect(() => {
-    const membershipCategoryId =
-      subscriptionDetail?.subscriptionDetails?.membershipCategory ||
-      professionalDetail?.professionalDetails?.membershipCategory;
+    const profileId = profileDetail?.profileId;
+    if (!profileId) return;
 
-    if (membershipCategoryId) {
-      getCategoryData(membershipCategoryId, categoryLookups || []);
-    }
-  }, [
-    subscriptionDetail?.subscriptionDetails?.membershipCategory,
-    professionalDetail?.professionalDetails?.membershipCategory,
-    getCategoryData,
-    categoryLookups,
-  ]);
+    setLoadingSubscriptions(true);
+    getSubscriptionRequest(profileId)
+      .then(res => {
+        const items = res?.data?.data?.data || res?.data?.data || [];
+        setSubscriptions(Array.isArray(items) ? items : []);
+      })
+      .catch(() => {
+        setSubscriptions([]);
+      })
+      .finally(() => {
+        setLoadingSubscriptions(false);
+      });
+  }, [profileDetail?.profileId]);
 
   const getMembershipCategoryLabel = categoryIdOrName => {
     if (!categoryIdOrName) return 'N/A';
@@ -62,45 +62,45 @@ const Subscriptions = () => {
   };
 
   const dataSource = useMemo(() => {
-    const membershipNo =
-      profileDetail?.membershipNumber ??
-      'N/A';
+    const membershipNo = profileDetail?.membershipNumber ?? 'N/A';
 
     const nameRaw = `${personalDetail?.personalInfo?.forename ?? ''} ${
       personalDetail?.personalInfo?.surname ?? ''
     }`.trim();
     const name = nameRaw || 'N/A';
-    const membershipCategoryId =
-      professionalDetail?.professionalDetails?.membershipCategory ||
-      subscriptionDetail?.subscriptionDetails?.membershipCategory;
-    const category =
-      categoryData?.name || getMembershipCategoryLabel(membershipCategoryId);
-    const subscriptionStartDate =
-      subscriptionDetail?.subscriptionDetails?.dateJoined
-        ? formatToDDMMYYYY(subscriptionDetail.subscriptionDetails.dateJoined)
-        : 'N/A';
-    const section = subscriptionDetail?.subscriptionDetails?.primarySection ?? 'N/A';
-    const branch = professionalDetail?.professionalDetails?.branch ?? 'N/A';
 
-    return [
-      {
-        key: 1,
+    return subscriptions.map((sub, index) => {
+      const category = sub?.membershipCategory
+        ? getMembershipCategoryLabel(sub?.membershipCategory)
+        : 'N/A';
+
+      const subscriptionStartDate = sub?.startDate
+        ? formatToDDMMYYYY(sub?.startDate)
+        : 'N/A';
+
+      const subscriptionStatus = sub?.subscriptionStatus ?? 'N/A';
+
+      const section =
+        sub?.primarySection ||
+        sub?.section ||
+        professionalDetail?.professionalDetails?.primarySection ||
+        'N/A';
+
+      const branch =
+        sub?.branch || professionalDetail?.professionalDetails?.branch || 'N/A';
+
+      return {
+        key: sub?._id || sub?.id || index,
         membershipNo,
         name,
         category,
         subscriptionStartDate,
+        subscriptionStatus,
         section,
         branch,
-      },
-    ];
-  }, [
-    personalDetail,
-    professionalDetail,
-    subscriptionDetail,
-    profileDetail,
-    categoryLookups,
-    categoryData,
-  ]);
+      };
+    });
+  }, [subscriptions, profileDetail, personalDetail, professionalDetail, categoryLookups]);
 
   const columns = [
     {
@@ -124,6 +124,26 @@ const Subscriptions = () => {
       key: 'subscriptionStartDate',
     },
     {
+      title: 'Subscription Status',
+      dataIndex: 'subscriptionStatus',
+      key: 'subscriptionStatus',
+      render: subscriptionStatusValue => {
+        const status = String(subscriptionStatusValue || '').toLowerCase();
+
+        let color = 'default';
+        if (status.includes('active')) color = 'green';
+        else if (status.includes('pending') || status.includes('in review'))
+          color = 'gold';
+        else if (status.includes('cancel')) color = 'red';
+
+        return (
+          <Tag color={color} style={{ fontWeight: 600 }}>
+            {subscriptionStatusValue || 'N/A'}
+          </Tag>
+        );
+      },
+    },
+    {
       title: 'Section',
       dataIndex: 'section',
       key: 'section',
@@ -138,14 +158,23 @@ const Subscriptions = () => {
   return (
     <div>
       <Card title="Subscription Details">
-        {!hasApplication ? (
+        {loadingSubscriptions ? (
+          <div className="py-12 flex items-center justify-center">
+            <Spin />
+          </div>
+        ) : subscriptions.length === 0 ? (
           <Empty
-            description="No application data found."
+            description="No subscriptions found."
             className="py-12"
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           />
         ) : (
-          <Table dataSource={dataSource} columns={columns} pagination={false} rowKey="key" />
+          <Table
+            dataSource={dataSource}
+            columns={columns}
+            pagination={false}
+            rowKey="key"
+          />
         )}
       </Card>
     </div>

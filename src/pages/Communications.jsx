@@ -87,37 +87,29 @@ const Communications = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Hero Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl shadow-lg p-8 text-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Communications</h1>
-            <p className="text-blue-100 text-sm">
-              Stay updated with all your messages and notifications
-            </p>
-          </div>
-          <div className="hidden md:block">
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <MessageOutlined className="text-5xl" />
-            </div>
-          </div>
-        </div>
+    <div className="space-y-5 px-3 py-4 sm:space-y-6 sm:px-6 lg:px-8 sm:py-6">
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          Communications
+        </h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Stay updated with all your messages and notifications.
+        </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {stats.map((stat, index) => (
           <div
             key={index}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-all duration-300"
+            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-md"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 font-medium mb-1">{stat.label}</p>
-                <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                <p className="mb-1 text-sm font-medium text-slate-600">{stat.label}</p>
+                <p className="text-3xl font-bold text-slate-900">{stat.value}</p>
               </div>
-              <div className={`bg-gradient-to-br ${stat.color} p-3 rounded-full shadow-md`}>
+              <div className={`rounded-full bg-gradient-to-br ${stat.color} p-3 shadow-sm`}>
                 {React.cloneElement(stat.icon, { className: 'text-white text-xl' })}
               </div>
             </div>
@@ -126,7 +118,7 @@ const Communications = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4">
         {/* Status Filter */}
         <div>
           <p className="text-sm font-semibold text-gray-700 mb-2">Status</p>
@@ -137,8 +129,8 @@ const Communications = () => {
                 onClick={() => setFilter(tab.value)}
                 className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
                   filter === tab.value
-                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 {tab.label}
@@ -164,8 +156,8 @@ const Communications = () => {
                 onClick={() => setSelectedType(tab.value)}
                 className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
                   selectedType === tab.value
-                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 {tab.label}
@@ -181,10 +173,10 @@ const Communications = () => {
           {filteredCommunications.map((item, index) => (
             <div
               key={index}
-              className={`bg-white rounded-xl shadow-sm border ${
+              className={`rounded-xl border bg-white shadow-sm ${
                 item.status === 'Unread' 
-                  ? 'border-blue-200 bg-blue-50/30' 
-                  : 'border-gray-200'
+                  ? 'border-blue-200 bg-blue-50/20' 
+                  : 'border-slate-200'
               } overflow-hidden hover:shadow-md transition-all duration-300 group`}
             >
               <div className="p-5">
@@ -198,7 +190,7 @@ const Communications = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4 mb-2">
                       <h3 className={`text-base font-bold group-hover:text-blue-600 transition-colors ${
-                        item.status === 'Unread' ? 'text-gray-900' : 'text-gray-700'
+                        item.status === 'Unread' ? 'text-slate-900' : 'text-slate-700'
                       }`}>
                         {item.title}
                       </h3>
@@ -248,12 +240,12 @@ const Communications = () => {
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12">
+        <div className="rounded-xl border border-slate-200 bg-white p-12 shadow-sm">
           <Empty
             description={
               <div className="space-y-2">
-                <p className="text-gray-900 font-semibold">No Communications Found</p>
-                <p className="text-gray-500 text-sm">
+                <p className="text-slate-900 font-semibold">No Communications Found</p>
+                <p className="text-slate-500 text-sm">
                   There are no communications matching your filters.
                 </p>
               </div>

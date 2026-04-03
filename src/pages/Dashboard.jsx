@@ -25,6 +25,7 @@ import { applicationConfirmationRequest } from '../api/application.api';
 import { getAccountNetBalanceRequest } from '../api/account.api';
 import { useMemberRole } from '../hooks/useMemberRole';
 import { dummyData } from '../services/dummyData';
+import { getSubscriptionRequest } from '../api/subscription.api';
 
 const stripePromise = loadStripe(
   'pk_test_51SBAG4FTlZb0wcbr19eI8nC5u62DfuaUWRVS51VTERBocxSM9JSEs4ubrW57hYTCAHK9d6jrarrT4SAViKFMqKjT00TrEr3PNV',
@@ -58,6 +59,8 @@ const Dashboard = () => {
   });
   const [isApplicationSubmitted, setIsApplicationSubmitted] = useState(false);
   const [applicationStatus, setApplicationStatus] = useState(null);
+  const [isApplicationActive, setIsApplicationActive] = useState(true);
+  const [isResignedMember, setIsResignedMember] = useState(false);
   const [appicationLoader, setApplicationLoader] = useState(true);
   const [accountNetBalance, setAccountNetBalance] = useState(null);
   const [accountNetBalanceLoading, setAccountNetBalanceLoading] =
@@ -74,6 +77,9 @@ const Dashboard = () => {
     professionalDetails: {},
     subscriptionDetails: {},
   });
+
+
+  console.log('member number=========>',profileDetail?.membershipNumber)
 
   // Kick off profile and application data loading together when the dashboard mounts
   useEffect(() => {
@@ -348,6 +354,7 @@ const Dashboard = () => {
 
     if (contextApplicationStatus != null) {
       setApplicationStatus(contextApplicationStatus);
+      setIsApplicationActive(true);
       setIsApplicationSubmitted(
         contextApplicationStatus === 'submitted' ||
           contextApplicationStatus === 'approved',
@@ -372,10 +379,15 @@ const Dashboard = () => {
             const status =
               response?.data?.data?.applicationStatus ||
               response?.data?.applicationStatus;
+            const isActive =
+              response?.data?.data?.meta?.isActive ??
+              response?.data?.meta?.isActive ??
+              true;
 
             setApplicationStatus(status);
+            setIsApplicationActive(Boolean(isActive));
             setApplicationLoader(false);
-            if (status === 'submitted' || status === 'approved') {
+            if (isActive && (status === 'submitted' || status === 'approved')) {
               setIsApplicationSubmitted(true);
             } else {
               setIsApplicationSubmitted(false);
@@ -387,10 +399,12 @@ const Dashboard = () => {
           console.error('Failed to fetch application status:', error);
           setIsApplicationSubmitted(false);
           setApplicationStatus(null);
+          setIsApplicationActive(true);
           setApplicationLoader(false);
         }
       } else {
         setApplicationStatus('none');
+        setIsApplicationActive(true);
         setApplicationLoader(false);
       }
     };
@@ -401,7 +415,7 @@ const Dashboard = () => {
   // Fetch account statement when member has membership number
   useEffect(() => {
     const memberId = profileDetail?.membershipNumber;
-    if (!memberId || !isMember) {
+    if (!memberId) {
       return;
     }
     setAccountNetBalanceLoading(true);
@@ -418,6 +432,38 @@ const Dashboard = () => {
         setAccountNetBalanceLoading(false);
       });
   }, [profileDetail?.membershipNumber, isMember]);
+
+  useEffect(() => {
+    const profileId = profileDetail?.profileId;
+    if (!profileId) {
+      setIsResignedMember(false);
+      return;
+    }
+
+    getSubscriptionRequest(profileId)
+      .then(res => {
+        const subscriptions = res?.data?.data?.data || [];
+        if (!Array.isArray(subscriptions) || subscriptions.length === 0) {
+          setIsResignedMember(false);
+          return;
+        }
+
+        const sortedSubscriptions = [...subscriptions].sort((a, b) => {
+          const aTime = new Date(a?.updatedAt || a?.createdAt || 0).getTime();
+          const bTime = new Date(b?.updatedAt || b?.createdAt || 0).getTime();
+          return bTime - aTime;
+        });
+
+        const latestSubscription = sortedSubscriptions[0];
+        const isResigned =
+          String(latestSubscription?.subscriptionStatus || '').toLowerCase() ===
+          'resigned';
+        setIsResignedMember(isResigned);
+      })
+      .catch(() => {
+        setIsResignedMember(false);
+      });
+  }, [profileDetail?.profileId]);
 
   // Update current step based on application progress
   useEffect(() => {
@@ -493,6 +539,9 @@ const Dashboard = () => {
 
   // Get button text based on application status
   const getApplicationButtonText = () => {
+    if (!isApplicationActive) {
+      return 'Start Application';
+    }
     if (applicationStatus === 'rejected') {
       return 'Re-apply';
     }
@@ -564,7 +613,9 @@ const Dashboard = () => {
   const applicationQuickActionState = useMemo(
     () => {
       const subtitle =
-        applicationStatus === 'approved'
+        !isApplicationActive
+          ? 'Start Application'
+          : applicationStatus === 'approved'
           ? 'Approved'
           : applicationStatus === 'submitted'
           ? 'In Review'
@@ -578,11 +629,14 @@ const Dashboard = () => {
         loading ||
         appicationLoader ||
         applicationStatus === null ||
-        applicationStatus === 'submitted' ||
-        applicationStatus === 'approved';
+        (isApplicationActive &&
+          (applicationStatus === 'submitted' ||
+            applicationStatus === 'approved'));
 
       const colorScheme =
-        applicationStatus === 'approved'
+        !isApplicationActive
+          ? 'blue'
+          : applicationStatus === 'approved'
           ? 'green'
           : applicationStatus === 'submitted'
           ? 'blue'
@@ -594,6 +648,7 @@ const Dashboard = () => {
     },
     [
       applicationStatus,
+      isApplicationActive,
       loading,
       appicationLoader,
       isApplicationSubmitted,
@@ -607,7 +662,7 @@ const Dashboard = () => {
   const upcomingEvents = useMemo(
     () =>
       (dummyData?.events || [])
-        .filter(event => event?.status?.toLowerCase() === 'upcoming')
+        .filter(event => event?.type?.toLowerCase() === 'upcoming')
         .slice(0, 3),
     [],
   );
@@ -758,6 +813,9 @@ const Dashboard = () => {
                 onClick={() =>
                   navigate(
                     isApplicationSubmitted ? '/profile' : '/applicationForm',
+                    !isApplicationSubmitted && isResignedMember
+                      ? { state: { startFresh: true } }
+                      : undefined,
                   )
                 }
                 className={`w-full px-4 py-2.5 sm:py-3 rounded-lg transition-colors font-medium text-sm sm:text-base ${
@@ -782,7 +840,7 @@ const Dashboard = () => {
               Payments & Billing
             </h2>
             <div className="space-y-2.5 sm:space-y-4">
-              {isMember && (
+              {profileDetail?.membershipNumber && (
                 <div className="rounded-lg bg-slate-50 p-4 text-right">
                   <p className="mb-1 text-xs text-slate-600 sm:text-sm">
                     Net Balance
