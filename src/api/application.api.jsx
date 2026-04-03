@@ -39,3 +39,7 @@ export const updateSubscriptionDetailRequest = (id, data) => {
 export const applicationConfirmationRequest = (id) => {
   return application_request.get(`/api/personal-details/${id}/status`);
 };
+
+// export const getApplicationById = (id) => {
+//   return application_request.get(`/api/applications/${id}`);
+// };

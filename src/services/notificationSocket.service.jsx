@@ -1,4 +1,5 @@
 import { io } from 'socket.io-client';
+import { notification } from 'antd';
 import { NOTIFICATION_URL } from '../constants/api';
 import { decryptToken } from '../helpers/crypt.helper';
 
@@ -21,6 +22,21 @@ const getBaseSocketUrl = () => {
     // Fallback to the raw value if URL parsing fails
     return NOTIFICATION_URL;
   }
+};
+
+const showAntdNotification = payload => {
+  const messageId =
+    payload?.messageId || payload?._id || payload?.id || Date.now().toString();
+  const title = payload?.title || 'Notification';
+  const description = payload?.body || payload?.message || 'You have a new notification.';
+
+  notification.open({
+    key: String(messageId),
+    message: title,
+    description,
+    placement: 'topRight',
+    duration: 5,
+  });
 };
 
 export const initNotificationSocket = async({
@@ -83,7 +99,7 @@ export const initNotificationSocket = async({
       timeout: 20000,
     });
 
-    notificationSocket.on('connection', () => {
+    notificationSocket.on('connect', () => {
       console.log('Notification socket connected');
     });
 
@@ -97,6 +113,9 @@ export const initNotificationSocket = async({
 
     // Generic notification payload handler
     notificationSocket.on('notification', payload => {
+      // Show Ant Design toast popup whenever a real-time notification arrives.
+      showAntdNotification(payload);
+
       if (handlers.onNotification) {
         handlers.onNotification(payload);
       }

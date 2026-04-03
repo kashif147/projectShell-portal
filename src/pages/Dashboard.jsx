@@ -25,6 +25,7 @@ import { applicationConfirmationRequest } from '../api/application.api';
 import { getAccountNetBalanceRequest } from '../api/account.api';
 import { useMemberRole } from '../hooks/useMemberRole';
 import { dummyData } from '../services/dummyData';
+import { getSubscriptionRequest } from '../api/subscription.api';
 
 const stripePromise = loadStripe(
   'pk_test_51SBAG4FTlZb0wcbr19eI8nC5u62DfuaUWRVS51VTERBocxSM9JSEs4ubrW57hYTCAHK9d6jrarrT4SAViKFMqKjT00TrEr3PNV',
@@ -59,6 +60,7 @@ const Dashboard = () => {
   const [isApplicationSubmitted, setIsApplicationSubmitted] = useState(false);
   const [applicationStatus, setApplicationStatus] = useState(null);
   const [isApplicationActive, setIsApplicationActive] = useState(true);
+  const [isResignedMember, setIsResignedMember] = useState(false);
   const [appicationLoader, setApplicationLoader] = useState(true);
   const [accountNetBalance, setAccountNetBalance] = useState(null);
   const [accountNetBalanceLoading, setAccountNetBalanceLoading] =
@@ -431,6 +433,38 @@ const Dashboard = () => {
       });
   }, [profileDetail?.membershipNumber, isMember]);
 
+  useEffect(() => {
+    const profileId = profileDetail?.profileId;
+    if (!profileId) {
+      setIsResignedMember(false);
+      return;
+    }
+
+    getSubscriptionRequest(profileId)
+      .then(res => {
+        const subscriptions = res?.data?.data?.data || [];
+        if (!Array.isArray(subscriptions) || subscriptions.length === 0) {
+          setIsResignedMember(false);
+          return;
+        }
+
+        const sortedSubscriptions = [...subscriptions].sort((a, b) => {
+          const aTime = new Date(a?.updatedAt || a?.createdAt || 0).getTime();
+          const bTime = new Date(b?.updatedAt || b?.createdAt || 0).getTime();
+          return bTime - aTime;
+        });
+
+        const latestSubscription = sortedSubscriptions[0];
+        const isResigned =
+          String(latestSubscription?.subscriptionStatus || '').toLowerCase() ===
+          'resigned';
+        setIsResignedMember(isResigned);
+      })
+      .catch(() => {
+        setIsResignedMember(false);
+      });
+  }, [profileDetail?.profileId]);
+
   // Update current step based on application progress
   useEffect(() => {
     // Only set step after data is fully loaded
@@ -779,6 +813,9 @@ const Dashboard = () => {
                 onClick={() =>
                   navigate(
                     isApplicationSubmitted ? '/profile' : '/applicationForm',
+                    !isApplicationSubmitted && isResignedMember
+                      ? { state: { startFresh: true } }
+                      : undefined,
                   )
                 }
                 className={`w-full px-4 py-2.5 sm:py-3 rounded-lg transition-colors font-medium text-sm sm:text-base ${
