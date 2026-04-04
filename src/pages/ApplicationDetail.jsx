@@ -156,23 +156,6 @@ const ApplicationDetail = () => {
            /T\d{2}:\d{2}:\d{2}/.test(value);
   };
 
-  const getStatusTagColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'approved':
-        return 'success';
-      case 'submitted':
-        return 'processing';
-      case 'rejected':
-        return 'error';
-      case 'in-progress':
-        return 'warning';
-      default:
-        return 'default';
-    }
-  };
-
-
-  console.log('application',application);
   // Helper function to check if a key is a phone number field
   const isPhoneField = (key) => {
     const phoneKeywords = ['mobilenumber', 'telephonenumber', 'phonenumber', 'mobile', 'telephone', 'phone', 'tel'];
@@ -234,6 +217,13 @@ const ApplicationDetail = () => {
 
   const { personalDetail, professionalDetail, subscriptionDetail } =
     application;
+
+  const personalMetaIsActive =
+    personalDetail &&
+    personalDetail.meta != null &&
+    typeof personalDetail.meta.isActive === 'boolean'
+      ? personalDetail.meta.isActive
+      : null;
 
   const getIconConfig = (type) => {
     const configs = {
@@ -445,13 +435,22 @@ const ApplicationDetail = () => {
                 <h3 className="text-base sm:text-lg font-bold text-gray-900">
                   {categoryData?.name || 'N/A'}
                 </h3>
-                {application?.personalDetail?.applicationStatus && (
-                  <Tag 
-                    color={getStatusTagColor(application?.personalDetail?.applicationStatus)} 
-                    className="rounded-full px-2 uppercase text-[10px] sm:text-[11px] font-bold"
-                  >
-                    {application?.personalDetail?.applicationStatus}
+                {personalMetaIsActive === true && (
+                  <Tag
+                    color="success"
+                    className="rounded-full px-2 text-[10px] sm:text-[11px] font-bold m-0">
+                    Active
                   </Tag>
+                )}
+                {personalMetaIsActive === false && (
+                  <Tag
+                    color="error"
+                    className="rounded-full px-2 text-[10px] sm:text-[11px] font-bold m-0">
+                    Inactive
+                  </Tag>
+                )}
+                {personalMetaIsActive === null && (
+                  <span className="text-xs text-gray-500 font-medium">N/A</span>
                 )}
               </div>
               <p className="text-xs sm:text-sm text-gray-600">

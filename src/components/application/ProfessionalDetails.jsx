@@ -117,6 +117,8 @@ const ProfessionalDetails = ({
   };
   // Helper function to check category type based on name
   const isCategoryType = categoryType => {
+
+    // console.log('categoryType======>',categoryType)
     if (!formData?.membershipCategory) return false;
 
     // Find the selected category by name
@@ -132,13 +134,16 @@ const ProfessionalDetails = ({
       }
     );
 
+    console.log('categoryType======>',selectedCategory)
     if (!selectedCategory) return false;
 
     const selectedCode = String(selectedCategory?.code || '').toUpperCase();
 
+    console.log('selectcode=======>',selectedCode)
+
     // Map category types to their actual codes
     const categoryCodeMap = {
-      undergraduate_student: 'MEM-UG',
+      undergraduate_student: '4090',
       retired_associate: 'MEM-RET',
       postgraduate_student: 'MEM-PG',
       general: 'MEM-GEN',

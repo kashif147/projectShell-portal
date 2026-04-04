@@ -38,6 +38,9 @@ export const extractApplicationsFromMeResponse = res => {
   const list = coalesce(
     inner != null ? inner.applications : undefined,
     body != null && body.data != null ? body.data.applications : undefined,
+    body != null && body.data != null && body.data.data != null
+      ? body.data.data.applications
+      : undefined,
     body != null ? body.applications : undefined,
     Array.isArray(inner) ? inner : null,
   );
@@ -142,3 +145,38 @@ export const applicationDetailHasSections = app =>
       app.professionalDetail &&
       app.subscriptionDetail,
   );
+
+/**
+ * Bundle from portal context for ApplicationDetail navigation (pre-list API shape).
+ */
+export const buildApplicationBundleFromContext = ({
+  personalDetail,
+  professionalDetail,
+  subscriptionDetail,
+}) => {
+  const applicationId =
+    personalDetail != null && personalDetail.applicationId != null
+      ? personalDetail.applicationId
+      : null;
+  const submissionDateRaw = coalesce(
+    personalDetail != null ? personalDetail.submissionDate : undefined,
+    personalDetail != null && personalDetail.personalInfo != null
+      ? personalDetail.personalInfo.submissionDate
+      : undefined,
+    subscriptionDetail != null &&
+      subscriptionDetail.subscriptionDetails != null
+      ? subscriptionDetail.subscriptionDetails.submissionDate
+      : undefined,
+  );
+
+  return {
+    applicationId,
+    submissionDate:
+      submissionDateRaw !== undefined && submissionDateRaw !== null
+        ? submissionDateRaw
+        : null,
+    personalDetail: personalDetail || null,
+    professionalDetail: professionalDetail || null,
+    subscriptionDetail: subscriptionDetail || null,
+  };
+};

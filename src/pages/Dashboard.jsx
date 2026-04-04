@@ -843,7 +843,7 @@ const Dashboard = () => {
               {profileDetail?.membershipNumber && (
                 <div className="rounded-lg bg-slate-50 p-4 text-right">
                   <p className="mb-1 text-xs text-slate-600 sm:text-sm">
-                    Net Balance
+                    Balance
                     {accountNetBalance?.year && (
                       <span className="ml-1">({accountNetBalance.year})</span>
                     )}
