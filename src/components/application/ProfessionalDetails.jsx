@@ -18,6 +18,30 @@ const nurseTypeOptions = [
   },
 ];
 
+/** Same resolution order as membership dropdown value — keep in sync with API labels. */
+const getCategoryLookupLabel = item =>
+  String(
+    item?.name ||
+      item?.DisplayName ||
+      item?.label ||
+      item?.productType?.name ||
+      item?.code ||
+      '',
+  );
+
+/** Internal type keys → exact dropdown labels (aligned with Receipt / Resources). */
+export const CATEGORY_DISPLAY_NAME_BY_TYPE = {
+  undergraduate_student: 'Undergraduate Student',
+  retired_associate: 'Retired Associate',
+  postgraduate_student: 'Postgraduate Student',
+  general: 'General (all grades)',
+  private_nursing_home: 'Private nursing home',
+  short_term_relief: 'Short-term/ Relief (under 15 hrs/wk average)',
+  associate: 'Associate (not currently employed as a nurse/midwife)',
+  affiliate: 'Affiliate members (non-practicing)',
+  lecturing: 'Lecturing (employed in universities and IT institutes)',
+};
+
 const ProfessionalDetails = ({
   formData,
   onFormDataChange,
@@ -28,6 +52,7 @@ const ProfessionalDetails = ({
     categoryLookups,
     gradeLookups,
     studyLocationLookups,
+    disciplineLookups,
   } = useLookup();
 
   const workLocationOptions = (workLocationLookups || []).map(item => {
@@ -36,16 +61,10 @@ const ProfessionalDetails = ({
   });
 
   const membershipCategoryOptions = (categoryLookups || []).map(item => {
-    // Use name as the value to store
-    const label =
-      item?.name ||
-      item?.DisplayName ||
-      item?.label ||
-      item?.productType?.name ||
-      item?.code;
+    const label = getCategoryLookupLabel(item);
     return {
-      value: String(label || ''),
-      label: String(label || ''),
+      value: label,
+      label,
       rawItem: item, // Keep reference to original item
     };
   });
@@ -66,6 +85,16 @@ const ProfessionalDetails = ({
       return { value: name, label: name };
     })
     .filter(option => option.value); // Filter out empty values
+
+  const disciplineOptions = [
+    ...(disciplineLookups || [])
+      .map(item => {
+        const name = item?.DisplayName || item?.lookupname || '';
+        return { value: name, label: name };
+      })
+      .filter(option => option.value),
+    { value: 'other', label: 'Other' },
+  ];
 
   const branchOptions = Array.from(
     new Set(
@@ -115,47 +144,20 @@ const ProfessionalDetails = ({
       nurseType: e.target.value,
     });
   };
-  // Helper function to check category type based on name
+  // Helper: internal type key vs dropdown display label (aligned with Receipt / Resources).
   const isCategoryType = categoryType => {
-
-    // console.log('categoryType======>',categoryType)
     if (!formData?.membershipCategory) return false;
 
-    // Find the selected category by name
     const selectedCategory = (categoryLookups || []).find(
-      item => {
-        const itemName =
-          item?.name ||
-          item?.DisplayName ||
-          item?.label ||
-          item?.productType?.name ||
-          item?.code;
-        return String(itemName || '') === String(formData.membershipCategory);
-      }
+      item => getCategoryLookupLabel(item) === String(formData.membershipCategory),
     );
 
-    console.log('categoryType======>',selectedCategory)
     if (!selectedCategory) return false;
 
-    const selectedCode = String(selectedCategory?.code || '').toUpperCase();
+    const selectedDisplayName = getCategoryLookupLabel(selectedCategory);
 
-    console.log('selectcode=======>',selectedCode)
-
-    // Map category types to their actual codes
-    const categoryCodeMap = {
-      undergraduate_student: '4090',
-      retired_associate: 'MEM-RET',
-      postgraduate_student: 'MEM-PG',
-      general: 'MEM-GEN',
-      private_nursing_home: 'MEM-PNH',
-      short_term_relief: 'MEM-STR',
-      associate: 'MEM-ASS',
-      affiliate: 'MEM-AFF',
-      lecturing: 'MEM-LEC',
-    };
-
-    const targetCode = categoryCodeMap[categoryType];
-    return targetCode ? selectedCode === targetCode : false;
+    const targetName = CATEGORY_DISPLAY_NAME_BY_TYPE[categoryType];
+    return targetName ? selectedDisplayName === targetName : false;
   };
 
   return (
@@ -224,24 +226,20 @@ const ProfessionalDetails = ({
               <Select
                 label="Discipline"
                 name="discipline"
+                required
                 value={formData?.discipline || ''}
                 onChange={handleInputChange}
+                showValidation={showValidation}
                 placeholder="Select your discipline"
-                options={[
-                  { value: 'nursing', label: 'Nursing' },
-                  { value: 'midwifery', label: 'Midwifery' },
-                  { value: 'publicHealth', label: 'Public Health' },
-                  { value: 'mentalHealth', label: 'Mental Health' },
-                  { value: 'pediatric', label: 'Pediatric Nursing' },
-                  { value: 'adult', label: 'Adult Nursing' },
-                  { value: 'other', label: 'Other' },
-                ]}
+                options={disciplineOptions}
               />
               <Select
                 label="Study Location"
                 name="studyLocation"
+                required
                 value={formData?.studyLocation || ''}
                 onChange={handleInputChange}
+                showValidation={showValidation}
                 placeholder="Select study location"
                 options={studyLocationOptions}
               />
@@ -252,11 +250,13 @@ const ProfessionalDetails = ({
                 name="startDate"
                 value={formData?.startDate || ''}
                 onChange={handleInputChange}
+                showValidation={showValidation}
                 disableAgeValidation
               />
               <DatePicker
                 label="Graduation Date"
                 name="graduationDate"
+                required
                 value={formData?.graduationDate || ''}
                 onChange={handleInputChange}
                 disableAgeValidation
@@ -286,8 +286,8 @@ const ProfessionalDetails = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <DatePicker
                 label="Retired Date"
-                name="retiredDate"
-                value={formData?.retiredDate || ''}
+                name="retirementDate"
+                value={formData?.retirementDate || ''}
                 onChange={handleInputChange}
                 disableAgeValidation
                 placeholder="DD/MM/YYYY"
@@ -295,8 +295,10 @@ const ProfessionalDetails = ({
               <Input
                 label="Pension No"
                 name="pensionNo"
+                required
                 value={formData?.pensionNo || ''}
                 onChange={handleInputChange}
+                showValidation={showValidation}
                 placeholder="Enter your pension number"
               />
             </div>

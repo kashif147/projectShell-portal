@@ -4,7 +4,7 @@ import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
 import { Radio } from '../ui/Radio';
 import { DatePicker } from '../ui/DatePicker';
-import PhoneInput from 'react-phone-number-input';
+import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import '../../assets/theme/phoneInput.css';
 // Dynamic countries from lookup context will replace static constants
@@ -138,10 +138,26 @@ const PersonalInformation = ({
       return `+353${digits}`;
     }
 
-    // Otherwise, don't force Ireland. Assume the stored digits already contain
-    // the country calling code (just missing the '+').
+    // For other local 0-prefixed patterns (e.g. 0345...), do not force-convert.
+    // Keep the local format so validation can flag ambiguous numbers.
+    if (digits.startsWith('0')) {
+      return digits;
+    }
+
+    // Otherwise, only prefix '+' for non-local digits that likely already include
+    // a country code from backend data (e.g. 923450391493 -> +923450391493).
     return `+${digits}`;
   }, [formData?.mobileNo]);
+
+  const hasMobileValue = Boolean(normalizedMobileNo);
+  const hasValidMobileNumber =
+    hasMobileValue && isValidPhoneNumber(normalizedMobileNo);
+  const showMobileRequiredError = showValidation && !hasMobileValue;
+  const showMobileInvalidError = hasMobileValue && !hasValidMobileNumber;
+  const shouldUseInternationalMobileFormat =
+    normalizedMobileNo && !normalizedMobileNo.startsWith('+353');
+  const shouldShowCountryCallingCode =
+    !normalizedMobileNo || shouldUseInternationalMobileFormat;
 
   // Handle numeric-only input fields
   const handleNumericInputChange = e => {
@@ -588,21 +604,29 @@ const PersonalInformation = ({
           <div className="flex flex-col">
             <label className="mb-1 text-sm font-medium text-gray-700">
               Mobile Number <span className="text-red-500">*</span>
-              {showValidation && !formData?.mobileNo && (
+              {showMobileRequiredError && (
                 <span className="ml-1 text-xs text-red-500">(Required)</span>
+              )}
+              {showMobileInvalidError && (
+                <span className="ml-1 text-xs text-red-500">
+                  (Enter a valid mobile number)
+                </span>
               )}
             </label>
             <PhoneInput
               defaultCountry="IE"
-              international={false}
+              international={shouldShowCountryCallingCode}
+              withCountryCallingCode={shouldShowCountryCallingCode}
               value={normalizedMobileNo}
               onChange={handleMobileNumberChange}
               className={`phone-input-custom ${
-                showValidation && !formData?.mobileNo
+                showMobileRequiredError || showMobileInvalidError
                   ? 'border-red-500 bg-red-50'
                   : 'border-blue-500'
               }`}
-              placeholder="85 123 4567"
+              placeholder={
+                shouldUseInternationalMobileFormat ? '+92 345 0491493' : '85 123 4567'
+              }
             />
           </div>
 

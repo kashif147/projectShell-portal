@@ -88,6 +88,7 @@ export const LookupProvider = ({ children }) => {
   const [gradeLookups, setGradeLookups] = React.useState([]);
   const [paymentLooups, setPaymentLooups] = React.useState([]);
   const [studyLocationLookups, setStudyLocationLookups] = React.useState([]);
+  const [disciplineLookups, setDisciplineLookups] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
   const isInitialMount = useRef(true);
@@ -124,6 +125,7 @@ export const LookupProvider = ({ children }) => {
         fetchLocal('gradeLookups'),
         fetchLocal('paymentLookups'),
         fetchLocal('studyLocationLookups'),
+        fetchLocal('disciplineLookups'),
       ]);
 
       const sanitizeData = (data, key) => {
@@ -147,13 +149,14 @@ export const LookupProvider = ({ children }) => {
       const sanitizedGradeLookups = sanitizeData(gradeLookupsData, 'gradeLookups');
       const sanitizedPaymentLookups = sanitizeData(paymentLookupsData, 'paymentLookups');
       const sanitizedStudyLocationLookups = sanitizeData(studyLocationLookupsData, 'studyLocationLookups');
-
+      const sanitizedDisciplineLookups = sanitizeData(disciplineLookupsData, 'disciplineLookups');
       const hasDataToLoad = 
         sanitizedGenderLookups.length > 0 ||
         sanitizedCityLookups.length > 0 ||
         sanitizedTitleLookups.length > 0 ||
         sanitizedCountryLookups.length > 0 ||
-        sanitizedCategoryLookups.length > 0;
+        sanitizedCategoryLookups.length > 0 ||
+        sanitizedDisciplineLookups.length > 0;
 
       // Only update state if we have data to load, or if forced AND we don't have fresh data
       if (hasDataToLoad || (forceLoad && !hasFreshDataRef.current)) {
@@ -168,6 +171,7 @@ export const LookupProvider = ({ children }) => {
         setGradeLookups(sanitizedGradeLookups);
         setPaymentLooups(sanitizedPaymentLookups);
         setStudyLocationLookups(sanitizedStudyLocationLookups);
+        setDisciplineLookups(sanitizedDisciplineLookups);
       }
     } catch (error) {
       console.error('❌ Error loading lookups from storage:', error);
@@ -183,6 +187,7 @@ export const LookupProvider = ({ children }) => {
       setGradeLookups([]);
       setPaymentLooups([]);
       setStudyLocationLookups([]);
+      setDisciplineLookups([]);
     }
   }, [fetchLocal]);
 
@@ -200,6 +205,7 @@ export const LookupProvider = ({ children }) => {
         workLocationData = [],
         countryData = [],
         categoryData = [],
+        disciplineData = [],
       } = lookupData;
 
       const lookupKeys = [
@@ -214,6 +220,7 @@ export const LookupProvider = ({ children }) => {
         { key: 'workLocationLookups', data: workLocationData },
         { key: 'countries', data: countryData },
         { key: 'categories', data: categoryData },
+        { key: 'disciplineLookups', data: disciplineData },
       ];
 
       try {
@@ -332,7 +339,7 @@ export const LookupProvider = ({ children }) => {
         let workLocationData = [];
         let countryData = [];
         let categoryData = [];
-
+        let disciplineData = [];
         if (allLookupsResult.status === 'fulfilled' && allLookupsResult.value) {
           const result = allLookupsResult.value;
 
@@ -344,6 +351,7 @@ export const LookupProvider = ({ children }) => {
           gradeData = result.filter(item => item.lookuptypeId?.lookuptype === 'Grade');
           paymentData = result.filter(item => item.lookuptypeId?.lookuptype === 'Payment Type');
           studyLocationData = result.filter(item => item.lookuptypeId?.lookuptype === 'Study Location');
+          disciplineData = result.filter(item => item.lookuptypeId?.lookuptype === 'Discipline');
         }
 
         if (workLocationResult.status === 'fulfilled' && workLocationResult.value) {
@@ -370,7 +378,7 @@ export const LookupProvider = ({ children }) => {
         setWorkLocationLookups(workLocationData);
         setCountryLookups(countryData);
         setCategoryLookups(categoryData);
-
+        setDisciplineLookups(disciplineData);
         // Mark fresh data immediately
         hasFreshDataRef.current = true;
 
@@ -386,6 +394,7 @@ export const LookupProvider = ({ children }) => {
           workLocationData,
           countryData,
           categoryData,
+          disciplineData,
         }).catch(error => {
           console.error('Failed to save lookups to localStorage:', error);
         });
@@ -464,6 +473,7 @@ export const LookupProvider = ({ children }) => {
     gradeLookups,
     paymentLooups,
     studyLocationLookups,
+    disciplineLookups,
     loading,
     error,
     fetchAllLookups,
@@ -481,6 +491,7 @@ export const LookupProvider = ({ children }) => {
     gradeLookups,
     paymentLooups,
     studyLocationLookups,
+    disciplineLookups,
     loading,
     error,
     fetchAllLookups,
@@ -555,7 +566,7 @@ export const fetchAllLookupsOnLogin = async () => {
       const gradeData = result.filter(item => item.lookuptypeId?.lookuptype === 'Grade');
       const paymentData = result.filter(item => item.lookuptypeId?.lookuptype === 'Payment Type');
       const studyLocationData = result.filter(item => item.lookuptypeId?.lookuptype === 'Study Location');
-
+      const disciplineData = result.filter(item => item.lookuptypeId?.lookuptype === 'Discipline');
       lookupKeys.push(
         { key: 'paymentLookups', data: paymentData },
         { key: 'genderLookups', data: genderData },
@@ -564,7 +575,8 @@ export const fetchAllLookupsOnLogin = async () => {
         { key: 'secondarySection', data: secondarySectionData },
         { key: 'primarySection', data: sectionData },
         { key: 'gradeLookups', data: gradeData },
-        { key: 'studyLocationLookups', data: studyLocationData }
+        { key: 'studyLocationLookups', data: studyLocationData },
+        { key: 'disciplineLookups', data: disciplineData },
       );
     }
 

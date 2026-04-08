@@ -113,6 +113,7 @@ export const signOut = navigate => {
         'primarySection',
         'gradeLookups',
         'studyLocationLookups',
+        'disciplineLookups',
         'workLocationLookups',
         'countries',
         'categories',

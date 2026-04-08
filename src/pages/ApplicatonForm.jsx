@@ -2,7 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card } from 'antd';
 import { toast } from 'react-toastify';
 import PersonalInformation from '../components/application/PersonalInformation';
-import ProfessionalDetails from '../components/application/ProfessionalDetails';
+import ProfessionalDetails, {
+  CATEGORY_DISPLAY_NAME_BY_TYPE,
+} from '../components/application/ProfessionalDetails';
 import SubscriptionDetails from '../components/application/SubscriptionDetails';
 import { PaymentStatusModal } from '../components/modals';
 import Button from '../components/common/Button';
@@ -261,17 +263,25 @@ const ApplicationForm = () => {
             professionalDetail?.professionalDetails?.isRetired ??
             prev.professionalDetails.isRetired ??
             false,
-          retiredDate:
-            professionalDetail?.professionalDetails?.retiredDate ??
-            prev.professionalDetails.retiredDate ??
+          retirementDate:
+            professionalDetail?.professionalDetails?.retirementDate ??
+            prev.professionalDetails.retirementDate ??
             '',
           studyLocation:
             professionalDetail?.professionalDetails?.studyLocation ??
             prev.professionalDetails.studyLocation ??
             '',
+          startDate:
+            professionalDetail?.professionalDetails?.startDate ??
+            prev.professionalDetails.startDate ??
+            '',
           graduationDate:
             professionalDetail?.professionalDetails?.graduationDate ??
             prev.professionalDetails.graduationDate ??
+            '',
+          discipline:
+            professionalDetail?.professionalDetails?.discipline ??
+            prev.professionalDetails.discipline ??
             '',
         },
       }));
@@ -548,9 +558,11 @@ const ApplicationForm = () => {
       branch: data.branch,
       pensionNo: data.pensionNo,
       // isRetired: data?.membershipCategory === 'MEM-RET',
-      retiredDate: data.retiredDate && isDataFormat(data.retiredDate),
+      retirementDate: data.retirementDate && isDataFormat(data.retirementDate),
       studyLocation: data.studyLocation,
+      startDate: data.startDate && isDataFormat(data.startDate),
       graduationDate: data.graduationDate && isDataFormat(data.graduationDate),
+      discipline: data.discipline,
     };
 
     const professionalInfo = { professionalDetails: {} };
@@ -594,10 +606,11 @@ const ApplicationForm = () => {
       region: data.region,
       branch: data.branch,
       pensionNo: data.pensionNo,
-      // isRetired: data?.membershipCategory === 'MEM-RET',
-      retiredDate: data.retiredDate && isDataFormat(data.retiredDate),
+      retirementDate: data.retirementDate && isDataFormat(data.retirementDate),
       studyLocation: data.studyLocation,
+      startDate: data.startDate && isDataFormat(data.startDate),
       graduationDate: data.graduationDate && isDataFormat(data.graduationDate),
+      discipline: data.discipline,
     };
 
     const professionalInfo = { professionalDetails: {} };
@@ -920,9 +933,25 @@ const ApplicationForm = () => {
           nursingAdaptationProgramme,
           nurseType,
           nmbiNumber,
+          discipline,
+          studyLocation,
+          graduationDate,
+          pensionNo,
         } = formData.professionalDetails || {};
         if (!grade || !workLocation || !membershipCategory) {
           return false;
+        }
+        if (
+          membershipCategory ===
+          CATEGORY_DISPLAY_NAME_BY_TYPE.undergraduate_student
+        ) {
+          if (!discipline || !studyLocation || !graduationDate) return false;
+        }
+        if (
+          membershipCategory ===
+          CATEGORY_DISPLAY_NAME_BY_TYPE.retired_associate
+        ) {
+          if (!String(pensionNo || '').trim()) return false;
         }
         if (nursingAdaptationProgramme === 'yes') {
           if (!nurseType || !nmbiNumber) return false;
@@ -1006,11 +1035,30 @@ const ApplicationForm = () => {
           nursingAdaptationProgramme,
           nurseType,
           nmbiNumber,
+          discipline,
+          studyLocation,
+          startDate,
+          pensionNo,
         } = formData.professionalDetails || {};
 
         if (!membershipCategory) missing.push('Membership category');
         if (!workLocation) missing.push('Work location');
         if (!grade) missing.push('Grade');
+        if (
+          membershipCategory ===
+          CATEGORY_DISPLAY_NAME_BY_TYPE.undergraduate_student
+        ) {
+          if (!discipline) missing.push('Discipline');
+          if (!studyLocation) missing.push('Study location');
+          if (!startDate) missing.push('Start date');
+        }
+        if (
+          membershipCategory ===
+          CATEGORY_DISPLAY_NAME_BY_TYPE.retired_associate
+        ) {
+          if (!String(pensionNo || '').trim())
+            missing.push('Pension number');
+        }
         if (nursingAdaptationProgramme === 'yes') {
           if (!nurseType) missing.push('Nurse type');
           if (!nmbiNumber) missing.push('NMBI number');
