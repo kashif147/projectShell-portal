@@ -217,6 +217,10 @@ const ApplicationDetail = () => {
 
   const { personalDetail, professionalDetail, subscriptionDetail } =
     application;
+  const membershipCategoryFallback =
+    subscriptionDetail?.subscriptionDetails?.membershipCategory ||
+    professionalDetail?.professionalDetails?.membershipCategory ||
+    'N/A';
 
   const personalMetaIsActive =
     personalDetail &&
@@ -433,7 +437,7 @@ const ApplicationDetail = () => {
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h3 className="text-base sm:text-lg font-bold text-gray-900">
-                  {categoryData?.name || 'N/A'}
+                  {categoryData?.name || membershipCategoryFallback}
                 </h3>
                 {personalMetaIsActive === true && (
                   <Tag
