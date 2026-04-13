@@ -134,7 +134,7 @@ const Subscriptions = () => {
         if (status.includes('active')) color = 'green';
         else if (status.includes('pending') || status.includes('in review'))
           color = 'gold';
-        else if (status.includes('cancel')) color = 'red';
+        else if (status.includes('cancel','Rejected','Resigned')) color = 'red';
 
         return (
           <Tag color={color} style={{ fontWeight: 600 }}>

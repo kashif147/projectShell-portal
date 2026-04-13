@@ -157,6 +157,13 @@ export const ApplicationProvider = ({ children }) => {
 
       // Determine if we need to find category by name from lookup
       let categoryId = categoryNameOrId;
+      const normalize = value =>
+        String(value || '')
+          .trim()
+          .toLowerCase()
+          .replace(/[_-]+/g, ' ')
+          .replace(/\s+/g, ' ');
+      const normalizedInput = normalize(categoryNameOrId);
 
       // If it doesn't look like an ID and we have categoryLookups, find by name
       if (!isObjectId(categoryNameOrId) && categoryLookups.length > 0) {
@@ -167,7 +174,7 @@ export const ApplicationProvider = ({ children }) => {
             item?.label ||
             item?.productType?.name ||
             item?.code;
-          return String(itemName || '') === String(categoryNameOrId);
+          return normalize(itemName) === normalizedInput;
         });
 
         if (foundCategory) {
@@ -181,6 +188,11 @@ export const ApplicationProvider = ({ children }) => {
           setCategoryLoading(false);
           return;
         }
+      } else if (!isObjectId(categoryNameOrId) && categoryLookups.length === 0) {
+        // Wait for lookups instead of calling product API with a plain name.
+        setCategoryData(null);
+        setCategoryLoading(false);
+        return;
       }
 
       if (!categoryId) {
