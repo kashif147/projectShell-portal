@@ -93,14 +93,9 @@ export const LookupProvider = ({ children }) => {
   const [error, setError] = React.useState(null);
   const isInitialMount = useRef(true);
   const isFetchingRef = useRef(false);
-  const hasFreshDataRef = useRef(false);
 
-  const loadLookupsFromStorage = useCallback(async (forceLoad = false) => {
+  const loadLookupsFromStorage = useCallback(async () => {
     try {
-      if (!forceLoad && hasFreshDataRef.current) {
-        return;
-      }
-
       const [
         genderLookupsData,
         cityLookupsData,
@@ -113,6 +108,7 @@ export const LookupProvider = ({ children }) => {
         gradeLookupsData,
         paymentLookupsData,
         studyLocationLookupsData,
+        disciplineLookupsData,
       ] = await Promise.all([
         fetchLocal('genderLookups'),
         fetchLocal('cityLookups'),
@@ -150,29 +146,19 @@ export const LookupProvider = ({ children }) => {
       const sanitizedPaymentLookups = sanitizeData(paymentLookupsData, 'paymentLookups');
       const sanitizedStudyLocationLookups = sanitizeData(studyLocationLookupsData, 'studyLocationLookups');
       const sanitizedDisciplineLookups = sanitizeData(disciplineLookupsData, 'disciplineLookups');
-      const hasDataToLoad = 
-        sanitizedGenderLookups.length > 0 ||
-        sanitizedCityLookups.length > 0 ||
-        sanitizedTitleLookups.length > 0 ||
-        sanitizedCountryLookups.length > 0 ||
-        sanitizedCategoryLookups.length > 0 ||
-        sanitizedDisciplineLookups.length > 0;
 
-      // Only update state if we have data to load, or if forced AND we don't have fresh data
-      if (hasDataToLoad || (forceLoad && !hasFreshDataRef.current)) {
-        setGenderLookups(sanitizedGenderLookups);
-        setCityLookups(sanitizedCityLookups);
-        setTitleLookups(sanitizedTitleLookups);
-        setPrimarySectionLookups(sanitizedPrimarySection);
-        setSecondarySectionLookups(sanitizedSecondarySection);
-        setWorkLocationLookups(sanitizedWorkLocationLookups);
-        setCountryLookups(sanitizedCountryLookups);
-        setCategoryLookups(sanitizedCategoryLookups);
-        setGradeLookups(sanitizedGradeLookups);
-        setPaymentLooups(sanitizedPaymentLookups);
-        setStudyLocationLookups(sanitizedStudyLocationLookups);
-        setDisciplineLookups(sanitizedDisciplineLookups);
-      }
+      setGenderLookups(sanitizedGenderLookups);
+      setCityLookups(sanitizedCityLookups);
+      setTitleLookups(sanitizedTitleLookups);
+      setPrimarySectionLookups(sanitizedPrimarySection);
+      setSecondarySectionLookups(sanitizedSecondarySection);
+      setWorkLocationLookups(sanitizedWorkLocationLookups);
+      setCountryLookups(sanitizedCountryLookups);
+      setCategoryLookups(sanitizedCategoryLookups);
+      setGradeLookups(sanitizedGradeLookups);
+      setPaymentLooups(sanitizedPaymentLookups);
+      setStudyLocationLookups(sanitizedStudyLocationLookups);
+      setDisciplineLookups(sanitizedDisciplineLookups);
     } catch (error) {
       console.error('❌ Error loading lookups from storage:', error);
       setError(error.message);
@@ -299,9 +285,6 @@ export const LookupProvider = ({ children }) => {
     isFetchingRef.current = true;
     setLoading(true);
     setError(null);
-    
-    // Reset fresh data flag before fetching new data
-    hasFreshDataRef.current = false;
 
     const fetchPromise = (async () => {
       try {
@@ -379,8 +362,6 @@ export const LookupProvider = ({ children }) => {
         setCountryLookups(countryData);
         setCategoryLookups(categoryData);
         setDisciplineLookups(disciplineData);
-        // Mark fresh data immediately
-        hasFreshDataRef.current = true;
 
         saveLookupsToStorageAndState({
           genderData,
@@ -422,11 +403,8 @@ export const LookupProvider = ({ children }) => {
   useEffect(() => {
     const initializeLookups = async () => {
       try {
-        // Reset flag before initialization
-        hasFreshDataRef.current = false;
-        
         // Load from localStorage first for immediate UI rendering
-        await loadLookupsFromStorage(true);
+        await loadLookupsFromStorage();
 
         const headers = getHeaders();
         if (headers.token) {
@@ -447,11 +425,7 @@ export const LookupProvider = ({ children }) => {
 
   useEffect(() => {
     const handleLookupUpdate = async () => {
-      await new Promise(resolve => setTimeout(resolve, 200));
-      await loadLookupsFromStorage(true);
-      setTimeout(() => {
-        hasFreshDataRef.current = false;
-      }, 500);
+      await loadLookupsFromStorage();
     };
 
     window.addEventListener('lookupsUpdated', handleLookupUpdate);
