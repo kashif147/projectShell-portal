@@ -23,6 +23,8 @@ import StandingBankersOrder from '../pages/payments/StandingBankersOrder';
 import DirectDebit from '../pages/payments/DirectDebit';
 import SalaryDeduction from '../pages/payments/SalaryDeduction';
 import PaymentMethod from '../pages/payments/PaymentMethod';
+import GoogleSignin from '../pages/GoogleSignin';
+import Signup from '../pages/Signup';
 
 export const publicRoutes = [
   {
@@ -32,6 +34,14 @@ export const publicRoutes = [
   {
     path: '/landing',
     element: <LandingPage />,
+  },
+  {
+    path: '/google-signin',
+    element: <GoogleSignin />,
+  },
+  {
+    path: '/signup',
+    element: <Signup />,
   },
 ];
 

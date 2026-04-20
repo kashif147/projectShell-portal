@@ -150,9 +150,12 @@ const PersonalInformation = ({
   }, [formData?.mobileNo]);
 
   const hasMobileValue = Boolean(normalizedMobileNo);
+  const hasCountryCode =
+    typeof normalizedMobileNo === 'string' && /^\+\d/.test(normalizedMobileNo);
   const hasValidMobileNumber =
-    hasMobileValue && isValidPhoneNumber(normalizedMobileNo);
+    hasMobileValue && hasCountryCode && isValidPhoneNumber(normalizedMobileNo);
   const showMobileRequiredError = showValidation && !hasMobileValue;
+  const showMobileCountryCodeError = hasMobileValue && !hasCountryCode;
   const showMobileInvalidError = hasMobileValue && !hasValidMobileNumber;
   const shouldUseInternationalMobileFormat =
     normalizedMobileNo && !normalizedMobileNo.startsWith('+353');
@@ -612,6 +615,11 @@ const PersonalInformation = ({
                   (Enter a valid mobile number)
                 </span>
               )}
+              {showMobileCountryCodeError && (
+                <span className="ml-1 text-xs text-red-500">
+                  (Country code is required)
+                </span>
+              )}
             </label>
             <PhoneInput
               defaultCountry="IE"
@@ -620,7 +628,9 @@ const PersonalInformation = ({
               value={normalizedMobileNo}
               onChange={handleMobileNumberChange}
               className={`phone-input-custom ${
-                showMobileRequiredError || showMobileInvalidError
+                showMobileRequiredError ||
+                showMobileInvalidError ||
+                showMobileCountryCodeError
                   ? 'border-red-500 bg-red-50'
                   : 'border-blue-500'
               }`}

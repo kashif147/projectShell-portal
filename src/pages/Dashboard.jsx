@@ -853,8 +853,20 @@ const Dashboard = () => {
                       Loading...
                     </p>
                   ) : (
-                    <p className="text-2xl font-bold text-blue-600 sm:text-3xl">
-                      {formatCurrency(accountNetBalance?.net ?? 0)}
+                    <p
+                      className={`text-2xl font-bold sm:text-3xl ${
+                        typeof accountNetBalance?.net === 'number' &&
+                        accountNetBalance.net < 0
+                          ? 'text-red-600'
+                          : 'text-blue-600'
+                      }`}
+                    >
+                      {formatCurrency(
+                        typeof accountNetBalance?.net === 'number' &&
+                          accountNetBalance.net < 0
+                          ? Math.abs(accountNetBalance.net)
+                          : accountNetBalance?.net ?? 0,
+                      )}
                     </p>
                   )}
                 </div>
