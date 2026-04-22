@@ -1,7 +1,16 @@
 import { generatePKCE } from './crypt.helper';
 import { setVerifier } from './verifier.helper';
 
-export const microSoftUrlRedirect = async () => {
+export const B2C_FLOW_STORAGE_KEY = "azure_b2c_flow";
+
+const POLICY_BY_INTENT = {
+  signin: "B2C_1_projectshell_signin",
+  signup: "B2C_1_projectshell_signup",
+  google: "B2C_1_projectshell_signup_signin_gmail",
+  default: "B2C_1_projectshell",
+};
+
+export const microSoftUrlRedirect = async (intent = "default") => {
   const { code_verifier, code_challenge } = await generatePKCE();
   setVerifier(code_verifier);
   const authUrl = new URL(
