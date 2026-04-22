@@ -116,6 +116,7 @@ const App = () => {
           const data = {
             code: authCode,
             codeVerifier: code_verifier,
+            flow: 'signin',
           };
           dispatch(signInMicrosoft(data));
         } else {
