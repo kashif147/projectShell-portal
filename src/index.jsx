@@ -18,6 +18,7 @@ import { signInMicrosoft, validation } from './services/auth.services';
 import './config/globals.js';
 import { ErrorPage } from './pages/errorPage';
 import { getVerifier } from './helpers/verifier.helper.js';
+import { B2C_FLOW_STORAGE_KEY } from './helpers/B2C.helper.js';
 import { ContextProvider } from './contexts/ContextProvider';
 import NotificationSetup from './components/NotificationSetup';
 import {
@@ -113,11 +114,17 @@ const App = () => {
       try {
         const code_verifier = getVerifier();
         if (authCode && code_verifier) {
+          const storedFlow = localStorage.getItem(B2C_FLOW_STORAGE_KEY);
           const data = {
             code: authCode,
             codeVerifier: code_verifier,
-            flow: 'signin',
           };
+
+          if (storedFlow) {
+            data.flow = storedFlow;
+            localStorage.removeItem(B2C_FLOW_STORAGE_KEY);
+          }
+
           dispatch(signInMicrosoft(data));
         } else {
           dispatch(validation());

@@ -33,15 +33,16 @@ const LandingPage = () => {
   ];
 
   const handleLogin = async () => {
-    await microSoftUrlRedirect();
+    await microSoftUrlRedirect('signin');
   };
 
-  const handleGoogleLogin = () => {
-    navigate('/google-signin');
+  const handleGoogleLogin = async() => {
+    await microSoftUrlRedirect('google');
+    // navigate('/google-signin');
   };
 
-  const handleSignUp = () => {
-    navigate('/signup');
+  const handleSignUp = async () => {
+    await microSoftUrlRedirect('signup');
   };
 
   return (
