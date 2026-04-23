@@ -37,7 +37,7 @@ const LandingPage = () => {
   };
 
   const handleGoogleLogin = async() => {
-    await microSoftUrlRedirect('google');
+    await microSoftUrlRedirect('gmail');
     // navigate('/google-signin');
   };
 

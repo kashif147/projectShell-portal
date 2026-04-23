@@ -100,6 +100,7 @@ const App = () => {
   const authCode = queryParams.get('code');
   const notificationUnsubscribeRef = React.useRef(null);
   const fcmInitializedRef = React.useRef(false);
+  const processedAuthCodeRef = React.useRef(null);
 
   // Store navigate function globally for notification handlers
   React.useEffect(() => {
@@ -114,18 +115,26 @@ const App = () => {
       try {
         const code_verifier = getVerifier();
         if (authCode && code_verifier) {
+          if (processedAuthCodeRef.current === authCode) {
+            return;
+          }
+
+          processedAuthCodeRef.current = authCode;
           const storedFlow = localStorage.getItem(B2C_FLOW_STORAGE_KEY);
           const data = {
             code: authCode,
             codeVerifier: code_verifier,
+            // flow: 'gmail',
           };
 
           if (storedFlow) {
             data.flow = storedFlow;
-            localStorage.removeItem(B2C_FLOW_STORAGE_KEY);
           }
 
           dispatch(signInMicrosoft(data));
+          if (storedFlow) {
+            localStorage.removeItem(B2C_FLOW_STORAGE_KEY);
+          }
         } else {
           dispatch(validation());
         }
@@ -136,7 +145,7 @@ const App = () => {
 
     handleAuthentication();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authCode, dispatch, location, navigate]);
+  }, [authCode, dispatch]);
 
   // Initialize FCM when user is signed in (once per session)
   React.useEffect(() => {

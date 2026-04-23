@@ -6,7 +6,7 @@ export const B2C_FLOW_STORAGE_KEY = "azure_b2c_flow";
 const POLICY_BY_INTENT = {
   signin: "B2C_1_projectshell_signin",
   signup: "B2C_1_projectshell_signup",
-  google: "B2C_1_projectshell_signup_signin_gmail",
+  gmail: "B2C_1_projectshell_signup_signin_gmail",
   default: "B2C_1_projectshell",
 };
 
@@ -17,7 +17,7 @@ export const microSoftUrlRedirect = async (intent = "default") => {
   const selectedIntent = POLICY_BY_INTENT[intent] ? intent : "default";
   const policy = POLICY_BY_INTENT[selectedIntent];
 
-  if (selectedIntent === "signin" || selectedIntent === "signup") {
+  if (selectedIntent === "signin" || selectedIntent === "signup" || selectedIntent === "gmail") {
     localStorage.setItem(B2C_FLOW_STORAGE_KEY, selectedIntent);
   } else {
     localStorage.removeItem(B2C_FLOW_STORAGE_KEY);
@@ -46,7 +46,7 @@ export const microSoftUrlRedirect = async (intent = "default") => {
 //     'https://projectshellab2c.b2clogin.com/projectshellAB2C.onmicrosoft.com/oauth2/v2.0/authorize'
 //   );
 
-//   authUrl.searchParams.append('p', 'B2C_1_projectshell_signin');
+//   authUrl.searchParams.append('p', 'B2C_1_projectshell_signup_signin_gmail');
 //   authUrl.searchParams.append('client_id', 'b0a62557-3308-4efb-954a-fb4b6a787309');
 //   authUrl.searchParams.append('nonce', 'defaultNonce');
 //   authUrl.searchParams.append('redirect_uri', 'com.portal://com.portal/ios/callback');
