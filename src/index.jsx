@@ -124,7 +124,6 @@ const App = () => {
           const data = {
             code: authCode,
             codeVerifier: code_verifier,
-            // flow: 'gmail',
           };
 
           if (storedFlow) {
