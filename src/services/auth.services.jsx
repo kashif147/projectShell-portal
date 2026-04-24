@@ -74,29 +74,31 @@ export const validation = () => {
 
 export const signInMicrosoft = data => {
   return async dispatch => {
-    signInMicrosoftRequest(data)
-      .then(async res => {
-        if (res.status === 200) {
-          setHeaders(res.data);
-          setRefreshToken(res?.data?.refreshToken);
-          deleteVerifier();
-          dispatch(setSignedIn(true));
-          dispatch(setUser(res.data.user));
-          const memberDetail = await getMemberDetail();
-          dispatch(setDetail(memberDetail));
+    try {
+      const res = await signInMicrosoftRequest(data);
+      if (res.status === 200) {
+        setHeaders(res.data);
+        setRefreshToken(res?.data?.refreshToken);
+        deleteVerifier();
+        dispatch(setSignedIn(true));
+        dispatch(setUser(res.data.user));
+        const memberDetail = await getMemberDetail();
+        dispatch(setDetail(memberDetail));
 
-          // Fetch all lookups after successful login
-          fetchAllLookupsOnLogin().catch(error => {
-            console.error('Failed to fetch lookups on login:', error);
-          });
-        } else {
-          toast.error(res.data.errors[0] ?? 'Unable to Sign In');
-        }
-      })
-      .catch(() => {
-        toast.error('Something went wrong');
-        // navigate('/')
-      });
+        // Fetch all lookups after successful login
+        fetchAllLookupsOnLogin().catch(error => {
+          console.error('Failed to fetch lookups on login:', error);
+        });
+        return { success: true };
+      }
+
+      toast.error(res.data.errors[0] ?? 'Unable to Sign In');
+      return { success: false };
+    } catch (error) {
+      toast.error('Something went wrong');
+      return { success: false, error };
+      // navigate('/')
+    }
   };
 };
 

@@ -27,6 +27,7 @@ import {
   unRegisterAppWithFcm,
   setNotificationContextMethods,
 } from './services/firebase.services';
+import SessionTimeoutModal from './components/SessionTimeoutModal';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
@@ -130,9 +131,12 @@ const App = () => {
             data.flow = storedFlow;
           }
 
-          dispatch(signInMicrosoft(data));
+          const signInResult = await dispatch(signInMicrosoft(data));
           if (storedFlow) {
             localStorage.removeItem(B2C_FLOW_STORAGE_KEY);
+          }
+          if (signInResult?.success) {
+            window.history.replaceState(null, '', '/');
           }
         } else {
           dispatch(validation());
@@ -220,7 +224,16 @@ const App = () => {
     };
   }, [auth.isSignedIn]);
 
-  return auth.isLoading ? <PulseLoader /> : <Router auth={auth} />;
+  if (auth.isLoading) {
+    return <PulseLoader />;
+  }
+
+  return (
+    <>
+      <Router auth={auth} />
+      <SessionTimeoutModal isEnabled={auth.isSignedIn} />
+    </>
+  );
 };
 
 root.render(
