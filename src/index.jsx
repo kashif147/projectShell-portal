@@ -27,6 +27,7 @@ import {
   unRegisterAppWithFcm,
   setNotificationContextMethods,
 } from './services/firebase.services';
+import SessionTimeoutModal from './components/SessionTimeoutModal';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
@@ -100,6 +101,7 @@ const App = () => {
   const authCode = queryParams.get('code');
   const notificationUnsubscribeRef = React.useRef(null);
   const fcmInitializedRef = React.useRef(false);
+  const processedAuthCodeRef = React.useRef(null);
 
   // Store navigate function globally for notification handlers
   React.useEffect(() => {
@@ -114,6 +116,11 @@ const App = () => {
       try {
         const code_verifier = getVerifier();
         if (authCode && code_verifier) {
+          if (processedAuthCodeRef.current === authCode) {
+            return;
+          }
+
+          processedAuthCodeRef.current = authCode;
           const storedFlow = localStorage.getItem(B2C_FLOW_STORAGE_KEY);
           const data = {
             code: authCode,
@@ -122,10 +129,15 @@ const App = () => {
 
           if (storedFlow) {
             data.flow = storedFlow;
-            localStorage.removeItem(B2C_FLOW_STORAGE_KEY);
           }
 
-          dispatch(signInMicrosoft(data));
+          const signInResult = await dispatch(signInMicrosoft(data));
+          if (storedFlow) {
+            localStorage.removeItem(B2C_FLOW_STORAGE_KEY);
+          }
+          if (signInResult?.success) {
+            window.history.replaceState(null, '', '/');
+          }
         } else {
           dispatch(validation());
         }
@@ -136,7 +148,7 @@ const App = () => {
 
     handleAuthentication();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authCode, dispatch, location, navigate]);
+  }, [authCode, dispatch]);
 
   // Initialize FCM when user is signed in (once per session)
   React.useEffect(() => {
@@ -212,7 +224,16 @@ const App = () => {
     };
   }, [auth.isSignedIn]);
 
-  return auth.isLoading ? <PulseLoader /> : <Router auth={auth} />;
+  if (auth.isLoading) {
+    return <PulseLoader />;
+  }
+
+  return (
+    <>
+      <Router auth={auth} />
+      <SessionTimeoutModal isEnabled={auth.isSignedIn} />
+    </>
+  );
 };
 
 root.render(

@@ -667,8 +667,96 @@ const Dashboard = () => {
     [],
   );
 
+  const paymentsBillingSection = (
+    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-6">
+      <h2 className="mb-3 text-lg font-semibold text-slate-900 sm:mb-4 sm:text-xl">
+        Payments & Billing
+      </h2>
+      <div className="space-y-2.5 sm:space-y-4">
+        {profileDetail?.membershipNumber && (
+          <div className="rounded-lg bg-slate-50 p-3 sm:p-4">
+            <p className="mb-1 text-sm font-semibold text-slate-900 sm:text-sm sm:font-normal sm:text-slate-600 sm:text-right">
+              Net Balance
+              {accountNetBalance?.year && (
+                <span className="ml-1">({accountNetBalance.year})</span>
+              )}
+            </p>
+            {accountNetBalanceLoading ? (
+              <p className="animate-pulse text-xl font-bold text-slate-500 sm:text-3xl sm:text-right">
+                Loading...
+              </p>
+            ) : (
+              <p
+                className={`text-xl font-bold sm:text-3xl sm:text-right ${
+                  typeof accountNetBalance?.net === 'number' &&
+                  accountNetBalance.net < 0
+                    ? 'text-red-600'
+                    : 'text-blue-600'
+                }`}
+              >
+                {formatCurrency(
+                  typeof accountNetBalance?.net === 'number' &&
+                    accountNetBalance.net < 0
+                    ? Math.abs(accountNetBalance.net)
+                    : accountNetBalance?.net ?? 0,
+                )}
+              </p>
+            )}
+
+            <div className="mt-3 flex items-center gap-2 sm:hidden">
+              <div className="flex-1 rounded-lg bg-slate-200 px-2.5 py-1.5">
+                <p className="text-[9px] font-semibold uppercase tracking-[0.06em] text-slate-500">
+                  Membership No
+                </p>
+                <p className="mt-0.5 text-lg font-bold leading-none text-slate-900">
+                  {profileDetail.membershipNumber}
+                </p>
+              </div>
+              <button
+                onClick={handleNext}
+                disabled={
+                  !isMember ||
+                  accountNetBalanceLoading ||
+                  (typeof accountNetBalance?.net === 'number' &&
+                    accountNetBalance.net <= 0)
+                }
+                className={`min-w-[96px] rounded-lg px-3 py-1.5 text-base font-semibold transition-colors ${
+                  !isMember ||
+                  accountNetBalanceLoading ||
+                  (typeof accountNetBalance?.net === 'number' &&
+                    accountNetBalance.net <= 0)
+                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}>
+                Pay Now
+              </button>
+            </div>
+          </div>
+        )}
+        <button
+          onClick={handleNext}
+          disabled={
+            !isMember ||
+            accountNetBalanceLoading ||
+            (typeof accountNetBalance?.net === 'number' &&
+              accountNetBalance.net <= 0)
+          }
+          className={`hidden sm:block w-full px-4 py-2.5 sm:py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm sm:text-base ${
+            !isMember ||
+            accountNetBalanceLoading ||
+            (typeof accountNetBalance?.net === 'number' &&
+              accountNetBalance.net <= 0)
+              ? 'opacity-50 cursor-not-allowed'
+              : ''
+          }`}>
+          Pay Now
+        </button>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="space-y-5 px-3 py-4 sm:space-y-6 sm:px-6 lg:px-8 sm:py-6">
+    <div className="space-y-5 px-2 py-4 sm:space-y-6 sm:px-6 lg:px-8 sm:py-6">
       {/* Welcome Header */}
       <div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -683,12 +771,15 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Mobile/Tablet: Payments card directly below welcome content */}
+      <div className="lg:hidden">{paymentsBillingSection}</div>
+
       {/* Main Grid Layout */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 sm:gap-6">
         {/* Left Column - Application Status & Events */}
         <div className="space-y-4 lg:col-span-2 sm:space-y-6">
           {/* Quick Actions Section */}
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+          <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-6">
             <h2 className="mb-3 text-lg font-semibold text-slate-900 sm:mb-4 sm:text-xl">
               Quick Actions
             </h2>
@@ -740,7 +831,7 @@ const Dashboard = () => {
           </div>
 
           {/* Upcoming Events Section */}
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+          <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-6">
             <div className="mb-3 flex items-center justify-between sm:mb-4">
               <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">
                 Upcoming Events
@@ -771,9 +862,9 @@ const Dashboard = () => {
         </div>
 
         {/* Right Column - Profile & Payments */}
-        <div className="space-y-4 sm:space-y-6">
+        <div className="flex flex-col gap-4 sm:gap-6">
           {/* Profile Completion Section */}
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+          <div className="order-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:order-1 sm:p-6">
             <h2 className="mb-3 text-lg font-semibold text-slate-900 sm:mb-4 sm:text-xl">
               Profile Completion
             </h2>
@@ -835,61 +926,8 @@ const Dashboard = () => {
           </div>
 
           {/* Payments & Billing Section */}
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-            <h2 className="mb-3 text-lg font-semibold text-slate-900 sm:mb-4 sm:text-xl">
-              Payments & Billing
-            </h2>
-            <div className="space-y-2.5 sm:space-y-4">
-              {profileDetail?.membershipNumber && (
-                <div className="rounded-lg bg-slate-50 p-4 text-right">
-                  <p className="mb-1 text-xs text-slate-600 sm:text-sm">
-                    Balance
-                    {accountNetBalance?.year && (
-                      <span className="ml-1">({accountNetBalance.year})</span>
-                    )}
-                  </p>
-                  {accountNetBalanceLoading ? (
-                    <p className="animate-pulse text-2xl font-bold text-slate-500 sm:text-3xl">
-                      Loading...
-                    </p>
-                  ) : (
-                    <p
-                      className={`text-2xl font-bold sm:text-3xl ${
-                        typeof accountNetBalance?.net === 'number' &&
-                        accountNetBalance.net < 0
-                          ? 'text-red-600'
-                          : 'text-blue-600'
-                      }`}
-                    >
-                      {formatCurrency(
-                        typeof accountNetBalance?.net === 'number' &&
-                          accountNetBalance.net < 0
-                          ? Math.abs(accountNetBalance.net)
-                          : accountNetBalance?.net ?? 0,
-                      )}
-                    </p>
-                  )}
-                </div>
-              )}
-              <button
-                onClick={handleNext}
-                disabled={
-                  !isMember ||
-                  accountNetBalanceLoading ||
-                  (typeof accountNetBalance?.net === 'number' &&
-                    accountNetBalance.net <= 0)
-                }
-                className={`w-full px-4 py-2.5 sm:py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm sm:text-base ${
-                  !isMember ||
-                  accountNetBalanceLoading ||
-                  (typeof accountNetBalance?.net === 'number' &&
-                    accountNetBalance.net <= 0)
-                    ? 'opacity-50 cursor-not-allowed'
-                    : ''
-                }`}>
-                Pay Now
-              </button>
-            </div>
+          <div className="hidden order-1 lg:block sm:order-2">
+            {paymentsBillingSection}
           </div>
         </div>
       </div>

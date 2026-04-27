@@ -16,7 +16,7 @@ import {
   Shield,
   Users,
 } from 'lucide-react';
-import { Logo } from '../assets/images/index';
+import { Logo, Splash } from '../assets/images/index';
 import { microSoftUrlRedirect } from '../helpers/B2C.helper';
 
 const LandingPage = () => {
@@ -37,7 +37,7 @@ const LandingPage = () => {
   };
 
   const handleGoogleLogin = async() => {
-    await microSoftUrlRedirect('google');
+    await microSoftUrlRedirect('gmail');
     // navigate('/google-signin');
   };
 
@@ -49,7 +49,7 @@ const LandingPage = () => {
     <div className="min-h-screen flex flex-col bg-white lg:flex-row">
       <div className="relative w-full overflow-hidden p-8 text-white md:p-14 lg:w-3/5">
         <img
-          src={`https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1200`}
+          src={Splash}
           alt="Members collaborating"
           className="absolute inset-0 h-full w-full object-cover"
         />
