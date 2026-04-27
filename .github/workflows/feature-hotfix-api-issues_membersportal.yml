@@ -1,0 +1,55 @@
+name: Deploy Vite React App to Azure Web App - membersPortal
+
+on:
+  push:
+    branches:
+      - feature/Hotfix-api-issues
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Vite app
+        run: npm run build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vite-dist
+          path: dist
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vite-dist
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_5B192FB6CDF04D499D1E82A78E1FDE00 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2107C1D8A83E4822BCC87D069DBDA220 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_7022D66F35694767B6FF0B80B31634CD }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'membersPortal'
+          slot-name: 'Production'
+          package: .
