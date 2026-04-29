@@ -690,8 +690,8 @@ const Dashboard = () => {
                 className={`text-xl font-bold sm:text-3xl sm:text-right ${
                   typeof accountNetBalance?.net === 'number' &&
                   accountNetBalance.net < 0
-                    ? 'text-red-600'
-                    : 'text-blue-600'
+                    ? 'text-green-600'
+                    : 'text-red-600'
                 }`}
               >
                 {formatCurrency(

@@ -47,7 +47,7 @@ const SalaryDeductionPrintTemplate = ({ formState, monthlyDeductionAmount }) => 
           </p>
 
           <div className="grid grid-cols-[135px_1fr] gap-y-3.5 items-end pt-2">
-            <span className="whitespace-nowrap">INMO NO:</span>
+            <span className="whitespace-nowrap">MEMBERSHIP NO:</span>
             <span className="border-b border-black min-h-[18px]">{formState.inmoNo || ' '}</span>
 
             <div className="leading-tight">

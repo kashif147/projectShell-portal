@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import { BellOutlined, CheckCircleOutlined, InfoCircleOutlined, WarningOutlined, CloseOutlined } from '@ant-design/icons';
+import { BellOutlined, CheckCircleOutlined, InfoCircleOutlined, WarningOutlined, CloseOutlined, FilePdfOutlined, DownloadOutlined } from '@ant-design/icons';
 import { Pagination } from 'antd';
 import moment from 'moment';
 import { toast } from 'react-toastify';
 import { fetchNotiticationRequest, readNotificationRequest, deleteNotificationRequest, deleteAllNotificationRequest } from '../api/notification.api';
+import notification_request from '../api/notification_request';
 import { useNotification } from '../contexts/notificationContext';
 import Spinner from '../components/common/Spinner';
 
@@ -37,6 +38,17 @@ const Notifications = () => {
 
   // Transform API notification to component format
   const transformNotification = (apiNotification) => {
+    const attachments = Array.isArray(apiNotification.attachments)
+      ? apiNotification.attachments
+      : Array.isArray(apiNotification?.metadata?.attachments)
+      ? apiNotification.metadata.attachments
+      : [];
+    const pdfAttachments = attachments.filter(attachment =>
+      String(attachment?.mimeType || '')
+        .toLowerCase()
+        .includes('pdf'),
+    );
+
     return {
       id: apiNotification._id,
       title: apiNotification.title || 'Notification',
@@ -47,7 +59,84 @@ const Notifications = () => {
       icon: 'info', // Default icon, can be enhanced later
       color: 'blue', // Default color, can be enhanced later
       sentAt: apiNotification.sentAt || apiNotification.createdAt,
+      attachments,
+      pdfAttachments,
     };
+  };
+
+  const resolveAttachmentPath = attachment => {
+    return (
+      attachment?.downloadUrl ||
+      attachment?.url ||
+      attachment?.path ||
+      ''
+    );
+  };
+
+  const handleDownloadAttachment = async attachment => {
+    const attachmentPath = resolveAttachmentPath(attachment);
+    const base64Data = attachment?.dataBase64 || attachment?.base64Data || '';
+
+    try {
+      if (!attachmentPath && base64Data) {
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i += 1) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const base64Blob = new Blob([byteArray], {
+          type: attachment?.mimeType || 'application/pdf',
+        });
+        const base64Url = window.URL.createObjectURL(base64Blob);
+        const base64Link = document.createElement('a');
+        base64Link.href = base64Url;
+        base64Link.download =
+          attachment?.fileName ||
+          attachment?.filename ||
+          'notification-attachment.pdf';
+        document.body.appendChild(base64Link);
+        base64Link.click();
+        base64Link.remove();
+        window.URL.revokeObjectURL(base64Url);
+        return;
+      }
+
+      if (!attachmentPath) {
+        toast.error('No attachment data found for this notification');
+        return;
+      }
+
+      const requestPath = attachmentPath.startsWith('http')
+        ? attachmentPath
+        : attachmentPath.startsWith('/')
+        ? attachmentPath
+        : `/${attachmentPath}`;
+
+      const response = await notification_request.get(requestPath, {
+        responseType: 'blob',
+      });
+
+      if (response?.status !== 200 || !response?.data) {
+        toast.error('Failed to download attachment');
+        return;
+      }
+
+      const blob = new Blob([response.data], {
+        type: attachment?.mimeType || 'application/octet-stream',
+      });
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = attachment?.fileName || attachment?.filename || 'notification-attachment.pdf';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Attachment download failed:', error);
+      toast.error('Failed to download attachment');
+    }
   };
 
   // Fetch notifications from API
@@ -444,16 +533,37 @@ const Notifications = () => {
                               }`}>
                                 {notification.type === 'payment' ? '💳 Payment' : notification.type === 'subscription' ? '📋 Subscription' : '📢 General'}
                               </span>
+                              {notification.pdfAttachments?.length > 0 && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 sm:py-1 text-xs font-medium rounded-md bg-red-100 text-red-700 whitespace-nowrap">
+                                  <FilePdfOutlined />
+                                  PDF
+                                </span>
+                              )}
                             </div>
-                            
-                            {!notification.read && (
-                              <button
-                                onClick={() => markAsRead(notification.id)}
-                                disabled={markingAsRead}
-                                className="w-full sm:w-auto text-xs font-medium text-blue-600 hover:text-blue-700 active:text-blue-800 px-3 py-1.5 sm:py-1 hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors touch-manipulation text-left sm:text-center disabled:opacity-50 disabled:cursor-not-allowed">
-                                {markingAsRead ? 'Marking...' : 'Mark as read'}
-                              </button>
-                            )}
+
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                              {notification.pdfAttachments?.length > 0 && (
+                                <button
+                                  onClick={() =>
+                                    handleDownloadAttachment(
+                                      notification.pdfAttachments[0],
+                                    )
+                                  }
+                                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 text-xs font-medium text-red-600 hover:text-red-700 active:text-red-800 px-3 py-1.5 sm:py-1 hover:bg-red-50 active:bg-red-100 rounded-lg transition-colors touch-manipulation">
+                                  <DownloadOutlined />
+                                  Download PDF
+                                </button>
+                              )}
+
+                              {!notification.read && (
+                                <button
+                                  onClick={() => markAsRead(notification.id)}
+                                  disabled={markingAsRead}
+                                  className="w-full sm:w-auto text-xs font-medium text-blue-600 hover:text-blue-700 active:text-blue-800 px-3 py-1.5 sm:py-1 hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors touch-manipulation text-left sm:text-center disabled:opacity-50 disabled:cursor-not-allowed">
+                                  {markingAsRead ? 'Marking...' : 'Mark as read'}
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>

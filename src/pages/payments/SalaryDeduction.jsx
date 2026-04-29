@@ -2,11 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import dayjs from 'dayjs';
 import { useSelector } from 'react-redux';
 import { useApplication } from '../../contexts/applicationContext';
+import { useProfile } from '../../contexts/profileContext';
+import { useLookup } from '../../contexts/lookupContext';
 import { Input } from '../../components/ui/Input';
 import { DatePicker } from '../../components/ui/DatePicker';
+import { Select } from '../../components/ui/Select';
 import SignaturePad from '../../components/common/SignaturePad';
 import Button from '../../components/common/Button';
 import SalaryDeductionPrintTemplate from './SalaryDeductionPrintTemplate';
@@ -14,7 +16,9 @@ import SalaryDeductionPrintTemplate from './SalaryDeductionPrintTemplate';
 const SalaryDeduction = () => {
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
-  const { personalDetail } = useApplication();
+  const { personalDetail, professionalDetail, subscriptionDetail } = useApplication();
+  const { profileDetail } = useProfile();
+  const { workLocationLookups } = useLookup();
   const printRef = useRef(null);
 
   const [formState, setFormState] = useState({
@@ -30,6 +34,21 @@ const SalaryDeduction = () => {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   const monthlyDeductionAmount = '19.00';
+  const mappedWorkLocations = (workLocationLookups || [])
+    .map(item => item?.lookup?.DisplayName || item?.lookup?.lookupname || '')
+    .filter(Boolean);
+  const uniqueWorkLocations = Array.from(new Set(mappedWorkLocations));
+  const workLocationOptions = uniqueWorkLocations.map(name => ({
+    value: name,
+    label: name,
+  }));
+  const employedAtOptions =
+    formState.employedAt &&
+    !workLocationOptions.some(
+      option => option.value === formState.employedAt,
+    )
+      ? [{ value: formState.employedAt, label: formState.employedAt }, ...workLocationOptions]
+      : workLocationOptions;
 
   useEffect(() => {
     const name =
@@ -40,15 +59,20 @@ const SalaryDeduction = () => {
         : user?.userName || '';
 
     const inmoNo =
+      profileDetail?.membershipNumber ||
       personalDetail?.personalInfo?.membershipNumber ||
       personalDetail?.membershipNumber ||
       personalDetail?.memberNumber ||
       '';
 
     const employedAt =
-      personalDetail?.employmentInfo?.employerName ||
-      personalDetail?.employmentDetails?.employerName ||
-      personalDetail?.employment?.employerName ||
+      professionalDetail?.professionalDetails?.workLocation ||
+      professionalDetail?.workLocation ||
+      '';
+
+    const payrollStaffNo =
+      subscriptionDetail?.subscriptionDetails?.payrollNo ||
+      subscriptionDetail?.payrollNo ||
       '';
 
     setFormState(prev => ({
@@ -56,8 +80,9 @@ const SalaryDeduction = () => {
       name,
       inmoNo: inmoNo ? String(inmoNo) : '',
       employedAt,
+      payrollStaffNo: payrollStaffNo ? String(payrollStaffNo) : '',
     }));
-  }, [personalDetail, user]);
+  }, [personalDetail, professionalDetail, profileDetail, subscriptionDetail, user]);
 
   const handleInputChange = e => {
     const { name, value } = e.target;
@@ -241,13 +266,16 @@ const SalaryDeduction = () => {
                 placeholder="Block capitals"
               />
 
-              <Input
+              <Select
                 label="Employed At"
                 name="employedAt"
                 required
                 value={formState.employedAt}
                 onChange={handleInputChange}
                 showValidation={showValidation}
+                options={employedAtOptions}
+                isSearchable
+                placeholder="Select work location"
               />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
