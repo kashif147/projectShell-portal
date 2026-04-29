@@ -10,6 +10,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { useSelector } from 'react-redux';
 import { useApplication } from '../../contexts/applicationContext';
+import { useProfile } from '../../contexts/profileContext';
 import { fetchCategoryByCategoryId } from '../../api/category.api';
 import dayjs from 'dayjs';
 
@@ -17,8 +18,14 @@ const StandingBankersOrder = () => {
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
   const { subscriptionDetail } = useApplication();
+  const { profileDetail } = useProfile();
   const printRef = useRef(null);
   const ibanInputRef = useRef(null);
+  const membershipNo =
+    profileDetail?.membershipNumber ||
+    subscriptionDetail?.subscriptionDetails?.membershipNo ||
+    subscriptionDetail?.subscriptionDetails?.membershipNumber ||
+    '';
 
   // Get category data
   const membershipCategory =
@@ -99,7 +106,7 @@ const StandingBankersOrder = () => {
   const beneficiaryDetails = {
     accountName: 'Irish Nurses and Midwives Organization (CRM)',
     iban: 'IE99 BOFI 9000 1234 5678 99',
-    reference: `MEMB-2023-${user?.id || '0000'}`,
+    reference: membershipNo || `MEMB-2023-${user?.id || '0000'}`,
   };
 
   // Auto-populate branch address based on bank selection
