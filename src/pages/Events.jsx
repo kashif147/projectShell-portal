@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Empty } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import EventCard from '../components/events/EventCard';
 import { dummyData } from '../services/dummyData';
 
 const Events = () => {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState('all');
   
   const filteredEvents = dummyData.events.filter(event => {
@@ -64,9 +66,15 @@ const Events = () => {
 
       {/* Events Grid */}
       {filteredEvents.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
           {filteredEvents.map((event, index) => (
-            <EventCard key={event.id || index} event={event} />
+            <EventCard
+              key={event.id || index}
+              event={event}
+              onRegister={selectedEvent => {
+                navigate(`/events/${selectedEvent.id}/register`);
+              }}
+            />
           ))}
         </div>
       ) : (

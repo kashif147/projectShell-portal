@@ -5,6 +5,9 @@ import Subscriptions from '../pages/Subscriptions';
 import Payments from '../pages/Payments';
 import Events from '../pages/Events';
 import Courses from '../pages/Courses';
+import EventRegistration from '../pages/EventRegistration';
+import CourseRegistration from '../pages/CourseRegistration';
+import RegistrationPayment from '../pages/RegistrationPayment';
 import Communications from '../pages/Communications';
 import Queries from '../pages/Queries';
 import QueriesCreate from '../pages/QueriesCreate';
@@ -103,8 +106,20 @@ export const privateRoutes = [
         element: <Events />,
       },
       {
+        path: 'events/:eventId/register',
+        element: <EventRegistration />,
+      },
+      {
         path: 'courses',
         element: <Courses />,
+      },
+      {
+        path: 'courses/:courseId/register',
+        element: <CourseRegistration />,
+      },
+      {
+        path: 'registrations/payment',
+        element: <RegistrationPayment />,
       },
       {
         path: 'communications',

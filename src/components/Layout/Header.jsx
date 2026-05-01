@@ -40,6 +40,7 @@ const Header = ({
       'Member User',
     [user?.userFirstName, user?.userLastName, user?.fullName],
   );
+  console.log('user========>',user)
   const userSubLabel = isMember
     ? profileDetail?.membershipNumber || 'Membership Pending'
     : isCrmUser

@@ -15,12 +15,13 @@ const statusStyles = {
   completed: 'bg-slate-100 text-slate-700 border-slate-200',
 };
 
-const EventCard = ({ event }) => {
+const EventCard = ({ event, onRegister }) => {
   const statusClass =
     statusStyles[event?.status?.toLowerCase()] ||
     'bg-slate-100 text-slate-700 border-slate-200';
   const isCompleted = String(event?.status || '').toLowerCase() === 'completed';
   const isWaitlist = String(event?.status || '').toLowerCase() === 'waitlist';
+  const isRegistered = String(event?.status || '').toLowerCase() === 'registered';
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md">
@@ -74,6 +75,7 @@ const EventCard = ({ event }) => {
           <Button
             type="primary"
             disabled={isCompleted}
+            onClick={() => onRegister && onRegister(event)}
             className={`!h-10 !rounded-lg !px-4 !font-semibold ${
               isCompleted
                 ? ''
@@ -82,7 +84,13 @@ const EventCard = ({ event }) => {
                 : '!bg-blue-600 hover:!bg-blue-700 !border-blue-600'
             }`}
           >
-            {isCompleted ? 'Completed' : isWaitlist ? 'Join Waitlist' : 'Register'}
+            {isCompleted
+              ? 'Completed'
+              : isRegistered
+              ? 'View Registration'
+              : isWaitlist
+              ? 'Join Waitlist'
+              : 'Register'}
           </Button>
         </div>
       </div>
