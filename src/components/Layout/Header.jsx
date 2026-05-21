@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Layout, Avatar, Dropdown, Badge, Input } from 'antd';
 import {
   MenuFoldOutlined,
@@ -10,13 +10,14 @@ import {
 import Button from '../common/Button';
 import { useDispatch } from 'react-redux';
 import { signOut } from '../../services/auth.services';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useLookup } from '../../contexts/lookupContext';
 import { useProfile } from '../../contexts/profileContext';
 import { useNotification } from '../../contexts/notificationContext';
 import { useApplication } from '../../contexts/applicationContext';
 import { useMemberRole } from '../../hooks/useMemberRole';
+import { fetchNotiticationRequest } from '../../api/notification.api';
 
 const Header = ({
   collapsed,
@@ -28,11 +29,12 @@ const Header = ({
   const { user } = useSelector(state => state.auth);
   const { fetchAllLookups } = useLookup();
   const { profileDetail } = useProfile();
-  const { unreadCount } = useNotification();
+  const { unreadCount, setUnreadCountValue } = useNotification();
   const { isCrmUser } = useApplication();
   const { isMember } = useMemberRole();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchValue, setSearchValue] = useState('');
   const userDisplayName = useMemo(
     () =>
@@ -45,6 +47,30 @@ const Header = ({
     : isCrmUser
       ? 'CRM User'
       : 'Non Member';
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const syncUnreadCount = async () => {
+      try {
+        const response = await fetchNotiticationRequest({ page: 1, limit: 1 });
+        if (!isMounted) return;
+        if (response?.status === 200 && response?.data?.success) {
+          const count = response?.data?.data?.unreadCount;
+          if (typeof count === 'number') {
+            setUnreadCountValue(count);
+          }
+        }
+      } catch {
+        // Keep current badge value if request fails
+      }
+    };
+
+    syncUnreadCount();
+    return () => {
+      isMounted = false;
+    };
+  }, [location.pathname, setUnreadCountValue]);
 
   const items = [
     {

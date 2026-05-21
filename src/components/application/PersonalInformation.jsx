@@ -420,6 +420,18 @@ const PersonalInformation = ({
 
         {/* Consent and Preferred Address Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          {/* Preferred Address Radio */}
+          <div className="mb-4 p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+            <Radio
+              label="Preferred address"
+              name="preferredAddress"
+              required
+              value={formData?.preferredAddress || ''}
+              onChange={handleInputChange}
+              showValidation={showValidation}
+              options={[{ value: 'home', label: 'Home' }, { value: 'work', label: 'Work' }]}
+            />
+          </div>  
           {/* Consent Checkbox */}
           <div className="mb-4 p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
             <Checkbox
@@ -440,18 +452,6 @@ const PersonalInformation = ({
             />
           </div>
 
-          {/* Preferred Address Radio */}
-          <div className="mb-4 p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-            <Radio
-              label="Preferred address"
-              name="preferredAddress"
-              required
-              value={formData?.preferredAddress || ''}
-              onChange={handleInputChange}
-              showValidation={showValidation}
-              options={[{ value: 'home', label: 'Home' }, { value: 'work', label: 'Work' }]}
-            />
-          </div>
         </div>
 
         {/* Find your address */}
