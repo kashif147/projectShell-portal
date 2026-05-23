@@ -13,8 +13,10 @@ import { useApplication } from '../../contexts/applicationContext';
 import { useProfile } from '../../contexts/profileContext';
 import { fetchCategoryByCategoryId } from '../../api/category.api';
 import dayjs from 'dayjs';
+import PaymentFormSubheader from './PaymentFormSubheader';
+import { PAYMENT_FORM_META } from './paymentFormMeta';
 
-const StandingBankersOrder = () => {
+const StandingBankersOrder = ({ embedded = false }) => {
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
   const { subscriptionDetail } = useApplication();
@@ -432,27 +434,10 @@ const StandingBankersOrder = () => {
   };
 
   const isFormValid = validateForm();
+  const formMeta = PAYMENT_FORM_META['Standing Banking Order'];
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-2.5 sm:py-3">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
-                Standing Banking Order Setup
-              </h1>
-              <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">
-                Please complete the form below to authorize a new standing order
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+  const formContent = (
+      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 max-w-7xl mx-auto">
         <div className="space-y-4 sm:space-y-6">
           {/* Print Content (hidden visually, used for PDF generation) */}
           <div
@@ -1071,6 +1056,19 @@ const StandingBankersOrder = () => {
           </div>
         </div>
       </div>
+  );
+
+  if (embedded) {
+    return formContent;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <PaymentFormSubheader
+        title={formMeta.title}
+        subtitle={formMeta.subtitle}
+      />
+      {formContent}
     </div>
   );
 };

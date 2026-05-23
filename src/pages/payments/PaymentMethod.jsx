@@ -5,6 +5,7 @@ import { applicationConfirmationRequest } from '../../api/application.api';
 import StandingBankersOrder from './StandingBankersOrder';
 import DirectDebit from './DirectDebit';
 import SalaryDeduction from './SalaryDeduction';
+import { PAYMENT_FORM_META } from './paymentFormMeta';
 
 const PaymentMethod = () => {
   const navigate = useNavigate();
@@ -107,12 +108,15 @@ const PaymentMethod = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applicationStatus, subscriptionDetail?.subscriptionDetails?.paymentType, loading]);
 
-  // Payment type options - only Standing Banking Order and Direct Debit
   const paymentTypes = [
     { value: 'Standing Banking Order', label: 'Standing Banking Order' },
     { value: 'Direct Debit', label: 'Direct Debit' },
     { value: 'Salary Deduction', label: 'Salary Deduction' },
   ];
+
+  const activeTabMeta = selectedPaymentType
+    ? PAYMENT_FORM_META[selectedPaymentType]
+    : null;
 
   // Render the appropriate payment component
   const renderPaymentComponent = () => {
@@ -122,11 +126,11 @@ const PaymentMethod = () => {
 
     switch (selectedPaymentType) {
       case 'Standing Banking Order':
-        return <StandingBankersOrder />;
+        return <StandingBankersOrder embedded />;
       case 'Direct Debit':
-        return <DirectDebit />;
+        return <DirectDebit embedded />;
       case 'Salary Deduction':
-        return <SalaryDeduction />;
+        return <SalaryDeduction embedded />;
       default:
         return null;
     }
@@ -143,18 +147,41 @@ const PaymentMethod = () => {
     );
   }
 
+  const tabList = (
+    <div
+      className="inline-flex max-w-full gap-1 overflow-x-auto rounded-lg bg-gray-100 p-1 shrink-0"
+      role="tablist"
+      aria-label="Payment method">
+      {paymentTypes.map(type => (
+        <button
+          key={type.value}
+          type="button"
+          role="tab"
+          aria-selected={selectedPaymentType === type.value}
+          onClick={() => setSelectedPaymentType(type.value)}
+          className={`h-9 px-2.5 sm:px-4 rounded-md text-[11px] sm:text-xs font-medium whitespace-nowrap transition-all duration-150 ${
+            selectedPaymentType === type.value
+              ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50/80'
+          }`}>
+          {type.label}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Payment Type Selector Bar - Sticky at top */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
-        <div className="px-3 sm:px-4 md:px-6 lg:px-8">
-          {/* Main Header Row */}
-          <div className="flex items-center gap-3 sm:gap-4 py-3 sm:py-3.5">
+        <div className="px-3 sm:px-4 md:px-6 lg:px-8 max-w-7xl mx-auto py-3 sm:py-4">
+          <div className="flex items-start gap-2 sm:gap-3">
             <button
+              type="button"
               onClick={() => navigate('/')}
-              className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 -ml-0.5 sm:ml-0">
+              className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+              aria-label="Go back">
               <svg
-                className="w-5 h-5 text-gray-600"
+                className="h-5 w-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24">
@@ -166,46 +193,25 @@ const PaymentMethod = () => {
                 />
               </svg>
             </button>
-            
-            <div className="flex-1 min-w-0">
-              <h1 className="text-base sm:text-lg font-semibold text-gray-900 leading-tight">
-                Payment Method
-              </h1>
-              <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">
-                Select your preferred payment method
-              </p>
+            <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+              <div className="min-w-0 flex-1">
+                {activeTabMeta ? (
+                  <>
+                    <h1 className="text-sm sm:text-base font-semibold text-gray-900 leading-tight">
+                      {activeTabMeta.title}
+                    </h1>
+                    <p className="text-xs text-gray-500 mt-0.5 leading-snug">
+                      {activeTabMeta.subtitle}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs text-gray-500">
+                    Select a payment method to continue
+                  </p>
+                )}
+              </div>
+              <div className="flex shrink-0 justify-end sm:ml-4">{tabList}</div>
             </div>
-
-            {/* Payment Type Selector - Desktop Tabs */}
-            <div className="hidden md:flex items-center gap-1 bg-gray-100 rounded-xl p-1 flex-shrink-0">
-              {paymentTypes.map((type) => (
-                <button
-                  key={type.value}
-                  onClick={() => setSelectedPaymentType(type.value)}
-                  className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 whitespace-nowrap relative ${
-                    selectedPaymentType === type.value
-                      ? 'bg-white text-blue-600 shadow-sm font-bold'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}>
-                  {type.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Payment Type Selector - Mobile Dropdown */}
-          <div className="md:hidden pb-3 -mt-1">
-            <select
-              value={selectedPaymentType || ''}
-              onChange={(e) => setSelectedPaymentType(e.target.value || null)}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all">
-              <option value="">Select payment method</option>
-              {paymentTypes.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
           </div>
         </div>
       </div>
@@ -235,7 +241,7 @@ const PaymentMethod = () => {
                 Change Your Payment Method
               </h2>
               <p className="text-gray-600 mb-6">
-                Please select a payment method from the options above to continue.
+                Please select a payment method from the tabs above to continue.
               </p>
             </div>
           </div>

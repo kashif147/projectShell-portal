@@ -413,6 +413,26 @@ const Dashboard = () => {
   }, [personalDetail?.applicationId, loading, contextApplicationStatus]);
 
   // Fetch account statement when member has membership number
+  const getAccountNetBalance = async () => {
+    const memberId = profileDetail?.membershipNumber;
+    if (!memberId) {
+      return;
+    }
+    setAccountNetBalanceLoading(true);
+    getAccountNetBalanceRequest(memberId)
+      .then(res => {
+        if (res?.status === 200 && res?.data?.data) {
+          setAccountNetBalance(res.data.data);
+        }
+      })
+      .catch(() => {
+        setAccountNetBalance(null);
+      })
+      .finally(() => {
+        setAccountNetBalanceLoading(false);
+      });
+  };
+
   useEffect(() => {
     const memberId = profileDetail?.membershipNumber;
     if (!memberId) {
@@ -939,6 +959,7 @@ const Dashboard = () => {
         onClose={() => setStatusModal(prev => ({ ...prev, open: false }))}
         onPrimary={() => {
           setStatusModal(prev => ({ ...prev, open: false }));
+          getAccountNetBalance();
           navigate('/');
         }}
       />
