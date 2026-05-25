@@ -476,19 +476,17 @@ const DirectDebit = ({ embedded = false }) => {
 
           {/* Header */}
           <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-                  SEPA Direct Debit Mandate
-                </h2>
-              </div>
-              <div className="flex flex-col items-start sm:items-end gap-2">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight">
+                SEPA Direct Debit Mandate
+              </h2>
+              <div className="flex items-center gap-2.5 sm:gap-3 sm:shrink-0 sm:max-w-[50%] sm:justify-end">
                 <img
                   src={logo}
                   alt={orgName}
-                  className="h-10 sm:h-12 w-auto"
+                  className="h-9 w-9 sm:h-11 sm:w-auto shrink-0 object-contain"
                 />
-                <span className="text-xs font-medium text-gray-700">
+                <span className="text-xs sm:text-sm font-medium text-gray-700 leading-snug break-words min-w-0 sm:text-right">
                   {orgName}
                 </span>
               </div>
@@ -647,7 +645,7 @@ const DirectDebit = ({ embedded = false }) => {
                 label="Debtor's Name"
                 name="memberName"
                 required
-                readOnly
+                // readOnly
                 value={formState.memberName}
                 onChange={handleInputChange}
                 showValidation={showValidation}
@@ -657,21 +655,21 @@ const DirectDebit = ({ embedded = false }) => {
                 label="Debtor's Address"
                 name="memberAddress"
                 required={requiresMemberAddress}
-                readOnly={!requiresMemberAddress}
+                // readOnly={!requiresMemberAddress}
                 value={formState.memberAddress}
                 onChange={handleInputChange}
                 showValidation={showValidation}
                 placeholder="Street address"
               />
               <p className="text-xs text-gray-500 -mt-2">
-                † Mandatory when collecting from a non EEA SEPA country or
+                Address of Debtor † Mandatory when collecting from a non EEA SEPA country or
                 territory
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Input
                   label="City"
                   name="memberCity"
-                  readOnly
+                  // readOnly
                   value={formState.memberCity}
                   onChange={handleInputChange}
                   placeholder="City"
@@ -679,7 +677,7 @@ const DirectDebit = ({ embedded = false }) => {
                 <Input
                   label="Post Code"
                   name="memberPostCode"
-                  readOnly
+                  // readOnly
                   value={formState.memberPostCode}
                   onChange={handleInputChange}
                   placeholder="Post code"
@@ -687,7 +685,7 @@ const DirectDebit = ({ embedded = false }) => {
                 <Input
                   label="Country"
                   name="memberCountry"
-                  readOnly
+                  // readOnly
                   value={formState.memberCountry}
                   onChange={handleInputChange}
                   placeholder="Country"

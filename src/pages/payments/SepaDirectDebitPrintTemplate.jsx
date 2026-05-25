@@ -8,11 +8,62 @@ const formatDate = value => {
 };
 
 /** Value sits above the underline (avoids text striking through the line in PDF capture). */
-const FieldLine = ({ value }) => (
+const FieldLine = ({ value, mono = false }) => (
   <div className="min-h-[24px] w-full">
-    <div className="pb-[5px] leading-[1.35] break-words">{value || '\u00A0'}</div>
+    <div
+      className={`pb-[5px] leading-[1.35] break-words ${mono ? 'font-mono text-[11px]' : ''}`}>
+      {value || '\u00A0'}
+    </div>
     <div className="border-b border-black" style={{ height: 0 }} />
   </div>
+);
+
+const LabelFieldRow = ({ label, value, mono = false }) => (
+  <div className="grid grid-cols-[140px_1fr] gap-x-2 items-start">
+    <span className="pt-1 text-[10px] font-semibold leading-snug">{label}</span>
+    <FieldLine value={value} mono={mono} />
+  </div>
+);
+
+const PrintCheckbox = ({ checked, label }) => (
+  <span
+    style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '6px',
+      marginRight: '18px',
+      verticalAlign: 'middle',
+    }}>
+    <span
+      style={{
+        display: 'inline-flex',
+        width: '12px',
+        height: '12px',
+        boxSizing: 'border-box',
+        flexShrink: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+        border: '1.5px solid #000',
+        backgroundColor: '#fff',
+      }}
+      aria-hidden="true">
+      {checked ? (
+        <svg
+          viewBox="0 0 12 12"
+          width="10"
+          height="10"
+          fill="none"
+          stroke="#000"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ display: 'block' }}>
+          <path d="M2.5 6.5 L5 9 L9.5 3.5" />
+        </svg>
+      ) : null}
+    </span>
+    <span style={{ fontSize: '11px', lineHeight: '12px' }}>{label}</span>
+  </span>
 );
 
 const SepaDirectDebitPrintTemplate = ({
@@ -57,11 +108,12 @@ const SepaDirectDebitPrintTemplate = ({
         </div>
 
         <div className="mb-3">
-          <p className="font-semibold text-[10px] pb-1">Unique Mandate Reference</p>
-          <p className="border border-black px-2 py-1.5 mt-0.5 font-mono text-[11px] leading-normal">
-            {uniqueMandateReference || ' '}
-          </p>
-          <p className="text-[9px] mt-0.5 italic">
+          <LabelFieldRow
+            label="Unique Mandate Reference"
+            value={uniqueMandateReference}
+            mono
+          />
+          <p className="text-[9px] mt-1 italic pl-[148px]">
             Unique Mandate Reference (UMR) – to be completed by {orgName}
           </p>
         </div>
@@ -93,21 +145,25 @@ const SepaDirectDebitPrintTemplate = ({
         </div>
 
         <div className="mb-2">
-          <p className="font-semibold mb-1">Type of payment*</p>
-          <p>
-            {formState.paymentType === 'recurrent'
-              ? '[X] Recurrent payment'
-              : 'Recurrent payment'}{' '}
-            {formState.paymentType === 'one-off'
-              ? '[X] One-off payment'
-              : '[ ] One-off payment'}
-          </p>
-          {totalAmount > 0 && (
-            <p className="mt-1">
-              Amount: {currencySymbol}
-              {totalAmount.toFixed(2)}
-            </p>
-          )}
+          <div className="grid grid-cols-[140px_1fr] gap-x-2 items-start">
+            <span className="pt-1.5 text-[10px] font-semibold leading-snug">
+              Type of payment*
+            </span>
+            <div className="min-h-[24px] w-full pb-[5px] border-b border-black">
+              <div
+                className="flex flex-wrap items-center"
+                style={{ minHeight: '14px', gap: '4px 18px' }}>
+                <PrintCheckbox
+                  checked={formState.paymentType === 'recurrent'}
+                  label="Recurrent payment"
+                />
+                <PrintCheckbox
+                  checked={formState.paymentType === 'one-off'}
+                  label="One-off payment"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="pb-2 mb-2">
