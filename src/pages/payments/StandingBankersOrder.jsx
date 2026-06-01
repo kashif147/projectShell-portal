@@ -15,6 +15,15 @@ import { fetchCategoryByCategoryId } from '../../api/category.api';
 import dayjs from 'dayjs';
 import PaymentFormSubheader from './PaymentFormSubheader';
 import { PAYMENT_FORM_META } from './paymentFormMeta';
+import { toast } from 'react-toastify';
+import usePortalPaymentForm from '../../hooks/usePortalPaymentForm';
+import {
+  PAYMENT_FORM_TYPES,
+  buildStandingOrderPatchPayload,
+  buildStandingOrderPayload,
+  mapStandingOrderFromPortal,
+  toIsoDate,
+} from '../../helpers/paymentForm.helper';
 
 const StandingBankersOrder = ({ embedded = false }) => {
   const navigate = useNavigate();
@@ -58,6 +67,9 @@ const StandingBankersOrder = ({ embedded = false }) => {
   const [showValidation, setShowValidation] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [ibanError, setIbanError] = useState('');
+  const [hydratedFromPortal, setHydratedFromPortal] = useState(false);
+  const { portalForm, loading: portalFormLoading, saving, persistAndSubmit } =
+    usePortalPaymentForm(PAYMENT_FORM_TYPES.STANDING_ORDER);
 
   // Fetch category data
   useEffect(() => {
@@ -85,6 +97,18 @@ const StandingBankersOrder = ({ embedded = false }) => {
     };
     fetchCategory();
   }, [membershipCategory, user]);
+
+  useEffect(() => {
+    if (portalFormLoading || hydratedFromPortal || !portalForm?.standingOrder) {
+      return;
+    }
+
+    setFormState(prev => ({
+      ...prev,
+      ...mapStandingOrderFromPortal(portalForm.standingOrder),
+    }));
+    setHydratedFromPortal(true);
+  }, [portalForm, portalFormLoading, hydratedFromPortal]);
 
   // Bank list
   const bankOptions = [
@@ -307,7 +331,7 @@ const StandingBankersOrder = ({ embedded = false }) => {
     return true;
   };
 
-  const handleSaveOrder = () => {
+  const handleSaveOrder = async () => {
     setShowValidation(true);
     if (!validateForm()) {
       const firstErrorField = document.querySelector('.border-red-500');
@@ -317,22 +341,43 @@ const StandingBankersOrder = ({ embedded = false }) => {
       return;
     }
 
-    const orderData = {
-      ...formState,
-      beneficiaryDetails,
-      userDetails: {
-        name:
-          user?.userFirstName && user?.userLastName
-            ? `${user.userFirstName} ${user.userLastName}`
-            : user?.userName || '',
-        email: user?.userEmail || user?.email || '',
-      },
-    };
+    const signatures = [];
+    const primarySignedDate =
+      toIsoDate(formState.accountHolderSignatureDate) ||
+      new Date().toISOString();
 
-    console.log('Standing Order Data:', orderData);
-    // TODO: Add API call to save order
-    alert('Order saved successfully!');
-    navigate('/');
+    if (formState.accountHolderSignature) {
+      signatures.push({
+        imageBase64: formState.accountHolderSignature,
+        slot: 0,
+        signedDate: primarySignedDate,
+      });
+    }
+
+    if (formState.secondSignature) {
+      signatures.push({
+        imageBase64: formState.secondSignature,
+        slot: 1,
+        signedDate:
+          toIsoDate(formState.secondSignatureDate) || primarySignedDate,
+      });
+    }
+
+    try {
+      await persistAndSubmit({
+        createPayload: buildStandingOrderPayload(formState),
+        patchPayload: buildStandingOrderPatchPayload(formState),
+        signatures,
+      });
+      toast.success('Standing order saved and submitted successfully!');
+      navigate('/');
+    } catch (error) {
+      console.error('Standing order save failed:', error);
+      toast.error(
+        error?.message ||
+          'Failed to save standing order. Please try again.',
+      );
+    }
   };
 
   const handlePrint = async () => {
@@ -420,7 +465,7 @@ const StandingBankersOrder = ({ embedded = false }) => {
       pdf.save('standing-bankers-order.pdf');
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again or use browser print.');
+      toast.error('Failed to generate PDF. Please try again or use browser print.');
     } finally {
       setIsGeneratingPDF(false);
     }
@@ -428,7 +473,7 @@ const StandingBankersOrder = ({ embedded = false }) => {
 
   const handleEmailToBank = () => {
     console.log('Email to Bank functionality - to be implemented with backend');
-    alert(
+    toast.info(
       'Email to Bank functionality will be implemented with backend integration',
     );
   };
@@ -1035,7 +1080,8 @@ const StandingBankersOrder = ({ embedded = false }) => {
             <Button
               type="primary"
               onClick={handleSaveOrder}
-              disabled={!isFormValid}
+              loading={saving}
+              disabled={!isFormValid || saving || portalFormLoading}
               className="w-full sm:w-auto !text-sm sm:!text-base !h-10 sm:!h-11"
               icon={
                 <svg

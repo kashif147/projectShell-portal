@@ -15,6 +15,15 @@ import SepaDirectDebitPrintTemplate from './SepaDirectDebitPrintTemplate';
 import logo from '../../assets/images/logo.png';
 import PaymentFormSubheader from './PaymentFormSubheader';
 import { PAYMENT_FORM_META } from './paymentFormMeta';
+import { toast } from 'react-toastify';
+import usePortalPaymentForm from '../../hooks/usePortalPaymentForm';
+import {
+  PAYMENT_FORM_TYPES,
+  buildDirectDebitPatchPayload,
+  buildDirectDebitPayload,
+  mapDirectDebitFromPortal,
+  toIsoDate,
+} from '../../helpers/paymentForm.helper';
 
 const ORGANIZATION_DETAILS = {
   name: 'Sample Membership Organization Ltd.',
@@ -88,8 +97,7 @@ const DirectDebit = ({ embedded = false }) => {
     subscriptionDetail?.subscriptionDetails?.membershipNumber ||
     '';
 
-  const uniqueMandateReference =
-    membershipNo || `MEM-${user?.id || '0000'}`;
+  const uniqueMandateReference = membershipNo || `MEM-${user?.id || '0000'}`;
 
   const [formState, setFormState] = useState({
     paymentType: 'recurrent',
@@ -109,6 +117,13 @@ const DirectDebit = ({ embedded = false }) => {
   const [showValidation, setShowValidation] = useState(false);
   const [ibanError, setIbanError] = useState('');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [hydratedFromPortal, setHydratedFromPortal] = useState(false);
+  const {
+    portalForm,
+    loading: portalFormLoading,
+    saving,
+    persistAndSubmit,
+  } = usePortalPaymentForm(PAYMENT_FORM_TYPES.DIRECT_DEBIT);
 
   useEffect(() => {
     const fetchCategory = async () => {
@@ -153,6 +168,22 @@ const DirectDebit = ({ embedded = false }) => {
       memberCountry,
     }));
   }, [personalDetail, user]);
+
+  useEffect(() => {
+    if (
+      portalFormLoading ||
+      hydratedFromPortal ||
+      !portalForm?.directDebitMandate
+    ) {
+      return;
+    }
+
+    setFormState(prev => ({
+      ...prev,
+      ...mapDirectDebitFromPortal(portalForm.directDebitMandate),
+    }));
+    setHydratedFromPortal(true);
+  }, [portalForm, portalFormLoading, hydratedFromPortal]);
 
   const formatIBAN = (value, cursorPosition = null) => {
     const cleaned = value.replace(/\s/g, '').toUpperCase();
@@ -315,7 +346,7 @@ const DirectDebit = ({ embedded = false }) => {
     navigate('/');
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setShowValidation(true);
     if (!validateForm()) {
       const firstErrorField = document.querySelector('.border-red-500');
@@ -325,33 +356,41 @@ const DirectDebit = ({ embedded = false }) => {
       return;
     }
 
-    const formData = {
-      uniqueMandateReference,
-      organizationDetails: ORGANIZATION_DETAILS,
-      paymentType: formState.paymentType,
-      member: {
-        name: formState.memberName,
-        address: formState.memberAddress,
-        city: formState.memberCity,
-        postCode: formState.memberPostCode,
-        country: formState.memberCountry,
-        iban: formState.iban,
-        bic: formState.bic,
-      },
-      signatures: {
-        primary: formState.signature,
-        secondary: formState.secondSignature,
-        date: formState.signatureDate,
-      },
-      totalAmount: categoryData?.currentPricing?.price
-        ? categoryData.currentPricing.price / 100
-        : 0,
-      currency: categoryData?.currentPricing?.currency || 'EUR',
-    };
+    const signedDate =
+      toIsoDate(formState.signatureDate) || new Date().toISOString();
+    const signatures = [];
 
-    console.log('SEPA Direct Debit Mandate Data:', formData);
-    alert('Direct Debit mandate submitted successfully!');
-    navigate('/');
+    if (formState.signature) {
+      signatures.push({
+        imageBase64: formState.signature,
+        slot: 0,
+        signedDate,
+      });
+    }
+
+    if (formState.secondSignature) {
+      signatures.push({
+        imageBase64: formState.secondSignature,
+        slot: 1,
+        signedDate,
+      });
+    }
+
+    try {
+      await persistAndSubmit({
+        createPayload: buildDirectDebitPayload(formState),
+        patchPayload: buildDirectDebitPatchPayload(formState),
+        signatures,
+      });
+      toast.success('Direct Debit mandate submitted successfully!');
+      navigate('/');
+    } catch (error) {
+      console.error('Direct debit save failed:', error);
+      toast.error(
+        error?.message ||
+          'Failed to submit direct debit mandate. Please try again.',
+      );
+    }
   };
 
   const handlePrint = async () => {
@@ -437,7 +476,7 @@ const DirectDebit = ({ embedded = false }) => {
       pdf.save('sepa-direct-debit-mandate.pdf');
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      toast.error('Failed to generate PDF. Please try again.');
     } finally {
       setIsGeneratingPDF(false);
     }
@@ -454,244 +493,244 @@ const DirectDebit = ({ embedded = false }) => {
   const formMeta = PAYMENT_FORM_META['Direct Debit'];
 
   const formContent = (
-      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 max-w-7xl mx-auto">
-        <div className="space-y-4 sm:space-y-6">
-          <div
-            ref={printRef}
-            className="fixed left-[-9999px] top-0"
-            style={{
-              opacity: 0,
-              visibility: 'hidden',
-              zIndex: -1,
-              pointerEvents: 'none',
-            }}>
-            <SepaDirectDebitPrintTemplate
-              formState={formState}
-              organizationDetails={ORGANIZATION_DETAILS}
-              uniqueMandateReference={uniqueMandateReference}
-              totalAmount={totalAmount}
-              currencySymbol={currencySymbol}
+    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 max-w-7xl mx-auto">
+      <div className="space-y-4 sm:space-y-6">
+        <div
+          ref={printRef}
+          className="fixed left-[-9999px] top-0"
+          style={{
+            opacity: 0,
+            visibility: 'hidden',
+            zIndex: -1,
+            pointerEvents: 'none',
+          }}>
+          <SepaDirectDebitPrintTemplate
+            formState={formState}
+            organizationDetails={ORGANIZATION_DETAILS}
+            uniqueMandateReference={uniqueMandateReference}
+            totalAmount={totalAmount}
+            currencySymbol={currencySymbol}
+          />
+        </div>
+
+        {/* Header */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight">
+              SEPA Direct Debit Mandate
+            </h2>
+            <div className="flex items-center gap-2.5 sm:gap-3 sm:shrink-0 sm:max-w-[50%] sm:justify-end">
+              <img
+                src={logo}
+                alt={orgName}
+                className="h-9 w-9 sm:h-11 sm:w-auto shrink-0 object-contain"
+              />
+              <span className="text-xs sm:text-sm font-medium text-gray-700 leading-snug break-words min-w-0 sm:text-right">
+                {orgName}
+              </span>
+            </div>
+          </div>
+          <div className="mt-4">
+            <Input
+              label="Unique Mandate Reference"
+              name="uniqueMandateReference"
+              readOnly
+              value={uniqueMandateReference}
             />
           </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Unique Mandate Reference (UMR) – to be completed by {orgName}
+          </p>
+        </div>
 
-          {/* Header */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight">
-                SEPA Direct Debit Mandate
-              </h2>
-              <div className="flex items-center gap-2.5 sm:gap-3 sm:shrink-0 sm:max-w-[50%] sm:justify-end">
-                <img
-                  src={logo}
-                  alt={orgName}
-                  className="h-9 w-9 sm:h-11 sm:w-auto shrink-0 object-contain"
-                />
-                <span className="text-xs sm:text-sm font-medium text-gray-700 leading-snug break-words min-w-0 sm:text-right">
-                  {orgName}
-                </span>
-              </div>
-            </div>
-            <div className="mt-4">
-              <Input
-                label="Unique Mandate Reference"
-                name="uniqueMandateReference"
-                readOnly
-                value={uniqueMandateReference}
-              />
-            </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Unique Mandate Reference (UMR) – to be completed by{' '}
-                  {orgName}
-                </p>
-          </div>
-
-          {/* Legal */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-            <div className="p-3 sm:p-4 bg-indigo-50 border-2 border-indigo-200 rounded-lg">
-              <Checkbox
-                name="authorization"
-                required
-                checked={formState.authorization}
-                onChange={handleInputChange}
-                showValidation={showValidation}
-                label={
-                  <span className="block space-y-3 text-sm text-gray-700 leading-relaxed">
-                    <span className="block">
-                      By signing this mandate form, you authorise (A){' '}
-                      <strong className="font-semibold text-gray-900">
-                        {orgName}
-                      </strong>{' '}
-                      to send instructions to your bank to debit your account
-                      and (B) your bank to debit your account in accordance
-                      with the instructions from{' '}
-                      <strong className="font-semibold text-gray-900">
-                        {orgName}
-                      </strong>
-                      .
-                    </span>
-                    <span className="block">
-                      As part of your rights, you are entitled to a refund from
-                      your bank under the terms and conditions of your agreement
-                      with your bank. A refund must be claimed within 8 weeks
-                      starting from the date on which your account was debited.
-                      Your rights are explained in a statement that you can
-                      obtain from your bank.
-                    </span>
+        {/* Legal */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+          <div className="p-3 sm:p-4 bg-indigo-50 border-2 border-indigo-200 rounded-lg">
+            <Checkbox
+              name="authorization"
+              required
+              checked={formState.authorization}
+              onChange={handleInputChange}
+              showValidation={showValidation}
+              label={
+                <span className="block space-y-3 text-sm text-gray-700 leading-relaxed">
+                  <span className="block">
+                    By signing this mandate form, you authorise (A){' '}
+                    <strong className="font-semibold text-gray-900">
+                      {orgName}
+                    </strong>{' '}
+                    to send instructions to your bank to debit your account and
+                    (B) your bank to debit your account in accordance with the
+                    instructions from{' '}
+                    <strong className="font-semibold text-gray-900">
+                      {orgName}
+                    </strong>
+                    .
                   </span>
-                }
+                  <span className="block">
+                    As part of your rights, you are entitled to a refund from
+                    your bank under the terms and conditions of your agreement
+                    with your bank. A refund must be claimed within 8 weeks
+                    starting from the date on which your account was debited.
+                    Your rights are explained in a statement that you can obtain
+                    from your bank.
+                  </span>
+                </span>
+              }
+            />
+          </div>
+        </div>
+
+        {/* Organization Information */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
+            Creditor's Information
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Creditor's Name"
+              name="orgName"
+              readOnly
+              value={ORGANIZATION_DETAILS.name}
+            />
+            <Input
+              label="Creditor's Identifier"
+              name="orgIdentifier"
+              readOnly
+              value={ORGANIZATION_DETAILS.identifier}
+            />
+            <div className="md:col-span-2">
+              <Input
+                label="Creditor's Address"
+                name="orgAddress"
+                readOnly
+                value={ORGANIZATION_DETAILS.address}
               />
             </div>
+            <Input
+              label="City"
+              name="orgCity"
+              readOnly
+              value={ORGANIZATION_DETAILS.city}
+            />
+            <Input
+              label="Post Code"
+              name="orgPostCode"
+              readOnly
+              value={ORGANIZATION_DETAILS.postCode}
+            />
+            <Input
+              label="Country"
+              name="orgCountry"
+              readOnly
+              value={ORGANIZATION_DETAILS.country}
+            />
           </div>
+        </div>
 
-          {/* Organization Information */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
-              Creditor's Information
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                label="Creditor's Name"
-                name="orgName"
-                readOnly
-                value={ORGANIZATION_DETAILS.name}
+        {/* Type of payment */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">
+            Type of payment *
+          </h3>
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-8">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="paymentType"
+                value="recurrent"
+                checked={formState.paymentType === 'recurrent'}
+                onChange={handleInputChange}
+                className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
               />
-              <Input
-                label="Creditor's Identifier"
-                name="orgIdentifier"
-                readOnly
-                value={ORGANIZATION_DETAILS.identifier}
+              <span className="text-sm text-gray-700">Recurrent payment</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="paymentType"
+                value="one-off"
+                checked={formState.paymentType === 'one-off'}
+                onChange={handleInputChange}
+                className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
               />
-              <div className="md:col-span-2">
-                <Input
-                  label="Creditor's Address"
-                  name="orgAddress"
-                  readOnly
-                  value={ORGANIZATION_DETAILS.address}
-                />
-              </div>
+              <span className="text-sm text-gray-700">One-off payment</span>
+            </label>
+          </div>
+          {totalAmount > 0 && (
+            <p className="mt-3 text-sm text-gray-600">
+              Membership amount: {currencySymbol}
+              {totalAmount.toFixed(2)}
+              {formState.paymentType === 'recurrent' && (
+                <span className="ml-2 text-xs text-green-700 font-medium">
+                  (recurring)
+                </span>
+              )}
+            </p>
+          )}
+        </div>
+
+        {/* Debtor Information */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+            Debtor&apos;s Information
+          </h3>
+          <p className="mt-1 mb-3 sm:mb-4 text-sm font-medium text-gray-900">
+            Please complete all the fields marked *
+          </p>
+          <div className="space-y-3 sm:space-y-4">
+            <Input
+              label="Debtor's Name"
+              name="memberName"
+              required
+              // readOnly
+              value={formState.memberName}
+              onChange={handleInputChange}
+              showValidation={showValidation}
+              placeholder="Full name"
+            />
+            <Input
+              label="Debtor's Address"
+              name="memberAddress"
+              required={requiresMemberAddress}
+              // readOnly={!requiresMemberAddress}
+              value={formState.memberAddress}
+              onChange={handleInputChange}
+              showValidation={showValidation}
+              placeholder="Street address"
+            />
+            <p className="text-xs text-gray-500 -mt-2">
+              Address of Debtor † Mandatory when collecting from a non EEA SEPA
+              country or territory
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Input
                 label="City"
-                name="orgCity"
-                readOnly
-                value={ORGANIZATION_DETAILS.city}
+                name="memberCity"
+                // readOnly
+                value={formState.memberCity}
+                onChange={handleInputChange}
+                placeholder="City"
               />
               <Input
                 label="Post Code"
-                name="orgPostCode"
-                readOnly
-                value={ORGANIZATION_DETAILS.postCode}
+                name="memberPostCode"
+                // readOnly
+                value={formState.memberPostCode}
+                onChange={handleInputChange}
+                placeholder="Post code"
               />
               <Input
                 label="Country"
-                name="orgCountry"
-                readOnly
-                value={ORGANIZATION_DETAILS.country}
-              />
-            </div>
-          </div>
-
-          {/* Type of payment */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">
-              Type of payment *
-            </h3>
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-8">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="paymentType"
-                  value="recurrent"
-                  checked={formState.paymentType === 'recurrent'}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">Recurrent payment</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="paymentType"
-                  value="one-off"
-                  checked={formState.paymentType === 'one-off'}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">One-off payment</span>
-              </label>
-            </div>
-            {totalAmount > 0 && (
-              <p className="mt-3 text-sm text-gray-600">
-                Membership amount: {currencySymbol}
-                {totalAmount.toFixed(2)}
-                {formState.paymentType === 'recurrent' && (
-                  <span className="ml-2 text-xs text-green-700 font-medium">
-                    (recurring)
-                  </span>
-                )}
-              </p>
-            )}
-          </div>
-
-          {/* Debtor Information */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-              Debtor&apos;s Information
-            </h3>
-            <p className="mt-1 mb-3 sm:mb-4 text-sm font-medium text-gray-900">
-              Please complete all the fields marked *
-            </p>
-            <div className="space-y-3 sm:space-y-4">
-              <Input
-                label="Debtor's Name"
-                name="memberName"
-                required
+                name="memberCountry"
                 // readOnly
-                value={formState.memberName}
+                value={formState.memberCountry}
                 onChange={handleInputChange}
-                showValidation={showValidation}
-                placeholder="Full name"
+                placeholder="Country"
               />
-              <Input
-                label="Debtor's Address"
-                name="memberAddress"
-                required={requiresMemberAddress}
-                // readOnly={!requiresMemberAddress}
-                value={formState.memberAddress}
-                onChange={handleInputChange}
-                showValidation={showValidation}
-                placeholder="Street address"
-              />
-              <p className="text-xs text-gray-500 -mt-2">
-                Address of Debtor † Mandatory when collecting from a non EEA SEPA country or
-                territory
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Input
-                  label="City"
-                  name="memberCity"
-                  // readOnly
-                  value={formState.memberCity}
-                  onChange={handleInputChange}
-                  placeholder="City"
-                />
-                <Input
-                  label="Post Code"
-                  name="memberPostCode"
-                  // readOnly
-                  value={formState.memberPostCode}
-                  onChange={handleInputChange}
-                  placeholder="Post code"
-                />
-                <Input
-                  label="Country"
-                  name="memberCountry"
-                  // readOnly
-                  value={formState.memberCountry}
-                  onChange={handleInputChange}
-                  placeholder="Country"
-                />
-              </div>
-              <div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2">
                 <Input
                   ref={ibanInputRef}
                   label="Debtor's account number – IBAN"
@@ -711,107 +750,113 @@ const DirectDebit = ({ embedded = false }) => {
                   <p className="mt-1 text-xs text-red-600">{ibanError}</p>
                 )}
                 {formState.iban && !ibanError && (
-                  <p className="mt-1 text-xs text-green-600">Valid IBAN format</p>
+                  <p className="mt-1 text-xs text-green-600">
+                    Valid IBAN format
+                  </p>
                 )}
               </div>
-              <Input
-                label="Debtor's bank identifier code – BIC"
-                name="bic"
-                value={formState.bic}
-                onChange={handleInputChange}
-                placeholder="e.g. BOFIIE2D"
-                style={{ textTransform: 'uppercase' }}
-              />
+              <div className="md:col-span-1">
+                <Input
+                  label="Debtor's bank identifier code – BIC"
+                  name="bic"
+                  value={formState.bic}
+                  onChange={handleInputChange}
+                  placeholder="e.g. BOFIIE2D"
+                  style={{ textTransform: 'uppercase' }}
+                />
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* Signature & Date */}
-          <div className="bg-gray-100 rounded-lg border border-gray-300 p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
-              Signature &amp; Date *
-            </h3>
-            <p className="text-xs text-gray-600 mb-4">
-              Where the account being debited is a joint account and more than
-              1 person is needed to withdraw funds, then all parties must sign
-              this form.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-              <div className="space-y-2">
-                <h4 className="text-xs sm:text-sm font-semibold text-gray-700 uppercase">
-                  Signature
-                </h4>
-                <SignaturePad
-                  onSignatureChange={sig =>
-                    handleSignatureChange('signature', sig)
-                  }
-                  value={formState.signature}
-                  required
-                  showValidation={showValidation}
-                />
-              </div>
-              <div className="space-y-2">
-                <h4 className="text-xs sm:text-sm font-semibold text-gray-700 uppercase">
-                  Second Signature (If Joint)
-                </h4>
-                <SignaturePad
-                  onSignatureChange={sig =>
-                    handleSignatureChange('secondSignature', sig)
-                  }
-                  value={formState.secondSignature}
-                />
-              </div>
-            </div>
-            <div className="mt-4 max-w-xs">
-              <DatePicker
-                label="Date"
-                name="signatureDate"
+        {/* Signature & Date */}
+        <div className="bg-gray-100 rounded-lg border border-gray-300 p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
+            Signature &amp; Date *
+          </h3>
+          <p className="text-xs text-gray-600 mb-4">
+            Where the account being debited is a joint account and more than 1
+            person is needed to withdraw funds, then all parties must sign this
+            form.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <div className="space-y-2">
+              <h4 className="text-xs sm:text-sm font-semibold text-gray-700 uppercase">
+                Signature
+              </h4>
+              <SignaturePad
+                onSignatureChange={sig =>
+                  handleSignatureChange('signature', sig)
+                }
+                value={formState.signature}
                 required
-                value={formState.signatureDate}
-                disableAgeValidation={true}
-                onChange={handleInputChange}
                 showValidation={showValidation}
               />
             </div>
+            <div className="space-y-2">
+              <h4 className="text-xs sm:text-sm font-semibold text-gray-700 uppercase">
+                Second Signature (If Joint)
+              </h4>
+              <SignaturePad
+                onSignatureChange={sig =>
+                  handleSignatureChange('secondSignature', sig)
+                }
+                value={formState.secondSignature}
+              />
+            </div>
           </div>
-
-          {/* Footer */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
-            <p className="text-sm font-medium text-gray-800">
-              Please return this mandate to the Organization
-            </p>
-            <p className="text-xs text-gray-500 mt-2">
-              {ORGANIZATION_DETAILS.name} · {ORGANIZATION_DETAILS.address},{' '}
-              {ORGANIZATION_DETAILS.city} {ORGANIZATION_DETAILS.postCode},{' '}
-              {ORGANIZATION_DETAILS.country}
-            </p>
-          </div>
-
-          {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-end pt-4 border-t border-gray-200 bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-            <Button
-              type="default"
-              onClick={handlePrint}
-              loading={isGeneratingPDF}
-              disabled={isGeneratingPDF}
-              className="w-full sm:w-auto !text-sm sm:!text-base !h-10 sm:!h-11">
-              {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF'}
-            </Button>
-            <Button
-              type="default"
-              onClick={handleCancel}
-              className="w-full sm:w-auto !text-sm sm:!text-base !h-10 sm:!h-11">
-              Cancel
-            </Button>
-            <Button
-              type="primary"
-              onClick={handleConfirm}
-              disabled={!isFormValid}
-              className="w-full sm:w-auto !text-sm sm:!text-base !h-10 sm:!h-11">
-              Confirm and Authorize
-            </Button>
+          <div className="mt-4 max-w-xs">
+            <DatePicker
+              label="Date"
+              name="signatureDate"
+              required
+              value={formState.signatureDate}
+              disableAgeValidation={true}
+              onChange={handleInputChange}
+              showValidation={showValidation}
+            />
           </div>
         </div>
+
+        {/* Footer */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+          <p className="text-sm font-medium text-gray-800">
+            Please return this mandate to the Organization
+          </p>
+          <p className="text-xs text-gray-500 mt-2">
+            {ORGANIZATION_DETAILS.name} · {ORGANIZATION_DETAILS.address},{' '}
+            {ORGANIZATION_DETAILS.city} {ORGANIZATION_DETAILS.postCode},{' '}
+            {ORGANIZATION_DETAILS.country}
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-end pt-4 border-t border-gray-200 bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+          <Button
+            type="default"
+            onClick={handlePrint}
+            loading={isGeneratingPDF}
+            disabled={isGeneratingPDF}
+            className="w-full sm:w-auto !text-sm sm:!text-base !h-10 sm:!h-11">
+            {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF'}
+          </Button>
+          <Button
+            type="default"
+            onClick={handleCancel}
+            className="w-full sm:w-auto !text-sm sm:!text-base !h-10 sm:!h-11">
+            Cancel
+          </Button>
+          <Button
+            type="primary"
+            onClick={handleConfirm}
+            loading={saving}
+            disabled={!isFormValid || saving || portalFormLoading}
+            className="w-full sm:w-auto !text-sm sm:!text-base !h-10 sm:!h-11">
+            Confirm and Authorize
+          </Button>
+        </div>
       </div>
+    </div>
   );
 
   if (embedded) {

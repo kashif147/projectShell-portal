@@ -14,6 +14,15 @@ import Button from '../../components/common/Button';
 import SalaryDeductionPrintTemplate from './SalaryDeductionPrintTemplate';
 import PaymentFormSubheader from './PaymentFormSubheader';
 import { PAYMENT_FORM_META } from './paymentFormMeta';
+import { toast } from 'react-toastify';
+import usePortalPaymentForm from '../../hooks/usePortalPaymentForm';
+import {
+  PAYMENT_FORM_TYPES,
+  buildSalaryDeductionPatchPayload,
+  buildSalaryDeductionPayload,
+  mapSalaryDeductionFromPortal,
+  toIsoDate,
+} from '../../helpers/paymentForm.helper';
 
 const SalaryDeduction = ({ embedded = false }) => {
   const navigate = useNavigate();
@@ -34,6 +43,9 @@ const SalaryDeduction = ({ embedded = false }) => {
   });
   const [showValidation, setShowValidation] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [hydratedFromPortal, setHydratedFromPortal] = useState(false);
+  const { portalForm, loading: portalFormLoading, saving, persistAndSubmit } =
+    usePortalPaymentForm(PAYMENT_FORM_TYPES.SALARY_DEDUCTION);
 
   const monthlyDeductionAmount = '19.00';
   const mappedWorkLocations = (workLocationLookups || [])
@@ -86,6 +98,18 @@ const SalaryDeduction = ({ embedded = false }) => {
     }));
   }, [personalDetail, professionalDetail, profileDetail, subscriptionDetail, user]);
 
+  useEffect(() => {
+    if (portalFormLoading || hydratedFromPortal || !portalForm?.salaryDeduction) {
+      return;
+    }
+
+    setFormState(prev => ({
+      ...prev,
+      ...mapSalaryDeductionFromPortal(portalForm.salaryDeduction),
+    }));
+    setHydratedFromPortal(true);
+  }, [portalForm, portalFormLoading, hydratedFromPortal]);
+
   const handleInputChange = e => {
     const { name, value } = e.target;
     setFormState(prev => ({
@@ -113,7 +137,7 @@ const SalaryDeduction = ({ embedded = false }) => {
     );
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setShowValidation(true);
     if (!validateForm()) {
       const firstErrorField = document.querySelector('.border-red-500');
@@ -123,9 +147,30 @@ const SalaryDeduction = ({ embedded = false }) => {
       return;
     }
 
-    console.log('Salary Deduction Data:', formState);
-    alert('Salary Deduction form saved successfully!');
-    navigate('/');
+    try {
+      await persistAndSubmit({
+        createPayload: buildSalaryDeductionPayload(formState),
+        patchPayload: buildSalaryDeductionPatchPayload(formState),
+        signatures: formState.signature
+          ? [
+              {
+                imageBase64: formState.signature,
+                slot: 0,
+                signedDate:
+                  toIsoDate(formState.date) || new Date().toISOString(),
+              },
+            ]
+          : [],
+      });
+      toast.success('Salary Deduction form saved and submitted successfully!');
+      navigate('/');
+    } catch (error) {
+      console.error('Salary deduction save failed:', error);
+      toast.error(
+        error?.message ||
+          'Failed to save salary deduction form. Please try again.',
+      );
+    }
   };
 
   const handlePrint = async () => {
@@ -194,7 +239,7 @@ const SalaryDeduction = ({ embedded = false }) => {
       pdf.save('salary-deduction-form.pdf');
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      toast.error('Failed to generate PDF. Please try again.');
     } finally {
       setIsGeneratingPDF(false);
     }
@@ -337,7 +382,8 @@ const SalaryDeduction = ({ embedded = false }) => {
             <Button
               type="primary"
               onClick={handleSave}
-              disabled={!isFormValid}
+              loading={saving}
+              disabled={!isFormValid || saving || portalFormLoading}
               className="w-full sm:w-auto !text-sm sm:!text-base !h-10 sm:!h-11">
               Save Authorization
             </Button>

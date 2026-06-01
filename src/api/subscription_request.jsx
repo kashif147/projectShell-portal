@@ -19,7 +19,11 @@ subscription_request.interceptors.request.use(
     }
     console.log('token=============>', token);
     config.headers['Authorization'] = `Bearer ${token}`;
-    config.headers['Content-Type'] = 'application/json';
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    } else {
+      config.headers['Content-Type'] = 'application/json';
+    }
 
     config.baseURL = SUBSCRIPTION_URL;
 
