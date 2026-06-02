@@ -16,22 +16,30 @@ import logo from '../../assets/images/logo.png';
 import PaymentFormSubheader from './PaymentFormSubheader';
 import { PAYMENT_FORM_META } from './paymentFormMeta';
 import { toast } from 'react-toastify';
+import { getPaymentFormPrefill } from '../../api/paymentForms.api';
 import usePortalPaymentForm from '../../hooks/usePortalPaymentForm';
 import {
   PAYMENT_FORM_TYPES,
   buildDirectDebitPatchPayload,
   buildDirectDebitPayload,
+  extractPaymentFormPrefill,
+  getUniqueMandateReferenceFromForm,
+  hasCreditorOrganizationDetails,
+  isPaymentApiSuccess,
+  mapCreditorOrganizationDetails,
   mapDirectDebitFromPortal,
+  mergePaymentFormWithPrefill,
+  normalizePortalPaymentForm,
   toIsoDate,
 } from '../../helpers/paymentForm.helper';
 
-const ORGANIZATION_DETAILS = {
-  name: 'Sample Membership Organization Ltd.',
-  identifier: 'IE12ZZZ00000012345',
-  address: '100 Example Street, Business Park',
-  city: 'Dublin',
-  postCode: 'D02 XK56',
-  country: 'Ireland',
+const EMPTY_CREDITOR_DETAILS = {
+  name: '',
+  identifier: '',
+  address: '',
+  city: '',
+  postCode: '',
+  country: '',
 };
 
 const EEA_SEPA_COUNTRIES = [
@@ -79,7 +87,7 @@ const isEeaSepaCountry = country => {
   );
 };
 
-const DirectDebit = ({ embedded = false }) => {
+const DirectDebit = ({ embedded = false, seedPortalForm = null }) => {
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
   const { personalDetail, subscriptionDetail } = useApplication();
@@ -96,8 +104,6 @@ const DirectDebit = ({ embedded = false }) => {
     subscriptionDetail?.subscriptionDetails?.membershipNo ||
     subscriptionDetail?.subscriptionDetails?.membershipNumber ||
     '';
-
-  const uniqueMandateReference = membershipNo || `MEM-${user?.id || '0000'}`;
 
   const [formState, setFormState] = useState({
     paymentType: 'recurrent',
@@ -117,13 +123,70 @@ const DirectDebit = ({ embedded = false }) => {
   const [showValidation, setShowValidation] = useState(false);
   const [ibanError, setIbanError] = useState('');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  const [hydratedFromPortal, setHydratedFromPortal] = useState(false);
+  const [prefillForm, setPrefillForm] = useState(null);
   const {
     portalForm,
     loading: portalFormLoading,
     saving,
     persistAndSubmit,
-  } = usePortalPaymentForm(PAYMENT_FORM_TYPES.DIRECT_DEBIT);
+  } = usePortalPaymentForm(PAYMENT_FORM_TYPES.DIRECT_DEBIT, { seedPortalForm });
+
+  const formSource = useMemo(() => {
+    const base = normalizePortalPaymentForm(seedPortalForm ?? portalForm);
+    const prefill = normalizePortalPaymentForm(prefillForm);
+    return mergePaymentFormWithPrefill(base, prefill) ?? prefill ?? base;
+  }, [seedPortalForm, portalForm, prefillForm]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadPrefill = async () => {
+      const profileId = profileDetail?.profileId;
+      if (!profileId) return;
+
+      const base = normalizePortalPaymentForm(seedPortalForm ?? portalForm);
+      if (
+        hasCreditorOrganizationDetails(base) &&
+        String(base?.status || '').toLowerCase() === 'active'
+      ) {
+        return;
+      }
+
+      try {
+        const res = await getPaymentFormPrefill(profileId);
+        if (cancelled || !isPaymentApiSuccess(res)) return;
+
+        const prefill = extractPaymentFormPrefill(res);
+        if (!prefill || cancelled) return;
+
+        setPrefillForm(prefill);
+      } catch (error) {
+        console.error('Failed to load direct debit prefill:', error);
+      }
+    };
+
+    loadPrefill();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profileDetail?.profileId, seedPortalForm, portalForm]);
+
+  const organizationDetails = useMemo(() => {
+    return (
+      mapCreditorOrganizationDetails(formSource) ?? EMPTY_CREDITOR_DETAILS
+    );
+  }, [formSource]);
+
+  const uniqueMandateReference = useMemo(() => {
+    const fromForm = getUniqueMandateReferenceFromForm(formSource);
+    return fromForm || membershipNo || `MEM-${user?.id || '0000'}`;
+  }, [formSource, membershipNo, user?.id]);
+
+  const creditorAddressLine = useMemo(() => {
+    const address = organizationDetails.address || '';
+    return address.replace(/\n/g, ', ');
+  }, [organizationDetails.address]);
 
   useEffect(() => {
     const fetchCategory = async () => {
@@ -139,51 +202,82 @@ const DirectDebit = ({ embedded = false }) => {
     fetchCategory();
   }, [membershipCategory]);
 
+  const formSourceKey = useMemo(() => {
+    if (!formSource) return '';
+    const mandate = formSource.directDebitMandate;
+    return [
+      formSource._id,
+      formSource.id,
+      formSource.status,
+      formSource.unsaved,
+      mandate?.debtorName,
+      mandate?.debtorIban,
+      mandate?.debtorAddress,
+      mandate?.debtorCity,
+    ].join('|');
+  }, [formSource]);
+
   useEffect(() => {
-    const memberName =
+    if (portalFormLoading || !formSource) {
+      return;
+    }
+
+    const mapped = mapDirectDebitFromPortal(formSource);
+    const contactInfo = personalDetail?.contactInfo || {};
+    const profileName =
       personalDetail?.personalInfo?.forename &&
       personalDetail?.personalInfo?.surname
         ? `${personalDetail.personalInfo.forename} ${personalDetail.personalInfo.surname}`
         : user?.userFirstName && user?.userLastName
           ? `${user.userFirstName} ${user.userLastName}`
           : user?.userName || '';
-
-    const contactInfo = personalDetail?.contactInfo || {};
-    const addressParts = [
+    const profileAddress = [
       contactInfo.buildingOrHouse,
       contactInfo.streetOrRoad,
-    ].filter(Boolean);
-    const memberAddress = addressParts.join(', ') || '';
-    const memberCity = contactInfo.areaOrTown || '';
-    const memberPostCode =
-      contactInfo.eircode || contactInfo.countyCityOrPostCode || '';
-    const memberCountry = contactInfo.country || 'Ireland';
+    ]
+      .filter(Boolean)
+      .join(', ');
+
+    const isActiveRecord =
+      String(formSource?.status || '').toLowerCase() === 'active';
 
     setFormState(prev => ({
       ...prev,
-      memberName,
-      memberAddress,
-      memberCity,
-      memberPostCode,
-      memberCountry,
+      ...mapped,
+      memberName: isActiveRecord
+        ? mapped.memberName || prev.memberName
+        : mapped.memberName || profileName || prev.memberName,
+      memberAddress: isActiveRecord
+        ? mapped.memberAddress || prev.memberAddress
+        : mapped.memberAddress || profileAddress || prev.memberAddress,
+      memberCity: isActiveRecord
+        ? mapped.memberCity || prev.memberCity
+        : mapped.memberCity || contactInfo.areaOrTown || prev.memberCity,
+      memberPostCode: isActiveRecord
+        ? mapped.memberPostCode || prev.memberPostCode
+        : mapped.memberPostCode ||
+          contactInfo.eircode ||
+          contactInfo.countyCityOrPostCode ||
+          prev.memberPostCode,
+      memberCountry: isActiveRecord
+        ? mapped.memberCountry || prev.memberCountry
+        : mapped.memberCountry || contactInfo.country || prev.memberCountry,
+      iban: mapped.iban || prev.iban,
+      bic: mapped.bic || prev.bic,
+      paymentType: mapped.paymentType || prev.paymentType,
+      authorization:
+        mapped.authorization !== undefined
+          ? mapped.authorization
+          : prev.authorization,
+      signatureDate: mapped.signatureDate || prev.signatureDate,
     }));
-  }, [personalDetail, user]);
-
-  useEffect(() => {
-    if (
-      portalFormLoading ||
-      hydratedFromPortal ||
-      !portalForm?.directDebitMandate
-    ) {
-      return;
-    }
-
-    setFormState(prev => ({
-      ...prev,
-      ...mapDirectDebitFromPortal(portalForm.directDebitMandate),
-    }));
-    setHydratedFromPortal(true);
-  }, [portalForm, portalFormLoading, hydratedFromPortal]);
+  }, [
+    formSource,
+    formSourceKey,
+    portalFormLoading,
+    personalDetail,
+    user,
+  ]);
 
   const formatIBAN = (value, cursorPosition = null) => {
     const cleaned = value.replace(/\s/g, '').toUpperCase();
@@ -489,7 +583,7 @@ const DirectDebit = ({ embedded = false }) => {
   const currencySymbol = currency.toUpperCase() === 'EUR' ? '€' : currency;
 
   const requiresMemberAddress = !isEeaSepaCountry(formState.memberCountry);
-  const orgName = ORGANIZATION_DETAILS.name;
+  const orgName = organizationDetails.name;
   const formMeta = PAYMENT_FORM_META['Direct Debit'];
 
   const formContent = (
@@ -506,7 +600,7 @@ const DirectDebit = ({ embedded = false }) => {
           }}>
           <SepaDirectDebitPrintTemplate
             formState={formState}
-            organizationDetails={ORGANIZATION_DETAILS}
+            organizationDetails={organizationDetails}
             uniqueMandateReference={uniqueMandateReference}
             totalAmount={totalAmount}
             currencySymbol={currencySymbol}
@@ -591,39 +685,39 @@ const DirectDebit = ({ embedded = false }) => {
               label="Creditor's Name"
               name="orgName"
               readOnly
-              value={ORGANIZATION_DETAILS.name}
+              value={organizationDetails.name}
             />
             <Input
               label="Creditor's Identifier"
               name="orgIdentifier"
               readOnly
-              value={ORGANIZATION_DETAILS.identifier}
+              value={organizationDetails.identifier}
             />
             <div className="md:col-span-2">
               <Input
                 label="Creditor's Address"
                 name="orgAddress"
                 readOnly
-                value={ORGANIZATION_DETAILS.address}
+                value={organizationDetails.address}
               />
             </div>
             <Input
               label="City"
               name="orgCity"
               readOnly
-              value={ORGANIZATION_DETAILS.city}
+              value={organizationDetails.city}
             />
             <Input
               label="Post Code"
               name="orgPostCode"
               readOnly
-              value={ORGANIZATION_DETAILS.postCode}
+              value={organizationDetails.postCode}
             />
             <Input
               label="Country"
               name="orgCountry"
               readOnly
-              value={ORGANIZATION_DETAILS.country}
+              value={organizationDetails.country}
             />
           </div>
         </div>
@@ -824,9 +918,16 @@ const DirectDebit = ({ embedded = false }) => {
             Please return this mandate to the Organization
           </p>
           <p className="text-xs text-gray-500 mt-2">
-            {ORGANIZATION_DETAILS.name} · {ORGANIZATION_DETAILS.address},{' '}
-            {ORGANIZATION_DETAILS.city} {ORGANIZATION_DETAILS.postCode},{' '}
-            {ORGANIZATION_DETAILS.country}
+            {organizationDetails.name}
+            {creditorAddressLine ? ` · ${creditorAddressLine}` : ''}
+            {organizationDetails.city || organizationDetails.postCode
+              ? ` · ${[organizationDetails.city, organizationDetails.postCode]
+                  .filter(Boolean)
+                  .join(' ')}`
+              : ''}
+            {organizationDetails.country
+              ? ` · ${organizationDetails.country}`
+              : ''}
           </p>
         </div>
 

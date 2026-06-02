@@ -16,10 +16,17 @@ import {
   shouldRetryCreateAsPatch,
 } from '../helpers/paymentForm.helper';
 
-const usePortalPaymentForm = formType => {
-  const [portalForm, setPortalForm] = useState(null);
-  const [loading, setLoading] = useState(true);
+const usePortalPaymentForm = (formType, { seedPortalForm = null } = {}) => {
+  const [portalForm, setPortalForm] = useState(seedPortalForm);
+  const [loading, setLoading] = useState(!seedPortalForm);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (seedPortalForm) {
+      setPortalForm(seedPortalForm);
+      setLoading(false);
+    }
+  }, [seedPortalForm]);
 
   const loadPortalForm = useCallback(async ({ silent = false } = {}) => {
     if (!silent) {
@@ -46,8 +53,11 @@ const usePortalPaymentForm = formType => {
   }, []);
 
   useEffect(() => {
+    if (seedPortalForm) {
+      return;
+    }
     loadPortalForm();
-  }, [loadPortalForm, formType]);
+  }, [loadPortalForm, formType, seedPortalForm]);
 
   /** Step 1: POST create or PATCH update — returns form _id */
   const persistPortalForm = useCallback(

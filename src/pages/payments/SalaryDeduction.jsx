@@ -24,7 +24,7 @@ import {
   toIsoDate,
 } from '../../helpers/paymentForm.helper';
 
-const SalaryDeduction = ({ embedded = false }) => {
+const SalaryDeduction = ({ embedded = false, seedPortalForm = null }) => {
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
   const { personalDetail, professionalDetail, subscriptionDetail } = useApplication();
@@ -45,7 +45,7 @@ const SalaryDeduction = ({ embedded = false }) => {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [hydratedFromPortal, setHydratedFromPortal] = useState(false);
   const { portalForm, loading: portalFormLoading, saving, persistAndSubmit } =
-    usePortalPaymentForm(PAYMENT_FORM_TYPES.SALARY_DEDUCTION);
+    usePortalPaymentForm(PAYMENT_FORM_TYPES.SALARY_DEDUCTION, { seedPortalForm });
 
   const monthlyDeductionAmount = '19.00';
   const mappedWorkLocations = (workLocationLookups || [])
@@ -99,13 +99,17 @@ const SalaryDeduction = ({ embedded = false }) => {
   }, [personalDetail, professionalDetail, profileDetail, subscriptionDetail, user]);
 
   useEffect(() => {
-    if (portalFormLoading || hydratedFromPortal || !portalForm?.salaryDeduction) {
+    if (portalFormLoading || hydratedFromPortal || !portalForm) {
       return;
     }
 
+    const mapped = portalForm.salaryDeduction
+      ? mapSalaryDeductionFromPortal(portalForm.salaryDeduction)
+      : mapSalaryDeductionFromPortal(portalForm);
+
     setFormState(prev => ({
       ...prev,
-      ...mapSalaryDeductionFromPortal(portalForm.salaryDeduction),
+      ...mapped,
     }));
     setHydratedFromPortal(true);
   }, [portalForm, portalFormLoading, hydratedFromPortal]);

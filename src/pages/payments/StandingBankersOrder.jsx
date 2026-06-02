@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
@@ -25,7 +25,7 @@ import {
   toIsoDate,
 } from '../../helpers/paymentForm.helper';
 
-const StandingBankersOrder = ({ embedded = false }) => {
+const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
   const { subscriptionDetail } = useApplication();
@@ -69,7 +69,12 @@ const StandingBankersOrder = ({ embedded = false }) => {
   const [ibanError, setIbanError] = useState('');
   const [hydratedFromPortal, setHydratedFromPortal] = useState(false);
   const { portalForm, loading: portalFormLoading, saving, persistAndSubmit } =
-    usePortalPaymentForm(PAYMENT_FORM_TYPES.STANDING_ORDER);
+    usePortalPaymentForm(PAYMENT_FORM_TYPES.STANDING_ORDER, { seedPortalForm });
+
+  const formSource = useMemo(() => seedPortalForm ?? portalForm, [
+    seedPortalForm,
+    portalForm,
+  ]);
 
   // Fetch category data
   useEffect(() => {
@@ -99,13 +104,17 @@ const StandingBankersOrder = ({ embedded = false }) => {
   }, [membershipCategory, user]);
 
   useEffect(() => {
-    if (portalFormLoading || hydratedFromPortal || !portalForm?.standingOrder) {
+    if (portalFormLoading || hydratedFromPortal || !portalForm) {
       return;
     }
 
+    const mapped = portalForm.standingOrder
+      ? mapStandingOrderFromPortal(portalForm.standingOrder)
+      : mapStandingOrderFromPortal(portalForm);
+
     setFormState(prev => ({
       ...prev,
-      ...mapStandingOrderFromPortal(portalForm.standingOrder),
+      ...mapped,
     }));
     setHydratedFromPortal(true);
   }, [portalForm, portalFormLoading, hydratedFromPortal]);
@@ -128,12 +137,21 @@ const StandingBankersOrder = ({ embedded = false }) => {
     { value: 'Annually', label: 'Annually' },
   ];
 
-  // Beneficiary details
-  const beneficiaryDetails = {
-    accountName: 'Irish Nurses and Midwives Organization (CRM)',
-    iban: 'IE99 BOFI 9000 1234 5678 99',
-    reference: membershipNo || `MEMB-2023-${user?.id || '0000'}`,
-  };
+  // Beneficiary details from prefill/portal form (no hardcoded org values)
+  const beneficiaryDetails = useMemo(() => {
+    const standingOrder = formSource?.standingOrder ?? formSource ?? {};
+    return {
+      accountName:
+        standingOrder?.beneficiaryAccountName ||
+        standingOrder?.creditorName ||
+        '',
+      iban: standingOrder?.beneficiaryIban || '',
+      reference:
+        standingOrder?.beneficiaryReference ||
+        membershipNo ||
+        `MEMB-${user?.id || '0000'}`,
+    };
+  }, [formSource, membershipNo, user?.id]);
 
   // Auto-populate branch address based on bank selection
   useEffect(() => {

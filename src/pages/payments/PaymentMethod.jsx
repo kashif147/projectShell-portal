@@ -1,124 +1,178 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useApplication } from '../../contexts/applicationContext';
-import { applicationConfirmationRequest } from '../../api/application.api';
+import { useProfile } from '../../contexts/profileContext';
+import { getSubscriptionRequest } from '../../api/subscription.api';
+import {
+  getMyPortalPaymentForms,
+  getPaymentFormPrefill,
+} from '../../api/paymentForms.api';
 import StandingBankersOrder from './StandingBankersOrder';
 import DirectDebit from './DirectDebit';
 import SalaryDeduction from './SalaryDeduction';
 import { PAYMENT_FORM_META } from './paymentFormMeta';
+import {
+  extractMyPortalPaymentForms,
+  extractPaymentFormPrefill,
+  getActivePaymentFormForProfile,
+  getPaymentTypeFromProfileSubscription,
+  getTabKeyForPortalForm,
+  formMatchesProfilePaymentType,
+  isPaymentApiSuccess,
+  mergePaymentFormWithPrefill,
+  normalizePaymentType,
+} from '../../helpers/paymentForm.helper';
+
+const loadPaymentFormPrefill = async (profileId, paymentTab) => {
+  if (!profileId || !paymentTab) return null;
+  try {
+    const prefillRes = await getPaymentFormPrefill(profileId);
+    if (!isPaymentApiSuccess(prefillRes)) return null;
+    const prefill = extractPaymentFormPrefill(prefillRes);
+    if (!prefill) return null;
+    if (formMatchesProfilePaymentType(prefill, paymentTab)) {
+      return prefill;
+    }
+    const tabFromPrefill =
+      getTabKeyForPortalForm(prefill) ||
+      normalizePaymentType(prefill.memberPaymentType);
+    return tabFromPrefill === paymentTab ? prefill : null;
+  } catch (error) {
+    console.error('Failed to load payment form prefill:', error);
+    return null;
+  }
+};
 
 const PaymentMethod = () => {
   const navigate = useNavigate();
-  const {
-    personalDetail,
-    subscriptionDetail,
-    applicationStatus: contextApplicationStatus,
-  } = useApplication();
+  const { profileDetail } = useProfile();
   const [selectedPaymentType, setSelectedPaymentType] = useState(null);
-  const [applicationStatus, setApplicationStatus] = useState(null);
+  const [activePortalForm, setActivePortalForm] = useState(null);
+  const [prefillPortalForm, setPrefillPortalForm] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Normalize payment type to match component mapping
-  const normalizePaymentType = (paymentType) => {
-    if (!paymentType) return null;
-    
-    const normalized = paymentType.toString().toLowerCase();
-    
-    // Handle Standing Bankers Order variations
-    if (
-      normalized.includes('standing') &&
-      (normalized.includes('banker') || normalized.includes('bank') || normalized.includes('order'))
-    ) {
-      return 'Standing Banking Order';
-    }
-    
-    // Handle Direct Debit
-    if (normalized.includes('direct') && normalized.includes('debit')) {
-      return 'Direct Debit';
-    }
-
-    // Handle Salary Deduction variations
-    if (
-      (normalized.includes('salary') && normalized.includes('deduction')) ||
-      normalized.includes('payroll')
-    ) {
-      return 'Salary Deduction';
-    }
-    
-    // Return null for unrecognized payment types
-    return null;
-  };
-
-  // Get default payment type based on application status
-  const getDefaultPaymentType = () => {
-    if (applicationStatus === 'approved' || applicationStatus === 'submitted') {
-      const paymentType = subscriptionDetail?.subscriptionDetails?.paymentType;
-      if (paymentType) {
-        const normalized = normalizePaymentType(paymentType);
-        // Only return if it's a valid payment type (Standing Banking Order or Direct Debit)
-        if (normalized) {
-          return normalized;
-        }
-      }
-    }
-    return null; // No default payment type
-  };
-
-  // Use context applicationStatus when available (from aggregated CRM), else fetch
   useEffect(() => {
-    if (contextApplicationStatus != null) {
-      setApplicationStatus(contextApplicationStatus);
-      setLoading(false);
-      return;
-    }
+    const loadPaymentMethod = async () => {
+      if (!profileDetail?.profileId) {
+        setActivePortalForm(null);
+        setPrefillPortalForm(null);
+        setSelectedPaymentType(null);
+        setLoading(false);
+        return;
+      }
 
-    const checkApplicationStatus = async () => {
-      if (personalDetail?.applicationId) {
-        try {
-          const response = await applicationConfirmationRequest(
-            personalDetail.applicationId,
+      setLoading(true);
+      setPrefillPortalForm(null);
+      try {
+        let profilePaymentTypeTab = null;
+
+        const subRes = await getSubscriptionRequest(profileDetail.profileId);
+        if (isPaymentApiSuccess(subRes)) {
+          const items = subRes?.data?.data?.data ?? subRes?.data?.data ?? [];
+          const subscriptions = Array.isArray(items)
+            ? items
+            : items
+            ? [items]
+            : [];
+          const activeSubscription =
+            subscriptions.find(
+              sub =>
+                String(sub?.subscriptionStatus || '').toLowerCase() === 'active',
+            ) || subscriptions[0];
+          const raw = getPaymentTypeFromProfileSubscription(activeSubscription);
+          profilePaymentTypeTab = normalizePaymentType(raw);
+        }
+
+        const mineRes = await getMyPortalPaymentForms();
+        if (isPaymentApiSuccess(mineRes)) {
+          const paymentForms = extractMyPortalPaymentForms(mineRes);
+
+          if (!profilePaymentTypeTab && paymentForms.length > 0) {
+            const firstActive = paymentForms.find(
+              form => String(form?.status || '').toLowerCase() === 'active',
+            );
+            profilePaymentTypeTab = getTabKeyForPortalForm(firstActive);
+          }
+
+          const activeForm = getActivePaymentFormForProfile(
+            paymentForms,
+            profilePaymentTypeTab,
           );
 
-          if (
-            response?.status === 200 ||
-            response?.data?.status === 'success'
-          ) {
-            const status =
-              response?.data?.data?.applicationStatus ||
-              response?.data?.applicationStatus;
-            setApplicationStatus(status);
+          setActivePortalForm(activeForm);
+          const paymentTab =
+            profilePaymentTypeTab || getTabKeyForPortalForm(activeForm);
+          setSelectedPaymentType(paymentTab);
+
+          if (paymentTab) {
+            const prefill = await loadPaymentFormPrefill(
+              profileDetail.profileId,
+              paymentTab,
+            );
+            setPrefillPortalForm(prefill);
           }
-        } catch (error) {
-          console.error('Failed to fetch application status:', error);
-          setApplicationStatus(null);
+        } else {
+          setActivePortalForm(null);
+          setSelectedPaymentType(profilePaymentTypeTab);
+          if (profilePaymentTypeTab) {
+            const prefill = await loadPaymentFormPrefill(
+              profileDetail.profileId,
+              profilePaymentTypeTab,
+            );
+            setPrefillPortalForm(prefill);
+          }
         }
+      } catch (error) {
+        console.error('Failed to load payment method:', error);
+        setActivePortalForm(null);
+        setPrefillPortalForm(null);
+        setSelectedPaymentType(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    checkApplicationStatus();
-  }, [personalDetail?.applicationId, contextApplicationStatus]);
+    loadPaymentMethod();
+  }, [profileDetail?.profileId]);
 
-  // Set default payment type once status is checked
-  useEffect(() => {
-    if (!loading) {
-      const defaultType = getDefaultPaymentType();
-      setSelectedPaymentType(defaultType);
+  const seedPortalForm = useMemo(() => {
+    if (activePortalForm) {
+      return mergePaymentFormWithPrefill(activePortalForm, prefillPortalForm);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [applicationStatus, subscriptionDetail?.subscriptionDetails?.paymentType, loading]);
+    return prefillPortalForm;
+  }, [activePortalForm, prefillPortalForm]);
 
-  const paymentTypes = [
-    { value: 'Standing Banking Order', label: 'Standing Banking Order' },
-    { value: 'Direct Debit', label: 'Direct Debit' },
-    { value: 'Salary Deduction', label: 'Salary Deduction' },
-  ];
+  const isActivePaymentMethod = useMemo(
+    () => String(activePortalForm?.status || '').toLowerCase() === 'active',
+    [activePortalForm],
+  );
 
-  const activeTabMeta = selectedPaymentType
-    ? PAYMENT_FORM_META[selectedPaymentType]
-    : null;
+  const headerMeta = useMemo(() => {
+    if (activePortalForm?.formTypeLabel) {
+      const tabKey = getTabKeyForPortalForm(activePortalForm);
+      const fallback = tabKey ? PAYMENT_FORM_META[tabKey] : null;
+      return {
+        title: activePortalForm.formTypeLabel,
+        subtitle:
+          fallback?.subtitle ||
+          'View and manage your active payment authorization',
+      };
+    }
+    if (prefillPortalForm?.formTypeLabel) {
+      const tabKey = getTabKeyForPortalForm(prefillPortalForm);
+      const fallback = tabKey ? PAYMENT_FORM_META[tabKey] : null;
+      return {
+        title: prefillPortalForm.formTypeLabel,
+        subtitle:
+          fallback?.subtitle ||
+          'Complete and submit your payment authorization',
+      };
+    }
+    if (selectedPaymentType && PAYMENT_FORM_META[selectedPaymentType]) {
+      return PAYMENT_FORM_META[selectedPaymentType];
+    }
+    return null;
+  }, [activePortalForm, prefillPortalForm, selectedPaymentType]);
 
-  // Render the appropriate payment component
   const renderPaymentComponent = () => {
     if (!selectedPaymentType) {
       return null;
@@ -126,11 +180,14 @@ const PaymentMethod = () => {
 
     switch (selectedPaymentType) {
       case 'Standing Banking Order':
-        return <StandingBankersOrder embedded />;
+      case 'Standing Order':
+        return (
+          <StandingBankersOrder embedded seedPortalForm={seedPortalForm} />
+        );
       case 'Direct Debit':
-        return <DirectDebit embedded />;
+        return <DirectDebit embedded seedPortalForm={seedPortalForm} />;
       case 'Salary Deduction':
-        return <SalaryDeduction embedded />;
+        return <SalaryDeduction embedded seedPortalForm={seedPortalForm} />;
       default:
         return null;
     }
@@ -146,29 +203,6 @@ const PaymentMethod = () => {
       </div>
     );
   }
-
-  const tabList = (
-    <div
-      className="inline-flex max-w-full gap-1 overflow-x-auto rounded-lg bg-gray-100 p-1 shrink-0"
-      role="tablist"
-      aria-label="Payment method">
-      {paymentTypes.map(type => (
-        <button
-          key={type.value}
-          type="button"
-          role="tab"
-          aria-selected={selectedPaymentType === type.value}
-          onClick={() => setSelectedPaymentType(type.value)}
-          className={`h-9 px-2.5 sm:px-4 rounded-md text-[11px] sm:text-xs font-medium whitespace-nowrap transition-all duration-150 ${
-            selectedPaymentType === type.value
-              ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50/80'
-          }`}>
-          {type.label}
-        </button>
-      ))}
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -195,28 +229,31 @@ const PaymentMethod = () => {
             </button>
             <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
               <div className="min-w-0 flex-1">
-                {activeTabMeta ? (
+                {headerMeta ? (
                   <>
                     <h1 className="text-sm sm:text-base font-semibold text-gray-900 leading-tight">
-                      {activeTabMeta.title}
+                      {headerMeta.title}
                     </h1>
                     <p className="text-xs text-gray-500 mt-0.5 leading-snug">
-                      {activeTabMeta.subtitle}
+                      {headerMeta.subtitle}
                     </p>
+                    {isActivePaymentMethod && (
+                      <span className="inline-flex mt-1.5 items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700 ring-1 ring-green-600/20">
+                        {activePortalForm.status}
+                      </span>
+                    )}
                   </>
                 ) : (
                   <p className="text-xs text-gray-500">
-                    Select a payment method to continue
+                    Payment method is not available for your profile
                   </p>
                 )}
               </div>
-              <div className="flex shrink-0 justify-end sm:ml-4">{tabList}</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Payment Component Container */}
       <div className="relative">
         {selectedPaymentType ? (
           renderPaymentComponent()
@@ -238,10 +275,12 @@ const PaymentMethod = () => {
                 </svg>
               </div>
               <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                Change Your Payment Method
+                Payment Method Unavailable
               </h2>
               <p className="text-gray-600 mb-6">
-                Please select a payment method from the tabs above to continue.
+                {!profileDetail?.profileId
+                  ? 'A member profile is required to manage payment methods.'
+                  : 'No payment method is configured for your profile.'}
               </p>
             </div>
           </div>
