@@ -13,6 +13,7 @@ import { useProfile } from '../../contexts/profileContext';
 import { fetchCategoryByCategoryId } from '../../api/category.api';
 import SepaDirectDebitPrintTemplate from './SepaDirectDebitPrintTemplate';
 import logo from '../../assets/images/logo.png';
+import shellLogo from '../../assets/images/shell-logo.png';
 import PaymentFormSubheader from './PaymentFormSubheader';
 import { PAYMENT_FORM_META } from './paymentFormMeta';
 import { toast } from 'react-toastify';
@@ -613,12 +614,19 @@ const DirectDebit = ({ embedded = false, seedPortalForm = null }) => {
             <h2 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight">
               SEPA Direct Debit Mandate
             </h2>
-            <div className="flex items-center gap-2.5 sm:gap-3 sm:shrink-0 sm:max-w-[50%] sm:justify-end">
-              <img
-                src={logo}
-                alt={orgName}
-                className="h-9 w-9 sm:h-11 sm:w-auto shrink-0 object-contain"
-              />
+            <div className="flex items-center gap-2.5 sm:gap-3 sm:shrink-0 sm:max-w-[55%] sm:justify-end">
+              <div className="flex shrink-0 items-center justify-center rounded-xl bg-white p-1.5 shadow-sm ring-1 ring-gray-200 sm:p-2">
+                <img
+                  src={shellLogo}
+                  alt={orgName}
+                  className="h-9 w-9 object-contain sm:hidden"
+                />
+                <img
+                  src={logo}
+                  alt={orgName}
+                  className="hidden h-9 w-auto max-w-[200px] object-contain sm:block md:h-10 md:max-w-[240px]"
+                />
+              </div>
               <span className="text-xs sm:text-sm font-medium text-gray-700 leading-snug break-words min-w-0 sm:text-right">
                 {orgName}
               </span>

@@ -16,7 +16,7 @@ import {
   Shield,
   Users,
 } from 'lucide-react';
-import { Logo, Splash } from '../assets/images/index';
+import { Logo, ShellLogo, Splash } from '../assets/images/index';
 import { microSoftUrlRedirect } from '../helpers/B2C.helper';
 
 const LandingPage = () => {
@@ -58,9 +58,17 @@ const LandingPage = () => {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(96,165,250,0.18),_transparent_50%)]" />
 
         <div className="relative z-10 flex h-full flex-col justify-between">
-          <div className="inline-flex w-fit items-center gap-3 rounded-xl border border-white/20 bg-white/10 px-4 py-2 backdrop-blur-sm">
-            <img src={Logo} alt="Portal logo" className="h-8 w-8 rounded-lg bg-white p-1" />
-            <span className="text-xl font-bold tracking-tight">MemberHub</span>
+          <div className="inline-flex w-fit items-center gap-3 rounded-xl border border-white/25 bg-white px-3 py-2 shadow-lg shadow-black/20 sm:px-4 sm:py-2.5">
+            <img
+              src={ShellLogo}
+              alt="ProjectShell"
+              className="h-9 w-9 object-contain sm:hidden"
+            />
+            <img
+              src={Logo}
+              alt="ProjectShell"
+              className="hidden h-9 w-auto max-w-[160px] object-contain sm:block md:h-10 md:max-w-[200px]"
+            />
           </div>
 
           <div className="my-12 lg:my-0">

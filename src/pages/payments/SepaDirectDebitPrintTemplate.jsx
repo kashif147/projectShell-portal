@@ -102,7 +102,11 @@ const SepaDirectDebitPrintTemplate = ({
             SEPA Direct Debit Mandate
           </h2>
           <div className="text-right">
-            <img src={logo} alt={orgName} className="h-12 w-auto ml-auto mb-1" />
+            <img
+              src={logo}
+              alt={orgName}
+              className="ml-auto mb-1 h-12 w-auto max-w-[200px] object-contain"
+            />
             <p className="text-[10px] font-semibold">{orgName}</p>
           </div>
         </div>

@@ -18,6 +18,7 @@ import { useNotification } from '../../contexts/notificationContext';
 import { useApplication } from '../../contexts/applicationContext';
 import { useMemberRole } from '../../hooks/useMemberRole';
 import { fetchNotiticationRequest } from '../../api/notification.api';
+import { Logo, ShellLogo } from '../../assets/images';
 
 const Header = ({
   collapsed,
@@ -109,19 +110,33 @@ const Header = ({
         top: 0,
         zIndex: 99,
         boxShadow: '0 6px 20px rgba(15, 23, 42, 0.06)',
-        height: '74px',
+        height: isMobile ? '64px' : '74px',
       }}>
-      {/* Left Section - Menu Button, Title, and Search */}
-      <div className="flex items-center flex-1">
+      {/* Left Section - Menu Button, Logo, Title, and Search */}
+      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
         {!isMobile && (
           <Button
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => setCollapsed(!collapsed)}
-            className="w-11 h-11 rounded-xl border border-blue-100 bg-white/80 text-slate-700 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all"
+            className="w-11 h-11 shrink-0 rounded-xl border border-blue-100 bg-white/80 text-slate-700 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all"
           />
         )}
-        <h1 className="header-title ml-3 text-xl sm:text-2xl font-semibold text-slate-800 tracking-tight">
+        {isMobile && (
+          <div className="flex shrink-0 items-center justify-center rounded-xl bg-white p-1 shadow-sm ring-1 ring-blue-100">
+            <img
+              src={ShellLogo}
+              alt="ProjectShell"
+              className="h-9 w-9 object-contain lg:hidden"
+            />
+            <img
+              src={Logo}
+              alt="ProjectShell"
+              className="hidden h-8 w-auto max-w-[150px] object-contain lg:block xl:max-w-[180px]"
+            />
+          </div>
+        )}
+        <h1 className="header-title min-w-0 truncate text-lg font-semibold tracking-tight text-slate-800 sm:text-xl lg:text-2xl">
           {pageTitle}
         </h1>
 
@@ -148,7 +163,6 @@ const Header = ({
 
       {/* Right Section - Membership Number, Notifications and User Profile */}
       <div className="flex items-center space-x-2 sm:space-x-3">
-        
         {/* Notification Bell */}
         <Badge
           count={unreadCount > 0 ? unreadCount : 0}
@@ -182,9 +196,7 @@ const Header = ({
               <span className="text-sm font-semibold text-slate-900">
                 {userDisplayName}
               </span>
-              <span className="text-xs text-slate-500">
-                {userSubLabel}
-              </span>
+              <span className="text-xs text-slate-500">{userSubLabel}</span>
             </div>
           </div>
         </Dropdown>

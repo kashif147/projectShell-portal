@@ -15,7 +15,7 @@ import {
   EnvironmentOutlined,
   MenuOutlined,
 } from '@ant-design/icons';
-import { Logo } from '../../assets/images';
+import { Logo, ShellLogo } from '../../assets/images';
 import { useMemberRole } from '../../hooks/useMemberRole';
 
 const Sidebar = ({ collapsed, isMobile = false }) => {
@@ -353,21 +353,32 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
       <div className="pointer-events-none absolute bottom-12 -left-20 h-56 w-56 rounded-full bg-indigo-200/30 blur-3xl" />
       <div className={`sidebar-header ${collapsed ? 'p-4' : 'p-6'} text-center border-b border-blue-100/80 transition-all duration-300`}>
         <div className="flex flex-col items-center justify-center">
-          {/* Logo with smooth transitions */}
-          <div
-            className={`relative transition-all duration-300 mb-3 ${
-              collapsed ? 'w-12 h-12' : 'w-20 h-20'
-            }`}
-          >
-            <div className="absolute inset-0 rounded-full bg-white/80 ring-1 ring-blue-100 shadow-sm" />
-            <img
-              src={Logo}
-              alt="Logo"
-              className="w-full h-full object-contain transition-transform duration-300 hover:scale-105"
-            />
-            {/* Subtle glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-100/50 to-purple-100/50 rounded-full blur-xl opacity-0 hover:opacity-100 transition-opacity duration-300 -z-10" />
-          </div>
+          {/* Logo: shell icon when collapsed, full brand mark when expanded */}
+          {collapsed ? (
+            <div className="sidebar-logo-wrap relative mb-3 flex h-14 w-14 items-center justify-center">
+              <div className="sidebar-logo-badge absolute inset-0 rounded-2xl bg-white shadow-md ring-1 ring-blue-200/80" />
+              <img
+                src={ShellLogo}
+                alt="ProjectShell"
+                className="relative z-10 h-10 w-10 object-contain transition-transform duration-300 hover:scale-105"
+              />
+            </div>
+          ) : (
+            <div className="sidebar-logo-wrap relative mb-4 w-full max-w-[220px] px-1">
+              <div className="sidebar-logo-badge rounded-2xl bg-white p-3 shadow-md ring-1 ring-blue-200/80">
+                <img
+                  src={Logo}
+                  alt="ProjectShell"
+                  className="hidden h-11 w-full object-contain sm:block md:h-12"
+                />
+                <img
+                  src={ShellLogo}
+                  alt="ProjectShell"
+                  className="mx-auto h-12 w-12 object-contain sm:hidden"
+                />
+              </div>
+            </div>
+          )}
           
           {/* Title and subtitle - only show when not collapsed */}
           {!collapsed && (
@@ -519,6 +530,11 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
           }
           .sidebar-shell p {
             color: #94a3b8 !important;
+          }
+          .sidebar-logo-badge {
+            background: #ffffff !important;
+            border: 1px solid rgba(148, 163, 184, 0.4) !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
           }
           .sidebar-footer {
             backdrop-filter: blur(8px);
