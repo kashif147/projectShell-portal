@@ -699,3 +699,23 @@ export const getUniqueMandateReferenceFromForm = paymentForm => {
     ''
   );
 };
+
+/** Organisation display name from prefill / portal payment form */
+export const getOrganizationNameFromPrefill = paymentForm => {
+  if (!paymentForm) return '';
+
+  const creditor = mapCreditorOrganizationDetails(paymentForm);
+  if (creditor?.name?.trim()) return creditor.name.trim();
+
+  const standingOrder = paymentForm.standingOrder || {};
+  const org = paymentForm.organisationSnapshot || {};
+
+  return (
+    standingOrder.beneficiaryAccountName ||
+    standingOrder.creditorName ||
+    org.legalName ||
+    org.tradingName ||
+    org.bankName ||
+    ''
+  );
+};
