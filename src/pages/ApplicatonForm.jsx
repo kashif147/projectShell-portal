@@ -22,7 +22,11 @@ import {
 import { useApplication } from '../contexts/applicationContext';
 import { useLookup } from '../contexts/lookupContext';
 import Spinner from '../components/common/Spinner';
-import { isDataFormat } from '../helpers/date.helper';
+import { calculateAgeFromDateOfBirth, isDataFormat } from '../helpers/date.helper';
+import {
+  getPaymentFrequencyCategory,
+  isSalaryDeductionPaymentType,
+} from '../helpers/subscriptionPricing.helper';
 import SubscriptionWrapper from '../components/modals/SubscriptionWrapper';
 
 const stripePromise = loadStripe(
@@ -219,20 +223,10 @@ const ApplicationForm = () => {
             if (value === true || value === 'yes') return 'yes';
             return prev.professionalDetails.nursingAdaptationProgramme || '';
           })(),
-          nmbiNumber: (() => {
-            const programmeValue =
-              professionalDetail?.professionalDetails
-                ?.nursingAdaptationProgramme;
-            // Clear nmbiNumber if nursingAdaptationProgramme is false or 'no'
-            if (programmeValue === false || programmeValue === 'no') {
-              return '';
-            }
-            return (
-              professionalDetail?.professionalDetails?.nmbiNumber ??
-              prev.professionalDetails.nmbiNumber ??
-              ''
-            );
-          })(),
+          nmbiNumber:
+            professionalDetail?.professionalDetails?.nmbiNumber ??
+            prev.professionalDetails.nmbiNumber ??
+            '',
           nurseType: (() => {
             const programmeValue =
               professionalDetail?.professionalDetails
@@ -384,6 +378,19 @@ const ApplicationForm = () => {
               ?.exclusiveDiscountsAndOffers ??
             prev.subscriptionDetails.exclusiveDiscountsAndOffers ??
             false,
+          previousMembershipNumber:
+            subscriptionDetail?.subscriptionDetails?.previousMembershipNumber ??
+            prev.subscriptionDetails.previousMembershipNumber ??
+            '',
+          joinYouthForum: subscriptionDetail?.subscriptionDetails?.joinYouthForum
+            ? 'yes'
+            : subscriptionDetail?.subscriptionDetails?.joinYouthForum === false
+              ? 'no'
+              : prev.subscriptionDetails.joinYouthForum || '',
+          youthForum:
+            subscriptionDetail?.subscriptionDetails?.youthForum ??
+            prev.subscriptionDetails.youthForum ??
+            '',
         },
       }));
     }
@@ -658,7 +665,10 @@ const ApplicationForm = () => {
         membershipStatus: data?.memberStatus,
         otherIrishTradeUnion: data?.otherIrishTradeUnion === 'yes',
         otherIrishTradeUnionName: data?.otherIrishTradeUnionName,
-        otherScheme: data?.otherScheme === true,
+        otherScheme: data?.otherScheme === 'yes',
+        previousMembershipNumber: data?.previousMembershipNumber,
+        joinYouthForum: data?.joinYouthForum === 'yes',
+        youthForum: data?.youthForum,
         recuritedBy: data?.recuritedBy,
         recuritedByMembershipNo: data?.recuritedByMembershipNo,
         primarySection: data?.primarySection,
@@ -670,8 +680,7 @@ const ApplicationForm = () => {
         valueAddedServices: data?.valueAddedServices === true,
         termsAndConditions: data?.termsAndConditions === true,
         exclusiveDiscountsAndOffers: data?.exclusiveDiscountsAndOffers === true,
-        paymentFrequency:
-          data?.paymentType === 'Credit Card' ? 'Annually' : 'Monthly',
+        paymentFrequency: data?.paymentFrequency,
         ...defaultFields,
       };
 
@@ -735,7 +744,10 @@ const ApplicationForm = () => {
         membershipStatus: data?.memberStatus,
         otherIrishTradeUnion: data?.otherIrishTradeUnion === 'yes',
         otherIrishTradeUnionName: data?.otherIrishTradeUnionName,
-        otherScheme: data?.otherScheme === true,
+        otherScheme: data?.otherScheme === 'yes',
+        previousMembershipNumber: data?.previousMembershipNumber,
+        joinYouthForum: data?.joinYouthForum === 'yes',
+        youthForum: data?.youthForum,
         recuritedBy: data?.recuritedBy,
         recuritedByMembershipNo: data?.recuritedByMembershipNo,
         primarySection: data?.primarySection,
@@ -747,8 +759,7 @@ const ApplicationForm = () => {
         valueAddedServices: data?.valueAddedServices === true,
         termsAndConditions: data?.termsAndConditions === true,
         exclusiveDiscountsAndOffers: data?.exclusiveDiscountsAndOffers === true,
-        paymentFrequency:
-          data?.paymentType === 'Credit Card' ? 'Annually' : 'Monthly',
+        paymentFrequency: data?.paymentFrequency,
         ...defaultFields,
       };
 
@@ -953,8 +964,11 @@ const ApplicationForm = () => {
         ) {
           if (!String(pensionNo || '').trim()) return false;
         }
-        if (nursingAdaptationProgramme === 'yes') {
-          if (!nurseType || !nmbiNumber) return false;
+        if (nursingAdaptationProgramme === 'yes' && !nurseType) {
+          return false;
+        }
+        if (nursingAdaptationProgramme === 'no' && !String(nmbiNumber || '').trim()) {
+          return false;
         }
         break;
       case 3:
@@ -970,13 +984,42 @@ const ApplicationForm = () => {
         if (!paymentType) return false;
 
         if (
-          paymentType === 'deduction' &&
+          isSalaryDeductionPaymentType(paymentType) &&
           !formData.subscriptionDetails?.payrollNo
         )
           return false;
+
+        if (
+          getPaymentFrequencyCategory(paymentType) &&
+          !formData.subscriptionDetails?.paymentFrequency
+        ) {
+          return false;
+        }
+
         if (!memberStatus) return false;
 
-        if (!otherIrishTradeUnion || !otherScheme) return false;
+        if (memberStatus === 'new' || memberStatus === 'graduate') {
+          if (!otherIrishTradeUnion || !otherScheme) return false;
+          if (
+            otherIrishTradeUnion === 'yes' &&
+            !String(formData.subscriptionDetails?.otherIrishTradeUnionName || '').trim()
+          ) {
+            return false;
+          }
+        }
+
+        const memberAge = calculateAgeFromDateOfBirth(
+          formData.personalInfo?.dateOfBirth,
+        );
+        if (memberAge !== null && memberAge < 35) {
+          if (!formData.subscriptionDetails?.joinYouthForum) return false;
+          if (
+            formData.subscriptionDetails?.joinYouthForum === 'yes' &&
+            !formData.subscriptionDetails?.youthForum
+          ) {
+            return false;
+          }
+        }
 
         if (!termsAndConditions) return false;
 
@@ -1059,20 +1102,50 @@ const ApplicationForm = () => {
           if (!String(pensionNo || '').trim())
             missing.push('Pension number');
         }
-        if (nursingAdaptationProgramme === 'yes') {
-          if (!nurseType) missing.push('Nurse type');
-          if (!nmbiNumber) missing.push('NMBI number');
+        if (nursingAdaptationProgramme === 'yes' && !nurseType) {
+          missing.push('Nurse type');
+        }
+        if (
+          nursingAdaptationProgramme === 'no' &&
+          !String(nmbiNumber || '').trim()
+        ) {
+          missing.push('NMBI number');
         }
         break;
       }
       case 3: {
         const sub = formData.subscriptionDetails || {};
         if (!sub.paymentType) missing.push('Payment type');
-        if (sub.paymentType === 'deduction' && !sub.payrollNo)
+        if (isSalaryDeductionPaymentType(sub.paymentType) && !sub.payrollNo) {
           missing.push('Payroll number');
+        }
+        if (
+          getPaymentFrequencyCategory(sub.paymentType) &&
+          !sub.paymentFrequency
+        ) {
+          missing.push('Payment frequency');
+        }
         if (!sub.memberStatus) missing.push('Member status');
-        if (!sub.otherIrishTradeUnion) missing.push('Other Irish trade union');
-        if (!sub.otherScheme) missing.push('Other scheme');
+        if (sub.memberStatus === 'new' || sub.memberStatus === 'graduate') {
+          if (!sub.otherIrishTradeUnion)
+            missing.push('Other Irish trade union');
+          if (!sub.otherScheme) missing.push('Other scheme');
+          if (
+            sub.otherIrishTradeUnion === 'yes' &&
+            !String(sub.otherIrishTradeUnionName || '').trim()
+          ) {
+            missing.push('Other Irish trade union name');
+          }
+        }
+        const memberAge = calculateAgeFromDateOfBirth(
+          formData.personalInfo?.dateOfBirth,
+        );
+        if (memberAge !== null && memberAge < 35) {
+          if (!sub.joinYouthForum) missing.push('Youth Forum preference');
+          if (sub.joinYouthForum === 'yes' && !sub.youthForum) {
+            missing.push('Youth Forum selection');
+          }
+        }
         if (!sub.termsAndConditions) missing.push('Terms and conditions');
         break;
       }
@@ -1143,6 +1216,8 @@ const ApplicationForm = () => {
             }
             showValidation={showValidation}
             categoryData={categoryData}
+            dateOfBirth={formData.personalInfo?.dateOfBirth}
+            workLocation={formData.professionalDetails?.workLocation}
           />
         );
       default:

@@ -12,8 +12,19 @@ import { Select } from '../../components/ui/Select';
 import SignaturePad from '../../components/common/SignaturePad';
 import Button from '../../components/common/Button';
 import SalaryDeductionPrintTemplate from './SalaryDeductionPrintTemplate';
+import PaymentFormSubheader from './PaymentFormSubheader';
+import { PAYMENT_FORM_META } from './paymentFormMeta';
+import { toast } from 'react-toastify';
+import usePortalPaymentForm from '../../hooks/usePortalPaymentForm';
+import {
+  PAYMENT_FORM_TYPES,
+  buildSalaryDeductionPatchPayload,
+  buildSalaryDeductionPayload,
+  mapSalaryDeductionFromPortal,
+  toIsoDate,
+} from '../../helpers/paymentForm.helper';
 
-const SalaryDeduction = () => {
+const SalaryDeduction = ({ embedded = false, seedPortalForm = null }) => {
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
   const { personalDetail, professionalDetail, subscriptionDetail } = useApplication();
@@ -32,6 +43,9 @@ const SalaryDeduction = () => {
   });
   const [showValidation, setShowValidation] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [hydratedFromPortal, setHydratedFromPortal] = useState(false);
+  const { portalForm, loading: portalFormLoading, saving, persistAndSubmit } =
+    usePortalPaymentForm(PAYMENT_FORM_TYPES.SALARY_DEDUCTION, { seedPortalForm });
 
   const monthlyDeductionAmount = '19.00';
   const mappedWorkLocations = (workLocationLookups || [])
@@ -84,6 +98,22 @@ const SalaryDeduction = () => {
     }));
   }, [personalDetail, professionalDetail, profileDetail, subscriptionDetail, user]);
 
+  useEffect(() => {
+    if (portalFormLoading || hydratedFromPortal || !portalForm) {
+      return;
+    }
+
+    const mapped = portalForm.salaryDeduction
+      ? mapSalaryDeductionFromPortal(portalForm.salaryDeduction)
+      : mapSalaryDeductionFromPortal(portalForm);
+
+    setFormState(prev => ({
+      ...prev,
+      ...mapped,
+    }));
+    setHydratedFromPortal(true);
+  }, [portalForm, portalFormLoading, hydratedFromPortal]);
+
   const handleInputChange = e => {
     const { name, value } = e.target;
     setFormState(prev => ({
@@ -111,7 +141,7 @@ const SalaryDeduction = () => {
     );
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setShowValidation(true);
     if (!validateForm()) {
       const firstErrorField = document.querySelector('.border-red-500');
@@ -121,9 +151,30 @@ const SalaryDeduction = () => {
       return;
     }
 
-    console.log('Salary Deduction Data:', formState);
-    alert('Salary Deduction form saved successfully!');
-    navigate('/');
+    try {
+      await persistAndSubmit({
+        createPayload: buildSalaryDeductionPayload(formState),
+        patchPayload: buildSalaryDeductionPatchPayload(formState),
+        signatures: formState.signature
+          ? [
+              {
+                imageBase64: formState.signature,
+                slot: 0,
+                signedDate:
+                  toIsoDate(formState.date) || new Date().toISOString(),
+              },
+            ]
+          : [],
+      });
+      toast.success('Salary Deduction form saved and submitted successfully!');
+      navigate('/');
+    } catch (error) {
+      console.error('Salary deduction save failed:', error);
+      toast.error(
+        error?.message ||
+          'Failed to save salary deduction form. Please try again.',
+      );
+    }
   };
 
   const handlePrint = async () => {
@@ -192,32 +243,17 @@ const SalaryDeduction = () => {
       pdf.save('salary-deduction-form.pdf');
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      toast.error('Failed to generate PDF. Please try again.');
     } finally {
       setIsGeneratingPDF(false);
     }
   };
 
   const isFormValid = validateForm();
+  const formMeta = PAYMENT_FORM_META['Salary Deduction'];
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-2.5 sm:py-3">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
-                Salary Deduction
-              </h1>
-              <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">
-                Complete the payroll deduction authorization form
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+  const formContent = (
+      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 max-w-7xl mx-auto">
         <div className="space-y-4 sm:space-y-6">
           <div
             ref={printRef}
@@ -350,13 +386,27 @@ const SalaryDeduction = () => {
             <Button
               type="primary"
               onClick={handleSave}
-              disabled={!isFormValid}
+              loading={saving}
+              disabled={!isFormValid || saving || portalFormLoading}
               className="w-full sm:w-auto !text-sm sm:!text-base !h-10 sm:!h-11">
               Save Authorization
             </Button>
           </div>
         </div>
       </div>
+  );
+
+  if (embedded) {
+    return formContent;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <PaymentFormSubheader
+        title={formMeta.title}
+        subtitle={formMeta.subtitle}
+      />
+      {formContent}
     </div>
   );
 };

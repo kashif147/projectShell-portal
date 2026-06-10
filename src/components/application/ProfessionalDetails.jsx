@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { DatePicker } from '../ui/DatePicker';
 import { Checkbox } from '../ui/Checkbox';
 import { Radio } from '../ui/Radio';
 import { useLookup } from '../../contexts/lookupContext';
+import MembershipCategoryConfirmationModal from '../modals/MembershipCategoryConfirmationModal';
 
 const nurseTypeOptions = [
   { value: 'generalNursing', label: 'General Nurse' },
@@ -36,10 +37,50 @@ export const CATEGORY_DISPLAY_NAME_BY_TYPE = {
   postgraduate_student: 'Postgraduate Student',
   general: 'General (all grades)',
   private_nursing_home: 'Private nursing home',
-  short_term_relief: 'Short-term/ Relief (under 15 hrs/wk average)',
+  short_term_relief: 'Short-term/Relief (under 12 hrs/wk average)',
   associate: 'Associate (not currently employed as a nurse/midwife)',
   affiliate: 'Affiliate members (non-practicing)',
   lecturing: 'Lecturing (employed in universities and IT institutes)',
+};
+
+const REDUCED_RATE_CATEGORY_TYPES = [
+  'affiliate',
+  'associate',
+  'short_term_relief',
+];
+
+const isReducedRateMembershipCategory = categoryLabel => {
+  if (!categoryLabel) return false;
+
+  const label = String(categoryLabel).toLowerCase();
+
+  if (
+    REDUCED_RATE_CATEGORY_TYPES.some(
+      type => CATEGORY_DISPLAY_NAME_BY_TYPE[type] === categoryLabel,
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    (label.includes('short-term') || label.includes('short term')) &&
+    label.includes('relief')
+  ) {
+    return true;
+  }
+
+  if (label.includes('affiliate') && label.includes('non-practicing')) {
+    return true;
+  }
+
+  if (
+    label.includes('associate') &&
+    label.includes('not currently employed')
+  ) {
+    return true;
+  }
+
+  return false;
 };
 
 const ProfessionalDetails = ({
@@ -54,6 +95,10 @@ const ProfessionalDetails = ({
     studyLocationLookups,
     disciplineLookups,
   } = useLookup();
+
+  const [categoryConfirmOpen, setCategoryConfirmOpen] = useState(false);
+  const [pendingMembershipCategory, setPendingMembershipCategory] =
+    useState('');
 
   const workLocationOptions = (workLocationLookups || []).map(item => {
     const name = item?.lookup?.DisplayName || item?.lookup?.lookupname || '';
@@ -116,8 +161,47 @@ const ProfessionalDetails = ({
     .filter(Boolean)
     .map(name => ({ value: name, label: name }));
 
+  const applyMembershipCategory = categoryValue => {
+    onFormDataChange({
+      ...formData,
+      membershipCategory: categoryValue,
+    });
+  };
+
+  const handleMembershipCategoryChange = value => {
+    if (!value) {
+      applyMembershipCategory('');
+      return;
+    }
+
+    if (isReducedRateMembershipCategory(value)) {
+      setPendingMembershipCategory(value);
+      setCategoryConfirmOpen(true);
+      return;
+    }
+
+    applyMembershipCategory(value);
+  };
+
+  const handleConfirmMembershipCategory = () => {
+    applyMembershipCategory(pendingMembershipCategory);
+    setCategoryConfirmOpen(false);
+    setPendingMembershipCategory('');
+  };
+
+  const handleCancelMembershipCategory = () => {
+    setCategoryConfirmOpen(false);
+    setPendingMembershipCategory('');
+  };
+
   const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
+
+    if (name === 'membershipCategory') {
+      handleMembershipCategoryChange(value);
+      return;
+    }
+
     let newFormData = {
       ...formData,
       [name]: type === 'checkbox' ? checked : value,
@@ -162,6 +246,12 @@ const ProfessionalDetails = ({
 
   return (
     <div className="space-y-6">
+      <MembershipCategoryConfirmationModal
+        open={categoryConfirmOpen}
+        onCancel={handleCancelMembershipCategory}
+        onConfirm={handleConfirmMembershipCategory}
+      />
+
       {/* Membership Category Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-300">
         <div className="flex items-start gap-3 mb-6">
@@ -453,9 +543,7 @@ const ProfessionalDetails = ({
                   ...formData,
                   nursingAdaptationProgramme: e.target.value,
                 };
-                // Clear nmbiNumber and nurseType if "no" is selected
                 if (e.target.value === 'no') {
-                  updatedData.nmbiNumber = '';
                   updatedData.nurseType = '';
                 }
                 onFormDataChange(updatedData);
@@ -468,9 +556,12 @@ const ProfessionalDetails = ({
           </div>
 
           <Input
-            disabled={formData?.nursingAdaptationProgramme !== 'yes'}
-            required={formData?.nursingAdaptationProgramme === 'yes'}
-            label="NMBI No / An Board Altranais Number"
+            disabled={
+              !formData?.nursingAdaptationProgramme ||
+              !['yes', 'no'].includes(formData.nursingAdaptationProgramme)
+            }
+            required={formData?.nursingAdaptationProgramme === 'no'}
+            label={ 'NMBI No / An Board Altranais Number'}
             name="nmbiNumber"
             value={formData?.nmbiNumber || ''}
             onChange={handleInputChange}

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
@@ -9,6 +9,13 @@ import 'react-phone-number-input/style.css';
 import '../../assets/theme/phoneInput.css';
 // Dynamic countries from lookup context will replace static constants
 import { useLookup } from '../../contexts/lookupContext';
+import { useProfile } from '../../contexts/profileContext';
+import { getPaymentFormPrefill } from '../../api/paymentForms.api';
+import {
+  extractPaymentFormPrefill,
+  getOrganizationNameFromPrefill,
+  isPaymentApiSuccess,
+} from '../../helpers/paymentForm.helper';
 import { useJsApiLoader, StandaloneSearchBox } from '@react-google-maps/api';
 
 const libraries = ['places', 'maps'];
@@ -22,6 +29,34 @@ const PersonalInformation = ({
   const searchInputRef = useRef(null);
   const [searchValue, setSearchValue] = React.useState('');
   const { genderLookups, titleLookups, countryLookups } = useLookup();
+  const { profileDetail } = useProfile();
+  const [organizationName, setOrganizationName] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadOrganizationName = async () => {
+      const profileId = profileDetail?.profileId;
+      if (!profileId) return;
+
+      try {
+        const response = await getPaymentFormPrefill(profileId);
+        if (cancelled || !isPaymentApiSuccess(response)) return;
+
+        const prefill = extractPaymentFormPrefill(response);
+        const name = getOrganizationNameFromPrefill(prefill);
+        if (name) setOrganizationName(name);
+      } catch (error) {
+        console.error('Failed to load organization name from prefill:', error);
+      }
+    };
+
+    loadOrganizationName();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profileDetail?.profileId]);
 
   // Set default value to Ireland if countryPrimaryQualification is empty
   React.useEffect(() => {
@@ -438,11 +473,13 @@ const PersonalInformation = ({
               label={
                 <div>
                   <span className="font-semibold text-gray-900">
-                    I consent to receive Correspondence
+                    Consent to receive Correspondence
+                    {organizationName ? ` from ${organizationName}` : ''}
                   </span>
                   <p className="text-xs text-gray-500 mt-1">
-                    Please un-tick this box if you would not like to receive
-                    correspondence from us to this address.
+                    Please un-tick this box if you would{' '}
+                    <strong>NOT like</strong> to receive correspondence via
+                    email or phone.
                   </p>
                 </div>
               }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
@@ -13,8 +13,19 @@ import { useApplication } from '../../contexts/applicationContext';
 import { useProfile } from '../../contexts/profileContext';
 import { fetchCategoryByCategoryId } from '../../api/category.api';
 import dayjs from 'dayjs';
+import PaymentFormSubheader from './PaymentFormSubheader';
+import { PAYMENT_FORM_META } from './paymentFormMeta';
+import { toast } from 'react-toastify';
+import usePortalPaymentForm from '../../hooks/usePortalPaymentForm';
+import {
+  PAYMENT_FORM_TYPES,
+  buildStandingOrderPatchPayload,
+  buildStandingOrderPayload,
+  mapStandingOrderFromPortal,
+  toIsoDate,
+} from '../../helpers/paymentForm.helper';
 
-const StandingBankersOrder = () => {
+const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
   const { subscriptionDetail } = useApplication();
@@ -56,6 +67,14 @@ const StandingBankersOrder = () => {
   const [showValidation, setShowValidation] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [ibanError, setIbanError] = useState('');
+  const [hydratedFromPortal, setHydratedFromPortal] = useState(false);
+  const { portalForm, loading: portalFormLoading, saving, persistAndSubmit } =
+    usePortalPaymentForm(PAYMENT_FORM_TYPES.STANDING_ORDER, { seedPortalForm });
+
+  const formSource = useMemo(() => seedPortalForm ?? portalForm, [
+    seedPortalForm,
+    portalForm,
+  ]);
 
   // Fetch category data
   useEffect(() => {
@@ -84,6 +103,22 @@ const StandingBankersOrder = () => {
     fetchCategory();
   }, [membershipCategory, user]);
 
+  useEffect(() => {
+    if (portalFormLoading || hydratedFromPortal || !portalForm) {
+      return;
+    }
+
+    const mapped = portalForm.standingOrder
+      ? mapStandingOrderFromPortal(portalForm.standingOrder)
+      : mapStandingOrderFromPortal(portalForm);
+
+    setFormState(prev => ({
+      ...prev,
+      ...mapped,
+    }));
+    setHydratedFromPortal(true);
+  }, [portalForm, portalFormLoading, hydratedFromPortal]);
+
   // Bank list
   const bankOptions = [
     { value: 'AIB', label: 'Allied Irish Banks (AIB)' },
@@ -102,12 +137,21 @@ const StandingBankersOrder = () => {
     { value: 'Annually', label: 'Annually' },
   ];
 
-  // Beneficiary details
-  const beneficiaryDetails = {
-    accountName: 'Irish Nurses and Midwives Organization (CRM)',
-    iban: 'IE99 BOFI 9000 1234 5678 99',
-    reference: membershipNo || `MEMB-2023-${user?.id || '0000'}`,
-  };
+  // Beneficiary details from prefill/portal form (no hardcoded org values)
+  const beneficiaryDetails = useMemo(() => {
+    const standingOrder = formSource?.standingOrder ?? formSource ?? {};
+    return {
+      accountName:
+        standingOrder?.beneficiaryAccountName ||
+        standingOrder?.creditorName ||
+        '',
+      iban: standingOrder?.beneficiaryIban || '',
+      reference:
+        standingOrder?.beneficiaryReference ||
+        membershipNo ||
+        `MEMB-${user?.id || '0000'}`,
+    };
+  }, [formSource, membershipNo, user?.id]);
 
   // Auto-populate branch address based on bank selection
   useEffect(() => {
@@ -305,7 +349,7 @@ const StandingBankersOrder = () => {
     return true;
   };
 
-  const handleSaveOrder = () => {
+  const handleSaveOrder = async () => {
     setShowValidation(true);
     if (!validateForm()) {
       const firstErrorField = document.querySelector('.border-red-500');
@@ -315,22 +359,43 @@ const StandingBankersOrder = () => {
       return;
     }
 
-    const orderData = {
-      ...formState,
-      beneficiaryDetails,
-      userDetails: {
-        name:
-          user?.userFirstName && user?.userLastName
-            ? `${user.userFirstName} ${user.userLastName}`
-            : user?.userName || '',
-        email: user?.userEmail || user?.email || '',
-      },
-    };
+    const signatures = [];
+    const primarySignedDate =
+      toIsoDate(formState.accountHolderSignatureDate) ||
+      new Date().toISOString();
 
-    console.log('Standing Order Data:', orderData);
-    // TODO: Add API call to save order
-    alert('Order saved successfully!');
-    navigate('/');
+    if (formState.accountHolderSignature) {
+      signatures.push({
+        imageBase64: formState.accountHolderSignature,
+        slot: 0,
+        signedDate: primarySignedDate,
+      });
+    }
+
+    if (formState.secondSignature) {
+      signatures.push({
+        imageBase64: formState.secondSignature,
+        slot: 1,
+        signedDate:
+          toIsoDate(formState.secondSignatureDate) || primarySignedDate,
+      });
+    }
+
+    try {
+      await persistAndSubmit({
+        createPayload: buildStandingOrderPayload(formState),
+        patchPayload: buildStandingOrderPatchPayload(formState),
+        signatures,
+      });
+      toast.success('Standing order saved and submitted successfully!');
+      navigate('/');
+    } catch (error) {
+      console.error('Standing order save failed:', error);
+      toast.error(
+        error?.message ||
+          'Failed to save standing order. Please try again.',
+      );
+    }
   };
 
   const handlePrint = async () => {
@@ -418,7 +483,7 @@ const StandingBankersOrder = () => {
       pdf.save('standing-bankers-order.pdf');
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again or use browser print.');
+      toast.error('Failed to generate PDF. Please try again or use browser print.');
     } finally {
       setIsGeneratingPDF(false);
     }
@@ -426,33 +491,16 @@ const StandingBankersOrder = () => {
 
   const handleEmailToBank = () => {
     console.log('Email to Bank functionality - to be implemented with backend');
-    alert(
+    toast.info(
       'Email to Bank functionality will be implemented with backend integration',
     );
   };
 
   const isFormValid = validateForm();
+  const formMeta = PAYMENT_FORM_META['Standing Banking Order'];
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-2.5 sm:py-3">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
-                Standing Banking Order Setup
-              </h1>
-              <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">
-                Please complete the form below to authorize a new standing order
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+  const formContent = (
+      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 max-w-7xl mx-auto">
         <div className="space-y-4 sm:space-y-6">
           {/* Print Content (hidden visually, used for PDF generation) */}
           <div
@@ -1050,7 +1098,8 @@ const StandingBankersOrder = () => {
             <Button
               type="primary"
               onClick={handleSaveOrder}
-              disabled={!isFormValid}
+              loading={saving}
+              disabled={!isFormValid || saving || portalFormLoading}
               className="w-full sm:w-auto !text-sm sm:!text-base !h-10 sm:!h-11"
               icon={
                 <svg
@@ -1071,6 +1120,19 @@ const StandingBankersOrder = () => {
           </div>
         </div>
       </div>
+  );
+
+  if (embedded) {
+    return formContent;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <PaymentFormSubheader
+        title={formMeta.title}
+        subtitle={formMeta.subtitle}
+      />
+      {formContent}
     </div>
   );
 };
