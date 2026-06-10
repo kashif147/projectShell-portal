@@ -44,10 +44,10 @@ const Header = ({
     [user?.userFirstName, user?.userLastName, user?.fullName],
   );
   const userSubLabel = isMember
-    ? profileDetail?.membershipNumber || 'Membership Pending'
-    : isCrmUser
-      ? 'CRM User'
-      : 'Non Member';
+    ? profileDetail?.membershipNumber : 'Non Member'
+    // : isCrmUser
+    //   ? 'CRM User'
+    //   : 'Non Member';
 
   useEffect(() => {
     let isMounted = true;

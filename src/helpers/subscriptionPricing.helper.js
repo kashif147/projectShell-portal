@@ -184,16 +184,35 @@ export const getSubscriptionFeeLabel = frequency => {
   return labels[normalized] || 'Subscription Fee';
 };
 
+export const findWorkLocationLookupItem = (
+  workLocation,
+  workLocationLookups = [],
+) => {
+  if (!workLocation || workLocation === 'other') return null;
+
+  return (
+    (workLocationLookups || []).find(item => {
+      const lookup = item?.lookup || {};
+      const name = lookup.DisplayName || lookup.lookupname || '';
+      const id = lookup._id || lookup.id || '';
+      return (
+        name === workLocation || (id && String(id) === String(workLocation))
+      );
+    }) || null
+  );
+};
+
 export const workLocationAllowsSalaryDeduction = (
   workLocation,
   workLocationLookups = [],
 ) => {
-  if (!workLocation || workLocation === 'other') return false;
-
-  const selected = (workLocationLookups || []).find(
-    item =>
-      (item?.lookup?.DisplayName || item?.lookup?.lookupname) === workLocation,
+  const selected = findWorkLocationLookupItem(
+    workLocation,
+    workLocationLookups,
   );
 
-  return selected?.processSalaryDeduction === true;
+  if (!selected?.lookup) return false;
+
+  // Only the work-location lookup carries this flag — not branch/region/hierarchy
+  return selected.lookup.processSalaryDeduction === true;
 };

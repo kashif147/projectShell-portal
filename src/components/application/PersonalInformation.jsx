@@ -478,7 +478,7 @@ const PersonalInformation = ({
                   </span>
                   <p className="text-xs text-gray-500 mt-1">
                     Please un-tick this box if you would{' '}
-                    <strong>NOT</strong> like to receive correspondence via
+                    <strong>NOT like</strong> to receive correspondence via
                     email or phone.
                   </p>
                 </div>
