@@ -28,6 +28,60 @@ const wrapSubscriptionDetail = raw => {
   return { subscriptionDetails: raw };
 };
 
+const AGGREGATE_HANDLED = Symbol('aggregate_handled');
+
+export const extractAggregatedUserDetailsResponse = res => {
+  const body = res != null ? res.data : undefined;
+  if (!body || typeof body !== 'object') return null;
+
+  const payload = coalesce(
+    body.data,
+    body,
+  );
+
+  if (!payload?.personalDetails) return null;
+
+  return payload;
+};
+
+export const normalizeAggregatedSubscriptionDetails = raw => {
+  if (!raw || typeof raw !== 'object') return null;
+
+  const subscriptionDetails = coalesce(
+    raw.subscriptionDetails,
+    raw._doc?.subscriptionDetails,
+    raw.$__?.getters?.subscriptionDetails,
+  );
+
+  return {
+    applicationId: coalesce(raw.applicationId, raw._doc?.applicationId),
+    _id: coalesce(raw._id, raw._doc?._id),
+    tenantId: coalesce(raw.tenantId, raw._doc?.tenantId),
+    userId: coalesce(raw.userId, raw._doc?.userId),
+    subscriptionDetails,
+    meta: coalesce(raw.meta, raw._doc?.meta),
+    _subscriptionService: raw._subscriptionService,
+    isActive: coalesce(raw.isActive, raw._doc?.isActive),
+    createdAt: coalesce(raw.createdAt, raw._doc?.createdAt),
+    updatedAt: coalesce(raw.updatedAt, raw._doc?.updatedAt),
+  };
+};
+
+export const resolveApplicationId = ({
+  personalDetail,
+  professionalDetail,
+  subscriptionDetail,
+} = {}) =>
+  coalesce(
+    personalDetail?.applicationId,
+    professionalDetail?.applicationId,
+    subscriptionDetail?.applicationId,
+  );
+
+export const isAggregateResponseHandled = value => value === AGGREGATE_HANDLED;
+
+export const markAggregateResponseHandled = () => AGGREGATE_HANDLED;
+
 export const extractApplicationsFromMeResponse = res => {
   const body = res != null ? res.data : undefined;
   const inner = coalesce(

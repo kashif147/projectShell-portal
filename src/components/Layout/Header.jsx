@@ -12,10 +12,8 @@ import { useDispatch } from 'react-redux';
 import { signOut } from '../../services/auth.services';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { useLookup } from '../../contexts/lookupContext';
 import { useProfile } from '../../contexts/profileContext';
 import { useNotification } from '../../contexts/notificationContext';
-import { useApplication } from '../../contexts/applicationContext';
 import { useMemberRole } from '../../hooks/useMemberRole';
 import { fetchNotiticationRequest } from '../../api/notification.api';
 import { Logo, ShellLogo } from '../../assets/images';
@@ -27,27 +25,63 @@ const Header = ({
   setDrawerVisible,
   pageTitle,
 }) => {
-  const { user } = useSelector(state => state.auth);
-  const { fetchAllLookups } = useLookup();
+  const { user, userDetail, isSignedIn } = useSelector(state => state.auth);
   const { profileDetail } = useProfile();
   const { unreadCount, setUnreadCountValue } = useNotification();
-  const { isCrmUser } = useApplication();
   const { isMember } = useMemberRole();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchValue, setSearchValue] = useState('');
-  const userDisplayName = useMemo(
-    () =>
-      `${user?.userFirstName || ''} ${user?.userLastName || user?.fullName || ''}`.trim() ||
-      'Member User',
-    [user?.userFirstName, user?.userLastName, user?.fullName],
-  );
-  const userSubLabel = isMember
-    ? profileDetail?.membershipNumber : 'Non Member'
-    // : isCrmUser
-    //   ? 'CRM User'
-    //   : 'Non Member';
+
+  const authUserId =
+    user?.id ||
+    user?._id ||
+    user?.userId ||
+    userDetail?.id ||
+    userDetail?._id ||
+    null;
+
+  const userDisplayName = useMemo(() => {
+    if (!isSignedIn) return 'Member User';
+
+    const profileName =
+      profileDetail?.personalInfo?.fullName ||
+      [profileDetail?.personalInfo?.forename, profileDetail?.personalInfo?.surname]
+        .filter(Boolean)
+        .join(' ');
+
+    const firstName =
+      user?.userFirstName ||
+      user?.firstName ||
+      userDetail?.userFirstName ||
+      userDetail?.firstName;
+    const lastName =
+      user?.userLastName ||
+      user?.lastName ||
+      userDetail?.userLastName ||
+      userDetail?.lastName;
+    const authName = `${firstName || ''} ${lastName || ''}`.trim();
+    const fullName =
+      user?.fullName || userDetail?.fullName || userDetail?.name;
+
+    return profileName || authName || fullName || 'Member User';
+  }, [
+    isSignedIn,
+    authUserId,
+    user?.userFirstName,
+    user?.userLastName,
+    user?.firstName,
+    user?.lastName,
+    user?.fullName,
+    userDetail,
+    profileDetail?.personalInfo,
+  ]);
+
+  const userSubLabel = useMemo(() => {
+    if (!isMember) return 'Non Member';
+    return profileDetail?.membershipNumber || 'Non Member';
+  }, [isMember, authUserId, profileDetail?.membershipNumber]);
 
   useEffect(() => {
     let isMounted = true;

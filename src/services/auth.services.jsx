@@ -18,8 +18,20 @@ import { toast } from 'react-toastify';
 import { fetchAllLookupsOnLogin } from '../contexts/lookupContext';
 import { decryptToken } from '../helpers/crypt.helper';
 
+let authSessionGeneration = 0;
+
+const bumpAuthSession = () => {
+  authSessionGeneration += 1;
+  return authSessionGeneration;
+};
+
+const isAuthSessionCurrent = generation =>
+  generation === authSessionGeneration;
+
 const performLogoutCleanup = dispatch => {
+  bumpAuthSession();
   deleteHeaders();
+  deleteRefreshToken();
   deleteVerifier();
   dispatch(setSignedIn(false));
   dispatch(setUser({}));
@@ -28,28 +40,38 @@ const performLogoutCleanup = dispatch => {
 
 export const validation = () => {
   return async dispatch => {
+    const generation = authSessionGeneration;
+
     try {
       const res = getHeaders();
       const refreshToken = getRefreshToken();
-      
+
       const hasToken =
-      res?.token &&
-      typeof res.token === 'string' &&
-      res.token.trim().length > 0;
-      
+        res?.token &&
+        typeof res.token === 'string' &&
+        res.token.trim().length > 0;
+
       if (!hasToken) {
+        if (!isAuthSessionCurrent(generation)) return;
         dispatch(setSignedIn(false));
         dispatch(setUser({}));
+        dispatch(setDetail(null));
         return;
       }
-      
+
       const refreshUser = await refreshTokenRequest({ refreshToken });
+      if (!isAuthSessionCurrent(generation)) return;
+
       if (refreshUser?.status === 200) {
         setHeaders(refreshUser?.data?.data);
-        const refreshDectoken = await decryptToken(refreshUser?.data?.data?.refreshToken);
+        const refreshDectoken = await decryptToken(
+          refreshUser?.data?.data?.refreshToken,
+        );
         setRefreshToken(refreshDectoken);
 
         const meRes = await validationRequest();
+        if (!isAuthSessionCurrent(generation)) return;
+
         const isSuccess = meRes?.status >= 200 && meRes?.status < 300;
 
         if (isSuccess) {
@@ -57,16 +79,16 @@ export const validation = () => {
           dispatch(setSignedIn(true));
           dispatch(setUser(meUser ?? {}));
           const memberDetail = await getMemberDetail();
+          if (!isAuthSessionCurrent(generation)) return;
           dispatch(setDetail(memberDetail));
         }
       } else {
-        dispatch(setSignedIn(false));
-        dispatch(setUser({}));
-        dispatch(setDetail(null));
+        if (!isAuthSessionCurrent(generation)) return;
         performLogoutCleanup(dispatch);
       }
     } catch (error) {
       console.error('Validation error:', error);
+      if (!isAuthSessionCurrent(generation)) return;
       performLogoutCleanup(dispatch);
     }
   };
@@ -74,8 +96,12 @@ export const validation = () => {
 
 export const signInMicrosoft = data => {
   return async dispatch => {
+    const generation = bumpAuthSession();
+
     try {
       const res = await signInMicrosoftRequest(data);
+      if (!isAuthSessionCurrent(generation)) return { success: false };
+
       if (res.status === 200) {
         setHeaders(res.data);
         setRefreshToken(res?.data?.refreshToken);
@@ -83,6 +109,7 @@ export const signInMicrosoft = data => {
         dispatch(setSignedIn(true));
         dispatch(setUser(res.data.user));
         const memberDetail = await getMemberDetail();
+        if (!isAuthSessionCurrent(generation)) return { success: false };
         dispatch(setDetail(memberDetail));
 
         // Fetch all lookups after successful login
@@ -129,14 +156,7 @@ export const signOut = navigate => {
         }
       });
 
-      // Clear auth data
-      deleteHeaders();
-      deleteRefreshToken();
-
-      // Dispatch state changes
-      dispatch(setSignedIn(false));
-      dispatch(setUser({}));
-      dispatch(setDetail(null));
+      performLogoutCleanup(dispatch);
 
       // Use setTimeout to allow React to finish unmounting before navigation
       // This prevents the "removeChild" error during component cleanup
