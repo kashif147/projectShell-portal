@@ -5,6 +5,7 @@ import React, {
   useState,
   useCallback,
 } from 'react';
+import { useSelector } from 'react-redux';
 import {
   fetchPersonalDetail,
   fetchProfessionalDetail,
@@ -13,8 +14,22 @@ import {
 import { fetchCategoryByCategoryId } from '../api/category.api';
 import { getHeaders } from '../helpers/auth.helper';
 import { getAggregatedUserDetailsFromCrmCreateRequest } from '../api/profile.api';
+import {
+  extractAggregatedUserDetailsResponse,
+  isAggregateResponseHandled,
+  markAggregateResponseHandled,
+  normalizeAggregatedSubscriptionDetails,
+} from '../helpers/applicationPayload.helper';
 
 const ApplicationContext = createContext();
+
+const getAuthUserId = auth =>
+  auth?.user?.id ||
+  auth?.user?._id ||
+  auth?.user?.userId ||
+  auth?.userDetail?.id ||
+  auth?.userDetail?._id ||
+  null;
 
 export const ApplicationProvider = ({ children }) => {
   const [loading, setLoading] = React.useState(false);
@@ -27,11 +42,19 @@ export const ApplicationProvider = ({ children }) => {
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [isCrmUser, setIsCrmUser] = useState(false);
   const { token } = getHeaders();
+  const isSignedIn = useSelector(state => state.auth?.isSignedIn);
+  const authUserId = useSelector(state => getAuthUserId(state.auth));
 
   const applyAggregatedResponse = data => {
     if (data?.personalDetails) setPersonalDetail(data.personalDetails);
-    if (data?.professionalDetails) setProfessionalDetail(data.professionalDetails);
-    if (data?.subscriptionDetails) setSubscriptionDetail(data.subscriptionDetails);
+    if (data?.professionalDetails) {
+      setProfessionalDetail(data.professionalDetails);
+    }
+    if (data?.subscriptionDetails) {
+      setSubscriptionDetail(
+        normalizeAggregatedSubscriptionDetails(data.subscriptionDetails),
+      );
+    }
     setApplicationStatus(data?.personalDetails?.applicationStatus ?? null);
     setIsCrmUser(true);
     setLoading(false);
@@ -42,30 +65,32 @@ export const ApplicationProvider = ({ children }) => {
 
     getAggregatedUserDetailsFromCrmCreateRequest()
       .then(res => {
-        if (res?.status === 200 && res?.data?.data) {
-          const data = res.data.data;
-          if (data?.personalDetails) {
-            applyAggregatedResponse(data);
-            return Promise.resolve();
-          }
+        const isSuccess =
+          res?.status === 200 || res?.data?.status === 'success';
+        const data = isSuccess ? extractAggregatedUserDetailsResponse(res) : null;
+
+        if (data) {
+          applyAggregatedResponse(data);
+          return markAggregateResponseHandled();
         }
+
         return fetchPersonalDetail();
       })
       .then(res => {
-        if (res && res?.status === 200) {
-          setPersonalDetail(res?.data?.data);
+        if (isAggregateResponseHandled(res)) return;
+
+        if (res?.status === 200 && res?.data?.data) {
+          setPersonalDetail(res.data.data);
           setIsCrmUser(false);
           setApplicationStatus(null);
-          setLoading(false);
-        } else if (res) {
-          setLoading(false);
         }
+        setLoading(false);
       })
       .catch(() => {
         fetchPersonalDetail()
           .then(res => {
-            if (res?.status === 200) {
-              setPersonalDetail(res?.data?.data);
+            if (res?.status === 200 && res?.data?.data) {
+              setPersonalDetail(res.data.data);
               setIsCrmUser(false);
               setApplicationStatus(null);
             }
@@ -82,8 +107,13 @@ export const ApplicationProvider = ({ children }) => {
       setLoading(true);
       getAggregatedUserDetailsFromCrmCreateRequest()
         .then(res => {
-          if (res?.status === 200 && res?.data?.data) {
-            applyAggregatedResponse(res.data.data);
+          const isSuccess =
+            res?.status === 200 || res?.data?.status === 'success';
+          const data = isSuccess
+            ? extractAggregatedUserDetailsResponse(res)
+            : null;
+          if (data) {
+            applyAggregatedResponse(data);
           } else {
             setLoading(false);
           }
@@ -114,8 +144,13 @@ export const ApplicationProvider = ({ children }) => {
       setLoading(true);
       getAggregatedUserDetailsFromCrmCreateRequest()
         .then(res => {
-          if (res?.status === 200 && res?.data?.data) {
-            applyAggregatedResponse(res.data.data);
+          const isSuccess =
+            res?.status === 200 || res?.data?.status === 'success';
+          const data = isSuccess
+            ? extractAggregatedUserDetailsResponse(res)
+            : null;
+          if (data) {
+            applyAggregatedResponse(data);
           } else {
             setLoading(false);
           }
@@ -216,15 +251,26 @@ export const ApplicationProvider = ({ children }) => {
     [],
   );
 
-  // Global bootstrap: fetch application/member data once token is available.
-  // This prevents pages like Application from showing empty data after refresh.
   useEffect(() => {
-    if (!token) return;
-
-    if (!personalDetail && !loading) {
-      getPersonalDetail();
+    if (!isSignedIn || !authUserId) {
+      setPersonalDetail(null);
+      setProfessionalDetail(null);
+      setSubscriptionDetail(null);
+      setApplicationStatus(null);
+      setCategoryData(null);
+      setIsCrmUser(false);
+      setCurrentStep(1);
+      return;
     }
-  }, [token]);
+
+    setPersonalDetail(null);
+    setProfessionalDetail(null);
+    setSubscriptionDetail(null);
+    setApplicationStatus(null);
+    setCategoryData(null);
+    setIsCrmUser(false);
+    getPersonalDetail();
+  }, [isSignedIn, authUserId]);
 
   useEffect(() => {
     if (token) {

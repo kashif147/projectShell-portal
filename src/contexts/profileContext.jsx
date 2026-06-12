@@ -1,17 +1,27 @@
 import React, { createContext, useContext, useCallback, useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import {
   fetchProfileByIdRequest,
   fetchProfileRequest,
 } from '../api/profile.api';
 import { toast } from 'react-toastify';
-import { getHeaders } from '../helpers/auth.helper';
+
 const ProfileContext = createContext();
+
+const getAuthUserId = auth =>
+  auth?.user?.id ||
+  auth?.user?._id ||
+  auth?.user?.userId ||
+  auth?.userDetail?.id ||
+  auth?.userDetail?._id ||
+  null;
 
 export const ProfileProvider = ({ children }) => {
   const [loading, setLoading] = React.useState(false);
   const [profileDetail, setProfileDetail] = useState(null);
   const [profileByIdDetail, setProfileByIdDetail] = useState(null);
-  const { token } = getHeaders();
+  const isSignedIn = useSelector(state => state.auth?.isSignedIn);
+  const authUserId = useSelector(state => getAuthUserId(state.auth));
   const getProfileDetail = useCallback(() => {
     setLoading(true);
     fetchProfileRequest()
@@ -49,18 +59,25 @@ export const ProfileProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (token) {
-      getProfileDetail();
+    if (!isSignedIn || !authUserId) {
+      setProfileDetail(null);
+      setProfileByIdDetail(null);
+      return;
     }
-  }, []);
+
+    setProfileDetail(null);
+    setProfileByIdDetail(null);
+    getProfileDetail();
+  }, [isSignedIn, authUserId, getProfileDetail]);
 
   useEffect(() => {
-    if (token) {
-      if (profileDetail?.profileId) {
-        getProfileByIdDetail(profileDetail?.profileId);
-      }
+    if (!isSignedIn || !profileDetail?.profileId) {
+      setProfileByIdDetail(null);
+      return;
     }
-  }, [profileDetail?.profileId]);
+
+    getProfileByIdDetail(profileDetail.profileId);
+  }, [isSignedIn, profileDetail?.profileId, getProfileByIdDetail]);
 
   const value = {
     loading,

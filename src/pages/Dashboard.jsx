@@ -22,6 +22,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { applicationConfirmationRequest } from '../api/application.api';
+import { resolveApplicationId } from '../helpers/applicationPayload.helper';
 import { getAccountNetBalanceRequest } from '../api/account.api';
 import { useMemberRole } from '../hooks/useMemberRole';
 import { dummyData } from '../services/dummyData';
@@ -54,7 +55,7 @@ const Dashboard = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [statusModal, setStatusModal] = useState({
     open: false,
-    status: 'success',
+    status: 'success',  
     message: '',
   });
   const [isApplicationSubmitted, setIsApplicationSubmitted] = useState(false);
@@ -79,7 +80,19 @@ const Dashboard = () => {
   });
 
 
-  console.log('member number=========>',profileDetail?.membershipNumber)
+  const applicationId = useMemo(
+    () =>
+      resolveApplicationId({
+        personalDetail,
+        professionalDetail,
+        subscriptionDetail,
+      }),
+    [
+      personalDetail?.applicationId,
+      professionalDetail?.applicationId,
+      subscriptionDetail?.applicationId,
+    ],
+  );
 
   // Kick off profile and application data loading together when the dashboard mounts
   useEffect(() => {
@@ -90,7 +103,7 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (personalDetail?.applicationId) {
+    if (applicationId) {
       setFormData(prev => ({
         ...prev,
         personalInfo: {
@@ -177,7 +190,7 @@ const Dashboard = () => {
         },
       }));
     }
-  }, [personalDetail?.applicationId]);
+  }, [applicationId, personalDetail, user?.userLastName, user?.userFirstName, user?.userEmail, user?.userMobilePhone]);
 
   useEffect(() => {
     if (professionalDetail?.applicationId) {
@@ -346,6 +359,11 @@ const Dashboard = () => {
     categoryLookups,
   ]);
 
+  const resolveApplicationActiveState = () =>
+    personalDetail?.meta?.isActive ??
+    personalDetail?.isActive ??
+    true;
+
   // Check application status (use context when available from aggregated CRM response, else fetch)
   useEffect(() => {
     if (loading) {
@@ -353,24 +371,23 @@ const Dashboard = () => {
     }
 
     if (contextApplicationStatus != null) {
+      const isActive = resolveApplicationActiveState();
       setApplicationStatus(contextApplicationStatus);
-      setIsApplicationActive(true);
+      setIsApplicationActive(Boolean(isActive));
       setIsApplicationSubmitted(
-        contextApplicationStatus === 'submitted' ||
-          contextApplicationStatus === 'approved',
+        Boolean(isActive) &&
+          (contextApplicationStatus === 'submitted' ||
+            contextApplicationStatus === 'approved'),
       );
       setApplicationLoader(false);
       return;
     }
 
     const checkApplicationStatus = async () => {
-      if (personalDetail?.applicationId) {
+      if (applicationId) {
         try {
           setApplicationLoader(true);
-          const response = await applicationConfirmationRequest(
-            personalDetail.applicationId,
-          );
-          console.log('Application Status Response:', response);
+          const response = await applicationConfirmationRequest(applicationId);
 
           if (
             response?.status === 200 ||
@@ -382,35 +399,39 @@ const Dashboard = () => {
             const isActive =
               response?.data?.data?.meta?.isActive ??
               response?.data?.meta?.isActive ??
-              true;
+              resolveApplicationActiveState();
 
             setApplicationStatus(status);
             setIsApplicationActive(Boolean(isActive));
-            setApplicationLoader(false);
-            if (isActive && (status === 'submitted' || status === 'approved')) {
-              setIsApplicationSubmitted(true);
-            } else {
-              setIsApplicationSubmitted(false);
-            }
-          } else {
-            setApplicationLoader(false);
+            setIsApplicationSubmitted(
+              Boolean(isActive) &&
+                (status === 'submitted' || status === 'approved'),
+            );
           }
         } catch (error) {
           console.error('Failed to fetch application status:', error);
           setIsApplicationSubmitted(false);
           setApplicationStatus(null);
           setIsApplicationActive(true);
+        } finally {
           setApplicationLoader(false);
         }
       } else {
         setApplicationStatus('none');
         setIsApplicationActive(true);
+        setIsApplicationSubmitted(false);
         setApplicationLoader(false);
       }
     };
 
     checkApplicationStatus();
-  }, [personalDetail?.applicationId, loading, contextApplicationStatus]);
+  }, [
+    applicationId,
+    loading,
+    contextApplicationStatus,
+    personalDetail?.meta?.isActive,
+    personalDetail?.isActive,
+  ]);
 
   // Fetch account statement when member has membership number
   const getAccountNetBalance = async () => {
@@ -490,21 +511,18 @@ const Dashboard = () => {
     // Only set step after data is fully loaded
     if (loading) return;
 
-    if (!personalDetail?.applicationId) {
+    if (!applicationId) {
       setCurrentStep(1);
-    } else if (
-      personalDetail?.applicationId &&
-      !professionalDetail?.applicationId
-    ) {
+    } else if (applicationId && !professionalDetail?.applicationId) {
       setCurrentStep(2);
     } else if (
-      personalDetail?.applicationId &&
+      applicationId &&
       professionalDetail?.applicationId &&
       !subscriptionDetail?.applicationId
     ) {
       setCurrentStep(3);
     } else if (
-      personalDetail?.applicationId &&
+      applicationId &&
       professionalDetail?.applicationId &&
       subscriptionDetail?.applicationId
     ) {
@@ -512,7 +530,7 @@ const Dashboard = () => {
     }
   }, [
     loading,
-    personalDetail?.applicationId,
+    applicationId,
     professionalDetail?.applicationId,
     subscriptionDetail?.applicationId,
   ]);
@@ -613,7 +631,7 @@ const Dashboard = () => {
     let completionPercentage = 0;
 
     // Step 1: Personal Detail completed = 33%
-    if (personalDetail?.applicationId) {
+    if (applicationId) {
       completionPercentage = 33;
     }
 
@@ -673,7 +691,7 @@ const Dashboard = () => {
       appicationLoader,
       isApplicationSubmitted,
       currentStep,
-      personalDetail?.applicationId,
+      applicationId,
       professionalDetail?.applicationId,
       subscriptionDetail?.applicationId,
     ],
