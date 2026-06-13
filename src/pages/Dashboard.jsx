@@ -22,7 +22,12 @@ import { loadStripe } from '@stripe/stripe-js';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { applicationConfirmationRequest } from '../api/application.api';
-import { resolveApplicationId } from '../helpers/applicationPayload.helper';
+import {
+  detailBelongsToApplication,
+  getApplicationCompletionPercentage,
+  isResumablePortalApplication,
+  resolveApplicationId,
+} from '../helpers/applicationPayload.helper';
 import { getAccountNetBalanceRequest } from '../api/account.api';
 import { useMemberRole } from '../hooks/useMemberRole';
 import { dummyData } from '../services/dummyData';
@@ -40,6 +45,7 @@ const Dashboard = () => {
     setCurrentStep,
     personalDetail,
     professionalDetail,
+    getProfessionalDetail,
     getSubscriptionDetail,
     loading,
     categoryData,
@@ -94,6 +100,30 @@ const Dashboard = () => {
     ],
   );
 
+  const activeApplicationId = useMemo(
+    () =>
+      isResumablePortalApplication(personalDetail, contextApplicationStatus)
+        ? personalDetail?.applicationId
+        : null,
+    [personalDetail, contextApplicationStatus],
+  );
+
+  const activeProfessionalDetail = useMemo(
+    () =>
+      detailBelongsToApplication(professionalDetail, activeApplicationId)
+        ? professionalDetail
+        : null,
+    [professionalDetail, activeApplicationId],
+  );
+
+  const activeSubscriptionDetail = useMemo(
+    () =>
+      detailBelongsToApplication(subscriptionDetail, activeApplicationId)
+        ? subscriptionDetail
+        : null,
+    [subscriptionDetail, activeApplicationId],
+  );
+
   // Kick off profile and application data loading together when the dashboard mounts
   useEffect(() => {
     getProfileDetail();
@@ -101,6 +131,24 @@ const Dashboard = () => {
     // No need to fetch again here to avoid redundant calls
     getPersonalDetail();
   }, []);
+
+  useEffect(() => {
+    if (!activeApplicationId) {
+      return;
+    }
+
+    if (!activeProfessionalDetail) {
+      getProfessionalDetail(activeApplicationId);
+    }
+
+    if (!activeSubscriptionDetail) {
+      getSubscriptionDetail(activeApplicationId);
+    }
+  }, [
+    activeApplicationId,
+    activeProfessionalDetail?.applicationId,
+    activeSubscriptionDetail?.applicationId,
+  ]);
 
   useEffect(() => {
     if (applicationId) {
@@ -622,31 +670,14 @@ const Dashboard = () => {
   };
 
   // Calculate profile completion percentage based on application steps
-  const getProfileCompletion = () => {
-    // If application is submitted, profile is 100% complete
-    if (isApplicationSubmitted) {
-      return 100;
-    }
-
-    let completionPercentage = 0;
-
-    // Step 1: Personal Detail completed = 33%
-    if (applicationId) {
-      completionPercentage = 33;
-    }
-
-    // Step 2: Professional Detail completed = 67%
-    if (professionalDetail?.applicationId) {
-      completionPercentage = 67;
-    }
-
-    // Step 3: Subscription Detail completed (not submitted yet) = 90%
-    if (subscriptionDetail?.applicationId) {
-      completionPercentage = 90;
-    }
-
-    return completionPercentage;
-  };
+  const getProfileCompletion = () =>
+    getApplicationCompletionPercentage({
+      personalDetail,
+      professionalDetail,
+      subscriptionDetail,
+      applicationStatus: applicationStatus || contextApplicationStatus,
+      isApplicationSubmitted,
+    });
 
   const applicationQuickActionState = useMemo(
     () => {

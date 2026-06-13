@@ -4,5 +4,26 @@
  * @returns {boolean}
  */
 export const hasMemberRole = userDetail => {
-  return (userDetail?.roles?.some(r => r?.code === 'MEMBER') ?? false);
+  if (!userDetail) return false;
+
+  const roles = userDetail?.roles;
+  if (!Array.isArray(roles)) return false;
+
+  return roles.some(role => {
+    if (typeof role === 'string') {
+      return role === 'MEMBER';
+    }
+
+    return role?.code === 'MEMBER' || role?.name === 'MEMBER';
+  });
+};
+
+/**
+ * Active portal profile with an assigned membership number.
+ * @param {object} profileDetail
+ * @returns {boolean}
+ */
+export const isActivePortalMember = profileDetail => {
+  if (!profileDetail?.membershipNumber) return false;
+  return profileDetail.isActive !== false;
 };
