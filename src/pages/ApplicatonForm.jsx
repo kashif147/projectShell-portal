@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Card } from 'antd';
 import { toast } from 'react-toastify';
 import PersonalInformation from '../components/application/PersonalInformation';
@@ -27,6 +27,11 @@ import {
   getPaymentFrequencyCategory,
   isSalaryDeductionPaymentType,
 } from '../helpers/subscriptionPricing.helper';
+import {
+  detailBelongsToApplication,
+  isResumablePortalApplication,
+  resolveApplicationFormStep,
+} from '../helpers/applicationPayload.helper';
 import SubscriptionWrapper from '../components/modals/SubscriptionWrapper';
 
 const stripePromise = loadStripe(
@@ -37,6 +42,8 @@ const ApplicationForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const formTopRef = useRef(null);
+  const hasRestoredInitialStep = useRef(false);
+  const detailsFetchStarted = useRef(false);
   const { user } = useSelector(state => state.auth);
   const {
     personalDetail,
@@ -50,8 +57,32 @@ const ApplicationForm = () => {
     currentStep,
     categoryData,
     getCategoryData,
+    applicationStatus,
   } = useApplication();
   const { categoryLookups } = useLookup();
+
+  const hasActiveApplication = useMemo(
+    () => isResumablePortalApplication(personalDetail, applicationStatus),
+    [personalDetail, applicationStatus],
+  );
+  const activeApplicationId = hasActiveApplication
+    ? personalDetail?.applicationId
+    : null;
+  const activeProfessionalDetail = useMemo(
+    () =>
+      detailBelongsToApplication(professionalDetail, activeApplicationId)
+        ? professionalDetail
+        : null,
+    [professionalDetail, activeApplicationId],
+  );
+  const activeSubscriptionDetail = useMemo(
+    () =>
+      detailBelongsToApplication(subscriptionDetail, activeApplicationId)
+        ? subscriptionDetail
+        : null,
+    [subscriptionDetail, activeApplicationId],
+  );
+
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [statusModal, setStatusModal] = useState({
@@ -82,19 +113,72 @@ const ApplicationForm = () => {
 
   // Fetch personal detail on mount
   useEffect(() => {
+    hasRestoredInitialStep.current = false;
+    detailsFetchStarted.current = false;
     getPersonalDetail();
   }, []);
 
-  // Fetch professional and subscription details if personal detail exists
+  // Fetch professional and subscription details for active applications only
   useEffect(() => {
-    if (personalDetail?.applicationId) {
-      getProfessionalDetail(personalDetail.applicationId);
-      getSubscriptionDetail(personalDetail.applicationId);
+    if (!activeApplicationId) {
+      detailsFetchStarted.current = false;
+      return;
     }
-  }, [personalDetail?.applicationId]);
+
+    detailsFetchStarted.current = true;
+    hasRestoredInitialStep.current = false;
+    getProfessionalDetail(activeApplicationId);
+    getSubscriptionDetail(activeApplicationId);
+  }, [activeApplicationId]);
 
   useEffect(() => {
-    if (personalDetail?.applicationId) {
+    if (!hasActiveApplication) {
+      hasRestoredInitialStep.current = false;
+      detailsFetchStarted.current = false;
+    }
+  }, [hasActiveApplication]);
+
+  useEffect(() => {
+    if (
+      !hasActiveApplication ||
+      loading ||
+      hasRestoredInitialStep.current ||
+      !activeApplicationId ||
+      !detailsFetchStarted.current
+    ) {
+      return;
+    }
+
+    setCurrentStep(
+      resolveApplicationFormStep({
+        activeSubscriptionDetail,
+        activeProfessionalDetail,
+      }),
+    );
+    hasRestoredInitialStep.current = true;
+  }, [
+    hasActiveApplication,
+    loading,
+    activeApplicationId,
+    activeSubscriptionDetail,
+    activeProfessionalDetail,
+    setCurrentStep,
+  ]);
+
+  useEffect(() => {
+    if (!hasActiveApplication) {
+      setCurrentStep(1);
+      setIsSubmitted(false);
+      setPaymentIntentCreated(false);
+      setFormData(prev => ({
+        ...prev,
+        professionalDetails: {},
+        subscriptionDetails: {},
+      }));
+      return;
+    }
+
+    if (activeApplicationId) {
       // Reset payment intent state for new application
       setPaymentIntentCreated(false);
 
@@ -185,12 +269,12 @@ const ApplicationForm = () => {
         };
       });
     }
-  }, [personalDetail]);
+  }, [hasActiveApplication, activeApplicationId, personalDetail]);
 
   useEffect(() => {
-    if (professionalDetail?.applicationId) {
+    if (activeProfessionalDetail?.applicationId) {
       const membershipCategory =
-        professionalDetail?.professionalDetails?.membershipCategory;
+        activeProfessionalDetail?.professionalDetails?.membershipCategory;
 
       setFormData(prev => ({
         ...prev,
@@ -200,201 +284,203 @@ const ApplicationForm = () => {
             prev.professionalDetails.membershipCategory ||
             '',
           workLocation:
-            professionalDetail?.professionalDetails?.workLocation ||
+            activeProfessionalDetail?.professionalDetails?.workLocation ||
             prev.professionalDetails.workLocation ||
             '',
           otherWorkLocation:
-            professionalDetail?.professionalDetails?.otherWorkLocation ??
+            activeProfessionalDetail?.professionalDetails?.otherWorkLocation ??
             prev.professionalDetails.otherWorkLocation ??
             '',
           grade:
-            professionalDetail?.professionalDetails?.grade ||
+            activeProfessionalDetail?.professionalDetails?.grade ||
             prev.professionalDetails.grade ||
             '',
           otherGrade:
-            professionalDetail?.professionalDetails?.otherGrade ??
+            activeProfessionalDetail?.professionalDetails?.otherGrade ??
             prev.professionalDetails.otherGrade ??
             '',
           nursingAdaptationProgramme: (() => {
             const value =
-              professionalDetail?.professionalDetails
+              activeProfessionalDetail?.professionalDetails
                 ?.nursingAdaptationProgramme;
             if (value === false) return 'no';
             if (value === true || value === 'yes') return 'yes';
             return prev.professionalDetails.nursingAdaptationProgramme || '';
           })(),
           nmbiNumber:
-            professionalDetail?.professionalDetails?.nmbiNumber ??
+            activeProfessionalDetail?.professionalDetails?.nmbiNumber ??
             prev.professionalDetails.nmbiNumber ??
             '',
           nurseType: (() => {
             const programmeValue =
-              professionalDetail?.professionalDetails
+              activeProfessionalDetail?.professionalDetails
                 ?.nursingAdaptationProgramme;
-            // Clear nurseType if nursingAdaptationProgramme is false or 'no'
             if (programmeValue === false || programmeValue === 'no') {
               return '';
             }
             return (
-              professionalDetail?.professionalDetails?.nurseType ??
+              activeProfessionalDetail?.professionalDetails?.nurseType ??
               prev.professionalDetails.nurseType ??
               ''
             );
           })(),
           region:
-            professionalDetail?.professionalDetails?.region ??
+            activeProfessionalDetail?.professionalDetails?.region ??
             prev.professionalDetails.region ??
             '',
           branch:
-            professionalDetail?.professionalDetails?.branch ??
+            activeProfessionalDetail?.professionalDetails?.branch ??
             prev.professionalDetails.branch ??
             '',
           pensionNo:
-            professionalDetail?.professionalDetails?.pensionNo ??
+            activeProfessionalDetail?.professionalDetails?.pensionNo ??
             prev.professionalDetails.pensionNo ??
             '',
           isRetired:
-            professionalDetail?.professionalDetails?.isRetired ??
+            activeProfessionalDetail?.professionalDetails?.isRetired ??
             prev.professionalDetails.isRetired ??
             false,
           retirementDate:
-            professionalDetail?.professionalDetails?.retirementDate ??
+            activeProfessionalDetail?.professionalDetails?.retirementDate ??
             prev.professionalDetails.retirementDate ??
             '',
           studyLocation:
-            professionalDetail?.professionalDetails?.studyLocation ??
+            activeProfessionalDetail?.professionalDetails?.studyLocation ??
             prev.professionalDetails.studyLocation ??
             '',
           startDate:
-            professionalDetail?.professionalDetails?.startDate ??
+            activeProfessionalDetail?.professionalDetails?.startDate ??
             prev.professionalDetails.startDate ??
             '',
           graduationDate:
-            professionalDetail?.professionalDetails?.graduationDate ??
+            activeProfessionalDetail?.professionalDetails?.graduationDate ??
             prev.professionalDetails.graduationDate ??
             '',
           discipline:
-            professionalDetail?.professionalDetails?.discipline ??
+            activeProfessionalDetail?.professionalDetails?.discipline ??
             prev.professionalDetails.discipline ??
             '',
         },
       }));
 
-      // Fetch category data when professional details are available
       if (membershipCategory) {
         getCategoryData(membershipCategory, categoryLookups);
       }
     }
   }, [
-    professionalDetail,
-    professionalDetail?.professionalDetails?.membershipCategory,
+    activeProfessionalDetail,
+    activeProfessionalDetail?.professionalDetails?.membershipCategory,
     getCategoryData,
     categoryLookups,
   ]);
 
   useEffect(() => {
-    if (subscriptionDetail?.applicationId) {
+    if (activeSubscriptionDetail?.applicationId) {
       setIsSubmitted(true);
       setFormData(prev => ({
         ...prev,
         subscriptionDetails: {
           paymentType:
-            subscriptionDetail?.subscriptionDetails?.paymentType ||
+            activeSubscriptionDetail?.subscriptionDetails?.paymentType ||
             prev.subscriptionDetails.paymentType ||
             '',
           payrollNo:
-            subscriptionDetail?.subscriptionDetails?.payrollNo ??
+            activeSubscriptionDetail?.subscriptionDetails?.payrollNo ??
             prev.subscriptionDetails.payrollNo ??
             '',
           memberStatus:
-            subscriptionDetail?.subscriptionDetails?.membershipStatus ??
+            activeSubscriptionDetail?.subscriptionDetails?.membershipStatus ??
             prev.subscriptionDetails.memberStatus ??
             '',
-          otherIrishTradeUnion: subscriptionDetail?.subscriptionDetails
+          otherIrishTradeUnion: activeSubscriptionDetail?.subscriptionDetails
             ?.otherIrishTradeUnion
             ? 'yes'
             : prev.subscriptionDetails.otherIrishTradeUnion || 'no',
           otherIrishTradeUnionName:
-            subscriptionDetail?.subscriptionDetails?.otherIrishTradeUnionName ??
+            activeSubscriptionDetail?.subscriptionDetails
+              ?.otherIrishTradeUnionName ??
             prev.subscriptionDetails.otherIrishTradeUnionName ??
             '',
-          otherScheme: subscriptionDetail?.subscriptionDetails?.otherScheme
+          otherScheme: activeSubscriptionDetail?.subscriptionDetails?.otherScheme
             ? 'yes'
             : prev.subscriptionDetails.otherScheme || 'no',
           recuritedBy:
-            subscriptionDetail?.subscriptionDetails?.recuritedBy ??
+            activeSubscriptionDetail?.subscriptionDetails?.recuritedBy ??
             prev.subscriptionDetails.recuritedBy ??
             '',
           recuritedByMembershipNo:
-            subscriptionDetail?.subscriptionDetails?.recuritedByMembershipNo ??
+            activeSubscriptionDetail?.subscriptionDetails
+              ?.recuritedByMembershipNo ??
             prev.subscriptionDetails.recuritedByMembershipNo ??
             '',
           primarySection:
-            subscriptionDetail?.subscriptionDetails?.primarySection ||
+            activeSubscriptionDetail?.subscriptionDetails?.primarySection ||
             prev.subscriptionDetails.primarySection ||
             '',
           otherPrimarySection:
-            subscriptionDetail?.subscriptionDetails?.otherPrimarySection ??
+            activeSubscriptionDetail?.subscriptionDetails?.otherPrimarySection ??
             prev.subscriptionDetails.otherPrimarySection ??
             '',
           secondarySection:
-            subscriptionDetail?.subscriptionDetails?.secondarySection ||
+            activeSubscriptionDetail?.subscriptionDetails?.secondarySection ||
             prev.subscriptionDetails.secondarySection ||
             '',
           otherSecondarySection:
-            subscriptionDetail?.subscriptionDetails?.otherSecondarySection ??
+            activeSubscriptionDetail?.subscriptionDetails?.otherSecondarySection ??
             prev.subscriptionDetails.otherSecondarySection ??
             '',
           incomeProtectionScheme:
-            subscriptionDetail?.subscriptionDetails?.incomeProtectionScheme ??
+            activeSubscriptionDetail?.subscriptionDetails?.incomeProtectionScheme ??
             prev.subscriptionDetails.incomeProtectionScheme ??
             false,
           inmoRewards:
-            subscriptionDetail?.subscriptionDetails?.inmoRewards ??
+            activeSubscriptionDetail?.subscriptionDetails?.inmoRewards ??
             prev.subscriptionDetails.inmoRewards ??
             false,
           valueAddedServices:
-            subscriptionDetail?.subscriptionDetails?.valueAddedServices ??
+            activeSubscriptionDetail?.subscriptionDetails?.valueAddedServices ??
             prev.subscriptionDetails.valueAddedServices ??
             false,
           termsAndConditions:
-            subscriptionDetail?.subscriptionDetails?.termsAndConditions ??
+            activeSubscriptionDetail?.subscriptionDetails?.termsAndConditions ??
             prev.subscriptionDetails.termsAndConditions ??
             false,
           membershipCategory:
-            subscriptionDetail?.subscriptionDetails?.membershipCategory ||
+            activeSubscriptionDetail?.subscriptionDetails?.membershipCategory ||
             prev.subscriptionDetails.membershipCategory ||
             '',
           dateJoined:
-            subscriptionDetail?.subscriptionDetails?.dateJoined ||
+            activeSubscriptionDetail?.subscriptionDetails?.dateJoined ||
             prev.subscriptionDetails.dateJoined ||
             '',
           paymentFrequency:
-            subscriptionDetail?.subscriptionDetails?.paymentFrequency ||
+            activeSubscriptionDetail?.subscriptionDetails?.paymentFrequency ||
             prev.subscriptionDetails.paymentFrequency ||
             '',
           exclusiveDiscountsAndOffers:
-            subscriptionDetail?.subscriptionDetails
+            activeSubscriptionDetail?.subscriptionDetails
               ?.exclusiveDiscountsAndOffers ??
             prev.subscriptionDetails.exclusiveDiscountsAndOffers ??
             false,
           previousMembershipNumber:
-            subscriptionDetail?.subscriptionDetails?.previousMembershipNumber ??
+            activeSubscriptionDetail?.subscriptionDetails?.previousMembershipNumber ??
             prev.subscriptionDetails.previousMembershipNumber ??
             '',
-          joinYouthForum: subscriptionDetail?.subscriptionDetails?.joinYouthForum
+          joinYouthForum: activeSubscriptionDetail?.subscriptionDetails
+            ?.joinYouthForum
             ? 'yes'
-            : subscriptionDetail?.subscriptionDetails?.joinYouthForum === false
+            : activeSubscriptionDetail?.subscriptionDetails?.joinYouthForum ===
+                false
               ? 'no'
               : prev.subscriptionDetails.joinYouthForum || '',
           youthForum:
-            subscriptionDetail?.subscriptionDetails?.youthForum ??
+            activeSubscriptionDetail?.subscriptionDetails?.youthForum ??
             prev.subscriptionDetails.youthForum ??
             '',
         },
       }));
     }
-  }, [subscriptionDetail]);
+  }, [activeSubscriptionDetail]);
 
   // Show modal after subscription detail is created/updated
   useEffect(() => {
@@ -535,7 +621,7 @@ const ApplicationForm = () => {
       }
     });
 
-    updatePersonalDetailRequest(personalDetail?.applicationId, personalInfo)
+    updatePersonalDetailRequest(activeApplicationId, personalInfo)
       .then(res => {
         if (res.status === 200) {
           // Update personal detail and move to next step
@@ -580,14 +666,16 @@ const ApplicationForm = () => {
       }
     });
 
+    const applicationId = activeApplicationId ?? personalDetail?.applicationId;
+
     createProfessionalDetailRequest(
-      personalDetail?.applicationId,
+      applicationId,
       professionalInfo,
     )
       .then(res => {
         if (res.status === 200) {
           // Update professional detail and move to next step
-          getProfessionalDetail(personalDetail?.applicationId);
+          getProfessionalDetail(applicationId);
           setCurrentStep(3);
         } else {
           toast.error(res.data.message ?? 'Unable to add professional detail');
@@ -629,13 +717,13 @@ const ApplicationForm = () => {
     });
 
     updateProfessionalDetailRequest(
-      personalDetail?.applicationId,
+      activeApplicationId,
       professionalInfo,
     )
       .then(res => {
         if (res.status === 200) {
           // Update professional detail and move to next step
-          getProfessionalDetail(personalDetail?.applicationId);
+          getProfessionalDetail(activeApplicationId);
           setCurrentStep(3);
         } else {
           toast.error(
@@ -654,7 +742,8 @@ const ApplicationForm = () => {
     try {
       const defaultFields = {
         membershipCategory:
-          professionalDetail?.professionalDetails?.membershipCategory,
+          activeProfessionalDetail?.professionalDetails?.membershipCategory ||
+          formData.professionalDetails?.membershipCategory,
         // dateJoined: "15/01/2025",
         // paymentFrequency: "Monthly",
       };
@@ -695,14 +784,16 @@ const ApplicationForm = () => {
         subscriptionDetails,
       };
 
+      const applicationId = activeApplicationId ?? personalDetail?.applicationId;
+
       const res = await createSubscriptionDetailRequest(
-        personalDetail?.applicationId,
+        applicationId,
         subscriptionInfo,
       );
 
       if (res.status === 200) {
         // Update subscription detail
-        getSubscriptionDetail(personalDetail?.applicationId);
+        getSubscriptionDetail(applicationId);
 
         // Check if undergraduate student - they don't need payment
         if (categoryData?.name === 'Undergraduate Student') {
@@ -733,7 +824,8 @@ const ApplicationForm = () => {
     try {
       const defaultFields = {
         membershipCategory:
-          professionalDetail?.professionalDetails?.membershipCategory,
+          activeProfessionalDetail?.professionalDetails?.membershipCategory ||
+          formData.professionalDetails?.membershipCategory,
         // dateJoined: "15/01/2025",
         // paymentFrequency: "Monthly",
       };
@@ -775,13 +867,13 @@ const ApplicationForm = () => {
       };
 
       const res = await updateSubscriptionDetailRequest(
-        personalDetail?.applicationId,
+        activeApplicationId,
         subscriptionInfo,
       );
 
       if (res.status === 200) {
         // Update subscription detail
-        getSubscriptionDetail(personalDetail?.applicationId);
+        getSubscriptionDetail(activeApplicationId);
 
         // Check if undergraduate student - they don't need payment
         if (categoryData?.name === 'Undergraduate Student') {
@@ -813,22 +905,21 @@ const ApplicationForm = () => {
     if (validateCurrentStep()) {
       setIsNextLoading(true);
       if (currentStep === 1) {
-        if (!personalDetail) {
+        if (!hasActiveApplication) {
           createPersonalDetail(formData.personalInfo);
         } else {
           updatePersonalDetail(formData.personalInfo);
         }
       }
       if (currentStep === 2) {
-        if (!professionalDetail) {
+        if (!activeProfessionalDetail) {
           createProfessionalDetail(formData.professionalDetails);
         } else {
           updateProfessionalDetail(formData.professionalDetails);
         }
       }
       if (currentStep === 3) {
-        // Always create/update subscription detail first
-        if (!subscriptionDetail) {
+        if (!activeSubscriptionDetail) {
           createSubscriptionDetail(formData.subscriptionDetails);
         } else {
           updateSubscriptionDetail(formData.subscriptionDetails);

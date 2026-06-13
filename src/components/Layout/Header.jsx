@@ -80,8 +80,8 @@ const Header = ({
 
   const userSubLabel = useMemo(() => {
     if (!isMember) return 'Non Member';
-    return profileDetail?.membershipNumber || 'Non Member';
-  }, [isMember, authUserId, profileDetail?.membershipNumber]);
+    return profileDetail?.membershipNumber || 'Member';
+  }, [isMember, profileDetail?.membershipNumber]);
 
   useEffect(() => {
     let isMounted = true;

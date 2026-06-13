@@ -78,6 +78,114 @@ export const resolveApplicationId = ({
     subscriptionDetail?.applicationId,
   );
 
+export const isActiveApplicationPersonalDetail = personalDetail => {
+  if (!personalDetail) return false;
+
+  const isActive = coalesce(
+    personalDetail?.meta?.isActive,
+    personalDetail?.isActive,
+  );
+
+  return isActive !== false;
+};
+
+const RESUMABLE_PORTAL_APPLICATION_STATUSES = new Set([
+  'rejected',
+  'in-progress',
+  'in progress',
+]);
+
+export const isResumablePortalApplication = (
+  personalDetail,
+  applicationStatus,
+) => {
+  if (!personalDetail?.applicationId) return false;
+
+  const status = String(
+    coalesce(personalDetail.applicationStatus, applicationStatus) || '',
+  )
+    .trim()
+    .toLowerCase();
+
+  if (RESUMABLE_PORTAL_APPLICATION_STATUSES.has(status)) {
+    return true;
+  }
+
+  if (status === 'approved' || status === 'submitted') {
+    return isActiveApplicationPersonalDetail(personalDetail);
+  }
+
+  if (!isActiveApplicationPersonalDetail(personalDetail)) {
+    return true;
+  }
+
+  return true;
+};
+
+export const detailBelongsToApplication = (detail, applicationId) =>
+  Boolean(
+    applicationId &&
+      detail?.applicationId &&
+      String(detail.applicationId) === String(applicationId),
+  );
+
+export const normalizePortalPersonalDetail = (personalDetail, applicationStatus) => {
+  if (!personalDetail) return null;
+  if (isResumablePortalApplication(personalDetail, applicationStatus)) {
+    return personalDetail;
+  }
+
+  const { applicationId: _staleApplicationId, ...rest } = personalDetail;
+  return rest;
+};
+
+export const getApplicationCompletionPercentage = ({
+  personalDetail,
+  professionalDetail,
+  subscriptionDetail,
+  applicationStatus,
+  isApplicationSubmitted = false,
+} = {}) => {
+  if (isApplicationSubmitted) {
+    return 100;
+  }
+
+  const appId = isResumablePortalApplication(personalDetail, applicationStatus)
+    ? personalDetail?.applicationId
+    : null;
+
+  if (!appId) {
+    return 0;
+  }
+
+  let completionPercentage = 33;
+
+  if (detailBelongsToApplication(professionalDetail, appId)) {
+    completionPercentage = 67;
+  }
+
+  if (detailBelongsToApplication(subscriptionDetail, appId)) {
+    completionPercentage = 90;
+  }
+
+  return completionPercentage;
+};
+
+export const resolveApplicationFormStep = ({
+  activeSubscriptionDetail,
+  activeProfessionalDetail,
+} = {}) => {
+  if (activeSubscriptionDetail?.applicationId) {
+    return 3;
+  }
+
+  if (activeProfessionalDetail?.applicationId) {
+    return 2;
+  }
+
+  return 1;
+};
+
 export const isAggregateResponseHandled = value => value === AGGREGATE_HANDLED;
 
 export const markAggregateResponseHandled = () => AGGREGATE_HANDLED;

@@ -4,21 +4,26 @@ import React, {
   useEffect,
   useState,
   useCallback,
+  useRef,
 } from 'react';
 import { useSelector } from 'react-redux';
 import {
   fetchPersonalDetail,
   fetchProfessionalDetail,
   fetchSubscriptionDetail,
+  applicationConfirmationRequest,
 } from '../api/application.api';
 import { fetchCategoryByCategoryId } from '../api/category.api';
 import { getHeaders } from '../helpers/auth.helper';
 import { getAggregatedUserDetailsFromCrmCreateRequest } from '../api/profile.api';
 import {
   extractAggregatedUserDetailsResponse,
+  detailBelongsToApplication,
+  isActiveApplicationPersonalDetail,
   isAggregateResponseHandled,
   markAggregateResponseHandled,
   normalizeAggregatedSubscriptionDetails,
+  normalizePortalPersonalDetail,
 } from '../helpers/applicationPayload.helper';
 
 const ApplicationContext = createContext();
@@ -41,9 +46,62 @@ export const ApplicationProvider = ({ children }) => {
   const [categoryData, setCategoryData] = useState(null);
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [isCrmUser, setIsCrmUser] = useState(false);
+  const aggregateResultRef = useRef(null);
+  const aggregatePromiseRef = useRef(null);
+  const detailFetchAttemptedRef = useRef({ professional: null, subscription: null });
+  const professionalFetchRef = useRef({ key: null, promise: null });
+  const subscriptionFetchRef = useRef({ key: null, promise: null });
+  const personalDetailPromiseRef = useRef(null);
   const { token } = getHeaders();
   const isSignedIn = useSelector(state => state.auth?.isSignedIn);
   const authUserId = useSelector(state => getAuthUserId(state.auth));
+
+  const resetApplicationFetchState = useCallback(() => {
+    aggregateResultRef.current = null;
+    aggregatePromiseRef.current = null;
+    detailFetchAttemptedRef.current = { professional: null, subscription: null };
+    professionalFetchRef.current = { key: null, promise: null };
+    subscriptionFetchRef.current = { key: null, promise: null };
+    personalDetailPromiseRef.current = null;
+  }, []);
+
+  const fetchAggregateOnce = useCallback(() => {
+    if (aggregatePromiseRef.current) {
+      return aggregatePromiseRef.current;
+    }
+
+    aggregatePromiseRef.current = getAggregatedUserDetailsFromCrmCreateRequest()
+      .then(res => {
+        const isSuccess =
+          res?.status === 200 || res?.data?.status === 'success';
+        const data = isSuccess ? extractAggregatedUserDetailsResponse(res) : null;
+        aggregateResultRef.current = data;
+        return data;
+      })
+      .catch(() => {
+        aggregateResultRef.current = null;
+        return null;
+      });
+
+    return aggregatePromiseRef.current;
+  }, []);
+
+  const applyCachedAggregateDetails = useCallback(() => {
+    const data = aggregateResultRef.current;
+    if (!data || !isActiveApplicationPersonalDetail(data.personalDetails)) {
+      return false;
+    }
+
+    if (data.professionalDetails) {
+      setProfessionalDetail(data.professionalDetails);
+    }
+    if (data.subscriptionDetails) {
+      setSubscriptionDetail(
+        normalizeAggregatedSubscriptionDetails(data.subscriptionDetails),
+      );
+    }
+    return true;
+  }, []);
 
   const applyAggregatedResponse = data => {
     if (data?.personalDetails) setPersonalDetail(data.personalDetails);
@@ -60,18 +118,88 @@ export const ApplicationProvider = ({ children }) => {
     setLoading(false);
   };
 
-  const getPersonalDetail = () => {
+  const applyCancelledAggregateResponse = data => {
+    if (data?.personalDetails) {
+      setPersonalDetail(
+        normalizePortalPersonalDetail(
+          data.personalDetails,
+          data.personalDetails?.applicationStatus,
+        ),
+      );
+    }
+    setProfessionalDetail(null);
+    setSubscriptionDetail(null);
+    setApplicationStatus(data?.personalDetails?.applicationStatus ?? null);
+    setIsCrmUser(false);
+  };
+
+  const applyPortalPersonalDetail = portalPersonal => {
+    const status = portalPersonal?.applicationStatus ?? null;
+    setPersonalDetail(normalizePortalPersonalDetail(portalPersonal, status));
+    setIsCrmUser(false);
+    setApplicationStatus(status);
+  };
+
+  const enrichPortalPersonalDetail = portalPersonal =>
+    applicationConfirmationRequest(portalPersonal.applicationId)
+      .then(response => {
+        if (
+          response?.status !== 200 &&
+          response?.data?.status !== 'success'
+        ) {
+          return portalPersonal;
+        }
+
+        const statusPayload = response?.data?.data || response?.data || {};
+        const applicationStatus =
+          statusPayload.applicationStatus ??
+          portalPersonal?.applicationStatus ??
+          null;
+        const metaIsActive =
+          statusPayload?.meta?.isActive ?? statusPayload?.isActive;
+
+        return {
+          ...portalPersonal,
+          applicationStatus,
+          ...(metaIsActive !== undefined
+            ? {
+                meta: {
+                  ...portalPersonal?.meta,
+                  isActive: metaIsActive,
+                },
+              }
+            : {}),
+        };
+      })
+      .catch(() => portalPersonal);
+
+  const loadPortalPersonalDetail = portalPersonal => {
+    if (!portalPersonal?.applicationId) {
+      applyPortalPersonalDetail(portalPersonal);
+      return Promise.resolve();
+    }
+
+    return enrichPortalPersonalDetail(portalPersonal).then(
+      applyPortalPersonalDetail,
+    );
+  };
+
+  const getPersonalDetail = useCallback(() => {
+    if (personalDetailPromiseRef.current) {
+      return personalDetailPromiseRef.current;
+    }
+
     setLoading(true);
 
-    getAggregatedUserDetailsFromCrmCreateRequest()
-      .then(res => {
-        const isSuccess =
-          res?.status === 200 || res?.data?.status === 'success';
-        const data = isSuccess ? extractAggregatedUserDetailsResponse(res) : null;
-
+    personalDetailPromiseRef.current = fetchAggregateOnce()
+      .then(data => {
         if (data) {
-          applyAggregatedResponse(data);
-          return markAggregateResponseHandled();
+          if (isActiveApplicationPersonalDetail(data.personalDetails)) {
+            applyAggregatedResponse(data);
+            return markAggregateResponseHandled();
+          }
+
+          applyCancelledAggregateResponse(data);
         }
 
         return fetchPersonalDetail();
@@ -80,9 +208,7 @@ export const ApplicationProvider = ({ children }) => {
         if (isAggregateResponseHandled(res)) return;
 
         if (res?.status === 200 && res?.data?.data) {
-          setPersonalDetail(res.data.data);
-          setIsCrmUser(false);
-          setApplicationStatus(null);
+          return loadPortalPersonalDetail(res.data.data);
         }
         setLoading(false);
       })
@@ -90,91 +216,107 @@ export const ApplicationProvider = ({ children }) => {
         fetchPersonalDetail()
           .then(res => {
             if (res?.status === 200 && res?.data?.data) {
-              setPersonalDetail(res.data.data);
-              setIsCrmUser(false);
-              setApplicationStatus(null);
+              return loadPortalPersonalDetail(res.data.data);
             }
             setLoading(false);
           })
           .catch(() => {
             setLoading(false);
           });
+      })
+      .finally(() => {
+        setLoading(false);
+        personalDetailPromiseRef.current = null;
       });
-  };
 
-  const getProfessionalDetail = applicationId => {
-    if (isCrmUser) {
-      setLoading(true);
-      getAggregatedUserDetailsFromCrmCreateRequest()
-        .then(res => {
-          const isSuccess =
-            res?.status === 200 || res?.data?.status === 'success';
-          const data = isSuccess
-            ? extractAggregatedUserDetailsResponse(res)
-            : null;
-          if (data) {
-            applyAggregatedResponse(data);
-          } else {
-            setLoading(false);
-          }
-        })
-        .catch(() => setLoading(false));
-      return;
-    }
+    return personalDetailPromiseRef.current;
+  }, [fetchAggregateOnce]);
 
-    setLoading(true);
-    const appId = applicationId || personalDetail?.applicationId;
-    if (!appId) {
-      setLoading(false);
-      return;
-    }
-    fetchProfessionalDetail(appId)
-      .then(res => {
-        if (res?.status === 200) {
-          setProfessionalDetail(res?.data?.data);
-          setIsCrmUser(false);
+  const getProfessionalDetail = useCallback(
+    applicationId => {
+      if (isCrmUser) {
+        if (applyCachedAggregateDetails()) {
+          return;
         }
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  };
+        return;
+      }
 
-  const getSubscriptionDetail = applicationId => {
-    if (isCrmUser) {
       setLoading(true);
-      getAggregatedUserDetailsFromCrmCreateRequest()
-        .then(res => {
-          const isSuccess =
-            res?.status === 200 || res?.data?.status === 'success';
-          const data = isSuccess
-            ? extractAggregatedUserDetailsResponse(res)
-            : null;
-          if (data) {
-            applyAggregatedResponse(data);
-          } else {
-            setLoading(false);
-          }
-        })
-        .catch(() => setLoading(false));
-      return;
-    }
+      const appId = applicationId || personalDetail?.applicationId;
+      if (!appId) {
+        setLoading(false);
+        return;
+      }
 
-    setLoading(true);
-    const appId = applicationId || personalDetail?.applicationId;
-    if (!appId) {
-      setLoading(false);
-      return;
-    }
-    fetchSubscriptionDetail(appId)
-      .then(res => {
-        if (res?.status === 200) {
-          setSubscriptionDetail(res?.data?.data);
-          setIsCrmUser(false);
+      const cacheKey = String(appId);
+      if (
+        professionalFetchRef.current.key === cacheKey &&
+        professionalFetchRef.current.promise
+      ) {
+        return professionalFetchRef.current.promise;
+      }
+
+      professionalFetchRef.current.key = cacheKey;
+      professionalFetchRef.current.promise = fetchProfessionalDetail(appId)
+        .then(res => {
+          if (res?.status === 200) {
+            setProfessionalDetail(res?.data?.data);
+            setIsCrmUser(false);
+          }
+          setLoading(false);
+        })
+        .catch(() => {
+          setLoading(false);
+        });
+
+      return professionalFetchRef.current.promise;
+    },
+    [isCrmUser, personalDetail?.applicationId, applyCachedAggregateDetails],
+  );
+
+  const getSubscriptionDetail = useCallback(
+    applicationId => {
+      if (isCrmUser) {
+        if (applyCachedAggregateDetails()) {
+          return;
         }
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  };
+        return;
+      }
+
+      setLoading(true);
+      const appId = applicationId || personalDetail?.applicationId;
+      if (!appId) {
+        setLoading(false);
+        return;
+      }
+
+      const cacheKey = String(appId);
+      if (
+        subscriptionFetchRef.current.key === cacheKey &&
+        subscriptionFetchRef.current.promise
+      ) {
+        return subscriptionFetchRef.current.promise;
+      }
+
+      subscriptionFetchRef.current.key = cacheKey;
+      subscriptionFetchRef.current.promise = fetchSubscriptionDetail(appId)
+        .then(res => {
+          if (res?.status === 200) {
+            setSubscriptionDetail(res?.data?.data);
+            setIsCrmUser(false);
+          }
+          setLoading(false);
+        })
+        .catch(() => {
+          setLoading(false);
+        });
+
+      return subscriptionFetchRef.current.promise;
+    },
+    [isCrmUser, personalDetail?.applicationId, applyCachedAggregateDetails],
+  );
 
   const getCategoryData = useCallback(
     (categoryNameOrId, categoryLookups = []) => {
@@ -253,6 +395,7 @@ export const ApplicationProvider = ({ children }) => {
 
   useEffect(() => {
     if (!isSignedIn || !authUserId) {
+      resetApplicationFetchState();
       setPersonalDetail(null);
       setProfessionalDetail(null);
       setSubscriptionDetail(null);
@@ -263,6 +406,7 @@ export const ApplicationProvider = ({ children }) => {
       return;
     }
 
+    resetApplicationFetchState();
     setPersonalDetail(null);
     setProfessionalDetail(null);
     setSubscriptionDetail(null);
@@ -270,31 +414,58 @@ export const ApplicationProvider = ({ children }) => {
     setCategoryData(null);
     setIsCrmUser(false);
     getPersonalDetail();
-  }, [isSignedIn, authUserId]);
+  }, [isSignedIn, authUserId, resetApplicationFetchState]);
 
   useEffect(() => {
-    if (token) {
-      // For CRM users, professional and subscription details don't require applicationId
-      // For portal users, we need applicationId from personalDetail
-      if (isCrmUser) {
-        // CRM user: fetch professional and subscription details without applicationId
-        if (!professionalDetail) {
-          getProfessionalDetail();
-        }
-        if (!subscriptionDetail) {
-          getSubscriptionDetail();
-        }
-      } else if (personalDetail?.applicationId) {
-        // Portal user: fetch with applicationId
-        if (!professionalDetail) {
-          getProfessionalDetail(personalDetail.applicationId);
-        }
-        if (!subscriptionDetail) {
-          getSubscriptionDetail(personalDetail.applicationId);
-        }
-      }
+    if (!token) {
+      return;
     }
-  }, [personalDetail?.applicationId, isCrmUser]);
+
+    if (isCrmUser) {
+      if (
+        !professionalDetail &&
+        detailFetchAttemptedRef.current.professional !== 'crm'
+      ) {
+        detailFetchAttemptedRef.current.professional = 'crm';
+        getProfessionalDetail();
+      }
+      if (
+        !subscriptionDetail &&
+        detailFetchAttemptedRef.current.subscription !== 'crm'
+      ) {
+        detailFetchAttemptedRef.current.subscription = 'crm';
+        getSubscriptionDetail();
+      }
+      return;
+    }
+
+    const appId = personalDetail?.applicationId;
+    if (!appId) {
+      return;
+    }
+
+    if (
+      !detailBelongsToApplication(professionalDetail, appId) &&
+      detailFetchAttemptedRef.current.professional !== appId
+    ) {
+      detailFetchAttemptedRef.current.professional = appId;
+      getProfessionalDetail(appId);
+    }
+
+    if (
+      !detailBelongsToApplication(subscriptionDetail, appId) &&
+      detailFetchAttemptedRef.current.subscription !== appId
+    ) {
+      detailFetchAttemptedRef.current.subscription = appId;
+      getSubscriptionDetail(appId);
+    }
+  }, [
+    token,
+    personalDetail?.applicationId,
+    isCrmUser,
+    professionalDetail?.applicationId,
+    subscriptionDetail?.applicationId,
+  ]);
 
   // Note: Auto-fetch removed - components should handle fetching with categoryLookups
   // since membershipCategory is now stored as name and requires lookup to find the ID
