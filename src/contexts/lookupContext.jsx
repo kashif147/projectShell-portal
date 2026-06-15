@@ -7,6 +7,30 @@ import { toast } from 'react-toastify';
 
 const globalFetchLock = { isFetching: false, promise: null };
 
+const readStoredLookupArray = key => {
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (raw === null) {
+      return [];
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error(`Error reading lookup cache for ${key}:`, error);
+    return [];
+  }
+};
+
+const hasCachedLookupData = () =>
+  [
+    'genderLookups',
+    'titleLookups',
+    'countries',
+    'categories',
+    'workLocationLookups',
+    'gradeLookups',
+  ].some(key => readStoredLookupArray(key).length > 0);
+
 const verifyLocalStorageSave = (key, expectedValue) => {
   try {
     const saved = window.localStorage.getItem(key);
@@ -77,22 +101,47 @@ const LookupContext = createContext();
 export const LookupProvider = ({ children }) => {
   const { fetchLocal, saveLocal } = useLocalStorage();
   const [lookups, setLookups] = React.useState([]);
-  const [cityLookups, setCityLookups] = React.useState([]);
-  const [genderLookups, setGenderLookups] = React.useState([]);
-  const [titleLookups, setTitleLookups] = React.useState([]);
-  const [primarySectionLookups, setPrimarySectionLookups] = React.useState([]);
-  const [secondarySectionLookups, setSecondarySectionLookups] = React.useState([]);
-  const [workLocationLookups, setWorkLocationLookups] = React.useState([]);
-  const [countryLookups, setCountryLookups] = React.useState([]);
-  const [categoryLookups, setCategoryLookups] = React.useState([]);
-  const [gradeLookups, setGradeLookups] = React.useState([]);
-  const [paymentLooups, setPaymentLooups] = React.useState([]);
-  const [studyLocationLookups, setStudyLocationLookups] = React.useState([]);
-  const [disciplineLookups, setDisciplineLookups] = React.useState([]);
-  const [youthForumLookups, setYouthForumLookups] = React.useState([]);
-  const [loading, setLoading] = React.useState(false);
+  const [cityLookups, setCityLookups] = React.useState(() =>
+    readStoredLookupArray('cityLookups'),
+  );
+  const [genderLookups, setGenderLookups] = React.useState(() =>
+    readStoredLookupArray('genderLookups'),
+  );
+  const [titleLookups, setTitleLookups] = React.useState(() =>
+    readStoredLookupArray('titleLookups'),
+  );
+  const [primarySectionLookups, setPrimarySectionLookups] = React.useState(() =>
+    readStoredLookupArray('primarySection'),
+  );
+  const [secondarySectionLookups, setSecondarySectionLookups] = React.useState(
+    () => readStoredLookupArray('secondarySection'),
+  );
+  const [workLocationLookups, setWorkLocationLookups] = React.useState(() =>
+    readStoredLookupArray('workLocationLookups'),
+  );
+  const [countryLookups, setCountryLookups] = React.useState(() =>
+    readStoredLookupArray('countries'),
+  );
+  const [categoryLookups, setCategoryLookups] = React.useState(() =>
+    readStoredLookupArray('categories'),
+  );
+  const [gradeLookups, setGradeLookups] = React.useState(() =>
+    readStoredLookupArray('gradeLookups'),
+  );
+  const [paymentLooups, setPaymentLooups] = React.useState(() =>
+    readStoredLookupArray('paymentLookups'),
+  );
+  const [studyLocationLookups, setStudyLocationLookups] = React.useState(() =>
+    readStoredLookupArray('studyLocationLookups'),
+  );
+  const [disciplineLookups, setDisciplineLookups] = React.useState(() =>
+    readStoredLookupArray('disciplineLookups'),
+  );
+  const [youthForumLookups, setYouthForumLookups] = React.useState(() =>
+    readStoredLookupArray('youthForumLookups'),
+  );
+  const [loading, setLoading] = React.useState(() => !hasCachedLookupData());
   const [error, setError] = React.useState(null);
-  const isInitialMount = useRef(true);
   const isFetchingRef = useRef(false);
 
   const loadLookupsFromStorage = useCallback(async () => {
@@ -257,9 +306,6 @@ export const LookupProvider = ({ children }) => {
           }
         }
 
-        // Small delay to ensure localStorage is flushed
-        await new Promise(resolve => setTimeout(resolve, 50));
-
         return true;
       } catch (error) {
         console.error('❌ Error saving lookups to storage:', error);
@@ -291,7 +337,10 @@ export const LookupProvider = ({ children }) => {
 
     globalFetchLock.isFetching = true;
     isFetchingRef.current = true;
-    setLoading(true);
+    const shouldShowLoading = !hasCachedLookupData();
+    if (shouldShowLoading) {
+      setLoading(true);
+    }
     setError(null);
 
     const fetchPromise = (async () => {
@@ -413,27 +462,15 @@ export const LookupProvider = ({ children }) => {
   }, [loadLookupsFromStorage]);
 
   useEffect(() => {
-    const initializeLookups = async () => {
-      try {
-        // Load from localStorage first for immediate UI rendering
-        await loadLookupsFromStorage();
-
-        const headers = getHeaders();
-        if (headers.token) {
-          // Fetch fresh data - this will update state immediately and set hasFreshDataRef
-          await fetchAllLookups();
-        }
-      } catch (error) {
-        console.error('Error initializing lookups:', error);
-        setError(error.message);
-      }
-    };
-
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      initializeLookups();
+    const headers = getHeaders();
+    if (!headers.token) {
+      return;
     }
-  }, [loadLookupsFromStorage, fetchAllLookups]);
+
+    fetchAllLookups().catch(error => {
+      console.error('Error refreshing lookups:', error);
+    });
+  }, [fetchAllLookups]);
 
   useEffect(() => {
     const handleLookupUpdate = async () => {
@@ -445,6 +482,24 @@ export const LookupProvider = ({ children }) => {
       window.removeEventListener('lookupsUpdated', handleLookupUpdate);
     };
   }, [loadLookupsFromStorage]);
+
+  const lookupsReady = React.useMemo(
+    () =>
+      !loading ||
+      genderLookups.length > 0 ||
+      titleLookups.length > 0 ||
+      countryLookups.length > 0 ||
+      categoryLookups.length > 0 ||
+      workLocationLookups.length > 0,
+    [
+      loading,
+      genderLookups,
+      titleLookups,
+      countryLookups,
+      categoryLookups,
+      workLocationLookups,
+    ],
+  );
 
   const value = React.useMemo(() => ({
     lookups,
@@ -462,6 +517,7 @@ export const LookupProvider = ({ children }) => {
     disciplineLookups,
     youthForumLookups,
     loading,
+    lookupsReady,
     error,
     fetchAllLookups,
     refreshLookupsFromStorage,
@@ -481,6 +537,7 @@ export const LookupProvider = ({ children }) => {
     disciplineLookups,
     youthForumLookups,
     loading,
+    lookupsReady,
     error,
     fetchAllLookups,
     refreshLookupsFromStorage,
@@ -590,27 +647,6 @@ export const fetchAllLookupsOnLogin = async () => {
     );
 
     await Promise.allSettled(savePromises);
-
-    const verificationResults = lookupKeys.map(({ key, data }) => ({
-      key,
-      verified: verifyLocalStorageSave(key, data),
-    }));
-
-    const failedVerifications = verificationResults.filter(result => !result.verified);
-    if (failedVerifications.length > 0) {
-      for (const { key, data } of lookupKeys) {
-        const result = verificationResults.find(r => r.key === key);
-        if (!result?.verified) {
-          try {
-            await saveToLocalStorage(key, data);
-          } catch (retryError) {
-            console.error(`Failed to save ${key} after final retry:`, retryError);
-          }
-        }
-      }
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 150));
 
     window.dispatchEvent(new CustomEvent('lookupsUpdated'));
   } catch (error) {

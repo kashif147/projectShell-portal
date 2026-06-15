@@ -21,6 +21,7 @@ import {
   detailBelongsToApplication,
   isActiveApplicationPersonalDetail,
   isAggregateResponseHandled,
+  isResumablePortalApplication,
   markAggregateResponseHandled,
   normalizeAggregatedSubscriptionDetails,
   normalizePortalPersonalDetail,
@@ -38,6 +39,7 @@ const getAuthUserId = auth =>
 
 export const ApplicationProvider = ({ children }) => {
   const [loading, setLoading] = React.useState(false);
+  const [detailsLoading, setDetailsLoading] = React.useState(false);
   const [personalDetail, setPersonalDetail] = useState(null);
   const [professionalDetail, setProfessionalDetail] = useState(null);
   const [subscriptionDetail, setSubscriptionDetail] = useState(null);
@@ -52,6 +54,7 @@ export const ApplicationProvider = ({ children }) => {
   const professionalFetchRef = useRef({ key: null, promise: null });
   const subscriptionFetchRef = useRef({ key: null, promise: null });
   const personalDetailPromiseRef = useRef(null);
+  const bundleFetchRef = useRef({ appId: null, promise: null });
   const { token } = getHeaders();
   const isSignedIn = useSelector(state => state.auth?.isSignedIn);
   const authUserId = useSelector(state => getAuthUserId(state.auth));
@@ -63,6 +66,7 @@ export const ApplicationProvider = ({ children }) => {
     professionalFetchRef.current = { key: null, promise: null };
     subscriptionFetchRef.current = { key: null, promise: null };
     personalDetailPromiseRef.current = null;
+    bundleFetchRef.current = { appId: null, promise: null };
   }, []);
 
   const fetchAggregateOnce = useCallback(() => {
@@ -176,13 +180,107 @@ export const ApplicationProvider = ({ children }) => {
   const loadPortalPersonalDetail = portalPersonal => {
     if (!portalPersonal?.applicationId) {
       applyPortalPersonalDetail(portalPersonal);
+      return Promise.resolve(portalPersonal);
+    }
+
+    return enrichPortalPersonalDetail(portalPersonal).then(enriched => {
+      applyPortalPersonalDetail(enriched);
+      return enriched;
+    });
+  };
+
+  const fetchApplicationStepDetails = useCallback(applicationId => {
+    const appId = applicationId || personalDetail?.applicationId;
+    if (!appId) {
       return Promise.resolve();
     }
 
-    return enrichPortalPersonalDetail(portalPersonal).then(
-      applyPortalPersonalDetail,
-    );
-  };
+    const cacheKey = String(appId);
+    if (
+      bundleFetchRef.current.appId === cacheKey &&
+      bundleFetchRef.current.promise
+    ) {
+      return bundleFetchRef.current.promise;
+    }
+
+    setDetailsLoading(true);
+    detailFetchAttemptedRef.current = {
+      professional: cacheKey,
+      subscription: cacheKey,
+    };
+    professionalFetchRef.current.key = cacheKey;
+    subscriptionFetchRef.current.key = cacheKey;
+
+    const promise = Promise.allSettled([
+      fetchProfessionalDetail(appId).then(res => {
+        if (res?.status === 200) {
+          setProfessionalDetail(res?.data?.data);
+          setIsCrmUser(false);
+        }
+      }),
+      fetchSubscriptionDetail(appId).then(res => {
+        if (res?.status === 200) {
+          setSubscriptionDetail(res?.data?.data);
+          setIsCrmUser(false);
+        }
+      }),
+    ]).finally(() => {
+      setDetailsLoading(false);
+      if (bundleFetchRef.current.appId === cacheKey) {
+        bundleFetchRef.current = { appId: null, promise: null };
+      }
+    });
+
+    bundleFetchRef.current = { appId: cacheKey, promise };
+    professionalFetchRef.current.promise = promise;
+    subscriptionFetchRef.current.promise = promise;
+    return promise;
+  }, [personalDetail?.applicationId]);
+
+  const loadResumableApplicationDetails = useCallback(
+    portalPersonal => {
+      const status = portalPersonal?.applicationStatus ?? applicationStatus;
+      if (
+        !portalPersonal?.applicationId ||
+        !isResumablePortalApplication(portalPersonal, status)
+      ) {
+        return Promise.resolve();
+      }
+
+      return fetchApplicationStepDetails(portalPersonal.applicationId);
+    },
+    [applicationStatus, fetchApplicationStepDetails],
+  );
+
+  const refreshPortalPersonalDetail = useCallback((portalPersonal = null) => {
+    aggregateResultRef.current = null;
+    aggregatePromiseRef.current = null;
+    personalDetailPromiseRef.current = null;
+    detailFetchAttemptedRef.current = { professional: null, subscription: null };
+    professionalFetchRef.current = { key: null, promise: null };
+    subscriptionFetchRef.current = { key: null, promise: null };
+    bundleFetchRef.current = { appId: null, promise: null };
+
+    setLoading(true);
+
+    const refreshPromise = portalPersonal?.applicationId
+      ? loadPortalPersonalDetail(portalPersonal).then(loadedPersonal =>
+          loadResumableApplicationDetails(loadedPersonal),
+        )
+      : fetchPersonalDetail()
+          .then(res => {
+            if (res?.status === 200 && res?.data?.data) {
+              return loadPortalPersonalDetail(res.data.data).then(loadedPersonal =>
+                loadResumableApplicationDetails(loadedPersonal),
+              );
+            }
+            return null;
+          });
+
+    return refreshPromise.finally(() => {
+      setLoading(false);
+    });
+  }, [loadResumableApplicationDetails]);
 
   const getPersonalDetail = useCallback(() => {
     if (personalDetailPromiseRef.current) {
@@ -208,7 +306,9 @@ export const ApplicationProvider = ({ children }) => {
         if (isAggregateResponseHandled(res)) return;
 
         if (res?.status === 200 && res?.data?.data) {
-          return loadPortalPersonalDetail(res.data.data);
+          return loadPortalPersonalDetail(res.data.data).then(loadedPersonal =>
+            loadResumableApplicationDetails(loadedPersonal),
+          );
         }
         setLoading(false);
       })
@@ -216,7 +316,9 @@ export const ApplicationProvider = ({ children }) => {
         fetchPersonalDetail()
           .then(res => {
             if (res?.status === 200 && res?.data?.data) {
-              return loadPortalPersonalDetail(res.data.data);
+              return loadPortalPersonalDetail(res.data.data).then(loadedPersonal =>
+                loadResumableApplicationDetails(loadedPersonal),
+              );
             }
             setLoading(false);
           })
@@ -230,23 +332,20 @@ export const ApplicationProvider = ({ children }) => {
       });
 
     return personalDetailPromiseRef.current;
-  }, [fetchAggregateOnce]);
+  }, [fetchAggregateOnce, loadResumableApplicationDetails]);
 
   const getProfessionalDetail = useCallback(
     applicationId => {
       if (isCrmUser) {
         if (applyCachedAggregateDetails()) {
-          return;
+          return Promise.resolve();
         }
-        setLoading(false);
-        return;
+        return Promise.resolve();
       }
 
-      setLoading(true);
       const appId = applicationId || personalDetail?.applicationId;
       if (!appId) {
-        setLoading(false);
-        return;
+        return Promise.resolve();
       }
 
       const cacheKey = String(appId);
@@ -257,6 +356,7 @@ export const ApplicationProvider = ({ children }) => {
         return professionalFetchRef.current.promise;
       }
 
+      setLoading(true);
       professionalFetchRef.current.key = cacheKey;
       professionalFetchRef.current.promise = fetchProfessionalDetail(appId)
         .then(res => {
@@ -264,9 +364,8 @@ export const ApplicationProvider = ({ children }) => {
             setProfessionalDetail(res?.data?.data);
             setIsCrmUser(false);
           }
-          setLoading(false);
         })
-        .catch(() => {
+        .finally(() => {
           setLoading(false);
         });
 
@@ -279,17 +378,14 @@ export const ApplicationProvider = ({ children }) => {
     applicationId => {
       if (isCrmUser) {
         if (applyCachedAggregateDetails()) {
-          return;
+          return Promise.resolve();
         }
-        setLoading(false);
-        return;
+        return Promise.resolve();
       }
 
-      setLoading(true);
       const appId = applicationId || personalDetail?.applicationId;
       if (!appId) {
-        setLoading(false);
-        return;
+        return Promise.resolve();
       }
 
       const cacheKey = String(appId);
@@ -300,6 +396,7 @@ export const ApplicationProvider = ({ children }) => {
         return subscriptionFetchRef.current.promise;
       }
 
+      setLoading(true);
       subscriptionFetchRef.current.key = cacheKey;
       subscriptionFetchRef.current.promise = fetchSubscriptionDetail(appId)
         .then(res => {
@@ -307,9 +404,8 @@ export const ApplicationProvider = ({ children }) => {
             setSubscriptionDetail(res?.data?.data);
             setIsCrmUser(false);
           }
-          setLoading(false);
         })
-        .catch(() => {
+        .finally(() => {
           setLoading(false);
         });
 
@@ -444,27 +540,24 @@ export const ApplicationProvider = ({ children }) => {
       return;
     }
 
-    if (
-      !detailBelongsToApplication(professionalDetail, appId) &&
-      detailFetchAttemptedRef.current.professional !== appId
-    ) {
-      detailFetchAttemptedRef.current.professional = appId;
-      getProfessionalDetail(appId);
+    const profReady = detailBelongsToApplication(professionalDetail, appId);
+    const subReady = detailBelongsToApplication(subscriptionDetail, appId);
+    if (profReady && subReady) {
+      return;
     }
 
-    if (
-      !detailBelongsToApplication(subscriptionDetail, appId) &&
-      detailFetchAttemptedRef.current.subscription !== appId
-    ) {
-      detailFetchAttemptedRef.current.subscription = appId;
-      getSubscriptionDetail(appId);
+    if (detailFetchAttemptedRef.current.professional === String(appId)) {
+      return;
     }
+
+    fetchApplicationStepDetails(appId);
   }, [
     token,
     personalDetail?.applicationId,
     isCrmUser,
     professionalDetail?.applicationId,
     subscriptionDetail?.applicationId,
+    fetchApplicationStepDetails,
   ]);
 
   // Note: Auto-fetch removed - components should handle fetching with categoryLookups
@@ -484,6 +577,8 @@ export const ApplicationProvider = ({ children }) => {
 
   const value = {
     loading,
+    detailsLoading,
+    isFormInitializing: loading || detailsLoading,
     personalDetail,
     currentStep,
     setCurrentStep,
@@ -493,6 +588,7 @@ export const ApplicationProvider = ({ children }) => {
     categoryData,
     categoryLoading,
     getPersonalDetail,
+    refreshPortalPersonalDetail,
     getProfessionalDetail,
     getSubscriptionDetail,
     getCategoryData,
