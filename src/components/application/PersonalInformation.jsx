@@ -7,6 +7,7 @@ import { DatePicker } from '../ui/DatePicker';
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import '../../assets/theme/phoneInput.css';
+import { normalizeMobileToE164 } from '../../helpers/phone.helper';
 // Dynamic countries from lookup context will replace static constants
 import { useLookup } from '../../contexts/lookupContext';
 import { useProfile } from '../../contexts/profileContext';
@@ -133,55 +134,30 @@ const PersonalInformation = ({
   const handleMobileNumberChange = value => {
     onFormDataChange({
       ...formData,
-      mobileNo: value || '',
+      mobileNo: normalizeMobileToE164(value || ''),
     });
   };
 
   // Normalize stored mobile number so PhoneInput can format it correctly
-  const normalizedMobileNo = React.useMemo(() => {
+  const normalizedMobileNo = React.useMemo(
+    () => normalizeMobileToE164(formData?.mobileNo),
+    [formData?.mobileNo],
+  );
+
+  // Sync pre-filled local numbers (e.g. from registration) to E.164 in form state
+  React.useEffect(() => {
     const raw = formData?.mobileNo;
-    if (!raw) return '';
-
-    // If already in E.164 format, use as-is
-    if (typeof raw === 'string' && raw.startsWith('+')) {
-      return raw;
+    if (!raw) {
+      return;
     }
 
-    // Strip all non-digits
-    const digits = String(raw).replace(/\D/g, '');
-    if (!digits) return '';
-
-    // Common international format: 00<countryCode><number>
-    if (digits.startsWith('00')) {
-      return `+${digits.slice(2)}`;
+    const e164 = normalizeMobileToE164(raw);
+    if (e164 && e164 !== raw) {
+      onFormDataChange({
+        ...formData,
+        mobileNo: e164,
+      });
     }
-
-    // If it already starts with Irish country code 353, just add '+'
-    if (digits.startsWith('353')) {
-      return `+${digits}`;
-    }
-
-    // For Ireland mobile numbers we expect local style starting with 08...
-    // (e.g. 087 123 4567). Convert to +353 and drop the leading 0.
-    if (digits.startsWith('08')) {
-      return `+353${digits.slice(1)}`;
-    }
-
-    // If a phone is stored as Irish national digits without the leading 0 or 353,
-    // it typically starts with 8 and is 9-10 digits long (e.g. 851234567).
-    if (digits.startsWith('8') && digits.length >= 9 && digits.length <= 10) {
-      return `+353${digits}`;
-    }
-
-    // For other local 0-prefixed patterns (e.g. 0345...), do not force-convert.
-    // Keep the local format so validation can flag ambiguous numbers.
-    if (digits.startsWith('0')) {
-      return digits;
-    }
-
-    // Otherwise, only prefix '+' for non-local digits that likely already include
-    // a country code from backend data (e.g. 923450391493 -> +923450391493).
-    return `+${digits}`;
   }, [formData?.mobileNo]);
 
   const hasMobileValue = Boolean(normalizedMobileNo);

@@ -174,12 +174,17 @@ export const getApplicationCompletionPercentage = ({
 export const resolveApplicationFormStep = ({
   activeSubscriptionDetail,
   activeProfessionalDetail,
+  activeApplicationId,
 } = {}) => {
   if (activeSubscriptionDetail?.applicationId) {
     return 3;
   }
 
   if (activeProfessionalDetail?.applicationId) {
+    return 3;
+  }
+
+  if (activeApplicationId) {
     return 2;
   }
 

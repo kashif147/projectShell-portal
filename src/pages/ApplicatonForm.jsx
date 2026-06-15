@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react';
 import { Card } from 'antd';
 import { toast } from 'react-toastify';
 import PersonalInformation from '../components/application/PersonalInformation';
@@ -23,6 +23,7 @@ import { useApplication } from '../contexts/applicationContext';
 import { useLookup } from '../contexts/lookupContext';
 import Spinner from '../components/common/Spinner';
 import { calculateAgeFromDateOfBirth, isDataFormat } from '../helpers/date.helper';
+import { normalizeMobileToE164 } from '../helpers/phone.helper';
 import {
   getPaymentFrequencyCategory,
   isSalaryDeductionPaymentType,
@@ -43,12 +44,11 @@ const ApplicationForm = () => {
   const location = useLocation();
   const formTopRef = useRef(null);
   const hasRestoredInitialStep = useRef(false);
-  const detailsFetchStarted = useRef(false);
   const { user } = useSelector(state => state.auth);
   const {
     personalDetail,
-    getPersonalDetail,
-    loading,
+    refreshPortalPersonalDetail,
+    isFormInitializing,
     getProfessionalDetail,
     professionalDetail,
     subscriptionDetail,
@@ -59,7 +59,7 @@ const ApplicationForm = () => {
     getCategoryData,
     applicationStatus,
   } = useApplication();
-  const { categoryLookups } = useLookup();
+  const { categoryLookups, lookupsReady } = useLookup();
 
   const hasActiveApplication = useMemo(
     () => isResumablePortalApplication(personalDetail, applicationStatus),
@@ -94,13 +94,12 @@ const ApplicationForm = () => {
   const [paymentIntentCreated, setPaymentIntentCreated] = useState(false);
   const [shouldShowModal, setShouldShowModal] = useState(false);
   const [isNextLoading, setIsNextLoading] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [formData, setFormData] = useState({
     personalInfo: {
       forename: user?.userFirstName || user?.firstName || '',
       surname: user?.userLastName || user?.lastName || '',
       personalEmail: user?.userEmail || user?.email || '',
-      mobileNo: user?.userMobilePhone || user?.mobilePhone || '',
+      mobileNo: normalizeMobileToE164(user?.userMobilePhone || user?.mobilePhone || ''),
       country: 'Ireland',
       consent: true,
     },
@@ -111,54 +110,31 @@ const ApplicationForm = () => {
   console.log('Application ID', personalDetail?.applicationId);
   console.log('user===========>',user)
 
-  // Fetch personal detail on mount
-  useEffect(() => {
-    hasRestoredInitialStep.current = false;
-    detailsFetchStarted.current = false;
-    getPersonalDetail();
-  }, []);
-
-  // Fetch professional and subscription details for active applications only
-  useEffect(() => {
-    if (!activeApplicationId) {
-      detailsFetchStarted.current = false;
-      return;
-    }
-
-    detailsFetchStarted.current = true;
-    hasRestoredInitialStep.current = false;
-    getProfessionalDetail(activeApplicationId);
-    getSubscriptionDetail(activeApplicationId);
-  }, [activeApplicationId]);
-
   useEffect(() => {
     if (!hasActiveApplication) {
       hasRestoredInitialStep.current = false;
-      detailsFetchStarted.current = false;
     }
   }, [hasActiveApplication]);
 
-  useEffect(() => {
-    if (
-      !hasActiveApplication ||
-      loading ||
-      hasRestoredInitialStep.current ||
-      !activeApplicationId ||
-      !detailsFetchStarted.current
-    ) {
+  useLayoutEffect(() => {
+    if (isFormInitializing || hasRestoredInitialStep.current) {
       return;
     }
 
-    setCurrentStep(
-      resolveApplicationFormStep({
-        activeSubscriptionDetail,
-        activeProfessionalDetail,
-      }),
-    );
+    const nextStep =
+      !hasActiveApplication || !activeApplicationId
+        ? 1
+        : resolveApplicationFormStep({
+            activeSubscriptionDetail,
+            activeProfessionalDetail,
+            activeApplicationId,
+          });
+
+    setCurrentStep(nextStep);
     hasRestoredInitialStep.current = true;
   }, [
+    isFormInitializing,
     hasActiveApplication,
-    loading,
     activeApplicationId,
     activeSubscriptionDetail,
     activeProfessionalDetail,
@@ -167,6 +143,10 @@ const ApplicationForm = () => {
 
   useEffect(() => {
     if (!hasActiveApplication) {
+      if (isFormInitializing) {
+        return;
+      }
+
       setCurrentStep(1);
       setIsSubmitted(false);
       setPaymentIntentCreated(false);
@@ -214,7 +194,11 @@ const ApplicationForm = () => {
             prev.personalInfo.personalEmail ||
             '',
           mobileNo:
-            personalDetail?.contactInfo?.mobileNumber ||
+            normalizeMobileToE164(
+              personalDetail?.contactInfo?.mobileNumber ||
+                prev.personalInfo.mobileNo ||
+                '',
+            ) ||
             prev.personalInfo.mobileNo ||
             '',
           consent:
@@ -490,16 +474,8 @@ const ApplicationForm = () => {
     }
   }, [shouldShowModal]);
 
-  // Set initial load to false after first load completes
-  useEffect(() => {
-    if (!loading && isInitialLoad) {
-      setIsInitialLoad(false);
-    }
-  }, [loading, isInitialLoad]);
-
   // Scroll to top when component mounts or route changes
   useEffect(() => {
-    // Use setTimeout to ensure DOM is fully rendered
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 0);
@@ -507,12 +483,14 @@ const ApplicationForm = () => {
 
   // Scroll to top when step changes (after initial load)
   useEffect(() => {
-    if (isInitialLoad) return;
+    if (isFormInitializing) return;
     // Use setTimeout to ensure DOM is fully rendered
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 0);
-  }, [currentStep, isInitialLoad]);
+  }, [currentStep, isFormInitializing]);
+
+  const isPageReady = !isFormInitializing && lookupsReady;
 
   const steps = [
     { number: 1, title: 'Personal Information' },
@@ -547,7 +525,7 @@ const ApplicationForm = () => {
       areaOrTown: data.addressLine3,
       countyCityOrPostCode: data.addressLine4,
       country: data.country,
-      mobileNumber: data.mobileNo,
+      mobileNumber: normalizeMobileToE164(data.mobileNo),
       telephoneNumber: data.homeWorkTelNo,
       preferredEmail: data.preferredEmail,
       personalEmail: data.personalEmail,
@@ -565,9 +543,12 @@ const ApplicationForm = () => {
     createPersonalDetailRequest(personalInfo)
       .then(res => {
         if (res.status === 200) {
-          // Update personal detail and move to next step
-          getPersonalDetail();
+          const createdPersonal = res?.data?.data ?? res?.data;
+          hasRestoredInitialStep.current = true;
           setCurrentStep(2);
+          refreshPortalPersonalDetail(
+            createdPersonal?.applicationId ? createdPersonal : null,
+          );
         } else {
           toast.error(res.data.message ?? 'Unable to add personal detail');
         }
@@ -606,7 +587,7 @@ const ApplicationForm = () => {
       areaOrTown: data.addressLine3,
       countyCityOrPostCode: data.addressLine4,
       country: data.country,
-      mobileNumber: data.mobileNo,
+      mobileNumber: normalizeMobileToE164(data.mobileNo),
       telephoneNumber: data.homeWorkTelNo,
       preferredEmail: data.preferredEmail,
       personalEmail: data.personalEmail,
@@ -624,8 +605,7 @@ const ApplicationForm = () => {
     updatePersonalDetailRequest(activeApplicationId, personalInfo)
       .then(res => {
         if (res.status === 200) {
-          // Update personal detail and move to next step
-          getPersonalDetail();
+          hasRestoredInitialStep.current = true;
           setCurrentStep(2);
         } else {
           toast.error(res.data.message ?? 'Unable to update personal detail');
@@ -1322,9 +1302,7 @@ const ApplicationForm = () => {
   return (
     <div className="space-y-4" ref={formTopRef}>
       <h1 className="text-2xl font-bold mb-4">Application</h1>
-      {isInitialLoad && loading ? (
-        <Spinner />
-      ) : (
+      {isPageReady ? (
         <>
           <div className="flex items-center mb-6 sm:mb-8 px-1 sm:px-8 md:px-12 lg:px-16 overflow-x-auto">
             {steps.map((step, index) => {
@@ -1433,6 +1411,8 @@ const ApplicationForm = () => {
             </Button>
           </div>
         </>
+      ) : (
+        <Spinner />
       )}
 
       <SubscriptionWrapper
