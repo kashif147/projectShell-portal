@@ -1,9 +1,9 @@
 import { useSelector } from 'react-redux';
 import { useProfile } from '../contexts/profileContext';
-import { hasMemberRole, isActivePortalMember } from '../helpers/role.helper';
+import { resolveIsPortalMember } from '../helpers/role.helper';
 
 /**
- * Member status from JWT roles and portal profile membership.
+ * Member status from JWT roles, /api/me roles, and portal profile membership.
  * @returns {{ isMember: boolean, userDetail: object }}
  */
 export const useMemberRole = () => {
@@ -11,10 +11,11 @@ export const useMemberRole = () => {
   const user = useSelector(state => state.auth.user);
   const { profileDetail } = useProfile();
 
-  const isMember =
-    hasMemberRole(userDetail) ||
-    hasMemberRole(user) ||
-    isActivePortalMember(profileDetail);
+  const isMember = resolveIsPortalMember({
+    userDetail,
+    user,
+    profileDetail,
+  });
 
   return { isMember, userDetail };
 };
