@@ -110,8 +110,8 @@ export const isResumablePortalApplication = (
   if (RESUMABLE_PORTAL_APPLICATION_STATUSES.has(status)) {
     return true;
   }
-
-  if (status === 'approved' || status === 'submitted') {
+// kashif making changes status === 'approved'
+  if (status === 'processed' || status === 'submitted') {
     return isActiveApplicationPersonalDetail(personalDetail);
   }
 

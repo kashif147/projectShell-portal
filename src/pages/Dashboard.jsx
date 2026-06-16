@@ -425,7 +425,7 @@ const Dashboard = () => {
       setIsApplicationSubmitted(
         Boolean(isActive) &&
           (contextApplicationStatus === 'submitted' ||
-            contextApplicationStatus === 'approved'),
+            contextApplicationStatus === 'processed'), // kashif making changes === 'approved'
       );
       setApplicationLoader(false);
       return;
@@ -453,7 +453,7 @@ const Dashboard = () => {
             setIsApplicationActive(Boolean(isActive));
             setIsApplicationSubmitted(
               Boolean(isActive) &&
-                (status === 'submitted' || status === 'approved'),
+                (status === 'submitted' || status === 'processed'), // kashif making changes === 'approved'
             );
           }
         } catch (error) {
@@ -684,8 +684,8 @@ const Dashboard = () => {
       const subtitle =
         !isApplicationActive
           ? 'Start Application'
-          : applicationStatus === 'approved'
-          ? 'Approved'
+          : applicationStatus === 'processed' // kashif making changes === 'approved'
+          ? 'Processed'
           : applicationStatus === 'submitted'
           ? 'In Review'
           : applicationStatus === 'in-progress'
@@ -700,12 +700,12 @@ const Dashboard = () => {
         applicationStatus === null ||
         (isApplicationActive &&
           (applicationStatus === 'submitted' ||
-            applicationStatus === 'approved'));
+            applicationStatus === 'processed')); // kashif making changes === 'approved'
 
       const colorScheme =
         !isApplicationActive
           ? 'blue'
-          : applicationStatus === 'approved'
+          : applicationStatus === 'processed' // kashif making changes === ' approved'
           ? 'green'
           : applicationStatus === 'submitted'
           ? 'blue'
