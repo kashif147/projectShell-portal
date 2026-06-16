@@ -254,7 +254,7 @@ const SubscriptionModal = ({
                   </h3>
                   {formData?.subscriptionDetails?.paymentType !== 'Credit Card' ? (
                     <p className="text-sm text-gray-600 leading-relaxed">
-                      Your annual membership fee is {formatCurrency(priceInfo.full)}. For now, we are only collecting {formatCurrency(priceInfo.monthly)} as the application processing amount. The remaining balance will be applied when your membership is approved.
+                      Your annual membership fee is {formatCurrency(priceInfo.full)}. For now, we are only collecting {formatCurrency(priceInfo.monthly)} as the application processing amount. The remaining balance will be applied when your membership is processed.
                     </p>
                   ) : (
                     categoryData?.description && (

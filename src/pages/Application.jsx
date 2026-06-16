@@ -66,8 +66,8 @@ const Application = () => {
   const [resolvedStatus, setResolvedStatus] = useState(null);
   const [statusLoading, setStatusLoading] = useState(true);
 
-  const isApprovedListMode =
-    String(resolvedStatus || '').toLowerCase() === 'approved';
+  const isProcessedListMode = // kashif making changes === 'approved'
+    String(resolvedStatus || '').toLowerCase() === 'processed'; // kashif making changes === 'approved'
 
   useEffect(() => {
     if (loading) {
@@ -129,7 +129,7 @@ const Application = () => {
     };
   }, [loading, personalDetail?.applicationId, contextApplicationStatus]);
 
-  // Approved members may have no portal personal-detail applicationId; infer from /me list.
+  // Processed members may have no portal personal-detail applicationId; infer from /me list.
   useEffect(() => {
     if (loading || statusLoading) return;
     if (contextApplicationStatus != null) return;
@@ -142,16 +142,16 @@ const Application = () => {
         const res = await fetchAllApplications();
         if (cancelled) return;
         const items = extractApplicationsFromMeResponse(res);
-        const hasApproved =
+        const hasProcessed = // kashif making changes === 'approved'
           Array.isArray(items) &&
           items.some(
             row =>
               String(row.applicationStatus || '')
                 .trim()
-                .toLowerCase() === 'approved',
+                .toLowerCase() === 'processed', // kashif making changes === 'approved'
           );
-        if (hasApproved && !cancelled) {
-          setResolvedStatus('approved');
+        if (hasProcessed && !cancelled) {
+          setResolvedStatus('processed'); // kashif making changes === 'approved'
         }
       } catch {
         /* ignore */
@@ -169,7 +169,7 @@ const Application = () => {
   ]);
 
   useEffect(() => {
-    if (!isApprovedListMode) {
+    if (!isProcessedListMode) { // kashif making changes === 'approved'
       setApplications([]);
       setListLoading(false);
       return;
@@ -188,7 +188,7 @@ const Application = () => {
       .finally(() => {
         setListLoading(false);
       });
-  }, [isApprovedListMode]);
+  }, [isProcessedListMode]); // kashif making changes === 'approved'
 
   const portalApplicationRecord = useMemo(() => {
     if (!personalDetail || !personalDetail.applicationId) {
@@ -217,7 +217,7 @@ const Application = () => {
     };
   }, [personalDetail, professionalDetail, subscriptionDetail]);
 
-  const displayRows = isApprovedListMode
+  const displayRows = isProcessedListMode // kashif making changes === 'approved'
     ? applications
     : portalApplicationRecord
       ? [portalApplicationRecord]
@@ -318,7 +318,7 @@ const Application = () => {
             viewingApplicationId !== record.applicationId
           }
           onClick={() =>
-            isApprovedListMode
+            isProcessedListMode // kashif making changes === 'approved'
               ? handleViewApplication(record)
               : handleViewPortalApplication()
           }
@@ -370,7 +370,7 @@ const Application = () => {
                 viewingApplicationId !== record.applicationId
               }
               onClick={() =>
-                isApprovedListMode
+                isProcessedListMode // kashif making changes === 'approved'
                   ? handleViewApplication(record)
                   : handleViewPortalApplication()
               }
@@ -387,9 +387,9 @@ const Application = () => {
   const memberStatus = isMember ? 'Member' : 'Non Member';
 
   const pageBusy =
-    loading || statusLoading || (isApprovedListMode && listLoading);
+    loading || statusLoading || (isProcessedListMode && listLoading);
 
-  const emptyDescription = isApprovedListMode
+  const emptyDescription = isProcessedListMode // kashif making changes === 'approved'
     ? 'No application history found.'
     : "You don't have an application yet.";
 
