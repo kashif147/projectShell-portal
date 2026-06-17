@@ -168,8 +168,9 @@ const SubscriptionModal = ({
 
       console.log('Payment Confirmation Response:', paymentIntent);
 
-      // Check if payment was successful
-      if (paymentIntent?.status === 'succeeded') {
+      const authorisedStatuses = ['requires_capture', 'succeeded'];
+      // Check if payment was authorised/captured
+      if (authorisedStatuses.includes(paymentIntent?.status)) {
         onSuccess?.({
           paymentMethod: 'card',
           total: getDisplayPrice(),
@@ -181,7 +182,7 @@ const SubscriptionModal = ({
           paymentIntent: paymentIntent,
         });
       } else {
-        throw new Error('Payment not completed');
+        throw new Error('Payment was not authorised');
       }
     } catch (err) {
       console.error('Payment Error:', err);

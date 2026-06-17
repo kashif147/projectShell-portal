@@ -222,15 +222,16 @@ const CreditCardPayment = () => {
 
       console.log('Payment Confirmation Response:', paymentIntent);
 
-      // Step 4: Check if payment was successful
-      if (paymentIntent?.status === 'succeeded') {
+      const authorisedStatuses = ['requires_capture', 'succeeded'];
+      // Step 4: Check if payment was authorised/captured
+      if (authorisedStatuses.includes(paymentIntent?.status)) {
         setStatusModal({
           open: true,
           status: 'success',
-          message: 'Payment completed successfully!',
+          message: 'Payment authorised successfully!',
         });
       } else {
-        throw new Error('Payment not completed');
+        throw new Error('Payment was not authorised');
       }
     } catch (err) {
       console.error('Payment Error:', err);
