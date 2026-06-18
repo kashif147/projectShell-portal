@@ -225,9 +225,8 @@ const DashboardPaymentModal = ({
 
       console.log('Payment Confirmation Response:', paymentIntent);
 
-      const authorisedStatuses = ['requires_capture', 'succeeded'];
-      // Step 4: Check if payment was authorised/captured
-      if (authorisedStatuses.includes(paymentIntent?.status)) {
+      // Step 4: Check if payment was captured
+      if (paymentIntent?.status === 'succeeded') {
         onSuccess?.({
           paymentMethod: 'card',
           total: editablePrice,
@@ -239,7 +238,7 @@ const DashboardPaymentModal = ({
           paymentIntent: paymentIntent,
         });
       } else {
-        throw new Error('Payment was not authorised');
+        throw new Error('Payment not completed');
       }
     } catch (err) {
       console.error('Payment Error:', err);
