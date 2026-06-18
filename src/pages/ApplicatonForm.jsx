@@ -1038,7 +1038,12 @@ const ApplicationForm = () => {
         if (nursingAdaptationProgramme === 'yes' && !nurseType) {
           return false;
         }
-        if (nursingAdaptationProgramme === 'no' && !String(nmbiNumber || '').trim()) {
+        if (
+          nursingAdaptationProgramme === 'no' &&
+          membershipCategory !==
+            CATEGORY_DISPLAY_NAME_BY_TYPE.undergraduate_student &&
+          !String(nmbiNumber || '').trim()
+        ) {
           return false;
         }
         break;
@@ -1178,6 +1183,8 @@ const ApplicationForm = () => {
         }
         if (
           nursingAdaptationProgramme === 'no' &&
+          membershipCategory !==
+            CATEGORY_DISPLAY_NAME_BY_TYPE.undergraduate_student &&
           !String(nmbiNumber || '').trim()
         ) {
           missing.push('NMBI number');

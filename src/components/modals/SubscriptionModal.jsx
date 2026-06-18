@@ -168,7 +168,9 @@ const SubscriptionModal = ({
 
       console.log('Payment Confirmation Response:', paymentIntent);
 
-      // Check if payment was successful
+      // Check if payment was 
+      
+      
       if (paymentIntent?.status === 'succeeded') {
         onSuccess?.({
           paymentMethod: 'card',
