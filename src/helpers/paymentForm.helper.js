@@ -267,12 +267,24 @@ export const mapSalaryDeductionFromMineForm = form => {
 export const mapStandingOrderFromMineForm = form => {
   if (!form) return {};
   const signatureDates = form.signatureDates || [];
+  const amount =
+    form.installmentAmountEur === null || form.installmentAmountEur === undefined
+      ? ''
+      : String(form.installmentAmountEur);
+  const annualMembershipFee =
+    form.annualMembershipFeeEur === null ||
+    form.annualMembershipFeeEur === undefined
+      ? ''
+      : String(form.annualMembershipFeeEur);
   return {
     bankName: form.debtorBankName || '',
     branchAddress: form.debtorBankAddress || '',
     accountName: form.debtorAccountName || form.debtorName || '',
     iban: form.debtorIban || form.debtorIbanDisplay || '',
     bic: form.debtorBic || '',
+    frequency: form.paymentFrequency || 'Monthly',
+    amount,
+    annualMembershipFee,
     startDate: form.startDate || '',
     accountHolderSignatureDate: signatureDates[0] || form.signedDate || '',
     secondSignatureDate: signatureDates[1] || '',
@@ -291,6 +303,7 @@ export const getPaymentApiErrorMessage = (response, fallback) => {
   }
   if (typeof data === 'string') return data;
   if (data.message) return data.message;
+  if (data.error?.message) return data.error.message;
   if (typeof data.error === 'string') return data.error;
   return fallback;
 };
@@ -404,6 +417,7 @@ export const buildStandingOrderPayload = formState => {
     toIsoDate(formState.accountHolderSignatureDate),
     toIsoDate(formState.secondSignatureDate),
   ].filter(Boolean);
+  const installmentAmountEur = Number(formState.amount);
 
   return {
     formType: PAYMENT_FORM_TYPES.STANDING_ORDER,
@@ -414,6 +428,10 @@ export const buildStandingOrderPayload = formState => {
       debtorIban: cleanIban(formState.iban),
       debtorBic: formState.bic || '',
       startDate: toIsoDate(formState.startDate),
+      paymentFrequency: formState.frequency,
+      installmentAmountEur: Number.isFinite(installmentAmountEur)
+        ? installmentAmountEur
+        : undefined,
       signatureDates,
     },
     gdpr: buildGdprPayload(),
@@ -482,6 +500,17 @@ export const mapStandingOrderFromPortal = standingOrderOrForm => {
     accountName: standingOrder.debtorAccountName || '',
     iban: standingOrder.debtorIban || '',
     bic: standingOrder.debtorBic || '',
+    frequency: standingOrder.paymentFrequency || 'Monthly',
+    amount:
+      standingOrder.installmentAmountEur === null ||
+      standingOrder.installmentAmountEur === undefined
+        ? ''
+        : String(standingOrder.installmentAmountEur),
+    annualMembershipFee:
+      standingOrder.annualMembershipFeeEur === null ||
+      standingOrder.annualMembershipFeeEur === undefined
+        ? ''
+        : String(standingOrder.annualMembershipFeeEur),
     startDate: standingOrder.startDate || '',
     accountHolderSignatureDate: primaryDate || '',
     secondSignatureDate: secondaryDate || '',

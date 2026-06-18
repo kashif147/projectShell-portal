@@ -20,8 +20,8 @@ export const createPortalPaymentForm = data => {
   return profile_request.post(`${PORTAL_PAYMENT_FORMS_BASE}/`, data);
 };
 
-export const updatePortalPaymentForm = data => {
-  return profile_request.patch(`${PORTAL_PAYMENT_FORMS_BASE}/`, data);
+export const updatePortalPaymentForm = (id, data) => {
+  return profile_request.patch(`${PORTAL_PAYMENT_FORMS_BASE}/${id}`, data);
 };
 
 export const submitPortalPaymentForm = (id) => {

@@ -616,7 +616,7 @@ const Dashboard = () => {
     const isUndergraduateStudent =
       categoryData?.code === 'undergraduate_student';
 
-    if (currentStep === 3 && !isUndergraduateStudent) {
+    if ((isMember || currentStep === 3) && !isUndergraduateStudent) {
       setIsModalVisible(true);
     }
   };
