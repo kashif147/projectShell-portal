@@ -9,7 +9,7 @@ import {
   CardCvcElement,
 } from '@stripe/react-stripe-js';
 import Button from '../common/Button';
-import { useSelector } from 'react-redux';
+import { resolvePaymentIntentOutcome } from '../../helpers/paymentIntent.helper';
 import Spinner from '../common/Spinner';
 
 const SubscriptionModal = ({
@@ -168,9 +168,11 @@ const SubscriptionModal = ({
 
       console.log('Payment Confirmation Response:', paymentIntent);
 
-      const authorisedStatuses = ['requires_capture', 'succeeded'];
-      // Check if payment was authorised/captured
-      if (authorisedStatuses.includes(paymentIntent?.status)) {
+      const outcome = resolvePaymentIntentOutcome(paymentIntent?.status, {
+        isApplicationPayment: true,
+      });
+
+      if (outcome.success) {
         onSuccess?.({
           paymentMethod: 'card',
           total: getDisplayPrice(),
@@ -179,11 +181,13 @@ const SubscriptionModal = ({
             email: userEmail,
           },
           customPrice,
-          paymentIntent: paymentIntent,
+          paymentIntent,
+          paymentOutcome: outcome,
         });
-      } else {
-        throw new Error('Payment was not authorised');
+        return;
       }
+
+      throw new Error(outcome.message);
     } catch (err) {
       console.error('Payment Error:', err);
       onFailure?.(err.message || 'Payment failed.');

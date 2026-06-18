@@ -560,7 +560,10 @@ const ProfessionalDetails = ({
               !formData?.nursingAdaptationProgramme ||
               !['yes', 'no'].includes(formData.nursingAdaptationProgramme)
             }
-            required={formData?.nursingAdaptationProgramme === 'no'}
+            required={
+              formData?.nursingAdaptationProgramme === 'no' &&
+              !isCategoryType('undergraduate_student')
+            }
             label={ 'NMBI No / An Board Altranais Number'}
             name="nmbiNumber"
             value={formData?.nmbiNumber || ''}

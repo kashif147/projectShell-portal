@@ -33,6 +33,7 @@ import {
   isResumablePortalApplication,
   resolveApplicationFormStep,
 } from '../helpers/applicationPayload.helper';
+import { APPLICATION_PAYMENT_AUTHORISED_MESSAGE } from '../helpers/paymentIntent.helper';
 import SubscriptionWrapper from '../components/modals/SubscriptionWrapper';
 
 const stripePromise = loadStripe(
@@ -88,6 +89,7 @@ const ApplicationForm = () => {
   const [statusModal, setStatusModal] = useState({
     open: false,
     status: 'success',
+    title: '',
     message: '',
   });
   const [showValidation, setShowValidation] = useState(false);
@@ -781,7 +783,9 @@ const ApplicationForm = () => {
           setStatusModal({
             open: true,
             status: 'success',
-            message: 'Application submitted successfully!',
+            title: 'Application submitted',
+            message:
+              'Your application has been submitted successfully and is now pending review.',
           });
           setIsNextLoading(false);
         } else {
@@ -1038,7 +1042,12 @@ const ApplicationForm = () => {
         if (nursingAdaptationProgramme === 'yes' && !nurseType) {
           return false;
         }
-        if (nursingAdaptationProgramme === 'no' && !String(nmbiNumber || '').trim()) {
+        if (
+          nursingAdaptationProgramme === 'no' &&
+          membershipCategory !==
+            CATEGORY_DISPLAY_NAME_BY_TYPE.undergraduate_student &&
+          !String(nmbiNumber || '').trim()
+        ) {
           return false;
         }
         break;
@@ -1178,6 +1187,8 @@ const ApplicationForm = () => {
         }
         if (
           nursingAdaptationProgramme === 'no' &&
+          membershipCategory !==
+            CATEGORY_DISPLAY_NAME_BY_TYPE.undergraduate_student &&
           !String(nmbiNumber || '').trim()
         ) {
           missing.push('NMBI number');
@@ -1233,17 +1244,17 @@ const ApplicationForm = () => {
   const handleSubscriptionSuccess = async paymentData => {
     console.log('Payment Success Data:', paymentData);
 
-    // Close the payment modal
     setIsModalVisible(false);
 
-    // Show success status modal
+    const outcome = paymentData?.paymentOutcome;
     setStatusModal({
       open: true,
       status: 'success',
-      message: 'Payment completed successfully!',
+      title: outcome?.title || 'Payment authorised',
+      message:
+        outcome?.message || APPLICATION_PAYMENT_AUTHORISED_MESSAGE,
     });
 
-    // Reset form state
     setIsSubmitted(true);
   };
 
@@ -1427,6 +1438,7 @@ const ApplicationForm = () => {
       <PaymentStatusModal
         open={statusModal.open}
         status={statusModal.status}
+        title={statusModal.title}
         subTitle={statusModal.message}
         onClose={() => setStatusModal(prev => ({ ...prev, open: false }))}
         onPrimary={() => {
