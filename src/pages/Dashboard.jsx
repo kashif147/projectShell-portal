@@ -32,6 +32,7 @@ import { getAccountNetBalanceRequest } from '../api/account.api';
 import { useMemberRole } from '../hooks/useMemberRole';
 import { dummyData } from '../services/dummyData';
 import { getSubscriptionRequest } from '../api/subscription.api';
+import { REJECTED_APPLICATION_REAPPLY_MESSAGE } from '../helpers/paymentIntent.helper';
 
 const stripePromise = loadStripe(
   'pk_test_51SBAG4FTlZb0wcbr19eI8nC5u62DfuaUWRVS51VTERBocxSM9JSEs4ubrW57hYTCAHK9d6jrarrT4SAViKFMqKjT00TrEr3PNV',
@@ -61,7 +62,8 @@ const Dashboard = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [statusModal, setStatusModal] = useState({
     open: false,
-    status: 'success',  
+    status: 'success',
+    title: '',
     message: '',
   });
   const [isApplicationSubmitted, setIsApplicationSubmitted] = useState(false);
@@ -590,10 +592,12 @@ const Dashboard = () => {
   const handleSubscriptionSuccess = paymentData => {
     console.log('Payment Success from Dashboard:', paymentData);
     setIsModalVisible(false);
+    const outcome = paymentData?.paymentOutcome;
     setStatusModal({
       open: true,
       status: 'success',
-      message: 'Payment completed successfully!',
+      title: outcome?.title || 'Payment successful',
+      message: outcome?.message || 'Your payment has been completed successfully.',
     });
   };
 
@@ -941,7 +945,7 @@ const Dashboard = () => {
               {isApplicationSubmitted
                 ? 'Your profile is complete! Well done.'
                 : applicationStatus === 'rejected'
-                ? 'Your application was rejected. Please re-apply to continue.'
+                ? REJECTED_APPLICATION_REAPPLY_MESSAGE
                 : 'Complete your profile to get the most out of your membership.'}
             </p>
             <div className="mb-2.5 sm:mb-4">
@@ -1004,6 +1008,7 @@ const Dashboard = () => {
       <PaymentStatusModal
         open={statusModal.open}
         status={statusModal.status}
+        title={statusModal.title}
         subTitle={statusModal.message}
         onClose={() => setStatusModal(prev => ({ ...prev, open: false }))}
         onPrimary={() => {

@@ -20,6 +20,7 @@ import { useApplication } from '../../contexts/applicationContext';
 import { useLookup } from '../../contexts/lookupContext';
 import Spinner from '../common/Spinner';
 import { useProfile } from '../../contexts/profileContext';
+import { resolvePaymentIntentOutcome } from '../../helpers/paymentIntent.helper';
 
 const DashboardPaymentModal = ({
   isVisible,
@@ -225,9 +226,11 @@ const DashboardPaymentModal = ({
 
       console.log('Payment Confirmation Response:', paymentIntent);
 
-      const authorisedStatuses = ['requires_capture', 'succeeded'];
-      // Step 4: Check if payment was authorised/captured
-      if (authorisedStatuses.includes(paymentIntent?.status)) {
+      const outcome = resolvePaymentIntentOutcome(paymentIntent?.status, {
+        isApplicationPayment: false,
+      });
+
+      if (outcome.success) {
         onSuccess?.({
           paymentMethod: 'card',
           total: editablePrice,
@@ -236,11 +239,13 @@ const DashboardPaymentModal = ({
             email: userEmail,
           },
           customPrice: editablePrice,
-          paymentIntent: paymentIntent,
+          paymentIntent,
+          paymentOutcome: outcome,
         });
-      } else {
-        throw new Error('Payment was not authorised');
+        return;
       }
+
+      throw new Error(outcome.message);
     } catch (err) {
       console.error('Payment Error:', err);
       onFailure?.(err.message || 'Payment failed.');

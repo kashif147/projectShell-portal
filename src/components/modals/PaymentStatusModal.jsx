@@ -12,11 +12,11 @@ const PaymentStatusModal = ({
 }) => {
   const isSuccess = status === 'success';
 
-  const resolvedTitle = title || (isSuccess ? 'Thanks for membership' : 'Payment failed');
+  const resolvedTitle = title || (isSuccess ? 'Payment update' : 'Payment failed');
   const resolvedSubTitle =
     subTitle ||
     (isSuccess
-      ? 'You have just completed your payment. The seller will reach out to you as soon as possible.'
+      ? 'Your payment status has been updated.'
       : 'We could not complete your payment. Please try again or use a different method.');
   const resolvedPrimaryText = primaryText || (isSuccess ? 'Go to home' : 'Back to home');
 

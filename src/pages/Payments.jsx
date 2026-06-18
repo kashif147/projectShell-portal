@@ -8,6 +8,7 @@ import { useLookup } from '../contexts/lookupContext';
 import { useProfile } from '../contexts/profileContext';
 import { getAccountStatementRequest } from '../api/account.api';
 import { formatToDDMMYYYY } from '../helpers/date.helper';
+import { getSettlementStatusMemberLabel } from '../helpers/paymentIntent.helper';
 
 const Payments = () => {
   const { subscriptionDetail, personalDetail, professionalDetail } =
@@ -97,13 +98,7 @@ const Payments = () => {
       const mappedTxns = txns.map((txn, index) => {
         const amountInCents = getTxnAmountInCents(txn);
         const rawStatus = txn.settlement?.status || txn.status || 'PENDING';
-        const upperStatus = String(rawStatus).toUpperCase();
-        const status =
-          upperStatus === 'SETTLED' || upperStatus === 'PAID'
-            ? 'Paid'
-            : upperStatus === 'PENDING'
-              ? 'Pending'
-              : rawStatus;
+        const status = getSettlementStatusMemberLabel(rawStatus);
 
         return {
           key: txn._id || txn.id || txn.key || `txn-${index}`,

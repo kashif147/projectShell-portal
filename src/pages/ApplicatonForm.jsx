@@ -33,7 +33,7 @@ import {
   isResumablePortalApplication,
   resolveApplicationFormStep,
 } from '../helpers/applicationPayload.helper';
-import SubscriptionWrapper from '../components/modals/SubscriptionWrapper';
+import { APPLICATION_PAYMENT_AUTHORISED_MESSAGE } from '../helpers/paymentIntent.helper';
 
 const stripePromise = loadStripe(
   'pk_test_51SBAG4FTlZb0wcbr19eI8nC5u62DfuaUWRVS51VTERBocxSM9JSEs4ubrW57hYTCAHK9d6jrarrT4SAViKFMqKjT00TrEr3PNV',
@@ -88,6 +88,7 @@ const ApplicationForm = () => {
   const [statusModal, setStatusModal] = useState({
     open: false,
     status: 'success',
+    title: '',
     message: '',
   });
   const [showValidation, setShowValidation] = useState(false);
@@ -781,7 +782,9 @@ const ApplicationForm = () => {
           setStatusModal({
             open: true,
             status: 'success',
-            message: 'Application submitted successfully!',
+            title: 'Application submitted',
+            message:
+              'Your application has been submitted successfully and is now pending review.',
           });
           setIsNextLoading(false);
         } else {
@@ -1240,17 +1243,17 @@ const ApplicationForm = () => {
   const handleSubscriptionSuccess = async paymentData => {
     console.log('Payment Success Data:', paymentData);
 
-    // Close the payment modal
     setIsModalVisible(false);
 
-    // Show success status modal
+    const outcome = paymentData?.paymentOutcome;
     setStatusModal({
       open: true,
       status: 'success',
-      message: 'Payment completed successfully!',
+      title: outcome?.title || 'Payment authorised',
+      message:
+        outcome?.message || APPLICATION_PAYMENT_AUTHORISED_MESSAGE,
     });
 
-    // Reset form state
     setIsSubmitted(true);
   };
 
@@ -1434,6 +1437,7 @@ const ApplicationForm = () => {
       <PaymentStatusModal
         open={statusModal.open}
         status={statusModal.status}
+        title={statusModal.title}
         subTitle={statusModal.message}
         onClose={() => setStatusModal(prev => ({ ...prev, open: false }))}
         onPrimary={() => {

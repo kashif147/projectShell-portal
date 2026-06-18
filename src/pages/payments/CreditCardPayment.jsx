@@ -15,6 +15,7 @@ import { useApplication } from '../../contexts/applicationContext';
 import { useNavigate } from 'react-router-dom';
 import Spinner from '../../components/common/Spinner';
 import { PaymentStatusModal } from '../../components/modals';
+import { resolvePaymentIntentOutcome } from '../../helpers/paymentIntent.helper';
 
 const CreditCardPayment = () => {
   const [form] = Form.useForm();
@@ -34,6 +35,7 @@ const CreditCardPayment = () => {
   const [statusModal, setStatusModal] = useState({
     open: false,
     status: 'success',
+    title: '',
     message: '',
   });
 
@@ -222,17 +224,21 @@ const CreditCardPayment = () => {
 
       console.log('Payment Confirmation Response:', paymentIntent);
 
-      const authorisedStatuses = ['requires_capture', 'succeeded'];
-      // Step 4: Check if payment was authorised/captured
-      if (authorisedStatuses.includes(paymentIntent?.status)) {
+      const outcome = resolvePaymentIntentOutcome(paymentIntent?.status, {
+        isApplicationPayment: false,
+      });
+
+      if (outcome.success) {
         setStatusModal({
           open: true,
           status: 'success',
-          message: 'Payment authorised successfully!',
+          title: outcome.title,
+          message: outcome.message,
         });
-      } else {
-        throw new Error('Payment was not authorised');
+        return;
       }
+
+      throw new Error(outcome.message);
     } catch (err) {
       console.error('Payment Error:', err);
       setStatusModal({
@@ -694,6 +700,7 @@ const CreditCardPayment = () => {
       <PaymentStatusModal
         open={statusModal.open}
         status={statusModal.status}
+        title={statusModal.title}
         subTitle={statusModal.message}
         onClose={() => setStatusModal(prev => ({ ...prev, open: false }))}
         onPrimary={() => {
