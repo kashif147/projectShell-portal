@@ -34,6 +34,7 @@ import {
   resolveApplicationFormStep,
 } from '../helpers/applicationPayload.helper';
 import { APPLICATION_PAYMENT_AUTHORISED_MESSAGE } from '../helpers/paymentIntent.helper';
+import SubscriptionWrapper from '../components/modals/SubscriptionWrapper';
 
 const stripePromise = loadStripe(
   'pk_test_51SBAG4FTlZb0wcbr19eI8nC5u62DfuaUWRVS51VTERBocxSM9JSEs4ubrW57hYTCAHK9d6jrarrT4SAViKFMqKjT00TrEr3PNV',
