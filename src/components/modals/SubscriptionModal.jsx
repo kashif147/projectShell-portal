@@ -11,6 +11,7 @@ import {
 import Button from '../common/Button';
 import { resolvePaymentIntentOutcome } from '../../helpers/paymentIntent.helper';
 import Spinner from '../common/Spinner';
+import { useSelector } from 'react-redux';
 
 const SubscriptionModal = ({
   isVisible,
