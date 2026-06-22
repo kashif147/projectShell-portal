@@ -11,6 +11,7 @@ import jsPDF from 'jspdf';
 import { useSelector } from 'react-redux';
 import { useApplication } from '../../contexts/applicationContext';
 import { useProfile } from '../../contexts/profileContext';
+import { useLookup } from '../../contexts/lookupContext';
 import { fetchCategoryByCategoryId } from '../../api/category.api';
 import dayjs from 'dayjs';
 import PaymentFormSubheader from './PaymentFormSubheader';
@@ -30,6 +31,7 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
   const { user } = useSelector(state => state.auth);
   const { subscriptionDetail } = useApplication();
   const { profileDetail } = useProfile();
+  const { categoryLookups } = useLookup();
   const printRef = useRef(null);
   const ibanInputRef = useRef(null);
   const membershipNo =
@@ -55,6 +57,7 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
     message: '',
     frequency: 'Monthly',
     amount: '',
+    annualMembershipFee: '',
     startDate: '',
     numberOfPayments: 'indefinite',
     specificNumberOfPayments: '',
@@ -76,20 +79,86 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
     portalForm,
   ]);
 
+  const firstPositiveNumber = (...values) => {
+    for (const value of values) {
+      const numberValue = Number(value);
+      if (Number.isFinite(numberValue) && numberValue > 0) {
+        return numberValue;
+      }
+    }
+    return null;
+  };
+
+  const resolvedAnnualMembershipFee = useMemo(() => {
+    const subscription =
+      formSource?.subscription ||
+      subscriptionDetail?.subscriptionDetails ||
+      subscriptionDetail ||
+      {};
+    const standingOrder = formSource?.standingOrder || formSource || {};
+
+    return firstPositiveNumber(
+      categoryData?.currentPricing?.price
+        ? categoryData.currentPricing.price / 100
+        : null,
+      standingOrder?.annualMembershipFeeEur,
+      formSource?.annualMembershipFeeEur,
+      subscription?.membershipFeeAnnualEur,
+      subscription?.annualMembershipFee,
+      subscription?.membershipFee,
+      subscription?.financialDetails?.membershipFee,
+    );
+  }, [categoryData, formSource, subscriptionDetail]);
+
+  const resolveMembershipCategoryId = (categoryNameOrId) => {
+    if (!categoryNameOrId) return null;
+    const rawValue = String(categoryNameOrId).trim();
+    const isObjectId = value => /^[0-9a-fA-F]{24}$/.test(value);
+    if (isObjectId(rawValue)) return rawValue;
+
+    const normalize = value =>
+      String(value || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[_-]+/g, ' ')
+        .replace(/\s+/g, ' ');
+
+    const normalizedInput = normalize(rawValue);
+    const matched = (categoryLookups || []).find(item => {
+      const label =
+        item?.name ||
+        item?.DisplayName ||
+        item?.label ||
+        item?.lookup?.DisplayName ||
+        item?.lookup?.lookupname ||
+        item?.productType?.name ||
+        item?.code;
+      return normalize(label) === normalizedInput;
+    });
+
+    return matched?._id || matched?.id || null;
+  };
+
   // Fetch category data
   useEffect(() => {
     const fetchCategory = async () => {
       if (!membershipCategory) return;
+      const categoryId = resolveMembershipCategoryId(membershipCategory);
+      if (!categoryId) {
+        setCategoryData(null);
+        return;
+      }
+
       try {
-        const res = await fetchCategoryByCategoryId(membershipCategory);
+        const res = await fetchCategoryByCategoryId(categoryId);
         const payload = res?.data?.data || res?.data;
         setCategoryData(payload);
 
         if (payload?.currentPricing?.price) {
-          const priceInEuros = payload.currentPricing.price / 100;
+          const annualFee = payload.currentPricing.price / 100;
           setFormState(prev => ({
             ...prev,
-            amount: priceInEuros.toFixed(2),
+            annualMembershipFee: annualFee.toFixed(2),
             accountName:
               user?.userFirstName && user?.userLastName
                 ? `${user.userFirstName} ${user.userLastName}`
@@ -101,7 +170,18 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
       }
     };
     fetchCategory();
-  }, [membershipCategory, user]);
+  }, [categoryLookups, membershipCategory, user]);
+
+  useEffect(() => {
+    if (!resolvedAnnualMembershipFee) return;
+    const nextAnnualFee = resolvedAnnualMembershipFee.toFixed(2);
+    if (nextAnnualFee !== formState.annualMembershipFee) {
+      setFormState(prev => ({
+        ...prev,
+        annualMembershipFee: nextAnnualFee,
+      }));
+    }
+  }, [resolvedAnnualMembershipFee, formState.annualMembershipFee]);
 
   useEffect(() => {
     if (portalFormLoading || hydratedFromPortal || !portalForm) {
@@ -132,10 +212,44 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
 
   // Frequency options
   const frequencyOptions = [
+    { value: 'Weekly', label: 'Weekly' },
+    { value: 'Fortnightly', label: 'Fortnightly' },
     { value: 'Monthly', label: 'Monthly' },
     { value: 'Quarterly', label: 'Quarterly' },
     { value: 'Annually', label: 'Annually' },
   ];
+
+  const calculateInstallmentAmount = (annualFee, frequency) => {
+    const fee = Number(annualFee);
+    if (!Number.isFinite(fee) || fee <= 0) return '';
+
+    switch (frequency) {
+      case 'Weekly':
+        return (fee / 52).toFixed(2);
+      case 'Fortnightly':
+        return (fee / 26).toFixed(2);
+      case 'Quarterly':
+        return ((fee / 12) * 3).toFixed(2);
+      case 'Annually':
+        return fee.toFixed(2);
+      case 'Monthly':
+      default:
+        return (fee / 12).toFixed(2);
+    }
+  };
+
+  useEffect(() => {
+    const amount = calculateInstallmentAmount(
+      formState.annualMembershipFee,
+      formState.frequency,
+    );
+    if (amount !== formState.amount) {
+      setFormState(prev => ({
+        ...prev,
+        amount,
+      }));
+    }
+  }, [formState.annualMembershipFee, formState.frequency, formState.amount]);
 
   // Beneficiary details from prefill/portal form (no hardcoded org values)
   const beneficiaryDetails = useMemo(() => {
@@ -320,7 +434,7 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
     }));
   };
 
-  const validateForm = () => {
+  const validateForm = ({ updateIbanError = false } = {}) => {
     if (!formState.bankName) return false;
     if (!formState.branchAddress) return false;
     if (!formState.authorization) return false;
@@ -331,10 +445,14 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
     // Validate IBAN format
     const ibanValidation = validateIBAN(formState.iban);
     if (!ibanValidation.isValid) {
-      setIbanError(ibanValidation.message);
+      if (updateIbanError) {
+        setIbanError(ibanValidation.message);
+      }
       return false;
     }
-    setIbanError('');
+    if (updateIbanError) {
+      setIbanError('');
+    }
 
     if (!formState.frequency) return false;
     if (!formState.amount) return false;
@@ -351,7 +469,7 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
 
   const handleSaveOrder = async () => {
     setShowValidation(true);
-    if (!validateForm()) {
+    if (!validateForm({ updateIbanError: true })) {
       const firstErrorField = document.querySelector('.border-red-500');
       if (firstErrorField) {
         firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -916,10 +1034,10 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
                   name="amount"
                   type="number"
                   required
+                  readOnly
                   value={formState.amount}
-                  onChange={handleInputChange}
                   showValidation={showValidation}
-                  placeholder="€ 50.00"
+                  placeholder="Calculated from membership fee"
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

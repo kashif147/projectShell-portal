@@ -63,15 +63,21 @@ const usePortalPaymentForm = (formType, { seedPortalForm = null } = {}) => {
   const persistPortalForm = useCallback(
     async ({ createPayload, patchPayload }) => {
       const hasExisting = portalFormHasExistingRecord(portalForm, formType);
+      const existingFormId = getPortalFormId(portalForm);
       let usedPatch = hasExisting;
 
       let response = hasExisting
-        ? await updatePortalPaymentForm(patchPayload)
+        ? await updatePortalPaymentForm(existingFormId, patchPayload)
         : await createPortalPaymentForm(createPayload);
 
-      if (!hasExisting && !isPaymentApiSuccess(response) && shouldRetryCreateAsPatch(response)) {
+      if (
+        !hasExisting &&
+        existingFormId &&
+        !isPaymentApiSuccess(response) &&
+        shouldRetryCreateAsPatch(response)
+      ) {
         usedPatch = true;
-        response = await updatePortalPaymentForm(patchPayload);
+        response = await updatePortalPaymentForm(existingFormId, patchPayload);
       }
 
       if (!isPaymentApiSuccess(response)) {
