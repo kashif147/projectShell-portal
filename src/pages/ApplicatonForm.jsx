@@ -1024,13 +1024,17 @@ const ApplicationForm = () => {
           graduationDate,
           pensionNo,
         } = formData.professionalDetails || {};
-        if (!grade || !workLocation || !membershipCategory) {
+        const isUndergraduateStudent =
+          membershipCategory ===
+          CATEGORY_DISPLAY_NAME_BY_TYPE.undergraduate_student;
+
+        if (!grade || !membershipCategory) {
           return false;
         }
-        if (
-          membershipCategory ===
-          CATEGORY_DISPLAY_NAME_BY_TYPE.undergraduate_student
-        ) {
+        if (!isUndergraduateStudent && !workLocation) {
+          return false;
+        }
+        if (isUndergraduateStudent) {
           if (!discipline || !studyLocation || !graduationDate) return false;
         }
         if (
@@ -1164,13 +1168,16 @@ const ApplicationForm = () => {
           pensionNo,
         } = formData.professionalDetails || {};
 
-        if (!membershipCategory) missing.push('Membership category');
-        if (!workLocation) missing.push('Work location');
-        if (!grade) missing.push('Grade');
-        if (
+        const isUndergraduateStudent =
           membershipCategory ===
-          CATEGORY_DISPLAY_NAME_BY_TYPE.undergraduate_student
-        ) {
+          CATEGORY_DISPLAY_NAME_BY_TYPE.undergraduate_student;
+
+        if (!membershipCategory) missing.push('Membership category');
+        if (!isUndergraduateStudent && !workLocation) {
+          missing.push('Work location');
+        }
+        if (!grade) missing.push('Grade');
+        if (isUndergraduateStudent) {
           if (!discipline) missing.push('Discipline');
           if (!studyLocation) missing.push('Study location');
           if (!startDate) missing.push('Start date');

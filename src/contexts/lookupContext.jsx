@@ -100,7 +100,9 @@ const LookupContext = createContext();
 
 export const LookupProvider = ({ children }) => {
   const { fetchLocal, saveLocal } = useLocalStorage();
-  const [lookups, setLookups] = React.useState([]);
+  const [lookups, setLookups] = React.useState(() =>
+    readStoredLookupArray('allLookups'),
+  );
   const [cityLookups, setCityLookups] = React.useState(() =>
     readStoredLookupArray('cityLookups'),
   );
@@ -160,6 +162,7 @@ export const LookupProvider = ({ children }) => {
         studyLocationLookupsData,
         disciplineLookupsData,
         youthForumLookupsData,
+        allLookupsData,
       ] = await Promise.all([
         fetchLocal('genderLookups'),
         fetchLocal('cityLookups'),
@@ -174,6 +177,7 @@ export const LookupProvider = ({ children }) => {
         fetchLocal('studyLocationLookups'),
         fetchLocal('disciplineLookups'),
         fetchLocal('youthForumLookups'),
+        fetchLocal('allLookups'),
       ]);
 
       const sanitizeData = (data, key) => {
@@ -199,6 +203,7 @@ export const LookupProvider = ({ children }) => {
       const sanitizedStudyLocationLookups = sanitizeData(studyLocationLookupsData, 'studyLocationLookups');
       const sanitizedDisciplineLookups = sanitizeData(disciplineLookupsData, 'disciplineLookups');
       const sanitizedYouthForumLookups = sanitizeData(youthForumLookupsData, 'youthForumLookups');
+      const sanitizedAllLookups = sanitizeData(allLookupsData, 'allLookups');
 
       setGenderLookups(sanitizedGenderLookups);
       setCityLookups(sanitizedCityLookups);
@@ -213,9 +218,11 @@ export const LookupProvider = ({ children }) => {
       setStudyLocationLookups(sanitizedStudyLocationLookups);
       setDisciplineLookups(sanitizedDisciplineLookups);
       setYouthForumLookups(sanitizedYouthForumLookups);
+      setLookups(sanitizedAllLookups);
     } catch (error) {
       console.error('❌ Error loading lookups from storage:', error);
       setError(error.message);
+      setLookups([]);
       setGenderLookups([]);
       setCityLookups([]);
       setTitleLookups([]);
@@ -248,9 +255,11 @@ export const LookupProvider = ({ children }) => {
         categoryData = [],
         disciplineData = [],
         youthForumData = [],
+        allLookupsData = [],
       } = lookupData;
 
       const lookupKeys = [
+        { key: 'allLookups', data: allLookupsData },
         { key: 'paymentLookups', data: paymentData },
         { key: 'genderLookups', data: genderData },
         { key: 'cityLookups', data: cityData },
@@ -422,8 +431,10 @@ export const LookupProvider = ({ children }) => {
         setCategoryLookups(categoryData);
         setDisciplineLookups(disciplineData);
         setYouthForumLookups(youthForumData);
+        setLookups(result);
 
         saveLookupsToStorageAndState({
+          allLookupsData: result,
           genderData,
           cityData,
           titleData,
@@ -614,6 +625,7 @@ export const fetchAllLookupsOnLogin = async () => {
       const disciplineData = result.filter(item => item.lookuptypeId?.lookuptype === 'Discipline');
       const youthForumData = result.filter(item => item.lookuptypeId?.lookuptype === 'Youth Forum');
       lookupKeys.push(
+        { key: 'allLookups', data: result },
         { key: 'paymentLookups', data: paymentData },
         { key: 'genderLookups', data: genderData },
         { key: 'cityLookups', data: cityData },

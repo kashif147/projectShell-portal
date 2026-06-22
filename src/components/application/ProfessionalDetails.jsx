@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { DatePicker } from '../ui/DatePicker';
 import { Checkbox } from '../ui/Checkbox';
 import { Radio } from '../ui/Radio';
 import { useLookup } from '../../contexts/lookupContext';
+import { findWorkLocationLookupItem } from '../../helpers/subscriptionPricing.helper';
+import { resolveBranchRegionFromStudyLocation } from '../../helpers/lookupHierarchy.helper';
 import MembershipCategoryConfirmationModal from '../modals/MembershipCategoryConfirmationModal';
 
 const nurseTypeOptions = [
@@ -83,6 +85,63 @@ const isReducedRateMembershipCategory = categoryLabel => {
   return false;
 };
 
+const isUndergraduateStudentCategory = membershipCategory =>
+  membershipCategory === CATEGORY_DISPLAY_NAME_BY_TYPE.undergraduate_student;
+
+const getBranchRegionFromLookupItem = item => ({
+  branch: item?.branch?.DisplayName || item?.branch?.lookupname || '',
+  region: item?.region?.DisplayName || item?.region?.lookupname || '',
+});
+
+const getUndergraduateBranchRegion = (
+  { workLocation, studyLocation },
+  workLocationLookups,
+  studyLocationOptions,
+  rawLookups,
+) => {
+  if (workLocation === 'other') {
+    return { branch: '', region: '' };
+  }
+
+  if (workLocation) {
+    return getBranchRegionFromLookupItem(
+      findWorkLocationLookupItem(workLocation, workLocationLookups),
+    );
+  }
+
+  if (studyLocation) {
+    return resolveBranchRegionFromStudyLocation(
+      studyLocation,
+      studyLocationOptions,
+      rawLookups,
+      workLocationLookups,
+    );
+  }
+
+  return { branch: '', region: '' };
+};
+
+const applyUndergraduateBranchRegion = (
+  draft,
+  workLocationLookups,
+  studyLocationOptions,
+  rawLookups,
+) => {
+  if (!isUndergraduateStudentCategory(draft.membershipCategory)) {
+    return draft;
+  }
+
+  return {
+    ...draft,
+    ...getUndergraduateBranchRegion(
+      draft,
+      workLocationLookups,
+      studyLocationOptions,
+      rawLookups,
+    ),
+  };
+};
+
 const ProfessionalDetails = ({
   formData,
   onFormDataChange,
@@ -94,6 +153,7 @@ const ProfessionalDetails = ({
     gradeLookups,
     studyLocationLookups,
     disciplineLookups,
+    lookups,
   } = useLookup();
 
   const [categoryConfirmOpen, setCategoryConfirmOpen] = useState(false);
@@ -124,12 +184,23 @@ const ProfessionalDetails = ({
     { value: 'other', label: 'Other' }, // Add "Other" option at the end
   ];
 
-  const studyLocationOptions = (studyLocationLookups || [])
-    .map(item => {
-      const name = item?.DisplayName || item?.lookupname || '';
-      return { value: name, label: name };
-    })
-    .filter(option => option.value); // Filter out empty values
+  const rawLookups = useMemo(() => {
+    if (lookups?.length) {
+      return lookups;
+    }
+    return studyLocationLookups || [];
+  }, [lookups, studyLocationLookups]);
+
+  const studyLocationOptions = useMemo(
+    () =>
+      (studyLocationLookups || [])
+        .map(item => {
+          const name = item?.DisplayName || item?.lookupname || '';
+          return { value: name, label: name, key: item?._id || item?.id };
+        })
+        .filter(option => option.value),
+    [studyLocationLookups],
+  );
 
   const disciplineOptions = [
     ...(disciplineLookups || [])
@@ -162,10 +233,16 @@ const ProfessionalDetails = ({
     .map(name => ({ value: name, label: name }));
 
   const applyMembershipCategory = categoryValue => {
-    onFormDataChange({
-      ...formData,
-      membershipCategory: categoryValue,
-    });
+    const nextFormData = applyUndergraduateBranchRegion(
+      {
+        ...formData,
+        membershipCategory: categoryValue,
+      },
+      workLocationLookups,
+      studyLocationOptions,
+      rawLookups,
+    );
+    onFormDataChange(nextFormData);
   };
 
   const handleMembershipCategoryChange = value => {
@@ -208,19 +285,88 @@ const ProfessionalDetails = ({
     };
 
     if (name === 'workLocation') {
-      const selected = (workLocationLookups || []).find(
-        i => (i?.lookup?.DisplayName || i?.lookup?.lookupname) === value,
-      );
-      if (selected) {
-        newFormData.branch =
-          selected?.branch?.DisplayName || selected?.branch?.lookupname || '';
-        newFormData.region =
-          selected?.region?.DisplayName || selected?.region?.lookupname || '';
+      if (value === 'other') {
+        newFormData.branch = '';
+        newFormData.region = '';
+      } else if (value) {
+        const selected = findWorkLocationLookupItem(value, workLocationLookups);
+        Object.assign(newFormData, getBranchRegionFromLookupItem(selected));
+      } else if (isUndergraduateStudentCategory(newFormData.membershipCategory)) {
+        Object.assign(
+          newFormData,
+          getUndergraduateBranchRegion(
+            newFormData,
+            workLocationLookups,
+            studyLocationOptions,
+            rawLookups,
+          ),
+        );
+      } else {
+        newFormData.branch = '';
+        newFormData.region = '';
+      }
+    }
+
+    if (name === 'studyLocation') {
+      const hasWorkLocation =
+        newFormData.workLocation && newFormData.workLocation !== 'other';
+
+      if (
+        isUndergraduateStudentCategory(newFormData.membershipCategory) &&
+        !hasWorkLocation
+      ) {
+        Object.assign(
+          newFormData,
+          getUndergraduateBranchRegion(
+            newFormData,
+            workLocationLookups,
+            studyLocationOptions,
+            rawLookups,
+          ),
+        );
       }
     }
 
     onFormDataChange(newFormData);
   };
+
+  useEffect(() => {
+    if (!isUndergraduateStudentCategory(formData?.membershipCategory)) {
+      return;
+    }
+
+    const hasWorkLocation =
+      formData?.workLocation && formData.workLocation !== 'other';
+    if (hasWorkLocation || !formData?.studyLocation) {
+      return;
+    }
+
+    const { branch, region } = getUndergraduateBranchRegion(
+      formData,
+      workLocationLookups,
+      studyLocationOptions,
+      rawLookups,
+    );
+
+    if (branch === formData.branch && region === formData.region) {
+      return;
+    }
+
+    onFormDataChange({
+      ...formData,
+      branch,
+      region,
+    });
+  }, [
+    formData?.membershipCategory,
+    formData?.studyLocation,
+    formData?.workLocation,
+    formData?.branch,
+    formData?.region,
+    rawLookups,
+    studyLocationOptions,
+    workLocationLookups,
+  ]);
 
   const handleNurseTypeChange = e => {
     onFormDataChange({

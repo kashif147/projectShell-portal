@@ -144,6 +144,7 @@ export const signOut = navigate => {
         'studyLocationLookups',
         'disciplineLookups',
         'workLocationLookups',
+        'allLookups',
         'countries',
         'categories',
       ];
