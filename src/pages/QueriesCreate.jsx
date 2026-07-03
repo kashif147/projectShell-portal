@@ -25,10 +25,30 @@ const FieldGroup = ({ children, className = '' }) => (
   <div className={`mb-4 ${className}`}>{children}</div>
 );
 
+const selectFilterOption = (input, option) =>
+  String(option?.label || option?.children || '')
+    .toLowerCase()
+    .includes(input.toLowerCase());
+
 const QueriesCreate = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
+
+  const renderClearableDropdown = fieldName => menu => (
+    <>
+      <button
+        type="button"
+        className="w-full px-3 py-2 text-left text-sm text-gray-600 hover:bg-gray-50 disabled:text-gray-300 disabled:hover:bg-white"
+        disabled={!form.getFieldValue(fieldName)}
+        onMouseDown={event => event.preventDefault()}
+        onClick={() => form.setFieldValue(fieldName, undefined)}>
+        Clear selection
+      </button>
+      <div className="border-t border-gray-100" />
+      {menu}
+    </>
+  );
 
   // Same logic as mobile: Save Draft → navigate back, no validation
   const handleSaveDraft = () => {
@@ -132,6 +152,11 @@ const QueriesCreate = () => {
               <Select
                 placeholder="Select Category"
                 size="large"
+                showSearch
+                allowClear
+                optionFilterProp="label"
+                filterOption={selectFilterOption}
+                popupRender={renderClearableDropdown('category')}
                 options={CASE_CATEGORY_OPTIONS}
               />
             </Form.Item>
@@ -149,6 +174,11 @@ const QueriesCreate = () => {
               <Select
                 placeholder="Select Lead Counsel"
                 size="large"
+                showSearch
+                allowClear
+                optionFilterProp="label"
+                filterOption={selectFilterOption}
+                popupRender={renderClearableDropdown('assignedLead')}
                 options={AVAILABLE_STAFF.map((s) => ({
                   value: s.id,
                   label: s.name,
