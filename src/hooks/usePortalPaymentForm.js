@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   createPortalPaymentForm,
+  getMyPortalPaymentForms,
   getPortalPaymentForm,
   submitPortalPaymentForm,
   updatePortalPaymentForm,
   uploadPortalPaymentSignature,
 } from '../api/paymentForms.api';
 import {
+  extractMyPortalPaymentForms,
   extractPortalPaymentForm,
   extractPortalFormId,
+  getLatestPortalPaymentFormByType,
   getPaymentApiErrorMessage,
   getPortalFormId,
   isPaymentApiSuccess,
@@ -33,6 +36,16 @@ const usePortalPaymentForm = (formType, { seedPortalForm = null } = {}) => {
       setLoading(true);
     }
     try {
+      const mineResponse = await getMyPortalPaymentForms();
+      if (isPaymentApiSuccess(mineResponse)) {
+        const forms = extractMyPortalPaymentForms(mineResponse);
+        const existingForm = getLatestPortalPaymentFormByType(forms, formType);
+        if (existingForm) {
+          setPortalForm(existingForm);
+          return existingForm;
+        }
+      }
+
       const response = await getPortalPaymentForm();
       if (isPaymentApiSuccess(response)) {
         const data = extractPortalPaymentForm(response);
@@ -50,7 +63,7 @@ const usePortalPaymentForm = (formType, { seedPortalForm = null } = {}) => {
         setLoading(false);
       }
     }
-  }, []);
+  }, [formType]);
 
   useEffect(() => {
     if (seedPortalForm) {

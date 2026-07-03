@@ -1,3 +1,9 @@
+export const PAYMENT_UNAVAILABLE_META = {
+  title: 'Payment Method',
+  subtitle:
+    'Portal authorization forms are available for Standing Order, Direct Debit, and Salary Deduction only',
+};
+
 export const PAYMENT_FORM_META = {
   'Standing Banking Order': {
     title: 'Standing Banking Order Setup',
