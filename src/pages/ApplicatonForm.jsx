@@ -15,6 +15,7 @@ import {
   createPersonalDetailRequest,
   createProfessionalDetailRequest,
   createSubscriptionDetailRequest,
+  confirmApplicationPaymentRequest,
   updatePersonalDetailRequest,
   updateProfessionalDetailRequest,
   updateSubscriptionDetailRequest,
@@ -1254,6 +1255,31 @@ const ApplicationForm = () => {
     setIsModalVisible(false);
 
     const outcome = paymentData?.paymentOutcome;
+    const paymentIntentId = paymentData?.paymentIntent?.id;
+    const applicationId = activeApplicationId ?? personalDetail?.applicationId;
+
+    if (paymentIntentId && applicationId) {
+      try {
+        await confirmApplicationPaymentRequest(applicationId, {
+          paymentIntentId,
+        });
+        await refreshPortalPersonalDetail({ applicationId });
+      } catch (error) {
+        console.error('Application payment confirmation failed:', error);
+        const message =
+          error?.response?.data?.error?.message ||
+          error?.response?.data?.message ||
+          'Payment was authorised, but application submission could not be confirmed. Please refresh or contact support.';
+        setStatusModal({
+          open: true,
+          status: 'error',
+          title: 'Application confirmation failed',
+          message,
+        });
+        return;
+      }
+    }
+
     setStatusModal({
       open: true,
       status: 'success',

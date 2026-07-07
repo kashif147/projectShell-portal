@@ -36,6 +36,13 @@ export const updateSubscriptionDetailRequest = (id, data) => {
   return application_request.put(`/api/subscription-details/${id}`, data);
 };
 
+export const confirmApplicationPaymentRequest = (id, data) => {
+  return application_request.post(
+    `/api/subscription-details/${id}/payment-confirmation`,
+    data,
+  );
+};
+
 export const applicationConfirmationRequest = (id) => {
   return application_request.get(`/api/personal-details/${id}/status`);
 };
