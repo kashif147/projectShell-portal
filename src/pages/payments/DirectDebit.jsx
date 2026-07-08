@@ -31,8 +31,12 @@ import {
   mapDirectDebitFromPortal,
   mergePaymentFormWithPrefill,
   normalizePortalPaymentForm,
+  isMaskedIban,
   toIsoDate,
 } from '../../helpers/paymentForm.helper';
+
+const isDataUrlImage = value =>
+  typeof value === 'string' && value.startsWith('data:image/');
 
 const EMPTY_CREDITOR_DETAILS = {
   name: '',
@@ -115,6 +119,7 @@ const DirectDebit = ({ embedded = false, seedPortalForm = null }) => {
     memberPostCode: '',
     memberCountry: 'Ireland',
     iban: '',
+    ibanIsMasked: false,
     bic: '',
     signature: null,
     secondSignature: null,
@@ -264,12 +269,18 @@ const DirectDebit = ({ embedded = false, seedPortalForm = null }) => {
         ? mapped.memberCountry || prev.memberCountry
         : mapped.memberCountry || contactInfo.country || prev.memberCountry,
       iban: mapped.iban || prev.iban,
+      ibanIsMasked:
+        mapped.ibanIsMasked !== undefined
+          ? mapped.ibanIsMasked
+          : prev.ibanIsMasked,
       bic: mapped.bic || prev.bic,
       paymentType: mapped.paymentType || prev.paymentType,
       authorization:
         mapped.authorization !== undefined
           ? mapped.authorization
           : prev.authorization,
+      signature: mapped.signature ?? prev.signature,
+      secondSignature: mapped.secondSignature ?? prev.secondSignature,
       signatureDate: mapped.signatureDate || prev.signatureDate,
     }));
   }, [
@@ -366,7 +377,11 @@ const DirectDebit = ({ embedded = false, seedPortalForm = null }) => {
         cursorPosition,
       );
 
-      setFormState(prev => ({ ...prev, iban: formatted }));
+      setFormState(prev => ({
+        ...prev,
+        iban: formatted,
+        ibanIsMasked: isMaskedIban(formatted),
+      }));
 
       if (newCursorPosition !== null && ibanInputRef.current) {
         setTimeout(() => {
@@ -407,12 +422,18 @@ const DirectDebit = ({ embedded = false, seedPortalForm = null }) => {
     }));
   };
 
+  const isExistingPortalForm = Boolean(formSource?._id || formSource?.id);
+
   const isFormValid = useMemo(() => {
     if (!formState.authorization) return false;
     if (!formState.paymentType) return false;
     if (!formState.memberName) return false;
     if (!formState.iban) return false;
-    if (!validateIBAN(formState.iban).isValid) return false;
+    if (formState.ibanIsMasked) {
+      if (!isExistingPortalForm) return false;
+    } else if (!validateIBAN(formState.iban).isValid) {
+      return false;
+    }
     if (
       !isEeaSepaCountry(formState.memberCountry) &&
       !formState.memberAddress
@@ -422,18 +443,28 @@ const DirectDebit = ({ embedded = false, seedPortalForm = null }) => {
     if (!formState.signature) return false;
     if (!formState.signatureDate) return false;
     return true;
-  }, [formState]);
+  }, [formState, isExistingPortalForm]);
 
   const validateForm = () => {
     if (!formState.iban) {
       return false;
     }
-    const ibanValidation = validateIBAN(formState.iban);
-    if (!ibanValidation.isValid) {
-      setIbanError(ibanValidation.message);
-      return false;
+    if (formState.ibanIsMasked) {
+      if (!isExistingPortalForm) {
+        setIbanError(
+          'Enter your full IBAN below to update this direct debit mandate',
+        );
+        return false;
+      }
+      setIbanError('');
+    } else {
+      const ibanValidation = validateIBAN(formState.iban);
+      if (!ibanValidation.isValid) {
+        setIbanError(ibanValidation.message);
+        return false;
+      }
+      setIbanError('');
     }
-    setIbanError('');
     return isFormValid;
   };
 
@@ -455,7 +486,7 @@ const DirectDebit = ({ embedded = false, seedPortalForm = null }) => {
       toIsoDate(formState.signatureDate) || new Date().toISOString();
     const signatures = [];
 
-    if (formState.signature) {
+    if (formState.signature && isDataUrlImage(formState.signature)) {
       signatures.push({
         imageBase64: formState.signature,
         slot: 0,
@@ -463,7 +494,7 @@ const DirectDebit = ({ embedded = false, seedPortalForm = null }) => {
       });
     }
 
-    if (formState.secondSignature) {
+    if (formState.secondSignature && isDataUrlImage(formState.secondSignature)) {
       signatures.push({
         imageBase64: formState.secondSignature,
         slot: 1,
@@ -851,9 +882,15 @@ const DirectDebit = ({ embedded = false, seedPortalForm = null }) => {
                 {ibanError && (
                   <p className="mt-1 text-xs text-red-600">{ibanError}</p>
                 )}
-                {formState.iban && !ibanError && (
+                {formState.iban && !ibanError && !formState.ibanIsMasked && (
                   <p className="mt-1 text-xs text-green-600">
                     Valid IBAN format
+                  </p>
+                )}
+                {formState.ibanIsMasked && (
+                  <p className="mt-1 text-xs text-amber-600">
+                    IBAN on file is masked. Clear this field and enter your full
+                    IBAN if you need to update it.
                   </p>
                 )}
               </div>
@@ -959,7 +996,7 @@ const DirectDebit = ({ embedded = false, seedPortalForm = null }) => {
             type="primary"
             onClick={handleConfirm}
             loading={saving}
-            disabled={!isFormValid || saving || portalFormLoading}
+            disabled={saving || portalFormLoading}
             className="w-full sm:w-auto !text-sm sm:!text-base !h-10 sm:!h-11">
             Confirm and Authorize
           </Button>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
@@ -22,15 +22,23 @@ import {
   PAYMENT_FORM_TYPES,
   buildStandingOrderPatchPayload,
   buildStandingOrderPayload,
+  calculateStandingOrderInstallmentAmount,
   mapStandingOrderFromPortal,
+  resolveAnnualMembershipFeeEur,
+  resolveStandingOrderBranchAddress,
   toIsoDate,
+  validateStandingOrderIban,
+  isMaskedIban,
 } from '../../helpers/paymentForm.helper';
+
+const isDataUrlImage = value =>
+  typeof value === 'string' && value.startsWith('data:image/');
 
 const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
-  const { subscriptionDetail } = useApplication();
-  const { profileDetail } = useProfile();
+  const { subscriptionDetail, professionalDetail } = useApplication();
+  const { profileDetail, profileByIdDetail } = useProfile();
   const { categoryLookups } = useLookup();
   const printRef = useRef(null);
   const ibanInputRef = useRef(null);
@@ -40,9 +48,20 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
     subscriptionDetail?.subscriptionDetails?.membershipNumber ||
     '';
 
-  // Get category data
-  const membershipCategory =
-    subscriptionDetail?.subscriptionDetails?.membershipCategory;
+  // Membership category from subscription, profile, or application details
+  const membershipCategory = useMemo(
+    () =>
+      subscriptionDetail?.subscriptionDetails?.membershipCategory ||
+      profileByIdDetail?.professionalDetails?.membershipCategory ||
+      professionalDetail?.professionalDetails?.membershipCategory ||
+      null,
+    [
+      subscriptionDetail?.subscriptionDetails?.membershipCategory,
+      profileByIdDetail?.professionalDetails?.membershipCategory,
+      professionalDetail?.professionalDetails?.membershipCategory,
+    ],
+  );
+
   const [categoryData, setCategoryData] = useState(null);
 
   // Form state
@@ -54,6 +73,7 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
     accountNumber: '',
     bic: '',
     iban: '',
+    ibanIsMasked: false,
     message: '',
     frequency: 'Monthly',
     amount: '',
@@ -71,6 +91,8 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [ibanError, setIbanError] = useState('');
   const [hydratedFromPortal, setHydratedFromPortal] = useState(false);
+  const hydratedFormIdRef = useRef(null);
+  const preservedPortalAmountRef = useRef(null);
   const { portalForm, loading: portalFormLoading, saving, persistAndSubmit } =
     usePortalPaymentForm(PAYMENT_FORM_TYPES.STANDING_ORDER, { seedPortalForm });
 
@@ -79,15 +101,72 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
     portalForm,
   ]);
 
-  const firstPositiveNumber = (...values) => {
-    for (const value of values) {
-      const numberValue = Number(value);
-      if (Number.isFinite(numberValue) && numberValue > 0) {
-        return numberValue;
-      }
+  const resolveMembershipCategoryId = useCallback(
+    categoryNameOrId => {
+      if (!categoryNameOrId) return null;
+      const rawValue = String(categoryNameOrId).trim();
+      const isObjectId = value => /^[0-9a-fA-F]{24}$/.test(value);
+      if (isObjectId(rawValue)) return rawValue;
+
+      const normalize = value =>
+        String(value || '')
+          .trim()
+          .toLowerCase()
+          .replace(/[_-]+/g, ' ')
+          .replace(/\s+/g, ' ');
+
+      const normalizedInput = normalize(rawValue);
+      const matched = (categoryLookups || []).find(item => {
+        const label =
+          item?.name ||
+          item?.DisplayName ||
+          item?.label ||
+          item?.lookup?.DisplayName ||
+          item?.lookup?.lookupname ||
+          item?.productType?.name ||
+          item?.code;
+        return normalize(label) === normalizedInput;
+      });
+
+      return matched?._id || matched?.id || null;
+    },
+    [categoryLookups],
+  );
+
+  const categoryFromLookup = useMemo(() => {
+    if (!membershipCategory || !categoryLookups?.length) {
+      return null;
     }
-    return null;
-  };
+
+    const categoryId = resolveMembershipCategoryId(membershipCategory);
+    if (categoryId) {
+      return (
+        categoryLookups.find(
+          item => String(item?._id || item?.id) === String(categoryId),
+        ) || null
+      );
+    }
+
+    const normalize = value =>
+      String(value || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[_-]+/g, ' ')
+        .replace(/\s+/g, ' ');
+    const normalizedInput = normalize(membershipCategory);
+
+    return (
+      categoryLookups.find(item => {
+        const label =
+          item?.name ||
+          item?.DisplayName ||
+          item?.label ||
+          item?.productType?.name ||
+          item?.code;
+        return normalize(label) === normalizedInput;
+      }) || null
+    );
+  }, [membershipCategory, categoryLookups, resolveMembershipCategoryId]);
 
   const resolvedAnnualMembershipFee = useMemo(() => {
     const subscription =
@@ -97,47 +176,27 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
       {};
     const standingOrder = formSource?.standingOrder || formSource || {};
 
-    return firstPositiveNumber(
-      categoryData?.currentPricing?.price
-        ? categoryData.currentPricing.price / 100
-        : null,
-      standingOrder?.annualMembershipFeeEur,
-      formSource?.annualMembershipFeeEur,
-      subscription?.membershipFeeAnnualEur,
-      subscription?.annualMembershipFee,
-      subscription?.membershipFee,
-      subscription?.financialDetails?.membershipFee,
-    );
-  }, [categoryData, formSource, subscriptionDetail]);
-
-  const resolveMembershipCategoryId = (categoryNameOrId) => {
-    if (!categoryNameOrId) return null;
-    const rawValue = String(categoryNameOrId).trim();
-    const isObjectId = value => /^[0-9a-fA-F]{24}$/.test(value);
-    if (isObjectId(rawValue)) return rawValue;
-
-    const normalize = value =>
-      String(value || '')
-        .trim()
-        .toLowerCase()
-        .replace(/[_-]+/g, ' ')
-        .replace(/\s+/g, ' ');
-
-    const normalizedInput = normalize(rawValue);
-    const matched = (categoryLookups || []).find(item => {
-      const label =
-        item?.name ||
-        item?.DisplayName ||
-        item?.label ||
-        item?.lookup?.DisplayName ||
-        item?.lookup?.lookupname ||
-        item?.productType?.name ||
-        item?.code;
-      return normalize(label) === normalizedInput;
+    return resolveAnnualMembershipFeeEur({
+      categoryData,
+      categoryLookup: categoryFromLookup,
+      standingOrder,
+      formSource,
+      subscription,
     });
+  }, [categoryData, categoryFromLookup, formSource, subscriptionDetail]);
 
-    return matched?._id || matched?.id || null;
-  };
+  const membershipCurrency = useMemo(() => {
+    return (
+      categoryData?.currentPricing?.currency ||
+      categoryFromLookup?.currentPricing?.currency ||
+      'EUR'
+    );
+  }, [categoryData, categoryFromLookup]);
+
+  const membershipCurrencySymbol = useMemo(
+    () => (String(membershipCurrency).toUpperCase() === 'EUR' ? '€' : membershipCurrency),
+    [membershipCurrency],
+  );
 
   // Fetch category data
   useEffect(() => {
@@ -156,13 +215,23 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
 
         if (payload?.currentPricing?.price) {
           const annualFee = payload.currentPricing.price / 100;
+          const profileName =
+            profileByIdDetail?.personalInfo?.forename &&
+            profileByIdDetail?.personalInfo?.surname
+              ? `${profileByIdDetail.personalInfo.forename} ${profileByIdDetail.personalInfo.surname}`
+              : profileDetail?.personalInfo?.forename &&
+                  profileDetail?.personalInfo?.surname
+                ? `${profileDetail.personalInfo.forename} ${profileDetail.personalInfo.surname}`
+                : user?.userFirstName && user?.userLastName
+                  ? `${user.userFirstName} ${user.userLastName}`
+                  : user?.userName || '';
+
           setFormState(prev => ({
             ...prev,
-            annualMembershipFee: annualFee.toFixed(2),
-            accountName:
-              user?.userFirstName && user?.userLastName
-                ? `${user.userFirstName} ${user.userLastName}`
-                : user?.userName || '',
+            ...(preservedPortalAmountRef.current
+              ? {}
+              : { annualMembershipFee: annualFee.toFixed(2) }),
+            accountName: prev.accountName || profileName,
           }));
         }
       } catch (error) {
@@ -170,10 +239,17 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
       }
     };
     fetchCategory();
-  }, [categoryLookups, membershipCategory, user]);
+  }, [
+    categoryLookups,
+    membershipCategory,
+    user,
+    profileDetail,
+    profileByIdDetail,
+    resolveMembershipCategoryId,
+  ]);
 
   useEffect(() => {
-    if (!resolvedAnnualMembershipFee) return;
+    if (!resolvedAnnualMembershipFee || preservedPortalAmountRef.current) return;
     const nextAnnualFee = resolvedAnnualMembershipFee.toFixed(2);
     if (nextAnnualFee !== formState.annualMembershipFee) {
       setFormState(prev => ({
@@ -184,20 +260,40 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
   }, [resolvedAnnualMembershipFee, formState.annualMembershipFee]);
 
   useEffect(() => {
-    if (portalFormLoading || hydratedFromPortal || !portalForm) {
+    const source = formSource;
+    const sourceId = source?._id || source?.id || null;
+
+    if (portalFormLoading || !source) {
       return;
     }
 
-    const mapped = portalForm.standingOrder
-      ? mapStandingOrderFromPortal(portalForm.standingOrder)
-      : mapStandingOrderFromPortal(portalForm);
+    if (hydratedFormIdRef.current === sourceId && hydratedFromPortal) {
+      return;
+    }
 
-    setFormState(prev => ({
-      ...prev,
-      ...mapped,
-    }));
+    const mapped = mapStandingOrderFromPortal(source);
+
+    if (Number(mapped.amount) > 0) {
+      preservedPortalAmountRef.current = String(mapped.amount);
+    } else {
+      preservedPortalAmountRef.current = null;
+    }
+
+    hydratedFormIdRef.current = sourceId;
+    setFormState(prev => {
+      const next = {
+        ...prev,
+        ...mapped,
+      };
+
+      if (next.bankName && !next.branchAddress) {
+        next.branchAddress = resolveStandingOrderBranchAddress(next.bankName);
+      }
+
+      return next;
+    });
     setHydratedFromPortal(true);
-  }, [portalForm, portalFormLoading, hydratedFromPortal]);
+  }, [formSource, portalFormLoading, hydratedFromPortal]);
 
   // Bank list
   const bankOptions = [
@@ -219,34 +315,34 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
     { value: 'Annually', label: 'Annually' },
   ];
 
-  const calculateInstallmentAmount = (annualFee, frequency) => {
-    const fee = Number(annualFee);
-    if (!Number.isFinite(fee) || fee <= 0) return '';
-
-    switch (frequency) {
-      case 'Weekly':
-        return (fee / 52).toFixed(2);
-      case 'Fortnightly':
-        return (fee / 26).toFixed(2);
-      case 'Quarterly':
-        return ((fee / 12) * 3).toFixed(2);
-      case 'Annually':
-        return fee.toFixed(2);
-      case 'Monthly':
-      default:
-        return (fee / 12).toFixed(2);
-    }
-  };
+  const calculateInstallmentAmount = calculateStandingOrderInstallmentAmount;
 
   useEffect(() => {
-    const amount = calculateInstallmentAmount(
+    if (preservedPortalAmountRef.current) {
+      return;
+    }
+
+    if (!formState.annualMembershipFee || !formState.frequency) {
+      return;
+    }
+
+    const calculated = calculateInstallmentAmount(
       formState.annualMembershipFee,
       formState.frequency,
     );
-    if (amount !== formState.amount) {
+    if (!calculated) {
+      return;
+    }
+
+    const currentAmount = Number(formState.amount);
+    if (
+      !Number.isFinite(currentAmount) ||
+      currentAmount <= 0 ||
+      calculated !== formState.amount
+    ) {
       setFormState(prev => ({
         ...prev,
-        amount,
+        amount: calculated,
       }));
     }
   }, [formState.annualMembershipFee, formState.frequency, formState.amount]);
@@ -267,24 +363,17 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
     };
   }, [formSource, membershipNo, user?.id]);
 
-  // Auto-populate branch address based on bank selection
+  // Auto-populate branch address when bank is selected
   useEffect(() => {
-    if (formState.bankName) {
-      const branchAddresses = {
-        AIB: '12 Main St, Dublin (Auto-filled)',
-        BOI: '15 Grafton St, Dublin (Auto-filled)',
-        ULSTER: '20 College Green, Dublin (Auto-filled)',
-        PERMANENT: "25 O'Connell St, Dublin (Auto-filled)",
-        KBC: '30 Dame St, Dublin (Auto-filled)',
-        REVOLUT: 'Online Banking (Auto-filled)',
-        OTHER: 'Please enter branch address',
-      };
-      setFormState(prev => ({
-        ...prev,
-        branchAddress: branchAddresses[formState.bankName] || '',
-      }));
+    if (!formState.bankName || formState.branchAddress) {
+      return;
     }
-  }, [formState.bankName]);
+
+    setFormState(prev => ({
+      ...prev,
+      branchAddress: resolveStandingOrderBranchAddress(formState.bankName),
+    }));
+  }, [formState.bankName, formState.branchAddress]);
 
   // IBAN formatting function - adds spaces every 4 characters
   const formatIBAN = (value, cursorPosition = null) => {
@@ -322,54 +411,7 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
     return { formatted, cursorPosition: null };
   };
 
-  // IBAN validation function
-  const validateIBAN = iban => {
-    if (!iban) return { isValid: false, message: 'IBAN is required' };
-
-    // Remove spaces for validation
-    const cleaned = iban.replace(/\s/g, '');
-
-    // Basic format check: 2 letters (country code) + 2 digits (check digits) + up to 30 alphanumeric
-    const ibanRegex = /^[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}$/;
-    if (!ibanRegex.test(cleaned)) {
-      return {
-        isValid: false,
-        message: 'Invalid IBAN format. Format: CC00 XXXX XXXX XXXX...',
-      };
-    }
-
-    // Length check (IBAN should be between 15 and 34 characters)
-    if (cleaned.length < 15 || cleaned.length > 34) {
-      return {
-        isValid: false,
-        message: 'IBAN must be between 15 and 34 characters',
-      };
-    }
-
-    // Mod-97 check (basic IBAN validation algorithm)
-    const rearranged = cleaned.slice(4) + cleaned.slice(0, 4);
-    const numericString = rearranged
-      .split('')
-      .map(char => {
-        const code = char.charCodeAt(0);
-        return code >= 65 && code <= 90 ? code - 55 : char;
-      })
-      .join('');
-
-    let remainder = '';
-    for (let i = 0; i < numericString.length; i++) {
-      remainder = (remainder + numericString[i]) % 97;
-    }
-
-    if (remainder !== 1) {
-      return {
-        isValid: false,
-        message: 'Invalid IBAN check digits',
-      };
-    }
-
-    return { isValid: true, message: '' };
-  };
+  const validateIBAN = validateStandingOrderIban;
 
   const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
@@ -388,6 +430,7 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
       setFormState(prev => ({
         ...prev,
         [name]: formatted,
+        ...(name === 'iban' ? { ibanIsMasked: isMaskedIban(formatted) } : {}),
       }));
 
       // Restore cursor position after state update
@@ -421,10 +464,22 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
       return;
     }
 
-    setFormState(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
+    setFormState(prev => {
+      const next = {
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value,
+      };
+
+      if (name === 'bankName') {
+        next.branchAddress = resolveStandingOrderBranchAddress(value);
+      }
+
+      if (name === 'frequency') {
+        preservedPortalAmountRef.current = null;
+      }
+
+      return next;
+    });
   };
 
   const handleSignatureChange = (signatureType, signatureData) => {
@@ -435,27 +490,42 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
   };
 
   const validateForm = ({ updateIbanError = false } = {}) => {
+    const isExistingPortalForm = Boolean(formSource?._id || formSource?.id);
+
     if (!formState.bankName) return false;
     if (!formState.branchAddress) return false;
     if (!formState.authorization) return false;
     if (!formState.accountName) return false;
-    if (!formState.accountNumber) return false;
-    if (!formState.iban) return false;
-
-    // Validate IBAN format
-    const ibanValidation = validateIBAN(formState.iban);
-    if (!ibanValidation.isValid) {
-      if (updateIbanError) {
-        setIbanError(ibanValidation.message);
-      }
+    if (!formState.iban) {
       return false;
+    }
+    if (formState.ibanIsMasked) {
+      if (!isExistingPortalForm) {
+        if (updateIbanError) {
+          setIbanError(
+            'Enter your full IBAN below to update this standing order',
+          );
+        }
+        return false;
+      }
+    } else {
+      const ibanValidation = validateIBAN(formState.iban);
+      if (!ibanValidation.isValid) {
+        if (updateIbanError) {
+          setIbanError(ibanValidation.message);
+        }
+        return false;
+      }
     }
     if (updateIbanError) {
       setIbanError('');
     }
 
     if (!formState.frequency) return false;
-    if (!formState.amount) return false;
+    const installmentAmount = Number(formState.amount);
+    if (!Number.isFinite(installmentAmount) || installmentAmount <= 0) {
+      return false;
+    }
     if (!formState.startDate) return false;
     if (!formState.accountHolderSignature) return false;
     if (
@@ -470,6 +540,7 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
   const handleSaveOrder = async () => {
     setShowValidation(true);
     if (!validateForm({ updateIbanError: true })) {
+      toast.error('Please complete all required fields before saving.');
       const firstErrorField = document.querySelector('.border-red-500');
       if (firstErrorField) {
         firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -482,7 +553,7 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
       toIsoDate(formState.accountHolderSignatureDate) ||
       new Date().toISOString();
 
-    if (formState.accountHolderSignature) {
+    if (formState.accountHolderSignature && isDataUrlImage(formState.accountHolderSignature)) {
       signatures.push({
         imageBase64: formState.accountHolderSignature,
         slot: 0,
@@ -490,7 +561,7 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
       });
     }
 
-    if (formState.secondSignature) {
+    if (formState.secondSignature && isDataUrlImage(formState.secondSignature)) {
       signatures.push({
         imageBase64: formState.secondSignature,
         slot: 1,
@@ -500,9 +571,30 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
     }
 
     try {
+      const calculatedAmount = calculateInstallmentAmount(
+        formState.annualMembershipFee,
+        formState.frequency,
+      );
+      const currentAmount = Number(formState.amount);
+      const submitAmount =
+        Number.isFinite(currentAmount) && currentAmount > 0
+          ? String(currentAmount)
+          : calculatedAmount;
+      const submitFormState = {
+        ...formState,
+        amount: submitAmount,
+      };
+
+      if (!submitAmount || Number(submitAmount) <= 0) {
+        toast.error(
+          'Installment amount could not be calculated. Please check your membership category price.',
+        );
+        return;
+      }
+
       await persistAndSubmit({
-        createPayload: buildStandingOrderPayload(formState),
-        patchPayload: buildStandingOrderPatchPayload(formState),
+        createPayload: buildStandingOrderPayload(submitFormState),
+        patchPayload: buildStandingOrderPatchPayload(submitFormState),
         signatures,
       });
       toast.success('Standing order saved and submitted successfully!');
@@ -614,7 +706,6 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
     );
   };
 
-  const isFormValid = validateForm();
   const formMeta = PAYMENT_FORM_META['Standing Banking Order'];
 
   const formContent = (
@@ -871,11 +962,10 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
                 <Input
                   label="Account Number"
                   name="accountNumber"
-                  required
                   value={formState.accountNumber}
                   onChange={handleInputChange}
                   showValidation={showValidation}
-                  placeholder="e.g. 12345678"
+                  placeholder="e.g. 12345678 (optional)"
                 />
               </div>
 
@@ -903,6 +993,12 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
                       letterSpacing: '0.5px',
                     }}
                   />
+                  {formState.ibanIsMasked && (
+                    <p className="mt-1 text-xs text-amber-600">
+                      IBAN on file is masked. Clear this field and enter your
+                      full IBAN if you need to update it.
+                    </p>
+                  )}
                   {ibanError && (
                     <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
                       <svg
@@ -1028,7 +1124,6 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
                   onChange={handleInputChange}
                   options={frequencyOptions}
                 />
-
                 <Input
                   label="Amount"
                   name="amount"
@@ -1217,7 +1312,7 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
               type="primary"
               onClick={handleSaveOrder}
               loading={saving}
-              disabled={!isFormValid || saving || portalFormLoading}
+              disabled={saving || portalFormLoading}
               className="w-full sm:w-auto !text-sm sm:!text-base !h-10 sm:!h-11"
               icon={
                 <svg

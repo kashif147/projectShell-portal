@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -24,6 +24,9 @@ import {
   toIsoDate,
 } from '../../helpers/paymentForm.helper';
 
+const isDataUrlImage = value =>
+  typeof value === 'string' && value.startsWith('data:image/');
+
 const SalaryDeduction = ({ embedded = false, seedPortalForm = null }) => {
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
@@ -44,8 +47,14 @@ const SalaryDeduction = ({ embedded = false, seedPortalForm = null }) => {
   const [showValidation, setShowValidation] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [hydratedFromPortal, setHydratedFromPortal] = useState(false);
+  const hydratedFormIdRef = useRef(null);
   const { portalForm, loading: portalFormLoading, saving, persistAndSubmit } =
     usePortalPaymentForm(PAYMENT_FORM_TYPES.SALARY_DEDUCTION, { seedPortalForm });
+
+  const formSource = useMemo(() => seedPortalForm ?? portalForm, [
+    seedPortalForm,
+    portalForm,
+  ]);
 
   const monthlyDeductionAmount = '19.00';
   const mappedWorkLocations = (workLocationLookups || [])
@@ -65,6 +74,10 @@ const SalaryDeduction = ({ embedded = false, seedPortalForm = null }) => {
       : workLocationOptions;
 
   useEffect(() => {
+    if (hydratedFromPortal) {
+      return;
+    }
+
     const name =
       personalDetail?.personalInfo?.forename && personalDetail?.personalInfo?.surname
         ? `${personalDetail.personalInfo.forename} ${personalDetail.personalInfo.surname}`
@@ -96,23 +109,40 @@ const SalaryDeduction = ({ embedded = false, seedPortalForm = null }) => {
       employedAt,
       payrollStaffNo: payrollStaffNo ? String(payrollStaffNo) : '',
     }));
-  }, [personalDetail, professionalDetail, profileDetail, subscriptionDetail, user]);
+  }, [
+    personalDetail,
+    professionalDetail,
+    profileDetail,
+    subscriptionDetail,
+    user,
+    hydratedFromPortal,
+  ]);
 
   useEffect(() => {
-    if (portalFormLoading || hydratedFromPortal || !portalForm) {
+    const source = formSource;
+    const sourceId = source?._id || source?.id || null;
+
+    if (portalFormLoading || !source) {
       return;
     }
 
-    const mapped = portalForm.salaryDeduction
-      ? mapSalaryDeductionFromPortal(portalForm.salaryDeduction)
-      : mapSalaryDeductionFromPortal(portalForm);
+    if (hydratedFormIdRef.current === sourceId && hydratedFromPortal) {
+      return;
+    }
 
+    const mapped = mapSalaryDeductionFromPortal(source);
+
+    hydratedFormIdRef.current = sourceId;
     setFormState(prev => ({
       ...prev,
       ...mapped,
+      name: mapped.name || prev.name,
+      inmoNo: mapped.inmoNo || prev.inmoNo,
+      employedAt: mapped.employedAt || prev.employedAt,
+      payrollStaffNo: mapped.payrollStaffNo || prev.payrollStaffNo,
     }));
     setHydratedFromPortal(true);
-  }, [portalForm, portalFormLoading, hydratedFromPortal]);
+  }, [formSource, portalFormLoading, hydratedFromPortal]);
 
   const handleInputChange = e => {
     const { name, value } = e.target;
@@ -155,16 +185,17 @@ const SalaryDeduction = ({ embedded = false, seedPortalForm = null }) => {
       await persistAndSubmit({
         createPayload: buildSalaryDeductionPayload(formState),
         patchPayload: buildSalaryDeductionPatchPayload(formState),
-        signatures: formState.signature
-          ? [
-              {
-                imageBase64: formState.signature,
-                slot: 0,
-                signedDate:
-                  toIsoDate(formState.date) || new Date().toISOString(),
-              },
-            ]
-          : [],
+        signatures:
+          formState.signature && isDataUrlImage(formState.signature)
+            ? [
+                {
+                  imageBase64: formState.signature,
+                  slot: 0,
+                  signedDate:
+                    toIsoDate(formState.date) || new Date().toISOString(),
+                },
+              ]
+            : [],
       });
       toast.success('Salary Deduction form saved and submitted successfully!');
       navigate('/');
@@ -249,7 +280,6 @@ const SalaryDeduction = ({ embedded = false, seedPortalForm = null }) => {
     }
   };
 
-  const isFormValid = validateForm();
   const formMeta = PAYMENT_FORM_META['Salary Deduction'];
 
   const formContent = (
@@ -387,7 +417,7 @@ const SalaryDeduction = ({ embedded = false, seedPortalForm = null }) => {
               type="primary"
               onClick={handleSave}
               loading={saving}
-              disabled={!isFormValid || saving || portalFormLoading}
+              disabled={saving || portalFormLoading}
               className="w-full sm:w-auto !text-sm sm:!text-base !h-10 sm:!h-11">
               Save Authorization
             </Button>

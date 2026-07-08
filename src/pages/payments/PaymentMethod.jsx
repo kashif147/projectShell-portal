@@ -9,15 +9,16 @@ import {
 import StandingBankersOrder from './StandingBankersOrder';
 import DirectDebit from './DirectDebit';
 import SalaryDeduction from './SalaryDeduction';
-import { PAYMENT_FORM_META } from './paymentFormMeta';
+import { PAYMENT_FORM_META, PAYMENT_UNAVAILABLE_META } from './paymentFormMeta';
 import {
   extractMyPortalPaymentForms,
   extractPaymentFormPrefill,
-  getActivePaymentFormForProfile,
+  getExistingPaymentFormForProfile,
   getPaymentTypeFromProfileSubscription,
   getTabKeyForPortalForm,
   formMatchesProfilePaymentType,
   isPaymentApiSuccess,
+  isPortalPaymentFormTab,
   mergePaymentFormWithPrefill,
   normalizePaymentType,
 } from '../../helpers/paymentForm.helper';
@@ -82,9 +83,10 @@ const PaymentMethod = () => {
           profilePaymentTypeTab = normalizePaymentType(raw);
         }
 
+        let paymentForms = [];
         const mineRes = await getMyPortalPaymentForms();
         if (isPaymentApiSuccess(mineRes)) {
-          const paymentForms = extractMyPortalPaymentForms(mineRes);
+          paymentForms = extractMyPortalPaymentForms(mineRes);
 
           if (!profilePaymentTypeTab && paymentForms.length > 0) {
             const firstActive = paymentForms.find(
@@ -92,34 +94,36 @@ const PaymentMethod = () => {
             );
             profilePaymentTypeTab = getTabKeyForPortalForm(firstActive);
           }
+        }
 
-          const activeForm = getActivePaymentFormForProfile(
-            paymentForms,
-            profilePaymentTypeTab,
+        const activeForm =
+          profilePaymentTypeTab && isPortalPaymentFormTab(profilePaymentTypeTab)
+            ? getExistingPaymentFormForProfile(
+                paymentForms,
+                profilePaymentTypeTab,
+              )
+            : !profilePaymentTypeTab
+              ? getExistingPaymentFormForProfile(paymentForms, null)
+              : null;
+
+        setActivePortalForm(activeForm);
+
+        const candidateTab =
+          profilePaymentTypeTab ||
+          (activeForm ? getTabKeyForPortalForm(activeForm) : null);
+        const paymentTab = isPortalPaymentFormTab(candidateTab)
+          ? candidateTab
+          : null;
+        setSelectedPaymentType(paymentTab);
+
+        if (paymentTab && isPortalPaymentFormTab(paymentTab)) {
+          const prefill = await loadPaymentFormPrefill(
+            profileDetail.profileId,
+            paymentTab,
           );
-
-          setActivePortalForm(activeForm);
-          const paymentTab =
-            profilePaymentTypeTab || getTabKeyForPortalForm(activeForm);
-          setSelectedPaymentType(paymentTab);
-
-          if (paymentTab) {
-            const prefill = await loadPaymentFormPrefill(
-              profileDetail.profileId,
-              paymentTab,
-            );
-            setPrefillPortalForm(prefill);
-          }
+          setPrefillPortalForm(prefill);
         } else {
-          setActivePortalForm(null);
-          setSelectedPaymentType(profilePaymentTypeTab);
-          if (profilePaymentTypeTab) {
-            const prefill = await loadPaymentFormPrefill(
-              profileDetail.profileId,
-              profilePaymentTypeTab,
-            );
-            setPrefillPortalForm(prefill);
-          }
+          setPrefillPortalForm(null);
         }
       } catch (error) {
         console.error('Failed to load payment method:', error);
@@ -141,10 +145,10 @@ const PaymentMethod = () => {
     return prefillPortalForm;
   }, [activePortalForm, prefillPortalForm]);
 
-  const isActivePaymentMethod = useMemo(
-    () => String(activePortalForm?.status || '').toLowerCase() === 'active',
-    [activePortalForm],
-  );
+  const isActivePaymentMethod = useMemo(() => {
+    const status = String(activePortalForm?.status || '').toLowerCase();
+    return status === 'active' || status === 'submitted';
+  }, [activePortalForm]);
 
   const headerMeta = useMemo(() => {
     if (activePortalForm?.formTypeLabel) {
@@ -170,11 +174,17 @@ const PaymentMethod = () => {
     if (selectedPaymentType && PAYMENT_FORM_META[selectedPaymentType]) {
       return PAYMENT_FORM_META[selectedPaymentType];
     }
-    return null;
-  }, [activePortalForm, prefillPortalForm, selectedPaymentType]);
+    if (!profileDetail?.profileId) {
+      return {
+        title: 'Payment Method',
+        subtitle: 'A member profile is required to manage payment methods',
+      };
+    }
+    return PAYMENT_UNAVAILABLE_META;
+  }, [activePortalForm, prefillPortalForm, selectedPaymentType, profileDetail?.profileId]);
 
   const renderPaymentComponent = () => {
-    if (!selectedPaymentType) {
+    if (!selectedPaymentType || !isPortalPaymentFormTab(selectedPaymentType)) {
       return null;
     }
 
@@ -208,11 +218,11 @@ const PaymentMethod = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
         <div className="px-3 sm:px-4 md:px-6 lg:px-8 max-w-7xl mx-auto py-3 sm:py-4">
-          <div className="flex items-start gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
               aria-label="Go back">
               <svg
                 className="h-5 w-5"
@@ -229,24 +239,16 @@ const PaymentMethod = () => {
             </button>
             <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
               <div className="min-w-0 flex-1">
-                {headerMeta ? (
-                  <>
-                    <h1 className="text-sm sm:text-base font-semibold text-gray-900 leading-tight">
-                      {headerMeta.title}
-                    </h1>
-                    <p className="text-xs text-gray-500 mt-0.5 leading-snug">
-                      {headerMeta.subtitle}
-                    </p>
-                    {isActivePaymentMethod && (
-                      <span className="inline-flex mt-1.5 items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700 ring-1 ring-green-600/20">
-                        {activePortalForm.status}
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <p className="text-xs text-gray-500">
-                    Payment method is not available for your profile
-                  </p>
+                <h1 className="text-sm sm:text-base font-semibold text-gray-900 leading-tight">
+                  {headerMeta.title}
+                </h1>
+                <p className="text-xs text-gray-500 mt-0.5 leading-snug">
+                  {headerMeta.subtitle}
+                </p>
+                {isActivePaymentMethod && (
+                  <span className="inline-flex mt-1.5 items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700 ring-1 ring-green-600/20">
+                    {activePortalForm.status}
+                  </span>
                 )}
               </div>
             </div>
@@ -258,11 +260,11 @@ const PaymentMethod = () => {
         {selectedPaymentType ? (
           renderPaymentComponent()
         ) : (
-          <div className="min-h-[60vh] flex items-center justify-center px-4">
+          <div className="min-h-[60vh] flex items-center justify-center px-4 py-8">
             <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-5">
                 <svg
-                  className="w-8 h-8 text-blue-600"
+                  className="w-8 h-8 text-slate-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24">
@@ -274,13 +276,10 @@ const PaymentMethod = () => {
                   />
                 </svg>
               </div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                Payment Method Unavailable
-              </h2>
-              <p className="text-gray-600 mb-6">
+              <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
                 {!profileDetail?.profileId
-                  ? 'A member profile is required to manage payment methods.'
-                  : 'No payment method is configured for your profile.'}
+                  ? 'Please complete your member profile before managing payment methods.'
+                  : 'Your current payment type does not use a portal authorization form. If you need to update your payment method, please contact support or update it from your profile settings.'}
               </p>
             </div>
           </div>

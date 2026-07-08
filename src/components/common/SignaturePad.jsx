@@ -1,5 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
 
+const isRemoteImageUrl = value =>
+  typeof value === 'string' &&
+  (value.startsWith('http://') || value.startsWith('https://'));
+
 const SignaturePad = ({
   label,
   onSignatureChange,
@@ -11,20 +15,45 @@ const SignaturePad = ({
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(!!value);
+  const [remoteImageFailed, setRemoteImageFailed] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    if (value && canvasRef.current) {
+    setRemoteImageFailed(false);
+    setHasSignature(!!value);
+
+    if (!value || !canvasRef.current) {
+      return;
+    }
+
+    if (isRemoteImageUrl(value)) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
       const img = new Image();
+      img.crossOrigin = 'anonymous';
       img.onload = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         setHasSignature(true);
+        setRemoteImageFailed(false);
+      };
+      img.onerror = () => {
+        setRemoteImageFailed(true);
+        setHasSignature(true);
       };
       img.src = value;
+      return;
     }
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      setHasSignature(true);
+    };
+    img.src = value;
   }, [value]);
 
   useEffect(() => {
@@ -170,8 +199,20 @@ const SignaturePad = ({
             onTouchStart={startDrawing}
             onTouchMove={draw}
             onTouchEnd={stopDrawing}
-            style={{ display: 'block', width: '100%', height: '150px' }}
+            style={{
+              display: remoteImageFailed && isRemoteImageUrl(value) ? 'none' : 'block',
+              width: '100%',
+              height: '150px',
+            }}
           />
+          {remoteImageFailed && isRemoteImageUrl(value) && (
+            <img
+              src={value}
+              alt={label || 'Signature'}
+              className="w-full object-contain bg-white"
+              style={{ height: '150px' }}
+            />
+          )}
           {!hasSignature && (
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <svg

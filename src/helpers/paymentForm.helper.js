@@ -27,22 +27,46 @@ export const ALL_PAYMENT_TAB_OPTIONS = [
 
 export const getPaymentTypeFromProfileSubscription = subscription => {
   if (!subscription) return null;
+
+  const details =
+    subscription.subscriptionDetails || subscription.details || {};
+
   return (
     subscription.paymentType ??
+    details.paymentType ??
     subscription.paymentMethod ??
+    details.paymentMethod ??
     subscription.preferredPaymentType ??
     subscription._subscriptionService?.paymentType ??
     subscription.subscriptionService?.paymentType ??
     subscription.subscription?.paymentType ??
+    subscription.subscription?.subscriptionDetails?.paymentType ??
     null
   );
 };
+
+export const PORTAL_PAYMENT_FORM_TABS = new Set([
+  'Direct Debit',
+  'Standing Banking Order',
+  'Salary Deduction',
+]);
+
+export const isPortalPaymentFormTab = tab => PORTAL_PAYMENT_FORM_TABS.has(tab);
 
 /** Normalize lookup / subscription / formTypeLabel values to portal tab key */
 export const normalizePaymentType = paymentType => {
   if (!paymentType) return null;
 
   const normalized = paymentType.toString().toLowerCase();
+  const compact = normalized.replace(/[\s_-]+/g, '');
+
+  if (
+    compact.includes('creditcard') ||
+    (normalized.includes('credit') && normalized.includes('card')) ||
+    normalized.includes('card payment')
+  ) {
+    return 'Credit Card';
+  }
 
   if (
     normalized.includes('standing') &&
@@ -130,11 +154,76 @@ export const getActivePaymentFormForProfile = (forms, profilePaymentTypeTab) => 
   return [...activeForms].sort(sortFormsByRecent)[0] ?? null;
 };
 
+const VIEWABLE_PORTAL_FORM_STATUSES = new Set([
+  'active',
+  'submitted',
+  'draft',
+]);
+
+export const getLatestPortalPaymentFormByType = (forms, formType) => {
+  if (!Array.isArray(forms) || !formType) return null;
+
+  return (
+    forms
+      .filter(
+        form =>
+          form?.formType === formType &&
+          VIEWABLE_PORTAL_FORM_STATUSES.has(
+            String(form?.status || '').toLowerCase(),
+          ),
+      )
+      .sort(sortFormsByRecent)[0] ?? null
+  );
+};
+
+/** Prefer active record; otherwise latest submitted/draft for the profile payment tab */
+export const getExistingPaymentFormForProfile = (
+  forms,
+  profilePaymentTypeTab,
+) => {
+  const activeForm = getActivePaymentFormForProfile(forms, profilePaymentTypeTab);
+  if (activeForm) return activeForm;
+
+  if (!Array.isArray(forms) || forms.length === 0) return null;
+
+  const viewableForms = forms.filter(form =>
+    VIEWABLE_PORTAL_FORM_STATUSES.has(
+      String(form?.status || '').toLowerCase(),
+    ),
+  );
+
+  if (profilePaymentTypeTab) {
+    const matched = viewableForms
+      .filter(form => formMatchesProfilePaymentType(form, profilePaymentTypeTab))
+      .sort(sortFormsByRecent);
+    return matched[0] ?? null;
+  }
+
+  return [...viewableForms].sort(sortFormsByRecent)[0] ?? null;
+};
+
 export const formatIbanForDisplay = iban => {
   if (!iban) return '';
   const cleaned = String(iban).replace(/\s/g, '').toUpperCase();
   return cleaned.replace(/(.{4})/g, '$1 ').trim();
 };
+
+export const cleanIban = iban => (iban || '').replace(/\s/g, '').toUpperCase();
+
+export const isMaskedIban = iban => String(iban || '').includes('*');
+
+export const STANDING_ORDER_BRANCH_ADDRESSES = {
+  AIB: '12 Main St, Dublin (Auto-filled)',
+  BOI: '15 Grafton St, Dublin (Auto-filled)',
+  ULSTER: '20 College Green, Dublin (Auto-filled)',
+  PERMANENT: "25 O'Connell St, Dublin (Auto-filled)",
+  KBC: '30 Dame St, Dublin (Auto-filled)',
+  REVOLUT: 'Online Banking (Auto-filled)',
+  OTHER: 'Please enter branch address',
+};
+
+export const resolveStandingOrderBranchAddress = bankName =>
+  STANDING_ORDER_BRANCH_ADDRESSES[bankName] || '';
 
 const pickFirstNonEmpty = (...values) => {
   for (const value of values) {
@@ -238,6 +327,8 @@ export const normalizePortalPaymentForm = form => {
 export const mapDirectDebitFromMineForm = form => {
   if (!form) return {};
   const m = extractDirectDebitMandateFields(form);
+  const signatureUrls = extractPaymentFormSignatureUrls(form);
+  const ibanRaw = m.debtorIban || '';
 
   return {
     memberName: m.debtorName || '',
@@ -248,45 +339,138 @@ export const mapDirectDebitFromMineForm = form => {
     authorization: m.isAuthorized ?? false,
     signatureDate: m.signedDate || '',
     paymentType: m.paymentTypeRecurrent === false ? 'one-off' : 'recurrent',
-    iban: formatIbanForDisplay(m.debtorIban || ''),
+    iban: ibanRaw ? formatIbanForDisplay(ibanRaw) : '',
+    ibanIsMasked: isMaskedIban(ibanRaw),
     bic: m.debtorBic || '',
+    signature: signatureUrls[0] || null,
+    secondSignature: signatureUrls[1] || null,
   };
 };
 
 export const mapSalaryDeductionFromMineForm = form => {
   if (!form) return {};
+  const signatureUrls = extractPaymentFormSignatureUrls(form);
+
   return {
+    name: pickFirstNonEmpty(
+      form.memberFullName,
+      form.debtorName,
+      form.memberName,
+    ),
     employedAt: form.employedAt || '',
     payrollStaffNo: form.payrollStaffNo || '',
     commencing: form.commencingDate || form.startDate || '',
     date: form.signedDate || '',
     inmoNo: form.membershipNumber || form.referenceMembershipNo || '',
+    signature: signatureUrls[0] || null,
   };
 };
 
+export const deriveAnnualFeeFromInstallment = (
+  installmentAmount,
+  frequency = 'Monthly',
+) => {
+  const installment = Number(installmentAmount);
+  if (!Number.isFinite(installment) || installment <= 0) {
+    return '';
+  }
+
+  switch (frequency) {
+    case 'Weekly':
+      return (installment * 52).toFixed(2);
+    case 'Fortnightly':
+      return (installment * 26).toFixed(2);
+    case 'Quarterly':
+      return ((installment / 3) * 12).toFixed(2);
+    case 'Annually':
+      return installment.toFixed(2);
+    case 'Monthly':
+    default:
+      return (installment * 12).toFixed(2);
+  }
+};
+
+export const extractPaymentFormSignatureUrls = form => {
+  if (!form || typeof form !== 'object') return [];
+
+  const urls =
+    form.downloadUrls?.signatures ||
+    form.salaryDeduction?.downloadUrls?.signatures ||
+    form.standingOrder?.downloadUrls?.signatures ||
+    form.directDebitMandate?.downloadUrls?.signatures ||
+    [];
+
+  return Array.isArray(urls) ? urls.filter(Boolean) : [];
+};
+
+export const extractStandingOrderSignatureUrls = form =>
+  extractPaymentFormSignatureUrls(form);
+
 export const mapStandingOrderFromMineForm = form => {
   if (!form) return {};
-  const signatureDates = form.signatureDates || [];
+
+  const standingOrder = form.standingOrder || form;
+  const signatureUrls = extractStandingOrderSignatureUrls(form);
+  const signatureDates = standingOrder.signatureDates || form.signatureDates || [];
+  const frequency =
+    standingOrder.paymentFrequency || form.paymentFrequency || 'Monthly';
+  const installmentRaw =
+    standingOrder.installmentAmountEur ?? form.installmentAmountEur;
   const amount =
-    form.installmentAmountEur === null || form.installmentAmountEur === undefined
+    installmentRaw === null || installmentRaw === undefined
       ? ''
-      : String(form.installmentAmountEur);
+      : String(installmentRaw);
+  const annualFromApi =
+    standingOrder.annualMembershipFeeEur ?? form.annualMembershipFeeEur;
   const annualMembershipFee =
-    form.annualMembershipFeeEur === null ||
-    form.annualMembershipFeeEur === undefined
-      ? ''
-      : String(form.annualMembershipFeeEur);
+    annualFromApi === null || annualFromApi === undefined
+      ? deriveAnnualFeeFromInstallment(amount, frequency)
+      : String(annualFromApi);
+  const ibanRaw = pickFirstNonEmpty(
+    standingOrder.debtorIban,
+    standingOrder.debtorIbanDisplay,
+    form.debtorIban,
+    form.debtorIbanDisplay,
+  );
+  const ibanIsMasked = isMaskedIban(ibanRaw);
+  const status = String(form.status || standingOrder.status || '').toLowerCase();
+  const hasStoredSignatures = signatureUrls.length > 0;
+  const explicitAuthorization =
+    standingOrder.isAuthorized ?? form.isAuthorized;
+  const authorization =
+    explicitAuthorization === true ||
+    (hasStoredSignatures && (status === 'active' || status === 'submitted'));
+
   return {
-    bankName: form.debtorBankName || '',
-    branchAddress: form.debtorBankAddress || '',
-    accountName: form.debtorAccountName || form.debtorName || '',
-    iban: form.debtorIban || form.debtorIbanDisplay || '',
-    bic: form.debtorBic || '',
-    frequency: form.paymentFrequency || 'Monthly',
+    bankName:
+      standingOrder.debtorBankName || form.debtorBankName || '',
+    branchAddress:
+      standingOrder.debtorBankAddress ||
+      form.debtorBankAddress ||
+      resolveStandingOrderBranchAddress(
+        standingOrder.debtorBankName || form.debtorBankName || '',
+      ),
+    authorization,
+    accountName: pickFirstNonEmpty(
+      standingOrder.debtorAccountName,
+      standingOrder.debtorName,
+      form.debtorAccountName,
+      form.debtorName,
+      form.memberFullName,
+    ),
+    accountNumber:
+      standingOrder.debtorAccountNumber || form.debtorAccountNumber || '',
+    iban: ibanRaw ? formatIbanForDisplay(ibanRaw) : '',
+    ibanIsMasked,
+    bic: standingOrder.debtorBic || form.debtorBic || '',
+    frequency,
     amount,
     annualMembershipFee,
-    startDate: form.startDate || '',
-    accountHolderSignatureDate: signatureDates[0] || form.signedDate || '',
+    startDate: standingOrder.startDate || form.startDate || '',
+    accountHolderSignature: signatureUrls[0] || '',
+    secondSignature: signatureUrls[1] || '',
+    accountHolderSignatureDate:
+      signatureDates[0] || standingOrder.signedDate || form.signedDate || '',
     secondSignatureDate: signatureDates[1] || '',
   };
 };
@@ -369,7 +553,116 @@ export const toIsoDate = value => {
   return isDataFormat(value);
 };
 
-export const cleanIban = iban => (iban || '').replace(/\s/g, '').toUpperCase();
+export const validateStandingOrderIban = iban => {
+  if (!iban) {
+    return { isValid: false, message: 'IBAN is required' };
+  }
+
+  if (isMaskedIban(iban)) {
+    return {
+      isValid: false,
+      message: 'Please enter your full IBAN (masked values cannot be submitted)',
+    };
+  }
+
+  const cleaned = cleanIban(iban);
+  const ibanRegex = /^[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}$/;
+  if (!ibanRegex.test(cleaned)) {
+    return {
+      isValid: false,
+      message: 'Invalid IBAN format. Format: CC00 XXXX XXXX XXXX...',
+    };
+  }
+
+  if (cleaned.length < 15 || cleaned.length > 34) {
+    return {
+      isValid: false,
+      message: 'IBAN must be between 15 and 34 characters',
+    };
+  }
+
+  const rearranged = cleaned.slice(4) + cleaned.slice(0, 4);
+  const numericString = rearranged
+    .split('')
+    .map(char => {
+      const code = char.charCodeAt(0);
+      return code >= 65 && code <= 90 ? code - 55 : char;
+    })
+    .join('');
+
+  let remainder = '';
+  for (let i = 0; i < numericString.length; i += 1) {
+    remainder = (remainder + numericString[i]) % 97;
+  }
+
+  if (remainder !== 1) {
+    return {
+      isValid: false,
+      message: 'Invalid IBAN check digits',
+    };
+  }
+
+  return { isValid: true, message: '' };
+};
+
+export const calculateStandingOrderInstallmentAmount = (
+  annualFee,
+  frequency = 'Monthly',
+) => {
+  const fee = Number(annualFee);
+  if (!Number.isFinite(fee) || fee <= 0) {
+    return '';
+  }
+
+  switch (frequency) {
+    case 'Weekly':
+      return (fee / 52).toFixed(2);
+    case 'Fortnightly':
+      return (fee / 26).toFixed(2);
+    case 'Quarterly':
+      return ((fee / 12) * 3).toFixed(2);
+    case 'Annually':
+      return fee.toFixed(2);
+    case 'Monthly':
+    default:
+      return (fee / 12).toFixed(2);
+  }
+};
+
+export const resolveAnnualMembershipFeeEur = ({
+  categoryData,
+  categoryLookup,
+  standingOrder,
+  formSource,
+  subscription,
+} = {}) => {
+  const fromCategoryApi = categoryData?.currentPricing?.price
+    ? categoryData.currentPricing.price / 100
+    : null;
+  const fromCategoryLookup = categoryLookup?.currentPricing?.price
+    ? categoryLookup.currentPricing.price / 100
+    : null;
+
+  const candidates = [
+    fromCategoryApi,
+    fromCategoryLookup,
+    standingOrder?.annualMembershipFeeEur,
+    formSource?.annualMembershipFeeEur,
+    subscription?.membershipFeeAnnualEur,
+    subscription?.annualMembershipFee,
+    subscription?.membershipFee,
+    subscription?.financialDetails?.membershipFee,
+  ];
+
+  for (const value of candidates) {
+    const numberValue = Number(value);
+    if (Number.isFinite(numberValue) && numberValue > 0) {
+      return numberValue;
+    }
+  }
+
+  return null;
+};
 
 export const buildGdprPayload = () => ({
   consentCapturedAt: new Date().toISOString(),
@@ -383,7 +676,9 @@ export const buildDirectDebitPayload = formState => ({
     debtorCity: formState.memberCity || '',
     debtorPostcode: formState.memberPostCode || '',
     debtorCountry: formState.memberCountry || '',
-    debtorIban: cleanIban(formState.iban),
+    ...(formState.ibanIsMasked
+      ? {}
+      : { debtorIban: cleanIban(formState.iban) }),
     debtorBic: formState.bic || '',
     signedDate: toIsoDate(formState.signatureDate),
     isAuthorized: !!formState.authorization,
@@ -475,46 +770,36 @@ export const mapDirectDebitFromPortal = mandateOrForm => {
 
 export const mapSalaryDeductionFromPortal = salaryDeductionOrForm => {
   if (!salaryDeductionOrForm) return {};
-  if (salaryDeductionOrForm.formType === PAYMENT_FORM_TYPES.SALARY_DEDUCTION) {
+
+  if (
+    salaryDeductionOrForm.formType === PAYMENT_FORM_TYPES.SALARY_DEDUCTION ||
+    salaryDeductionOrForm._id ||
+    salaryDeductionOrForm.id
+  ) {
     return mapSalaryDeductionFromMineForm(salaryDeductionOrForm);
   }
-  const salaryDeduction = salaryDeductionOrForm;
-  return {
-    employedAt: salaryDeduction.employedAt || '',
-    payrollStaffNo: salaryDeduction.payrollStaffNo || '',
-    commencing: salaryDeduction.commencingDate || '',
-    date: salaryDeduction.signedDate || '',
-  };
+
+  return mapSalaryDeductionFromMineForm({
+    salaryDeduction: salaryDeductionOrForm,
+    ...salaryDeductionOrForm,
+  });
 };
 
 export const mapStandingOrderFromPortal = standingOrderOrForm => {
   if (!standingOrderOrForm) return {};
-  if (standingOrderOrForm.formType === PAYMENT_FORM_TYPES.STANDING_ORDER) {
+
+  if (
+    standingOrderOrForm.formType === PAYMENT_FORM_TYPES.STANDING_ORDER ||
+    standingOrderOrForm._id ||
+    standingOrderOrForm.id
+  ) {
     return mapStandingOrderFromMineForm(standingOrderOrForm);
   }
-  const standingOrder = standingOrderOrForm;
-  const [primaryDate, secondaryDate] = standingOrder.signatureDates || [];
-  return {
-    bankName: standingOrder.debtorBankName || '',
-    branchAddress: standingOrder.debtorBankAddress || '',
-    accountName: standingOrder.debtorAccountName || '',
-    iban: standingOrder.debtorIban || '',
-    bic: standingOrder.debtorBic || '',
-    frequency: standingOrder.paymentFrequency || 'Monthly',
-    amount:
-      standingOrder.installmentAmountEur === null ||
-      standingOrder.installmentAmountEur === undefined
-        ? ''
-        : String(standingOrder.installmentAmountEur),
-    annualMembershipFee:
-      standingOrder.annualMembershipFeeEur === null ||
-      standingOrder.annualMembershipFeeEur === undefined
-        ? ''
-        : String(standingOrder.annualMembershipFeeEur),
-    startDate: standingOrder.startDate || '',
-    accountHolderSignatureDate: primaryDate || '',
-    secondSignatureDate: secondaryDate || '',
-  };
+
+  return mapStandingOrderFromMineForm({
+    standingOrder: standingOrderOrForm,
+    ...standingOrderOrForm,
+  });
 };
 
 export const extractPaymentFormPrefill = response => {
