@@ -210,6 +210,8 @@ export const formatIbanForDisplay = iban => {
 
 export const cleanIban = iban => (iban || '').replace(/\s/g, '').toUpperCase();
 
+export const cleanBic = bic => (bic || '').replace(/\s/g, '').toUpperCase();
+
 export const isMaskedIban = iban => String(iban || '').includes('*');
 
 export const STANDING_ORDER_BRANCH_ADDRESSES = {
@@ -406,12 +408,42 @@ export const extractPaymentFormSignatureUrls = form => {
 export const extractStandingOrderSignatureUrls = form =>
   extractPaymentFormSignatureUrls(form);
 
+export const extractStandingOrderSignatureDates = form => {
+  if (!form || typeof form !== 'object') return [];
+
+  const standingOrder = form.standingOrder || form;
+  const nestedDates = standingOrder.signatureDates || form.signatureDates;
+  if (Array.isArray(nestedDates) && nestedDates.length > 0) {
+    return nestedDates.filter(Boolean);
+  }
+
+  const downloadDates = form.downloadUrls?.signatureDates;
+  if (Array.isArray(downloadDates) && downloadDates.length > 0) {
+    return downloadDates.filter(Boolean);
+  }
+
+  const primary = pickFirstNonEmpty(
+    standingOrder.signedDate,
+    form.signedDate,
+    standingOrder.accountHolderSignatureDate,
+    form.accountHolderSignatureDate,
+  );
+  const second = pickFirstNonEmpty(
+    standingOrder.secondSignedDate,
+    form.secondSignedDate,
+    standingOrder.secondSignatureDate,
+    form.secondSignatureDate,
+  );
+
+  return [primary, second].filter(Boolean);
+};
+
 export const mapStandingOrderFromMineForm = form => {
   if (!form) return {};
 
   const standingOrder = form.standingOrder || form;
   const signatureUrls = extractStandingOrderSignatureUrls(form);
-  const signatureDates = standingOrder.signatureDates || form.signatureDates || [];
+  const signatureDates = extractStandingOrderSignatureDates(form);
   const frequency =
     standingOrder.paymentFrequency || form.paymentFrequency || 'Monthly';
   const installmentRaw =
@@ -463,14 +495,21 @@ export const mapStandingOrderFromMineForm = form => {
     iban: ibanRaw ? formatIbanForDisplay(ibanRaw) : '',
     ibanIsMasked,
     bic: standingOrder.debtorBic || form.debtorBic || '',
+    message: pickFirstNonEmpty(
+      standingOrder.debtorMessage,
+      standingOrder.message,
+      standingOrder.optionalMessage,
+      form.debtorMessage,
+      form.message,
+      form.optionalMessage,
+    ),
     frequency,
     amount,
     annualMembershipFee,
     startDate: standingOrder.startDate || form.startDate || '',
     accountHolderSignature: signatureUrls[0] || '',
     secondSignature: signatureUrls[1] || '',
-    accountHolderSignatureDate:
-      signatureDates[0] || standingOrder.signedDate || form.signedDate || '',
+    accountHolderSignatureDate: signatureDates[0] || '',
     secondSignatureDate: signatureDates[1] || '',
   };
 };
@@ -605,6 +644,22 @@ export const validateStandingOrderIban = iban => {
   return { isValid: true, message: '' };
 };
 
+export const validateStandingOrderBic = bic => {
+  if (!bic || !String(bic).trim()) {
+    return { isValid: true, message: '' };
+  }
+
+  const cleaned = cleanBic(bic);
+  if (!/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(cleaned)) {
+    return {
+      isValid: false,
+      message: 'Invalid BIC format. Use 8 or 11 characters (e.g. BOFIIE2D)',
+    };
+  }
+
+  return { isValid: true, message: '' };
+};
+
 export const calculateStandingOrderInstallmentAmount = (
   annualFee,
   frequency = 'Monthly',
@@ -713,22 +768,34 @@ export const buildStandingOrderPayload = formState => {
     toIsoDate(formState.secondSignatureDate),
   ].filter(Boolean);
   const installmentAmountEur = Number(formState.amount);
+  const primarySignedDate = toIsoDate(formState.accountHolderSignatureDate);
+  const secondSignedDate = toIsoDate(formState.secondSignatureDate);
+
+  const standingOrder = {
+    debtorBankName: formState.bankName,
+    debtorBankAddress: formState.branchAddress,
+    debtorAccountName: formState.accountName,
+    debtorAccountNumber: formState.accountNumber || '',
+    ...(formState.ibanIsMasked
+      ? {}
+      : { debtorIban: cleanIban(formState.iban) }),
+    debtorBic: cleanBic(formState.bic),
+    debtorMessage: formState.message || '',
+    startDate: toIsoDate(formState.startDate),
+    paymentFrequency: formState.frequency,
+    installmentAmountEur: Number.isFinite(installmentAmountEur)
+      ? installmentAmountEur
+      : undefined,
+    isAuthorized: !!formState.authorization,
+    signedDate: primarySignedDate,
+    secondSignedDate: secondSignedDate || undefined,
+    signatureDates,
+  };
 
   return {
     formType: PAYMENT_FORM_TYPES.STANDING_ORDER,
-    standingOrder: {
-      debtorBankName: formState.bankName,
-      debtorBankAddress: formState.branchAddress,
-      debtorAccountName: formState.accountName,
-      debtorIban: cleanIban(formState.iban),
-      debtorBic: formState.bic || '',
-      startDate: toIsoDate(formState.startDate),
-      paymentFrequency: formState.frequency,
-      installmentAmountEur: Number.isFinite(installmentAmountEur)
-        ? installmentAmountEur
-        : undefined,
-      signatureDates,
-    },
+    isAuthorized: !!formState.authorization,
+    standingOrder,
     gdpr: buildGdprPayload(),
   };
 };

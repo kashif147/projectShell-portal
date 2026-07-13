@@ -16,6 +16,8 @@ import {
   getPriceForFrequency,
   getSubscriptionFeeLabel,
   isSalaryDeductionPaymentType,
+  isUndergraduateStudentMembership,
+  resolveCashPaymentType,
   workLocationAllowsSalaryDeduction,
 } from '../../helpers/subscriptionPricing.helper';
 
@@ -24,6 +26,7 @@ const SubscriptionDetails = ({
   onFormDataChange,
   showValidation = false,
   categoryData = null,
+  membershipCategory = '',
   dateOfBirth = '',
   workLocation = '',
 }) => {
@@ -84,6 +87,46 @@ const SubscriptionDetails = ({
     workLocation,
     workLocationLookups,
   );
+
+  const cashPaymentType = useMemo(
+    () => resolveCashPaymentType(paymentLooups),
+    [paymentLooups],
+  );
+
+  const isUndergraduateStudent = useMemo(
+    () => isUndergraduateStudentMembership(membershipCategory, categoryData),
+    [membershipCategory, categoryData],
+  );
+
+  useEffect(() => {
+    if (!isUndergraduateStudent) {
+      return;
+    }
+
+    const paymentFrequency =
+      getDefaultFrequencyForPaymentType(cashPaymentType) || 'Annually';
+
+    if (
+      formData?.paymentType === cashPaymentType &&
+      formData?.paymentFrequency === paymentFrequency &&
+      !formData?.payrollNo
+    ) {
+      return;
+    }
+
+    onFormDataChange({
+      ...formData,
+      paymentType: cashPaymentType,
+      paymentFrequency,
+      payrollNo: '',
+    });
+  }, [
+    isUndergraduateStudent,
+    cashPaymentType,
+    formData?.paymentType,
+    formData?.paymentFrequency,
+    formData?.payrollNo,
+  ]);
 
   const paymentOptions = useMemo(
     () =>
@@ -286,16 +329,27 @@ const SubscriptionDetails = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Select
-            label="Payment Type"
-            name="paymentType"
-            required
-            value={formData?.paymentType || ''}
-            onChange={handleInputChange}
-            showValidation={showValidation}
-            placeholder="Select payment type"
-            options={paymentOptions}
-          />
+          {isUndergraduateStudent ? (
+            <Input
+              label="Payment Type"
+              name="paymentType"
+              required
+              value={cashPaymentType}
+              readOnly
+              disabled
+            />
+          ) : (
+            <Select
+              label="Payment Type"
+              name="paymentType"
+              required
+              value={formData?.paymentType || ''}
+              onChange={handleInputChange}
+              showValidation={showValidation}
+              placeholder="Select payment type"
+              options={paymentOptions}
+            />
+          )}
           {showFrequencyDropdown && (
             <Select
               label="Payment Frequency"

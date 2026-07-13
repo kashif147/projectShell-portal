@@ -27,6 +27,8 @@ import { normalizeMobileToE164 } from '../helpers/phone.helper';
 import {
   getPaymentFrequencyCategory,
   isSalaryDeductionPaymentType,
+  isUndergraduateStudentMembership,
+  getUndergraduateSubscriptionPaymentDetails,
 } from '../helpers/subscriptionPricing.helper';
 import {
   detailBelongsToApplication,
@@ -60,7 +62,7 @@ const ApplicationForm = () => {
     getCategoryData,
     applicationStatus,
   } = useApplication();
-  const { categoryLookups, lookupsReady } = useLookup();
+  const { categoryLookups, paymentLooups, lookupsReady } = useLookup();
 
   const hasActiveApplication = useMemo(
     () => isResumablePortalApplication(personalDetail, applicationStatus),
@@ -720,6 +722,32 @@ const ApplicationForm = () => {
       });
   };
 
+  const resolveMembershipCategory = () =>
+    activeProfessionalDetail?.professionalDetails?.membershipCategory ||
+    formData.professionalDetails?.membershipCategory ||
+    '';
+
+  const shouldSkipSubscriptionPayment = () =>
+    isUndergraduateStudentMembership(resolveMembershipCategory(), categoryData);
+
+  const resolveSubscriptionPaymentFields = data => {
+    if (!shouldSkipSubscriptionPayment()) {
+      return {
+        paymentType: data?.paymentType,
+        paymentFrequency: data?.paymentFrequency,
+      };
+    }
+
+    const undergraduatePayment = getUndergraduateSubscriptionPaymentDetails(
+      paymentLooups,
+    );
+
+    return {
+      paymentType: undergraduatePayment.paymentType,
+      paymentFrequency: undergraduatePayment.paymentFrequency,
+    };
+  };
+
   const createSubscriptionDetail = async data => {
     try {
       const defaultFields = {
@@ -730,8 +758,10 @@ const ApplicationForm = () => {
         // paymentFrequency: "Monthly",
       };
 
+      const paymentFields = resolveSubscriptionPaymentFields(data);
+
       const subscriptionFields = {
-        paymentType: data?.paymentType,
+        paymentType: paymentFields.paymentType,
         payrollNo: data?.payrollNo,
         membershipStatus: data?.memberStatus,
         otherIrishTradeUnion: data?.otherIrishTradeUnion === 'yes',
@@ -751,7 +781,7 @@ const ApplicationForm = () => {
         valueAddedServices: data?.valueAddedServices === true,
         termsAndConditions: data?.termsAndConditions === true,
         exclusiveDiscountsAndOffers: data?.exclusiveDiscountsAndOffers === true,
-        paymentFrequency: data?.paymentFrequency,
+        paymentFrequency: paymentFields.paymentFrequency,
         ...defaultFields,
       };
 
@@ -777,8 +807,7 @@ const ApplicationForm = () => {
         // Update subscription detail
         getSubscriptionDetail(applicationId);
 
-        // Check if undergraduate student - they don't need payment
-        if (categoryData?.name === 'Undergraduate Student') {
+        if (shouldSkipSubscriptionPayment()) {
           setIsSubmitted(true);
           setStatusModal({
             open: true,
@@ -814,8 +843,10 @@ const ApplicationForm = () => {
         // paymentFrequency: "Monthly",
       };
 
+      const paymentFields = resolveSubscriptionPaymentFields(data);
+
       const subscriptionFields = {
-        paymentType: data?.paymentType,
+        paymentType: paymentFields.paymentType,
         payrollNo: data?.payrollNo,
         membershipStatus: data?.memberStatus,
         otherIrishTradeUnion: data?.otherIrishTradeUnion === 'yes',
@@ -835,7 +866,7 @@ const ApplicationForm = () => {
         valueAddedServices: data?.valueAddedServices === true,
         termsAndConditions: data?.termsAndConditions === true,
         exclusiveDiscountsAndOffers: data?.exclusiveDiscountsAndOffers === true,
-        paymentFrequency: data?.paymentFrequency,
+        paymentFrequency: paymentFields.paymentFrequency,
         ...defaultFields,
       };
 
@@ -859,8 +890,7 @@ const ApplicationForm = () => {
         // Update subscription detail
         getSubscriptionDetail(activeApplicationId);
 
-        // Check if undergraduate student - they don't need payment
-        if (categoryData?.name === 'Undergraduate Student') {
+        if (shouldSkipSubscriptionPayment()) {
           setIsSubmitted(true);
           setStatusModal({
             open: true,
@@ -1305,6 +1335,7 @@ const ApplicationForm = () => {
             }
             showValidation={showValidation}
             categoryData={categoryData}
+            membershipCategory={formData.professionalDetails?.membershipCategory}
             dateOfBirth={formData.personalInfo?.dateOfBirth}
             workLocation={formData.professionalDetails?.workLocation}
           />

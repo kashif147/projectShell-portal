@@ -6,6 +6,7 @@ import { createPaymentIntentRequest } from '../../api/payment.api';
 import { useSelector } from 'react-redux';
 import { useApplication } from '../../contexts/applicationContext';
 import { useLookup } from '../../contexts/lookupContext';
+import { isUndergraduateStudentMembership } from '../../helpers/subscriptionPricing.helper';
 
 const stripePromise = loadStripe(
   'pk_test_51SBAG4FTlZb0wcbr19eI8nC5u62DfuaUWRVS51VTERBocxSM9JSEs4ubrW57hYTCAHK9d6jrarrT4SAViKFMqKjT00TrEr3PNV',
@@ -49,8 +50,15 @@ const SubscriptionWrapper = ({
     }
 
     const initPayment = async () => {
-      if (!isVisible || !applicationId || !membershipCategory || !categoryData)
+      if (!isVisible || !applicationId || !membershipCategory) return;
+
+      if (isUndergraduateStudentMembership(membershipCategory, categoryData)) {
+        paymentIntentCreatedRef.current = false;
+        onClose?.();
         return;
+      }
+
+      if (!categoryData) return;
 
       setLoading(true);
       if (paymentIntentCreatedRef.current) {

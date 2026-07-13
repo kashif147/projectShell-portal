@@ -355,6 +355,23 @@ const onDisplayNotification = async (title, body, data) => {
   }
 };
 
+export const ensureFcmTokenRegistered = async ({ userId, tenantId }) => {
+  if (!userId || !tenantId) {
+    return false;
+  }
+
+  let token = localStorage.getItem('fcmToken');
+  if (!token || token === 'DeviceToken') {
+    token = await getFcmToken({ userId, tenantId });
+    if (!token || token === 'DeviceToken') {
+      return false;
+    }
+  }
+
+  const deviceId = getOrCreateDeviceId();
+  return registerFcmTokenWithBackend(token, userId, tenantId, deviceId, 'web');
+};
+
 export {
   getFcmToken,
   checkApplicationNotificationsPermission,

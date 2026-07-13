@@ -91,6 +91,8 @@ const NotificationSetup = () => {
     };
   }, [
     auth?.isSignedIn,
+    auth?.user,
+    auth?.userDetail,
     addNotification,
     incrementUnreadCount,
     setUnreadCountValue,
