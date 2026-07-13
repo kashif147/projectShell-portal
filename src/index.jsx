@@ -23,6 +23,7 @@ import { ContextProvider } from './contexts/ContextProvider';
 import NotificationSetup from './components/NotificationSetup';
 import {
   getFcmToken,
+  ensureFcmTokenRegistered,
   registerListenerWithFcm,
   unRegisterAppWithFcm,
   setNotificationContextMethods,
@@ -100,8 +101,20 @@ const App = () => {
   const queryParams = new URLSearchParams(location.search);
   const authCode = queryParams.get('code');
   const notificationUnsubscribeRef = React.useRef(null);
-  const fcmInitializedRef = React.useRef(false);
+  const fcmListenerInitializedRef = React.useRef(false);
+  const fcmRegisteredRef = React.useRef(false);
   const processedAuthCodeRef = React.useRef(null);
+
+  const fcmUserId =
+    auth.user?.id ||
+    auth.user?._id ||
+    auth.userDetail?.id ||
+    auth.userDetail?._id;
+  const fcmTenantId =
+    auth.user?.tenantId ||
+    auth.user?.userTenantId ||
+    auth.userDetail?.tenantId ||
+    auth.userDetail?.userTenantId;
 
   // Store navigate function globally for notification handlers
   React.useEffect(() => {
@@ -150,79 +163,76 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authCode, dispatch]);
 
-  // Initialize FCM when user is signed in (once per session)
+  // Fetch FCM token and set up foreground listener once per signed-in session
   React.useEffect(() => {
-    if (auth.isSignedIn) {
-      if (fcmInitializedRef.current) {
-        return;
-      }
-      fcmInitializedRef.current = true;
-      const initializeNotifications = async () => {
-        try {
-          console.log('Initializing FCM notifications...');
-
-          // Extract user data from Redux state
-          const user = auth.user || auth.userDetail;
-          const userId =
-            user?.id ||
-            user?._id ||
-            auth.userDetail?.id ||
-            auth.userDetail?._id;
-          const tenantId =
-            user?.tenantId ||
-            user?.userTenantId ||
-            auth.userDetail?.tenantId ||
-            auth.userDetail?.userTenantId;
-
-          console.log('User data for FCM registration:', {
-            hasUserId: !!userId,
-            hasTenantId: !!tenantId,
-            userId: userId ? userId.substring(0, 10) + '...' : 'N/A',
-            tenantId: tenantId ? tenantId.substring(0, 10) + '...' : 'N/A',
-          });
-
-          // Prepare user data for token registration
-          const userData = userId && tenantId ? { userId, tenantId } : null;
-
-          const token = await getFcmToken(userData);
-          console.log('FCM Token retrieved in App:', token);
-
-          // Also log from localStorage
-          const storedToken = localStorage.getItem('fcmToken');
-          console.log('FCM Token from localStorage:', storedToken);
-
-          // Wait a bit for navigation to be ready
-          setTimeout(() => {
-            const unsubscribe = registerListenerWithFcm(navigate);
-            notificationUnsubscribeRef.current = unsubscribe;
-          }, 500);
-        } catch (error) {
-          // Error handled silently
-          console.log('Error initializing notifications', error);
-          console.error('FCM Initialization Error:', error);
-        }
-      };
-
-      initializeNotifications();
-    } else {
-      // Clean up on logout
-      fcmInitializedRef.current = false;
+    if (!auth.isSignedIn) {
+      fcmListenerInitializedRef.current = false;
+      fcmRegisteredRef.current = false;
       if (notificationUnsubscribeRef.current) {
         notificationUnsubscribeRef.current();
         notificationUnsubscribeRef.current = null;
       }
-      unRegisterAppWithFcm().catch(() => {
-        // Error handled silently
-      });
+      unRegisterAppWithFcm().catch(() => {});
+      return;
     }
 
-    return () => {
-      if (notificationUnsubscribeRef.current) {
-        notificationUnsubscribeRef.current();
-        notificationUnsubscribeRef.current = null;
+    let cancelled = false;
+
+    const setupFcmListener = async () => {
+      if (fcmListenerInitializedRef.current) {
+        return;
+      }
+
+      fcmListenerInitializedRef.current = true;
+
+      try {
+        console.log('Initializing FCM notifications...');
+        await getFcmToken();
+        if (cancelled) return;
+
+        setTimeout(() => {
+          if (cancelled || notificationUnsubscribeRef.current) return;
+          notificationUnsubscribeRef.current = registerListenerWithFcm(navigate);
+        }, 500);
+      } catch (error) {
+        console.error('FCM Initialization Error:', error);
+        fcmListenerInitializedRef.current = false;
       }
     };
-  }, [auth.isSignedIn]);
+
+    setupFcmListener();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [auth.isSignedIn, navigate]);
+
+  // Register token with backend once userId and tenantId are available (e.g. after JWT decode)
+  React.useEffect(() => {
+    if (!auth.isSignedIn || !fcmUserId || !fcmTenantId || fcmRegisteredRef.current) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const registerToken = async () => {
+      const registered = await ensureFcmTokenRegistered({
+        userId: fcmUserId,
+        tenantId: fcmTenantId,
+      });
+
+      if (!cancelled && registered) {
+        fcmRegisteredRef.current = true;
+        console.log('FCM token registered with backend after login');
+      }
+    };
+
+    registerToken();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [auth.isSignedIn, fcmUserId, fcmTenantId]);
 
   if (auth.isLoading) {
     return <PulseLoader />;

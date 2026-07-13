@@ -28,6 +28,8 @@ import {
   resolveStandingOrderBranchAddress,
   toIsoDate,
   validateStandingOrderIban,
+  validateStandingOrderBic,
+  cleanBic,
   isMaskedIban,
 } from '../../helpers/paymentForm.helper';
 
@@ -90,6 +92,7 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
   const [showValidation, setShowValidation] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [ibanError, setIbanError] = useState('');
+  const [bicError, setBicError] = useState('');
   const [hydratedFromPortal, setHydratedFromPortal] = useState(false);
   const hydratedFormIdRef = useRef(null);
   const preservedPortalAmountRef = useRef(null);
@@ -464,6 +467,22 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
       return;
     }
 
+    if (name === 'bic') {
+      const formatted = cleanBic(value);
+      setFormState(prev => ({
+        ...prev,
+        bic: formatted,
+      }));
+
+      if (formatted) {
+        const validation = validateStandingOrderBic(formatted);
+        setBicError(validation.isValid ? '' : validation.message);
+      } else {
+        setBicError('');
+      }
+      return;
+    }
+
     setFormState(prev => {
       const next = {
         ...prev,
@@ -489,7 +508,7 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
     }));
   };
 
-  const validateForm = ({ updateIbanError = false } = {}) => {
+  const validateForm = ({ updateIbanError = false, updateBicError = false } = {}) => {
     const isExistingPortalForm = Boolean(formSource?._id || formSource?.id);
 
     if (!formState.bankName) return false;
@@ -521,6 +540,19 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
       setIbanError('');
     }
 
+    if (formState.bic) {
+      const bicValidation = validateStandingOrderBic(formState.bic);
+      if (!bicValidation.isValid) {
+        if (updateBicError) {
+          setBicError(bicValidation.message);
+        }
+        return false;
+      }
+    }
+    if (updateBicError) {
+      setBicError('');
+    }
+
     if (!formState.frequency) return false;
     const installmentAmount = Number(formState.amount);
     if (!Number.isFinite(installmentAmount) || installmentAmount <= 0) {
@@ -539,7 +571,7 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
 
   const handleSaveOrder = async () => {
     setShowValidation(true);
-    if (!validateForm({ updateIbanError: true })) {
+    if (!validateForm({ updateIbanError: true, updateBicError: true })) {
       toast.error('Please complete all required fields before saving.');
       const firstErrorField = document.querySelector('.border-red-500');
       if (firstErrorField) {
@@ -970,12 +1002,20 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  label="BIC"
-                  name="bic"
-                  value={formState.bic}
-                  onChange={handleInputChange}
-                />
+                <div>
+                  <Input
+                    label="BIC"
+                    name="bic"
+                    value={formState.bic}
+                    onChange={handleInputChange}
+                    showValidation={showValidation}
+                    placeholder="e.g. BOFIIE2D"
+                    style={{ textTransform: 'uppercase' }}
+                  />
+                  {bicError && (
+                    <p className="mt-1 text-xs text-red-600">{bicError}</p>
+                  )}
+                </div>
 
                 <div>
                   <Input
@@ -1147,11 +1187,11 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
                 />
 
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
                     Number of Payments
                   </label>
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3 sm:mb-4 p-3 sm:p-4 md:p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-                    <label className="flex items-center cursor-pointer">
+                  <div className="flex h-10 w-full items-center gap-2 rounded-md border border-gray-300 bg-white px-3">
+                    <label className="flex cursor-pointer items-center gap-2">
                       <input
                         type="checkbox"
                         name="numberOfPayments"
@@ -1169,23 +1209,21 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
                         }}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
-                      <span className="ml-2 text-xs sm:text-sm text-gray-700">
+                      <span className="text-sm text-gray-700 whitespace-nowrap">
                         Indefinite
                       </span>
                     </label>
-                    <span className="text-xs sm:text-sm text-gray-500">or</span>
-                    <div className="flex items-center">
-                      <Input
-                        name="specificNumberOfPayments"
-                        type="number"
-                        value={formState.specificNumberOfPayments}
-                        onChange={handleInputChange}
-                        disabled={formState.numberOfPayments === 'indefinite'}
-                        placeholder="#"
-                        className="w-16 sm:w-20"
-                        min="1"
-                      />
-                    </div>
+                    <span className="text-sm text-gray-500">or</span>
+                    <input
+                      name="specificNumberOfPayments"
+                      type="number"
+                      value={formState.specificNumberOfPayments}
+                      onChange={handleInputChange}
+                      disabled={formState.numberOfPayments === 'indefinite'}
+                      placeholder="#"
+                      min="1"
+                      className="h-7 w-16 rounded border border-gray-300 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+                    />
                   </div>
                 </div>
               </div>

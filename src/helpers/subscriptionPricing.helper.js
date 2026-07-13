@@ -216,3 +216,54 @@ export const workLocationAllowsSalaryDeduction = (
   // Only the work-location lookup carries this flag — not branch/region/hierarchy
   return selected.lookup.processSalaryDeduction === true;
 };
+
+const normalizeCategoryLabel = value =>
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ');
+
+/** Undergraduate members skip subscription payment on first application submit. */
+export const isUndergraduateStudentMembership = (
+  membershipCategory,
+  categoryData = null,
+) => {
+  if (normalizeCategoryLabel(membershipCategory) === 'undergraduate student') {
+    return true;
+  }
+
+  if (categoryData?.code === 'undergraduate_student') {
+    return true;
+  }
+
+  return normalizeCategoryLabel(categoryData?.name) === 'undergraduate student';
+};
+
+export const UNDERGRADUATE_STUDENT_PAYMENT_TYPE = 'Cash';
+
+export const resolveCashPaymentType = (paymentLookups = []) => {
+  const match = (paymentLookups || []).find(item => {
+    const label = item?.DisplayName || item?.lookupname || item?.name || '';
+    return normalizePaymentType(label).includes('cash');
+  });
+
+  return (
+    match?.DisplayName ||
+    match?.lookupname ||
+    match?.name ||
+    UNDERGRADUATE_STUDENT_PAYMENT_TYPE
+  );
+};
+
+export const getUndergraduateSubscriptionPaymentDetails = (
+  paymentLookups = [],
+) => {
+  const paymentType = resolveCashPaymentType(paymentLookups);
+
+  return {
+    paymentType,
+    paymentFrequency:
+      getDefaultFrequencyForPaymentType(paymentType) || 'Annually',
+  };
+};
