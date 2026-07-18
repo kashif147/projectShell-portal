@@ -17,12 +17,24 @@ import {
 } from '@ant-design/icons';
 import { Logo, ShellLogo } from '../../assets/images';
 import { useMemberRole } from '../../hooks/useMemberRole';
+import { useApplication } from '../../contexts/applicationContext';
+import { canAccessProfile } from '../../helpers/role.helper';
+import { isActiveApplicationPersonalDetail } from '../../helpers/applicationPayload.helper';
 
 const Sidebar = ({ collapsed, isMobile = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [moreMenuVisible, setMoreMenuVisible] = useState(false);
   const { isMember } = useMemberRole();
+  const { personalDetail, applicationStatus } = useApplication();
+  const showProfile = canAccessProfile({
+    isMember,
+    applicationStatus:
+      applicationStatus ?? personalDetail?.applicationStatus,
+    isActive: personalDetail
+      ? isActiveApplicationPersonalDetail(personalDetail)
+      : undefined,
+  });
   const MEMBER_ONLY_KEYS = ['/payments/method', '/membership', '/work-location', '/queries', '/voting', '/communications'];
 
   const menuItems = [
@@ -96,7 +108,11 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
       icon: <BookOutlined style={{ color: '#a855f7' }} />,
       label: 'Resources',
     },
-  ].filter(item => !(item.key === '/profile' && !isMember) && !(MEMBER_ONLY_KEYS.includes(item.key) && !isMember));
+  ].filter(
+    item =>
+      !(item.key === '/profile' && !showProfile) &&
+      !(MEMBER_ONLY_KEYS.includes(item.key) && !isMember),
+  );
 
   // Mobile bottom tab items - only show 4 main items + More button
   const mobileTabItems = [
@@ -124,7 +140,11 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
       label: 'Payments',
       color: '#10b981',
     },
-  ].filter(item => !(item.key === '/profile' && !isMember) && !(MEMBER_ONLY_KEYS.includes(item.key) && !isMember));
+  ].filter(
+    item =>
+      !(item.key === '/profile' && !showProfile) &&
+      !(MEMBER_ONLY_KEYS.includes(item.key) && !isMember),
+  );
 
   // Items shown in "More" menu
   const moreMenuItems = [

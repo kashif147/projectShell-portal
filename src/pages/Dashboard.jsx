@@ -25,6 +25,7 @@ import { applicationConfirmationRequest } from '../api/application.api';
 import {
   detailBelongsToApplication,
   getApplicationCompletionPercentage,
+  isActiveApplicationPersonalDetail,
   isResumablePortalApplication,
   resolveApplicationId,
 } from '../helpers/applicationPayload.helper';
@@ -33,6 +34,7 @@ import { useMemberRole } from '../hooks/useMemberRole';
 import { dummyData } from '../services/dummyData';
 import { getSubscriptionRequest } from '../api/subscription.api';
 import { REJECTED_APPLICATION_REAPPLY_MESSAGE } from '../helpers/paymentIntent.helper';
+import { canAccessProfile } from '../helpers/role.helper';
 
 const stripePromise = loadStripe(
   'pk_test_51SBAG4FTlZb0wcbr19eI8nC5u62DfuaUWRVS51VTERBocxSM9JSEs4ubrW57hYTCAHK9d6jrarrT4SAViKFMqKjT00TrEr3PNV',
@@ -641,6 +643,14 @@ const Dashboard = () => {
     return stepToButtonText[currentStep] || 'Continue';
   };
 
+  const showProfile = canAccessProfile({
+    isMember,
+    applicationStatus: applicationStatus || contextApplicationStatus,
+    isActive: personalDetail
+      ? isActiveApplicationPersonalDetail(personalDetail)
+      : isApplicationActive,
+  });
+
   // Format currency for display (use cents → euros logic like SubscriptionDetails)
   const formatCurrency = valueInCents => {
     const currency = (
@@ -867,8 +877,8 @@ const Dashboard = () => {
                 colorScheme={applicationQuickActionState.colorScheme}
               />
 
-              {/* Profile Action - show when member */}
-              {isMember && (
+              {/* Profile Action - members always; non-members before submit */}
+              {showProfile && (
                 <QuickActionButton
                   title="My Profile"
                   subtitle="View Profile"

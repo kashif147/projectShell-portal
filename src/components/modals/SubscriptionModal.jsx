@@ -286,7 +286,7 @@ const SubscriptionModal = ({
               <div className="mt-4 pt-4 border-t border-indigo-200/60 space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600 font-medium">
-                    Category Price
+                    Amount to Pay
                   </span>
                   <span className="text-xl font-bold text-indigo-600">
                     {formatCurrency(getDisplayPrice())}

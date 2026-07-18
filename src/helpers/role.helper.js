@@ -73,3 +73,32 @@ export const resolveIsPortalMember = ({
     isActivePortalMember(profileDetail)
   );
 };
+
+/**
+ * Whether the Profile screen/nav should be available.
+ * Members and non-members can always view Profile (including after submit).
+ */
+export const canAccessProfile = () => true;
+
+/**
+ * Whether Profile edits are locked.
+ * Non-members with an active submitted/processed application can view but not save.
+ */
+export const isProfileReadOnly = ({
+  isMember,
+  applicationStatus,
+  isActive,
+} = {}) => {
+  if (isMember) return false;
+
+  const status = String(applicationStatus || '')
+    .trim()
+    .toLowerCase();
+
+  const isSubmittedOrProcessed =
+    status === 'submitted' || status === 'processed';
+
+  if (!isSubmittedOrProcessed) return false;
+
+  return isActive !== false;
+};
