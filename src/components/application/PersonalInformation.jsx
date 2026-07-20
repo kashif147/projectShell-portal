@@ -301,7 +301,7 @@ const PersonalInformation = ({
   return (
     <div className="space-y-6">
       {/* Personal Information Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-300">
+      <div className="section-card">
         <div className="flex items-start gap-3 mb-6">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30">
             <svg
@@ -403,7 +403,7 @@ const PersonalInformation = ({
       </div>
 
       {/* Correspondence Details Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-300">
+      <div className="section-card">
         <div className="flex items-start gap-3 mb-6">
           <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-lg shadow-green-500/30">
             <svg
@@ -432,7 +432,7 @@ const PersonalInformation = ({
         {/* Consent and Preferred Address Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
           {/* Preferred Address Radio */}
-          <div className="mb-4 p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+          <div className="option-box mb-4">
             <Radio
               label="Preferred address"
               name="preferredAddress"
@@ -444,7 +444,7 @@ const PersonalInformation = ({
             />
           </div>  
           {/* Consent Checkbox */}
-          <div className="mb-4 p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+          <div className="option-box mb-4">
             <Checkbox
               label={
                 <div>
@@ -588,7 +588,7 @@ const PersonalInformation = ({
       </div>
 
       {/* Contact Details Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-300">
+      <div className="section-card">
         <div className="flex items-start gap-3 mb-6">
           <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/30">
             <svg
@@ -645,7 +645,7 @@ const PersonalInformation = ({
                 showMobileInvalidError ||
                 showMobileCountryCodeError
                   ? 'border-red-500 bg-red-50'
-                  : 'border-blue-500'
+                  : 'border-gray-300'
               }`}
               placeholder={
                 shouldUseInternationalMobileFormat ? '+92 345 0491493' : '85 123 4567'
@@ -665,7 +665,7 @@ const PersonalInformation = ({
         </div>
 
         {/* Preferred Email Radio */}
-        <div className="mb-4 p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+        <div className="option-box mb-4">
           <Radio
             label="Preferred Email"
             name="preferredEmail"

@@ -58,14 +58,14 @@ const SubscriptionModal = ({
   const ELEMENT_OPTIONS = {
     style: {
       base: {
-        fontSize: '14px',
+        fontSize: '13px',
         color: '#424770',
         letterSpacing: '0.025em',
         fontFamily: 'Source Code Pro, monospace',
         '::placeholder': {
           color: '#aab7c4',
         },
-        padding: '10px 12px',
+        padding: '6px 8px',
       },
       invalid: {
         color: '#9e2146',
@@ -206,12 +206,19 @@ const SubscriptionModal = ({
       open={isVisible}
       onCancel={onClose}
       footer={null}
-      width={window.innerWidth <= 768 ? '95%' : '600px'}
+      closable={false}
+      width={window.innerWidth <= 768 ? '95%' : '520px'}
       centered
-      closeIcon={
-        <span className="text-gray-400 hover:text-gray-600 transition-colors">
+      styles={{ body: { padding: '16px', maxHeight: '85vh', overflowY: 'auto' } }}>
+      {/* Modern Header with Gradient */}
+      <div className="relative bg-gradient-to-r from-indigo-600 to-purple-600 -m-4 mb-3 p-3 rounded-t-lg">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute top-2.5 right-2.5 z-10 inline-flex items-center justify-center w-7 h-7 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors">
           <svg
-            className="w-6 h-6"
+            className="w-4 h-4"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24">
@@ -222,15 +229,12 @@ const SubscriptionModal = ({
               d="M6 18L18 6M6 6l12 12"
             />
           </svg>
-        </span>
-      }>
-      {/* Modern Header with Gradient */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 -m-6 mb-6 p-6 rounded-t-lg">
+        </button>
         <div className="text-center text-white">
-          <div className="flex justify-center mb-3">
-            <div className="bg-white/20 backdrop-blur-sm p-3 rounded-full">
+          <div className="flex justify-center mb-1.5">
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full">
               <svg
-                className="w-8 h-8 text-white"
+                className="w-5 h-5 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24">
@@ -243,61 +247,64 @@ const SubscriptionModal = ({
               </svg>
             </div>
           </div>
-          <h2 className="text-2xl font-bold mb-2">Membership Subscription</h2>
-          <p className="text-indigo-100 text-sm">
+          <h2 className="text-lg font-bold mb-0.5">Membership Subscription</h2>
+          <p className="text-indigo-100 text-xs">
             Review your membership and complete payment
           </p>
         </div>
       </div>
 
-      <Form form={form} layout="vertical" className="space-y-5">
+      <Form form={form} layout="vertical" className="space-y-2.5">
         {/* Membership Category Details - Modern Card */}
         {categoryData && (
-          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border border-indigo-200 shadow-sm">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 rounded-full -mr-16 -mt-16"></div>
-            <div className="relative p-5">
-              <div className="flex items-start justify-between mb-3">
+          <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border border-indigo-200 shadow-sm">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 rounded-full -mr-12 -mt-12"></div>
+            <div className="relative p-3">
+              <div className="flex items-start justify-between mb-1.5">
                 <div className="flex-1">
-                  <h3 className="font-bold text-lg text-gray-800 mb-1">
+                  <h3 className="font-bold text-sm text-gray-800 mb-1">
                     {categoryData?.name || 'Membership Category'}
                   </h3>
                   {formData?.subscriptionDetails?.paymentType !==
                   'Credit Card' ? (
-                    <p className="text-sm text-gray-600 leading-relaxed">
-                      Your annual membership fee is{' '}
-                      {formatCurrency(priceInfo.full)}. For now, we are only
-                      collecting {formatCurrency(priceInfo.monthly)} as the
-                      application processing amount. The remaining balance will
-                      be applied when your membership is processed.
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      <strong>
+                        Your annual membership fee is{' '}
+                        {formatCurrency(priceInfo.full)}.
+                      </strong>{' '}
+                      For now, we are only collecting{' '}
+                      {formatCurrency(priceInfo.monthly)} as the application
+                      processing amount. The remaining balance will be applied
+                      when your membership is processed.
                     </p>
                   ) : (
                     categoryData?.description && (
-                      <p className="text-sm text-gray-600 leading-relaxed">
+                      <p className="text-xs text-gray-600 leading-relaxed">
                         {categoryData.description}
                       </p>
                     )
                   )}
                 </div>
-                <div className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-semibold ml-3">
+                <div className="bg-indigo-600 text-white px-2.5 py-0.5 rounded-full text-[10px] font-semibold ml-2 shrink-0">
                   Active
                 </div>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-indigo-200/60 space-y-2">
+              <div className="mt-2 pt-2 border-t border-indigo-200/60">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 font-medium">
+                  <span className="text-xs text-gray-600 font-medium">
                     Amount to Pay
                   </span>
-                  <span className="text-xl font-bold text-indigo-600">
+                  <span className="text-base font-bold text-indigo-600">
                     {formatCurrency(getDisplayPrice())}
                   </span>
                 </div>
                 {categoryData?.currentPricing?.frequency && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500">
+                  <div className="flex justify-between items-center mt-1.5">
+                    <span className="text-[11px] text-gray-500">
                       Payment Frequency
                     </span>
-                    <span className="text-sm font-semibold text-gray-700 bg-white px-3 py-1 rounded-full">
+                    <span className="text-xs font-semibold text-gray-700 bg-white px-2 py-0.5 rounded-full">
                       {categoryData.currentPricing.frequency}
                     </span>
                   </div>
@@ -309,7 +316,7 @@ const SubscriptionModal = ({
 
         {/* Name on Card - Modern Style */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-xs font-semibold text-gray-700 mb-1">
             <span className="text-red-500 mr-1">*</span>Name on Card
           </label>
           <div className="relative">
@@ -325,7 +332,7 @@ const SubscriptionModal = ({
                       : user?.userName || userDetail?.userName || ''
               }
               readOnly
-              size="large"
+              size="middle"
               className="shadow-sm rounded-lg"
               prefix={
                 <svg
@@ -349,9 +356,9 @@ const SubscriptionModal = ({
               }}
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <span className="inline-flex items-center text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+              <span className="inline-flex items-center text-[10px] font-medium text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full">
                 <svg
-                  className="w-3 h-3 mr-1"
+                  className="w-2.5 h-2.5 mr-0.5"
                   fill="currentColor"
                   viewBox="0 0 20 20">
                   <path
@@ -368,7 +375,7 @@ const SubscriptionModal = ({
 
         {/* Email - Modern Style */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-xs font-semibold text-gray-700 mb-1">
             <span className="text-red-500 mr-1">*</span>Email
           </label>
           <div className="relative">
@@ -385,7 +392,7 @@ const SubscriptionModal = ({
                 ''
               }
               readOnly
-              size="large"
+              size="middle"
               className="shadow-sm rounded-lg"
               prefix={
                 <svg
@@ -409,9 +416,9 @@ const SubscriptionModal = ({
               }}
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <span className="inline-flex items-center text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+              <span className="inline-flex items-center text-[10px] font-medium text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full">
                 <svg
-                  className="w-3 h-3 mr-1"
+                  className="w-2.5 h-2.5 mr-0.5"
                   fill="currentColor"
                   viewBox="0 0 20 20">
                   <path
@@ -428,13 +435,13 @@ const SubscriptionModal = ({
 
         {/* Card Number - Modern Style */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-xs font-semibold text-gray-700 mb-1">
             <span className="text-red-500 mr-1">*</span>Card Number
           </label>
           <div className="relative group">
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
               <svg
-                className="w-5 h-5"
+                className="w-4 h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24">
@@ -446,7 +453,7 @@ const SubscriptionModal = ({
                 />
               </svg>
             </div>
-            <div className="pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
+            <div className="pl-9 pr-3 py-2 border border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
               <CardNumberElement
                 options={ELEMENT_OPTIONS}
                 onChange={e => {
@@ -464,7 +471,7 @@ const SubscriptionModal = ({
             {cardComplete.cardNumber && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
                 <svg
-                  className="w-5 h-5 text-green-500"
+                  className="w-4 h-4 text-green-500"
                   fill="currentColor"
                   viewBox="0 0 20 20">
                   <path
@@ -479,15 +486,15 @@ const SubscriptionModal = ({
         </div>
 
         {/* Expiry & CVC - Modern Style */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
               <span className="text-red-500 mr-1">*</span>Expiry Date
             </label>
             <div className="relative group">
               <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
                 <svg
-                  className="w-5 h-5"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24">
@@ -499,7 +506,7 @@ const SubscriptionModal = ({
                   />
                 </svg>
               </div>
-              <div className="pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
+              <div className="pl-9 pr-3 py-2 border border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
                 <CardExpiryElement
                   onReady={element => (cardExpiryRef.current = element)}
                   options={ELEMENT_OPTIONS}
@@ -518,7 +525,7 @@ const SubscriptionModal = ({
               {cardComplete.cardExpiry && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                   <svg
-                    className="w-5 h-5 text-green-500"
+                    className="w-4 h-4 text-green-500"
                     fill="currentColor"
                     viewBox="0 0 20 20">
                     <path
@@ -533,13 +540,13 @@ const SubscriptionModal = ({
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
               <span className="text-red-500 mr-1">*</span>Security Code
             </label>
             <div className="relative group">
               <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
                 <svg
-                  className="w-5 h-5"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24">
@@ -551,7 +558,7 @@ const SubscriptionModal = ({
                   />
                 </svg>
               </div>
-              <div className="pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
+              <div className="pl-9 pr-3 py-2 border border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
                 <CardCvcElement
                   onReady={element => (cardCvcRef.current = element)}
                   options={ELEMENT_OPTIONS}
@@ -566,7 +573,7 @@ const SubscriptionModal = ({
               {cardComplete.cardCvc && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                   <svg
-                    className="w-5 h-5 text-green-500"
+                    className="w-4 h-4 text-green-500"
                     fill="currentColor"
                     viewBox="0 0 20 20">
                     <path
@@ -581,14 +588,11 @@ const SubscriptionModal = ({
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-gray-200 my-6"></div>
-
         {/* Footer with Total and Pay Button */}
-        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-indigo-50 rounded-xl border border-gray-200">
+        <div className="flex items-center justify-between p-3 mt-1 bg-gradient-to-r from-gray-50 to-indigo-50 rounded-lg border border-gray-200">
           <div>
-            <p className="text-xs text-gray-500 mb-1">Total Amount</p>
-            <p className="text-2xl font-bold text-gray-800">
+            <p className="text-[11px] text-gray-500 mb-0.5">Total Amount</p>
+            <p className="text-lg font-bold text-gray-800">
               {formatCurrency(getDisplayPrice())}
             </p>
           </div>
@@ -597,15 +601,15 @@ const SubscriptionModal = ({
             onClick={handlePayNow}
             loading={loading}
             disabled={!isCardReady}
-            className="!h-12 !px-8 !text-base !font-semibold !bg-gradient-to-r !from-indigo-600 !to-purple-600 hover:!from-indigo-700 hover:!to-purple-700 !border-0 !shadow-lg hover:!shadow-xl !transition-all !duration-200 disabled:!bg-gradient-to-r disabled:!from-indigo-300 disabled:!to-purple-300 disabled:!text-white disabled:!opacity-100 disabled:!cursor-not-allowed disabled:!shadow-md">
+            className="!h-10 !px-6 !text-sm !font-semibold !bg-gradient-to-r !from-indigo-600 !to-purple-600 hover:!from-indigo-700 hover:!to-purple-700 !border-0 !shadow-md hover:!shadow-lg !transition-all !duration-200 disabled:!bg-gradient-to-r disabled:!from-indigo-300 disabled:!to-purple-300 disabled:!text-white disabled:!opacity-100 disabled:!cursor-not-allowed disabled:!shadow-sm">
             {loading ? 'Processing...' : 'Pay Now'}
           </Button>
         </div>
 
         {/* Security Notice */}
-        <div className="flex items-center justify-center text-xs text-gray-500 mt-4">
+        <div className="flex items-center justify-center text-[11px] text-gray-500 mt-2">
           <svg
-            className="w-4 h-4 mr-1"
+            className="w-3.5 h-3.5 mr-1"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24">

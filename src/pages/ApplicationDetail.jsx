@@ -186,7 +186,7 @@ const ApplicationDetail = () => {
 
   if (!application) {
     return (
-      <div className="px-1 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Back Button */}
         <button
           onClick={() => navigate('/application')}
@@ -418,7 +418,7 @@ const ApplicationDetail = () => {
   }
 
   return (
-    <div className="px-1 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Back Button */}
       <button
         onClick={() => navigate('/application')}

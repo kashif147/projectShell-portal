@@ -394,7 +394,7 @@ const Application = () => {
     : "You don't have an application yet.";
 
   return (
-    <div className="px-1 sm:px-6 py-4 sm:py-6">
+    <div>
       <div
         className={`mb-4 sm:mb-6 border rounded-lg p-3 sm:p-4 ${
           isMember ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'

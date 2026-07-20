@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Card, Avatar, Row, Col } from 'antd';
+import { Card, Avatar } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -361,45 +361,63 @@ const Profile = () => {
     return null;
   }
 
+  if (loading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <Spinner />
+      </div>
+    );
+  }
+
+  const displayName =
+    `${user?.userFirstName || user?.firstName || ''} ${
+      user?.userLastName || user?.lastName || ''
+    }`.trim() || 'Member';
+
   return (
-    <Row gutter={[16, 16]}>
-      <Col xs={24} md={8}>
-        <Card>
-          <div className="text-center">
-            <Avatar size={120} src={user?.avatar} icon={<UserOutlined />} />
-            <h2 className="mt-4 text-xl font-bold">
-              {user?.userFirstName || user?.firstName || ''}{' '}
-              {user?.userLastName || user?.lastName || ''}
+    <div className="w-full max-w-none space-y-4 sm:space-y-5">
+      <Card className="profile-hero-card w-full border border-slate-200 shadow-sm">
+        <div className="flex flex-col items-center gap-3 py-2 text-center sm:flex-row sm:gap-5 sm:text-left">
+          <Avatar
+            size={88}
+            src={user?.avatar}
+            icon={<UserOutlined />}
+            className="shrink-0 bg-blue-600"
+          />
+          <div className="min-w-0">
+            <h2 className="m-0 text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">
+              {displayName}
             </h2>
-            <p className="text-gray-500">
+            <p className="m-0 mt-1 text-sm text-slate-500">
               {isMember ? 'Member' : 'Non Member'}
+              {profileDetail?.membershipNumber
+                ? ` · ${profileDetail.membershipNumber}`
+                : ''}
             </p>
           </div>
-        </Card>
-      </Col>
-      {loading ? (
-        <Spinner />
-      ) : (
-        <Col xs={24} md={16}>
-          <PersonalInformation
-            formData={personalInfo}
-            onFormDataChange={setPersonalInfo}
-            showValidation={showValidation}
-          />
-          <div className="flex gap-2 mt-4">
-            <Button
-              type="primary"
-              onClick={updatePersonalDetail}
-              disabled={isReadOnly}>
-              Save
-            </Button>
-            <Button type="default" onClick={handleCancel} disabled={isReadOnly}>
-              Cancel
-            </Button>
-          </div>
-        </Col>
-      )}
-    </Row>
+        </div>
+      </Card>
+
+      <div className="w-full">
+        <PersonalInformation
+          formData={personalInfo}
+          onFormDataChange={setPersonalInfo}
+          showValidation={showValidation}
+        />
+      </div>
+
+      <div className="flex flex-wrap gap-2 pt-1">
+        <Button
+          type="primary"
+          onClick={updatePersonalDetail}
+          disabled={isReadOnly}>
+          Save
+        </Button>
+        <Button type="default" onClick={handleCancel} disabled={isReadOnly}>
+          Cancel
+        </Button>
+      </div>
+    </div>
   );
 };
 

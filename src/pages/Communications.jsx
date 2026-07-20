@@ -87,7 +87,7 @@ const Communications = () => {
   ];
 
   return (
-    <div className="space-y-5 px-3 py-4 sm:space-y-6 sm:px-6 lg:px-8 sm:py-6">
+    <div className="space-y-5 sm:space-y-6">
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
           Communications

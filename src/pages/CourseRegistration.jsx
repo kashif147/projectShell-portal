@@ -49,7 +49,7 @@ const CourseRegistration = () => {
   };
 
   return (
-    <div className="space-y-5 px-3 py-4 sm:space-y-6 sm:px-6 lg:px-8 sm:py-6">
+    <div className="space-y-5 sm:space-y-6">
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="relative h-48 sm:h-60">
           <img src={course.image} alt={course.title} className="h-full w-full object-cover" />

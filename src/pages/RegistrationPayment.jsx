@@ -113,7 +113,7 @@ const RegistrationPayment = () => {
   }
 
   return (
-    <div className="px-3 py-4 sm:px-6 sm:py-6">
+    <div>
       <Modal
         title={null}
         open={true}

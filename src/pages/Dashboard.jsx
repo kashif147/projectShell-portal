@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import DashboardCard from '../components/dashboard/DashboardCard';
 import QuickActionButton from '../components/dashboard/QuickActionButton';
 import UpcomingEventCard from '../components/dashboard/UpcomingEventCard';
+import ProfileCompletionCard from '../components/dashboard/ProfileCompletionCard';
+import PaymentsBillingCard from '../components/dashboard/PaymentsBillingCard';
+import EventDetailModal from '../components/dashboard/EventDetailModal';
 import {
   UserOutlined,
   CalendarOutlined,
   CreditCardOutlined,
   FormOutlined,
-  EnvironmentOutlined,
-  ClockCircleOutlined,
 } from '@ant-design/icons';
 import { useApplication } from '../contexts/applicationContext';
 import { useLookup } from '../contexts/lookupContext';
@@ -29,16 +29,34 @@ import {
   isResumablePortalApplication,
   resolveApplicationId,
 } from '../helpers/applicationPayload.helper';
+import {
+  STRIPE_PUBLISHABLE_KEY,
+  INITIAL_STATUS_MODAL,
+  createInitialDashboardFormData,
+  buildDashboardPersonalInfo,
+  buildDashboardProfessionalDetails,
+  buildDashboardSubscriptionDetails,
+  resolvePersonalDetailActive,
+  buildApplicationStatusState,
+  parseApplicationConfirmationResponse,
+  resolveApplicationStep,
+  isLatestSubscriptionResigned,
+  getApplicationQuickActionState,
+  formatCentsCurrency,
+  getProfileCompletionCopy,
+  shouldOpenPaymentModal,
+  isPayDisabled,
+  getUpcomingEvents,
+  buildPaymentSuccessModal,
+} from '../helpers/dashboard.helper';
 import { getAccountNetBalanceRequest } from '../api/account.api';
 import { useMemberRole } from '../hooks/useMemberRole';
 import { dummyData } from '../services/dummyData';
 import { getSubscriptionRequest } from '../api/subscription.api';
-import { REJECTED_APPLICATION_REAPPLY_MESSAGE } from '../helpers/paymentIntent.helper';
 import { canAccessProfile } from '../helpers/role.helper';
+import '../assets/theme/dashboard.css';
 
-const stripePromise = loadStripe(
-  'pk_test_51SBAG4FTlZb0wcbr19eI8nC5u62DfuaUWRVS51VTERBocxSM9JSEs4ubrW57hYTCAHK9d6jrarrT4SAViKFMqKjT00TrEr3PNV',
-);
+const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
 
 const Dashboard = () => {
   const {
@@ -62,12 +80,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [statusModal, setStatusModal] = useState({
-    open: false,
-    status: 'success',
-    title: '',
-    message: '',
-  });
+  const [statusModal, setStatusModal] = useState(INITIAL_STATUS_MODAL);
   const [isApplicationSubmitted, setIsApplicationSubmitted] = useState(false);
   const [applicationStatus, setApplicationStatus] = useState(null);
   const [isApplicationActive, setIsApplicationActive] = useState(true);
@@ -76,19 +89,15 @@ const Dashboard = () => {
   const [accountNetBalance, setAccountNetBalance] = useState(null);
   const [accountNetBalanceLoading, setAccountNetBalanceLoading] =
     useState(false);
-  const [formData, setFormData] = useState({
-    personalInfo: {
-      forename: user?.userFirstName || '',
-      surname: user?.userLastName || '',
-      personalEmail: user?.userEmail || '',
-      mobileNo: user?.userMobilePhone || '',
-      country: 'Ireland',
-      consent: false,
-    },
-    professionalDetails: {},
-    subscriptionDetails: {},
-  });
+  const [formData, setFormData] = useState(() =>
+    createInitialDashboardFormData(user),
+  );
 
+  const applyApplicationStatusState = state => {
+    setApplicationStatus(state.applicationStatus);
+    setIsApplicationActive(state.isApplicationActive);
+    setIsApplicationSubmitted(state.isApplicationSubmitted);
+  };
 
   const applicationId = useMemo(
     () =>
@@ -128,26 +137,15 @@ const Dashboard = () => {
     [subscriptionDetail, activeApplicationId],
   );
 
-  // Kick off profile and application data loading together when the dashboard mounts
   useEffect(() => {
     getProfileDetail();
-    // Lookups are already fetched by LookupProvider on mount
-    // No need to fetch again here to avoid redundant calls
     getPersonalDetail();
   }, []);
 
   useEffect(() => {
-    if (!activeApplicationId) {
-      return;
-    }
-
-    if (!activeProfessionalDetail) {
-      getProfessionalDetail(activeApplicationId);
-    }
-
-    if (!activeSubscriptionDetail) {
-      getSubscriptionDetail(activeApplicationId);
-    }
+    if (!activeApplicationId) return;
+    if (!activeProfessionalDetail) getProfessionalDetail(activeApplicationId);
+    if (!activeSubscriptionDetail) getSubscriptionDetail(activeApplicationId);
   }, [
     activeApplicationId,
     activeProfessionalDetail?.applicationId,
@@ -155,323 +153,97 @@ const Dashboard = () => {
   ]);
 
   useEffect(() => {
-    if (applicationId) {
-      setFormData(prev => ({
-        ...prev,
-        personalInfo: {
-          title:
-            personalDetail?.personalInfo?.title ||
-            prev.personalInfo.title ||
-            '',
-          surname:
-            personalDetail?.personalInfo?.surname ||
-            prev.personalInfo.surname ||
-            user?.userLastName ||
-            '',
-          forename:
-            personalDetail?.personalInfo?.forename ||
-            prev.personalInfo.forename ||
-            user?.userFirstName ||
-            '',
-          gender:
-            personalDetail?.personalInfo?.gender ||
-            prev.personalInfo.gender ||
-            '',
-          dateOfBirth:
-            personalDetail?.personalInfo?.dateOfBirth ||
-            prev.personalInfo.dateOfBirth ||
-            '',
-          countryPrimaryQualification:
-            personalDetail?.personalInfo?.countryPrimaryQualification ||
-            prev.personalInfo.countryPrimaryQualification ||
-            '',
-          personalEmail:
-            personalDetail?.contactInfo?.personalEmail ||
-            prev.personalInfo.personalEmail ||
-            user?.userEmail ||
-            '',
-          mobileNo:
-            personalDetail?.contactInfo?.mobileNumber ||
-            prev.personalInfo.mobileNo ||
-            user?.userMobilePhone ||
-            '',
-          consent:
-            personalDetail?.contactInfo?.consent ??
-            prev.personalInfo.consent ??
-            false,
-          addressLine1:
-            personalDetail?.contactInfo?.buildingOrHouse ||
-            prev.personalInfo.addressLine1 ||
-            '',
-          addressLine2:
-            personalDetail?.contactInfo?.streetOrRoad ||
-            prev.personalInfo.addressLine2 ||
-            '',
-          addressLine3:
-            personalDetail?.contactInfo?.areaOrTown ||
-            prev.personalInfo.addressLine3 ||
-            '',
-          addressLine4:
-            personalDetail?.contactInfo?.countyCityOrPostCode ||
-            prev.personalInfo.addressLine4 ||
-            '',
-          eircode:
-            personalDetail?.contactInfo?.eircode ||
-            prev.personalInfo.eircode ||
-            '',
-          preferredAddress:
-            personalDetail?.contactInfo?.preferredAddress ||
-            prev.personalInfo.preferredAddress ||
-            '',
-          preferredEmail:
-            personalDetail?.contactInfo?.preferredEmail ||
-            prev.personalInfo.preferredEmail ||
-            '',
-          homeWorkTelNo:
-            personalDetail?.contactInfo?.telephoneNumber ||
-            prev.personalInfo.homeWorkTelNo ||
-            '',
-          country:
-            personalDetail?.contactInfo?.country ||
-            prev.personalInfo.country ||
-            'Ireland',
-          workEmail:
-            personalDetail?.contactInfo?.workEmail ||
-            prev.personalInfo.workEmail ||
-            '',
-        },
-      }));
-    }
-  }, [applicationId, personalDetail, user?.userLastName, user?.userFirstName, user?.userEmail, user?.userMobilePhone]);
+    if (!applicationId) return;
+    setFormData(prev => ({
+      ...prev,
+      personalInfo: buildDashboardPersonalInfo(
+        personalDetail,
+        prev.personalInfo,
+        user,
+      ),
+    }));
+  }, [
+    applicationId,
+    personalDetail,
+    user?.userLastName,
+    user?.userFirstName,
+    user?.userEmail,
+    user?.userMobilePhone,
+  ]);
 
   useEffect(() => {
-    if (professionalDetail?.applicationId) {
-      setFormData(prev => ({
-        ...prev,
-        professionalDetails: {
-          membershipCategory:
-            professionalDetail?.professionalDetails?.membershipCategory ||
-            prev.professionalDetails.membershipCategory ||
-            '',
-          workLocation:
-            professionalDetail?.professionalDetails?.workLocation ||
-            prev.professionalDetails.workLocation ||
-            '',
-          otherWorkLocation:
-            professionalDetail?.professionalDetails?.otherWorkLocation ??
-            prev.professionalDetails.otherWorkLocation ??
-            '',
-          grade:
-            professionalDetail?.professionalDetails?.grade ||
-            prev.professionalDetails.grade ||
-            '',
-          otherGrade:
-            professionalDetail?.professionalDetails?.otherGrade ??
-            prev.professionalDetails.otherGrade ??
-            '',
-          nmbiNumber:
-            professionalDetail?.professionalDetails?.nmbiNumber ??
-            prev.professionalDetails.nmbiNumber ??
-            '',
-          nurseType:
-            professionalDetail?.professionalDetails?.nurseType ??
-            prev.professionalDetails.nurseType ??
-            '',
-          nursingAdaptationProgramme: professionalDetail?.professionalDetails
-            ?.nursingAdaptationProgramme
-            ? 'yes'
-            : prev.professionalDetails.nursingAdaptationProgramme || 'no',
-          region:
-            professionalDetail?.professionalDetails?.region ??
-            prev.professionalDetails.region ??
-            '',
-          branch:
-            professionalDetail?.professionalDetails?.branch ??
-            prev.professionalDetails.branch ??
-            '',
-          pensionNo:
-            professionalDetail?.professionalDetails?.pensionNo ??
-            prev.professionalDetails.pensionNo ??
-            '',
-          isRetired:
-            professionalDetail?.professionalDetails?.isRetired ??
-            prev.professionalDetails.isRetired ??
-            false,
-          retiredDate:
-            professionalDetail?.professionalDetails?.retiredDate ??
-            prev.professionalDetails.retiredDate ??
-            '',
-          studyLocation:
-            professionalDetail?.professionalDetails?.studyLocation ??
-            prev.professionalDetails.studyLocation ??
-            '',
-          graduationDate:
-            professionalDetail?.professionalDetails?.graduationDate ??
-            prev.professionalDetails.graduationDate ??
-            '',
-        },
-      }));
-    }
+    if (!professionalDetail?.applicationId) return;
+    setFormData(prev => ({
+      ...prev,
+      professionalDetails: buildDashboardProfessionalDetails(
+        professionalDetail,
+        prev.professionalDetails,
+      ),
+    }));
   }, [professionalDetail?.applicationId]);
 
   useEffect(() => {
-    if (subscriptionDetail?.applicationId) {
-      setFormData(prev => ({
-        ...prev,
-        subscriptionDetails: {
-          paymentType:
-            subscriptionDetail?.subscriptionDetails?.paymentType ||
-            prev.subscriptionDetails.paymentType ||
-            '',
-          payrollNo:
-            subscriptionDetail?.subscriptionDetails?.payrollNo ??
-            prev.subscriptionDetails.payrollNo ??
-            '',
-          memberStatus:
-            subscriptionDetail?.subscriptionDetails?.membershipStatus ??
-            prev.subscriptionDetails.memberStatus ??
-            '',
-          otherIrishTradeUnion: subscriptionDetail?.subscriptionDetails
-            ?.otherIrishTradeUnion
-            ? 'yes'
-            : prev.subscriptionDetails.otherIrishTradeUnion || 'no',
-          otherScheme: subscriptionDetail?.subscriptionDetails?.otherScheme
-            ? 'yes'
-            : prev.subscriptionDetails.otherScheme || 'no',
-          recuritedBy:
-            subscriptionDetail?.subscriptionDetails?.recuritedBy ??
-            prev.subscriptionDetails.recuritedBy ??
-            '',
-          recuritedByMembershipNo:
-            subscriptionDetail?.subscriptionDetails?.recuritedByMembershipNo ??
-            prev.subscriptionDetails.recuritedByMembershipNo ??
-            '',
-          primarySection:
-            subscriptionDetail?.subscriptionDetails?.primarySection ||
-            prev.subscriptionDetails.primarySection ||
-            '',
-          otherPrimarySection:
-            subscriptionDetail?.subscriptionDetails?.otherPrimarySection ??
-            prev.subscriptionDetails.otherPrimarySection ??
-            '',
-          secondarySection:
-            subscriptionDetail?.subscriptionDetails?.secondarySection ||
-            prev.subscriptionDetails.secondarySection ||
-            '',
-          otherSecondarySection:
-            subscriptionDetail?.subscriptionDetails?.otherSecondarySection ??
-            prev.subscriptionDetails.otherSecondarySection ??
-            '',
-          incomeProtectionScheme:
-            subscriptionDetail?.subscriptionDetails?.incomeProtectionScheme ??
-            prev.subscriptionDetails.incomeProtectionScheme ??
-            false,
-          inmoRewards:
-            subscriptionDetail?.subscriptionDetails?.inmoRewards ??
-            prev.subscriptionDetails.inmoRewards ??
-            false,
-          valueAddedServices:
-            subscriptionDetail?.subscriptionDetails?.valueAddedServices ??
-            prev.subscriptionDetails.valueAddedServices ??
-            false,
-          termsAndConditions:
-            subscriptionDetail?.subscriptionDetails?.termsAndConditions ??
-            prev.subscriptionDetails.termsAndConditions ??
-            false,
-          membershipCategory:
-            subscriptionDetail?.subscriptionDetails?.membershipCategory ||
-            prev.subscriptionDetails.membershipCategory ||
-            '',
-          dateJoined:
-            subscriptionDetail?.subscriptionDetails?.dateJoined ||
-            prev.subscriptionDetails.dateJoined ||
-            '',
-          paymentFrequency:
-            subscriptionDetail?.subscriptionDetails?.paymentFrequency ||
-            prev.subscriptionDetails.paymentFrequency ||
-            '',
-        },
-      }));
-    }
+    if (!subscriptionDetail?.applicationId) return;
+    setFormData(prev => ({
+      ...prev,
+      subscriptionDetails: buildDashboardSubscriptionDetails(
+        subscriptionDetail,
+        prev.subscriptionDetails,
+      ),
+    }));
   }, [subscriptionDetail?.applicationId]);
 
-  // Fetch category data when subscription detail is available
   useEffect(() => {
-    if (
-      subscriptionDetail?.subscriptionDetails?.membershipCategory &&
-      categoryLookups?.length > 0
-    ) {
-      getCategoryData(
-        subscriptionDetail.subscriptionDetails.membershipCategory,
-        categoryLookups,
-      );
+    const membershipCategory =
+      subscriptionDetail?.subscriptionDetails?.membershipCategory;
+    if (membershipCategory && categoryLookups?.length > 0) {
+      getCategoryData(membershipCategory, categoryLookups);
     }
   }, [
     subscriptionDetail?.subscriptionDetails?.membershipCategory,
     categoryLookups,
   ]);
 
-  const resolveApplicationActiveState = () =>
-    personalDetail?.meta?.isActive ??
-    personalDetail?.isActive ??
-    true;
-
-  // Check application status (use context when available from aggregated CRM response, else fetch)
   useEffect(() => {
-    if (loading) {
-      return;
-    }
+    if (loading) return;
 
     if (contextApplicationStatus != null) {
-      const isActive = resolveApplicationActiveState();
-      setApplicationStatus(contextApplicationStatus);
-      setIsApplicationActive(Boolean(isActive));
-      setIsApplicationSubmitted(
-        Boolean(isActive) &&
-          (contextApplicationStatus === 'submitted' ||
-            contextApplicationStatus === 'processed'), // kashif making changes === 'approved'
+      applyApplicationStatusState(
+        buildApplicationStatusState({
+          status: contextApplicationStatus,
+          isActive: resolvePersonalDetailActive(personalDetail),
+        }),
       );
       setApplicationLoader(false);
       return;
     }
 
     const checkApplicationStatus = async () => {
-      if (applicationId) {
-        try {
-          setApplicationLoader(true);
-          const response = await applicationConfirmationRequest(applicationId);
+      if (!applicationId) {
+        applyApplicationStatusState(
+          buildApplicationStatusState({ status: 'none', isActive: true }),
+        );
+        setApplicationLoader(false);
+        return;
+      }
 
-          if (
-            response?.status === 200 ||
-            response?.data?.status === 'success'
-          ) {
-            const status =
-              response?.data?.data?.applicationStatus ||
-              response?.data?.applicationStatus;
-            const isActive =
-              response?.data?.data?.meta?.isActive ??
-              response?.data?.meta?.isActive ??
-              resolveApplicationActiveState();
-
-            setApplicationStatus(status);
-            setIsApplicationActive(Boolean(isActive));
-            setIsApplicationSubmitted(
-              Boolean(isActive) &&
-                (status === 'submitted' || status === 'processed'), // kashif making changes === 'approved'
-            );
-          }
-        } catch (error) {
-          console.error('Failed to fetch application status:', error);
-          setIsApplicationSubmitted(false);
-          setApplicationStatus(null);
-          setIsApplicationActive(true);
-        } finally {
-          setApplicationLoader(false);
+      try {
+        setApplicationLoader(true);
+        const response = await applicationConfirmationRequest(applicationId);
+        if (response?.status === 200 || response?.data?.status === 'success') {
+          applyApplicationStatusState(
+            parseApplicationConfirmationResponse(
+              response,
+              resolvePersonalDetailActive(personalDetail),
+            ),
+          );
         }
-      } else {
-        setApplicationStatus('none');
-        setIsApplicationActive(true);
-        setIsApplicationSubmitted(false);
+      } catch (error) {
+        console.error('Failed to fetch application status:', error);
+        applyApplicationStatusState(
+          buildApplicationStatusState({ status: null, isActive: true }),
+        );
+      } finally {
         setApplicationLoader(false);
       }
     };
@@ -485,12 +257,10 @@ const Dashboard = () => {
     personalDetail?.isActive,
   ]);
 
-  // Fetch account statement when member has membership number
   const getAccountNetBalance = async () => {
     const memberId = profileDetail?.membershipNumber;
-    if (!memberId) {
-      return;
-    }
+    if (!memberId) return;
+
     setAccountNetBalanceLoading(true);
     getAccountNetBalanceRequest(memberId)
       .then(res => {
@@ -498,32 +268,12 @@ const Dashboard = () => {
           setAccountNetBalance(res.data.data);
         }
       })
-      .catch(() => {
-        setAccountNetBalance(null);
-      })
-      .finally(() => {
-        setAccountNetBalanceLoading(false);
-      });
+      .catch(() => setAccountNetBalance(null))
+      .finally(() => setAccountNetBalanceLoading(false));
   };
 
   useEffect(() => {
-    const memberId = profileDetail?.membershipNumber;
-    if (!memberId) {
-      return;
-    }
-    setAccountNetBalanceLoading(true);
-    getAccountNetBalanceRequest(memberId)
-      .then(res => {
-        if (res?.status === 200 && res?.data?.data) {
-          setAccountNetBalance(res.data.data);
-        }
-      })
-      .catch(() => {
-        setAccountNetBalance(null);
-      })
-      .finally(() => {
-        setAccountNetBalanceLoading(false);
-      });
+    getAccountNetBalance();
   }, [profileDetail?.membershipNumber, isMember]);
 
   useEffect(() => {
@@ -535,51 +285,22 @@ const Dashboard = () => {
 
     getSubscriptionRequest(profileId)
       .then(res => {
-        const subscriptions = res?.data?.data?.data || [];
-        if (!Array.isArray(subscriptions) || subscriptions.length === 0) {
-          setIsResignedMember(false);
-          return;
-        }
-
-        const sortedSubscriptions = [...subscriptions].sort((a, b) => {
-          const aTime = new Date(a?.updatedAt || a?.createdAt || 0).getTime();
-          const bTime = new Date(b?.updatedAt || b?.createdAt || 0).getTime();
-          return bTime - aTime;
-        });
-
-        const latestSubscription = sortedSubscriptions[0];
-        const isResigned =
-          String(latestSubscription?.subscriptionStatus || '').toLowerCase() ===
-          'resigned';
-        setIsResignedMember(isResigned);
+        setIsResignedMember(
+          isLatestSubscriptionResigned(res?.data?.data?.data || []),
+        );
       })
-      .catch(() => {
-        setIsResignedMember(false);
-      });
+      .catch(() => setIsResignedMember(false));
   }, [profileDetail?.profileId]);
 
-  // Update current step based on application progress
   useEffect(() => {
-    // Only set step after data is fully loaded
     if (loading) return;
-
-    if (!applicationId) {
-      setCurrentStep(1);
-    } else if (applicationId && !professionalDetail?.applicationId) {
-      setCurrentStep(2);
-    } else if (
-      applicationId &&
-      professionalDetail?.applicationId &&
-      !subscriptionDetail?.applicationId
-    ) {
-      setCurrentStep(3);
-    } else if (
-      applicationId &&
-      professionalDetail?.applicationId &&
-      subscriptionDetail?.applicationId
-    ) {
-      setCurrentStep(3);
-    }
+    setCurrentStep(
+      resolveApplicationStep({
+        applicationId,
+        professionalId: professionalDetail?.applicationId,
+        subscriptionId: subscriptionDetail?.applicationId,
+      }),
+    );
   }, [
     loading,
     applicationId,
@@ -587,20 +308,11 @@ const Dashboard = () => {
     subscriptionDetail?.applicationId,
   ]);
 
-  const handleModalClose = () => {
-    setIsModalVisible(false);
-  };
+  const handleModalClose = () => setIsModalVisible(false);
 
   const handleSubscriptionSuccess = paymentData => {
-    console.log('Payment Success from Dashboard:', paymentData);
     setIsModalVisible(false);
-    const outcome = paymentData?.paymentOutcome;
-    setStatusModal({
-      open: true,
-      status: 'success',
-      title: outcome?.title || 'Payment successful',
-      message: outcome?.message || 'Your payment has been completed successfully.',
-    });
+    setStatusModal(buildPaymentSuccessModal(paymentData));
   };
 
   const handleSubscriptionFailure = errorMessage => {
@@ -608,39 +320,19 @@ const Dashboard = () => {
     setStatusModal({ open: true, status: 'error', message: errorMessage });
     setTimeout(() => {
       setStatusModal({ open: false, status: 'error', message: '' });
-      // navigate('/');
     }, 2500);
   };
 
   const handleNext = () => {
-    // Check if payment modal should be shown
-    // Skip for undergraduate students based on category code
-    const isUndergraduateStudent =
-      categoryData?.code === 'undergraduate_student';
-
-    if ((isMember || currentStep === 3) && !isUndergraduateStudent) {
+    if (
+      shouldOpenPaymentModal({
+        isMember,
+        currentStep,
+        categoryCode: categoryData?.code,
+      })
+    ) {
       setIsModalVisible(true);
     }
-  };
-
-  const stepToButtonText = {
-    1: 'Start Application',
-    2: 'Resume Application',
-    3: 'Application Completed',
-  };
-
-  // Get button text based on application status
-  const getApplicationButtonText = () => {
-    if (!isApplicationActive) {
-      return 'Start Application';
-    }
-    if (applicationStatus === 'rejected') {
-      return 'Re-apply';
-    }
-    if (isApplicationSubmitted) {
-      return 'Application Submitted';
-    }
-    return stepToButtonText[currentStep] || 'Continue';
   };
 
   const showProfile = canAccessProfile({
@@ -651,84 +343,30 @@ const Dashboard = () => {
       : isApplicationActive,
   });
 
-  // Format currency for display (use cents → euros logic like SubscriptionDetails)
-  const formatCurrency = valueInCents => {
-    const currency = (
-      categoryData?.currentPricing?.currency || 'EUR'
-    ).toUpperCase();
+  const formatCurrency = valueInCents =>
+    formatCentsCurrency(
+      valueInCents,
+      categoryData?.currentPricing?.currency || 'EUR',
+    );
 
-    if (!valueInCents || valueInCents === 0) {
-      return currency === 'EUR' ? '€0.00' : `${currency}0.00`;
-    }
-
-    const amountInEuros = valueInCents / 100;
-    const currencySymbol = currency === 'EUR' ? '€' : currency;
-
-    return `${currencySymbol}${amountInEuros.toFixed(2)}`;
-  };
-
-  // Get payment amount based on payment type
-  const getPaymentAmount = () => {
-    if (!categoryData?.currentPricing?.price) return 0;
-    const priceInEuros = categoryData.currentPricing.price / 100;
-
-    // If payment type is set in subscription details
-    const paymentType = subscriptionDetail?.subscriptionDetails?.paymentType;
-    if (paymentType === 'deduction') {
-      // Monthly payment (divide by 12 for monthly)
-      return priceInEuros / 12;
-    }
-
-    // Default to annual price
-    return priceInEuros;
-  };
-
-  // Calculate profile completion percentage based on application steps
-  const getProfileCompletion = () =>
-    getApplicationCompletionPercentage({
-      personalDetail,
-      professionalDetail,
-      subscriptionDetail,
-      applicationStatus: applicationStatus || contextApplicationStatus,
-      isApplicationSubmitted,
-    });
+  const profileCompletion = getApplicationCompletionPercentage({
+    personalDetail,
+    professionalDetail,
+    subscriptionDetail,
+    applicationStatus: applicationStatus || contextApplicationStatus,
+    isApplicationSubmitted,
+  });
 
   const applicationQuickActionState = useMemo(
-    () => {
-      const subtitle =
-        !isApplicationActive
-          ? 'Start Application'
-          : applicationStatus === 'processed' // kashif making changes === 'approved'
-          ? 'Processed'
-          : applicationStatus === 'submitted'
-          ? 'In Review'
-          : applicationStatus === 'in-progress'
-          ? 'In Progress'
-          : applicationStatus === 'rejected'
-          ? 'Start Application'
-          : getApplicationButtonText();
-
-      const disabled =
-        loading ||
-        appicationLoader ||
-        applicationStatus === null ||
-        (isApplicationActive &&
-          (applicationStatus === 'submitted' ||
-            applicationStatus === 'processed')); // kashif making changes === 'approved'
-
-      const colorScheme =
-        !isApplicationActive
-          ? 'blue'
-          : applicationStatus === 'processed' // kashif making changes === ' approved'
-          ? 'green'
-          : applicationStatus === 'submitted'
-          ? 'blue'
-          : applicationStatus === 'rejected'
-          ? 'red'
-          : 'blue';
-
-      return { subtitle, disabled, colorScheme };
-    },
+    () =>
+      getApplicationQuickActionState({
+        isApplicationActive,
+        applicationStatus,
+        loading,
+        applicationLoader: appicationLoader,
+        isApplicationSubmitted,
+        currentStep,
+      }),
     [
       applicationStatus,
       isApplicationActive,
@@ -736,192 +374,149 @@ const Dashboard = () => {
       appicationLoader,
       isApplicationSubmitted,
       currentStep,
-      applicationId,
-      professionalDetail?.applicationId,
-      subscriptionDetail?.applicationId,
     ],
   );
 
-  const upcomingEvents = useMemo(
+  const payDisabled = isPayDisabled({
+    isMember,
+    accountNetBalanceLoading,
+    netBalance: accountNetBalance?.net,
+  });
+
+  const quickActions = useMemo(
     () =>
-      (dummyData?.events || [])
-        .filter(event => event?.type?.toLowerCase() === 'upcoming')
-        .slice(0, 3),
+      [
+        {
+          key: 'application',
+          title: 'Application',
+          subtitle: applicationQuickActionState.subtitle,
+          icon: FormOutlined,
+          onClick: () => navigate('/applicationForm'),
+          disabled: applicationQuickActionState.disabled,
+          colorScheme: applicationQuickActionState.colorScheme,
+          visible: true,
+        },
+        {
+          key: 'profile',
+          title: 'My Profile',
+          subtitle: 'View Profile',
+          icon: UserOutlined,
+          onClick: () => navigate('/profile'),
+          colorScheme: 'purple',
+          visible: showProfile,
+        },
+        {
+          key: 'events',
+          title: 'Events',
+          subtitle: 'View Events',
+          icon: CalendarOutlined,
+          onClick: () => navigate('/events'),
+          colorScheme: 'orange',
+          visible: true,
+        },
+        {
+          key: 'payments',
+          title: 'Payments',
+          subtitle: 'Pay Now',
+          icon: CreditCardOutlined,
+          onClick: handleNext,
+          colorScheme: 'teal',
+          disabled:
+            typeof accountNetBalance?.net === 'number' &&
+            accountNetBalance.net <= 0,
+          visible: isMember,
+        },
+      ].filter(action => action.visible),
+    [
+      applicationQuickActionState,
+      showProfile,
+      isMember,
+      accountNetBalance?.net,
+      navigate,
+    ],
+  );
+
+  const { message: profileCompletionMessage, buttonLabel: profileButtonLabel } =
+    getProfileCompletionCopy({ isApplicationSubmitted, applicationStatus });
+
+  const upcomingEvents = useMemo(
+    () => getUpcomingEvents(dummyData?.events),
     [],
   );
 
   const paymentsBillingSection = (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-6">
-      <h2 className="mb-3 text-lg font-semibold text-slate-900 sm:mb-4 sm:text-xl">
-        Payments & Billing
-      </h2>
-      <div className="space-y-2.5 sm:space-y-4">
-        {profileDetail?.membershipNumber && (
-          <div className="rounded-lg bg-slate-50 p-3 sm:p-4">
-            <p className="mb-1 text-sm font-semibold text-slate-900 sm:text-sm sm:font-normal sm:text-slate-600 sm:text-right">
-              Net Balance
-              {accountNetBalance?.year && (
-                <span className="ml-1">({accountNetBalance.year})</span>
-              )}
-            </p>
-            {accountNetBalanceLoading ? (
-              <p className="animate-pulse text-xl font-bold text-slate-500 sm:text-3xl sm:text-right">
-                Loading...
-              </p>
-            ) : (
-              <p
-                className={`text-xl font-bold sm:text-3xl sm:text-right ${
-                  typeof accountNetBalance?.net === 'number' &&
-                  accountNetBalance.net < 0
-                    ? 'text-green-600'
-                    : 'text-red-600'
-                }`}
-              >
-                {formatCurrency(
-                  typeof accountNetBalance?.net === 'number' &&
-                    accountNetBalance.net < 0
-                    ? Math.abs(accountNetBalance.net)
-                    : accountNetBalance?.net ?? 0,
-                )}
-              </p>
-            )}
-
-            <div className="mt-3 flex items-center gap-2 sm:hidden">
-              <div className="flex-1 rounded-lg bg-slate-200 px-2.5 py-1.5">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.06em] text-slate-500">
-                  Membership No
-                </p>
-                <p className="mt-0.5 text-lg font-bold leading-none text-slate-900">
-                  {profileDetail.membershipNumber}
-                </p>
-              </div>
-              <button
-                onClick={handleNext}
-                disabled={
-                  !isMember ||
-                  accountNetBalanceLoading ||
-                  (typeof accountNetBalance?.net === 'number' &&
-                    accountNetBalance.net <= 0)
-                }
-                className={`min-w-[96px] rounded-lg px-3 py-1.5 text-base font-semibold transition-colors ${
-                  !isMember ||
-                  accountNetBalanceLoading ||
-                  (typeof accountNetBalance?.net === 'number' &&
-                    accountNetBalance.net <= 0)
-                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}>
-                Pay Now
-              </button>
-            </div>
-          </div>
-        )}
-        <button
-          onClick={handleNext}
-          disabled={
-            !isMember ||
-            accountNetBalanceLoading ||
-            (typeof accountNetBalance?.net === 'number' &&
-              accountNetBalance.net <= 0)
-          }
-          className={`hidden sm:block w-full px-4 py-2.5 sm:py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm sm:text-base ${
-            !isMember ||
-            accountNetBalanceLoading ||
-            (typeof accountNetBalance?.net === 'number' &&
-              accountNetBalance.net <= 0)
-              ? 'opacity-50 cursor-not-allowed'
-              : ''
-          }`}>
-          Pay Now
-        </button>
-      </div>
-    </div>
+    <PaymentsBillingCard
+      membershipNumber={profileDetail?.membershipNumber}
+      accountNetBalance={accountNetBalance}
+      accountNetBalanceLoading={accountNetBalanceLoading}
+      formatCurrency={formatCurrency}
+      payDisabled={payDisabled}
+      onPay={handleNext}
+    />
   );
 
   return (
-    <div className="space-y-5 px-2 py-4 sm:space-y-6 sm:px-6 lg:px-8 sm:py-6">
-      {/* Welcome Header */}
-      <div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="mb-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-              Welcome back, {user?.userFirstName || user?.fullName || 'Member'}!
-            </h1>
-            <p className="text-sm text-slate-600 sm:text-base">
-              Here's a quick overview of your member account.
-            </p>
-          </div>
-        </div>
+    <div className="dashboard-page">
+      <div className="page-title-row">
+        <h1>
+          Welcome back, {user?.userFirstName || user?.fullName || 'Member'}!
+        </h1>
+        <p>Here's a quick overview of your member account.</p>
       </div>
 
-      {/* Mobile/Tablet: Payments card directly below welcome content */}
-      <div className="lg:hidden">{paymentsBillingSection}</div>
+      <div className="lg:hidden mb-6">{paymentsBillingSection}</div>
 
-      {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 sm:gap-6">
-        {/* Left Column - Application Status & Events */}
-        <div className="space-y-4 lg:col-span-2 sm:space-y-6">
-          {/* Quick Actions Section */}
-          <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-6">
-            <h2 className="mb-3 text-lg font-semibold text-slate-900 sm:mb-4 sm:text-xl">
-              Quick Actions
-            </h2>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-2 lg:grid-cols-4 sm:gap-4">
-              {/* Application Action */}
-              <QuickActionButton
-                title="Application"
-                subtitle={applicationQuickActionState.subtitle}
-                icon={FormOutlined}
-                onClick={() => navigate('/applicationForm')}
-                disabled={applicationQuickActionState.disabled}
-                colorScheme={applicationQuickActionState.colorScheme}
-              />
-
-              {/* Profile Action - members always; non-members before submit */}
-              {showProfile && (
-                <QuickActionButton
-                  title="My Profile"
-                  subtitle="View Profile"
-                  icon={UserOutlined}
-                  onClick={() => navigate('/profile')}
-                  colorScheme="purple"
-                />
-              )}
-
-              {/* Events Action */}
-              <QuickActionButton
-                title="Events"
-                subtitle="View Events"
-                icon={CalendarOutlined}
-                onClick={() => navigate('/events')}
-                colorScheme="orange"
-              />
-
-              {/* Payments Action */}
-              {isMember && (
-                <QuickActionButton
-                  title="Payments"
-                  subtitle="Pay Now"
-                  icon={CreditCardOutlined}
-                  onClick={handleNext}
-                  colorScheme="teal"
-                  disabled={
-                  (typeof accountNetBalance?.net === 'number' &&
-                    accountNetBalance.net <= 0)}
-                />
-              )}
-            </div>
+      <div className="dash-top-row">
+        <div className="section-card">
+          <div className="card-head-row">
+            <h2>Quick Actions</h2>
           </div>
+          <div className="quick-actions">
+            {quickActions.map(
+              ({ key, title, subtitle, icon, onClick, disabled, colorScheme }) => (
+                <QuickActionButton
+                  key={key}
+                  title={title}
+                  subtitle={subtitle}
+                  icon={icon}
+                  onClick={onClick}
+                  disabled={disabled}
+                  colorScheme={colorScheme}
+                />
+              ),
+            )}
+          </div>
+        </div>
 
-          {/* Upcoming Events Section */}
-          <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-6">
-            <div className="mb-3 flex items-center justify-between sm:mb-4">
-              <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">
-                Upcoming Events
-              </h2>
+        <ProfileCompletionCard
+          percent={profileCompletion}
+          message={profileCompletionMessage}
+          isMember={isMember}
+          isComplete={profileCompletion === 100}
+          buttonDisabled={
+            loading || appicationLoader || applicationStatus === null
+          }
+          buttonLabel={profileButtonLabel}
+          onButtonClick={() =>
+            navigate(
+              isApplicationSubmitted ? '/profile' : '/applicationForm',
+              !isApplicationSubmitted && isResignedMember
+                ? { state: { startFresh: true } }
+                : undefined,
+            )
+          }
+        />
+      </div>
+
+      <div className="dash-grid">
+        <div className="dash-col">
+          <div className="section-card">
+            <div className="card-head-row">
+              <h2>Upcoming Events</h2>
               <button
+                type="button"
                 onClick={() => navigate('/events')}
-                className="text-xs font-medium text-blue-600 hover:text-blue-700 sm:text-sm">
+                className="text-sm font-medium text-blue-600 hover:text-blue-700">
                 View All
               </button>
             </div>
@@ -944,74 +539,8 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Right Column - Profile & Payments */}
-        <div className="flex flex-col gap-4 sm:gap-6">
-          {/* Profile Completion Section */}
-          <div className="order-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:order-1 sm:p-6">
-            <h2 className="mb-3 text-lg font-semibold text-slate-900 sm:mb-4 sm:text-xl">
-              Profile Completion
-            </h2>
-            <p className="mb-2.5 text-xs text-slate-600 sm:mb-4 sm:text-sm">
-              {isApplicationSubmitted
-                ? 'Your profile is complete! Well done.'
-                : applicationStatus === 'rejected'
-                ? REJECTED_APPLICATION_REAPPLY_MESSAGE
-                : 'Complete your profile to get the most out of your membership.'}
-            </p>
-            <div className="mb-2.5 sm:mb-4">
-              <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                <span
-                  className={`text-xl sm:text-2xl font-bold ${
-                    getProfileCompletion() === 100
-                      ? 'text-green-600'
-                      : 'text-blue-600'
-                  }`}>
-                  {getProfileCompletion()}%
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className={`h-2 rounded-full transition-all duration-500 ${
-                    getProfileCompletion() === 100
-                      ? 'bg-green-600'
-                      : 'bg-blue-600'
-                  }`}
-                  style={{ width: `${getProfileCompletion()}%` }}></div>
-              </div>
-            </div>
-            {isMember && (
-              <button
-                disabled={
-                  loading || appicationLoader || applicationStatus === null
-                }
-                onClick={() =>
-                  navigate(
-                    isApplicationSubmitted ? '/profile' : '/applicationForm',
-                    !isApplicationSubmitted && isResignedMember
-                      ? { state: { startFresh: true } }
-                      : undefined,
-                  )
-                }
-                className={`w-full px-4 py-2.5 sm:py-3 rounded-lg transition-colors font-medium text-sm sm:text-base ${
-                  loading || appicationLoader || applicationStatus === null
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
-                    : isApplicationSubmitted
-                      ? 'bg-green-600 text-white hover:bg-green-700 active:bg-green-800'
-                      : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
-                }`}>
-                {isApplicationSubmitted
-                  ? 'View Profile'
-                  : applicationStatus === 'rejected'
-                  ? 'Re-apply'
-                  : 'Complete Profile'}
-              </button>
-            )}
-          </div>
-
-          {/* Payments & Billing Section */}
-          <div className="hidden order-1 lg:block sm:order-2">
-            {paymentsBillingSection}
-          </div>
+        <div className="dash-col">
+          <div className="hidden lg:block">{paymentsBillingSection}</div>
         </div>
       </div>
 
@@ -1040,74 +569,14 @@ const Dashboard = () => {
         />
       </Elements>
 
-      <div>
-        {selectedEvent && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-            onClick={() => setSelectedEvent(null)}
-          >
-            <div
-              className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl sm:p-6"
-              onClick={e => e.stopPropagation()}
-            >
-              {selectedEvent.image && (
-                <img
-                  src={selectedEvent.image}
-                  alt={selectedEvent.title || 'Event'}
-                  className="mb-4 h-44 w-full rounded-lg object-cover"
-                />
-              )}
-              <div className="mb-4 flex items-start justify-between">
-                <h3 className="text-lg font-semibold text-slate-900 sm:text-xl">
-                  {selectedEvent.title}
-                </h3>
-                <button
-                  onClick={() => setSelectedEvent(null)}
-                  className="text-sm font-medium text-slate-500 hover:text-slate-700"
-                >
-                  Close
-                </button>
-              </div>
-              <p className="mb-4 text-sm text-slate-600">
-                {selectedEvent.description || 'No additional details available.'}
-              </p>
-              <div className="space-y-2 text-sm text-slate-700">
-                <p className="flex items-center gap-2">
-                  <CalendarOutlined className="text-blue-600" />
-                  <span>{selectedEvent.date || 'Date TBD'}</span>
-                </p>
-                {selectedEvent.time && (
-                  <p className="flex items-center gap-2">
-                    <ClockCircleOutlined className="text-blue-600" />
-                    <span>{selectedEvent.time}</span>
-                  </p>
-                )}
-                <p className="flex items-center gap-2">
-                  <EnvironmentOutlined className="text-blue-600" />
-                  <span>{selectedEvent.location || 'Location TBD'}</span>
-                </p>
-              </div>
-              <div className="mt-5 flex justify-end gap-2">
-                <button
-                  onClick={() => setSelectedEvent(null)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    setSelectedEvent(null);
-                    navigate('/events');
-                  }}
-                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                >
-                  Register
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      <EventDetailModal
+        event={selectedEvent}
+        onClose={() => setSelectedEvent(null)}
+        onRegister={() => {
+          setSelectedEvent(null);
+          navigate('/events');
+        }}
+      />
     </div>
   );
 };

@@ -37,8 +37,8 @@ export const Select = ({
   const isEmpty = required && !value && showValidation;
   const selectClasses = `
     w-full h-10 
-    ${props.disabled ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white'}
-    ${isEmpty ? 'border-red-500 bg-red-50' : required ? 'border-blue-500' : ''}
+    ${props.disabled ? 'bg-slate-100 text-slate-800 cursor-not-allowed border-slate-300' : 'bg-white border-gray-300'}
+    ${isEmpty ? 'border-red-500 bg-red-50' : ''}
     ${className}
   `;
 

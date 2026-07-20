@@ -205,7 +205,7 @@ const PaymentMethod = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex items-center justify-center py-16">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading payment options...</p>
@@ -215,9 +215,9 @@ const PaymentMethod = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div>
       <div className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
-        <div className="px-3 sm:px-4 md:px-6 lg:px-8 max-w-7xl mx-auto py-3 sm:py-4">
+        <div className="max-w-7xl mx-auto py-3 sm:py-4">
           <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"

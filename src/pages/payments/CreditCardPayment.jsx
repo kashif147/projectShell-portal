@@ -252,10 +252,10 @@ const CreditCardPayment = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div>
       {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-2.5 sm:py-3">
+        <div className="py-2.5 sm:py-3">
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="min-w-0 flex-1">
               <h1 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
@@ -270,7 +270,7 @@ const CreditCardPayment = () => {
       </div>
 
       {/* Main Content */}
-      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+      <div className="py-4 sm:py-6 md:py-8">
         <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 md:p-8">
           {productLoading ? (
             <div className="text-center py-12">

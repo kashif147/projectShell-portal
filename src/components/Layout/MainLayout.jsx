@@ -29,7 +29,7 @@ const MainLayout = () => {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const location = useLocation();
   const {
-    token: { colorBgContainer, borderRadiusLG },
+    token: { borderRadiusLG },
   } = theme.useToken();
 
   useEffect(() => {
@@ -91,13 +91,17 @@ const MainLayout = () => {
   const pageTitle = routeTitleMap[location.pathname] || 'Dashboard';
 
   return (
-    <Layout>
+    <Layout className="app-main-shell" style={{ minHeight: '100vh' }}>
       {renderSidebar()}
-      <Layout style={{ 
-        marginLeft: isMobile ? 0 : (collapsed ? 80 : 220), 
-        transition: 'all 0.2s' 
-      }}>
-        <Header 
+      <Layout
+        className="app-main-shell app-main-shell--content"
+        style={{
+          marginLeft: isMobile ? 0 : collapsed ? 80 : 200,
+          transition: 'all 0.2s',
+          height: '100vh',
+          overflow: 'hidden',
+        }}>
+        <Header
           collapsed={collapsed}
           setCollapsed={setCollapsed}
           isMobile={isMobile}
@@ -105,15 +109,14 @@ const MainLayout = () => {
           pageTitle={pageTitle}
         />
         <Content
+          className="app-content"
           style={{
-            margin: '12px 12px',
-            padding: 24,
-            paddingBottom: isMobile ? 80 : 24,
-            background: colorBgContainer,
             borderRadius: borderRadiusLG,
-            minHeight: isMobile ? 'calc(100vh - 112px - 64px)' : 'calc(100vh - 112px)',
-          }}
-        >
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+          }}>
           <Outlet />
         </Content>
       </Layout>

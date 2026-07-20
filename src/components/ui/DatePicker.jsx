@@ -26,8 +26,8 @@ export const DatePicker = ({
 
   const inputClasses = `
     w-full px-3 py-2 border rounded-md pr-10
-    ${props.disabled ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white'}
-    ${isEmpty ? 'border-red-500 bg-red-50' : required ? 'border-blue-500' : 'border-gray-300'}
+    ${props.disabled ? 'bg-slate-100 text-slate-800 cursor-not-allowed' : 'bg-white'}
+    ${isEmpty ? 'border-red-500 bg-red-50' : 'border-gray-300'}
     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
     ${error ? 'border-red-500' : ''}
     ${className}

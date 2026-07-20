@@ -741,7 +741,7 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
   const formMeta = PAYMENT_FORM_META['Standing Banking Order'];
 
   const formContent = (
-      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto py-4 sm:py-6 md:py-8">
         <div className="space-y-4 sm:space-y-6">
           {/* Print Content (hidden visually, used for PDF generation) */}
           <div
@@ -1378,7 +1378,7 @@ const StandingBankersOrder = ({ embedded = false, seedPortalForm = null }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div>
       <PaymentFormSubheader
         title={formMeta.title}
         subtitle={formMeta.subtitle}
