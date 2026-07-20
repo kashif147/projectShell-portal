@@ -1,53 +1,104 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { message } from 'antd';
 import Button from '../components/common/Button';
-import { dummyData } from '../services/dummyData';
-import { getEventWithRegistrationData } from '../services/registrationData';
+import { fetchEventByIdRequest, createEventRegistrationRequest } from '../api/event.api';
 
 const EventRegistration = () => {
   const navigate = useNavigate();
   const { eventId } = useParams();
-  const [selectedDays, setSelectedDays] = useState([]);
+  const { user, userDetail } = useSelector(state => state.auth);
+  const [event, setEvent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedSessionIds, setSelectedSessionIds] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const baseEvent = dummyData.events.find(item => String(item.id) === String(eventId));
-  const event = getEventWithRegistrationData(baseEvent);
+  useEffect(() => {
+    let cancelled = false;
+    fetchEventByIdRequest(eventId)
+      .then(res => {
+        if (cancelled) return;
+        const data = res?.data?.data ?? res?.data ?? null;
+        setEvent(data);
+        // Full-attendance events (allowPartialAttendance false/default) must
+        // include every day - only let the member pick a subset when the
+        // event explicitly allows partial attendance.
+        const eventSessions = data?.sessions || [];
+        setSelectedSessionIds(data?.allowPartialAttendance ? [] : eventSessions.map(s => s._id));
+      })
+      .catch(() => {
+        if (!cancelled) setEvent(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [eventId]);
 
-  const sessionsByDay = useMemo(() => {
-    const map = new Map();
-    (event?.sessions || []).forEach(session => {
-      if (!map.has(session.dayId)) map.set(session.dayId, []);
-      map.get(session.dayId).push(session);
-    });
-    return map;
-  }, [event]);
+  const sessions = event?.sessions || [];
+  const allowPartialAttendance = !!event?.allowPartialAttendance;
 
-  const totalCost = selectedDays.reduce((sum, day) => sum + (day.price || 0), 0);
-
-  const toggleDay = day => {
-    setSelectedDays(prev =>
-      prev.some(item => item.id === day.id)
-        ? prev.filter(item => item.id !== day.id)
-        : [...prev, day],
+  const toggleSession = session => {
+    if (!allowPartialAttendance) return;
+    setSelectedSessionIds(prev =>
+      prev.includes(session._id)
+        ? prev.filter(id => id !== session._id)
+        : [...prev, session._id],
     );
   };
 
-  const handleRegisterAndPay = () => {
-    if (selectedDays.length === 0 || !event) return;
+  const email = user?.userEmail || userDetail?.userEmail || user?.email || userDetail?.email || '';
+  const firstName = user?.userFirstName || userDetail?.userFirstName || '';
+  const lastName = user?.userLastName || userDetail?.userLastName || '';
+
+  const handleRegisterAndPay = async () => {
+    if (!event) return;
+    if (!email) {
+      message.error('An account email is required to register.');
+      return;
+    }
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const res = await createEventRegistrationRequest({
+        registrationType: 'event',
+        eventId: event._id,
+        sessionIds: selectedSessionIds,
+        profile: { email, firstName, lastName },
+        paymentMethod: 'stripe',
+        registeredVia: 'portal',
+      });
+      const data = res?.data?.data ?? res?.data;
+      if (!data?.payment?.clientSecret) {
+        message.error(data?.error?.message || 'Failed to start registration payment');
+        return;
+      }
       navigate('/registrations/payment', {
         state: {
           source: 'event-registration',
-          eventId: event.id,
+          eventId: event._id,
           eventTitle: event.title,
-          selectedDays,
-          totalCost,
+          registrationId: data.registration?._id,
+          clientSecret: data.payment.clientSecret,
+          totalCost: (data.registration?.amount || 0) / 100,
         },
       });
-    }, 450);
+    } catch (err) {
+      message.error(err?.response?.data?.error?.message || err?.message || 'Failed to register');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">Loading…</div>
+      </div>
+    );
+  }
 
   if (!event) {
     return (
@@ -66,89 +117,73 @@ const EventRegistration = () => {
   return (
     <div className="space-y-5 px-3 py-4 sm:space-y-6 sm:px-6 lg:px-8 sm:py-6">
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="relative h-48 sm:h-60">
-          <img src={event.image} alt={event.title} className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/10" />
-          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white">
-            <p className="text-xs font-semibold uppercase tracking-wider text-blue-100">
-              {event.category}
-            </p>
-            <h1 className="text-2xl font-bold sm:text-3xl">{event.title}</h1>
-            <p className="mt-1 text-sm text-slate-100">{event.location}</p>
-          </div>
-        </div>
-        <div className="grid gap-4 border-t border-slate-100 p-4 sm:grid-cols-2 sm:p-6">
-          <div>
-            <p className="text-xs font-semibold uppercase text-slate-500">Venue</p>
-            <p className="mt-1 text-sm font-medium text-slate-800">{event.venue}</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase text-slate-500">Credits</p>
-            <p className="mt-1 text-sm font-medium text-slate-800">{event.credits}</p>
-          </div>
+        <div className="p-4 sm:p-6">
+          <h1 className="text-2xl font-bold sm:text-3xl text-slate-900">{event.title}</h1>
+          <p className="mt-1 text-sm text-slate-600">{event.description}</p>
+          <p className="mt-2 text-sm text-slate-700">
+            {event.isVirtual ? 'Virtual' : event.venue || 'Location TBD'}
+          </p>
         </div>
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">Registration Options</h2>
-        <p className="mt-1 text-sm text-slate-600">Select one or more event days to continue.</p>
+        <p className="mt-1 text-sm text-slate-600">
+          {sessions.length > 0
+            ? allowPartialAttendance
+              ? 'Select one or more sessions to continue.'
+              : 'This event requires full attendance - every day is included.'
+            : 'Register below to continue to payment.'}
+        </p>
 
-        <div className="mt-4 space-y-4">
-          {(event.days || []).map(day => {
-            const selected = selectedDays.some(item => item.id === day.id);
-            const daySessions = sessionsByDay.get(day.id) || [];
-            return (
-              <button
-                key={day.id}
-                type="button"
-                onClick={() => toggleDay(day)}
-                className={`w-full rounded-xl border p-4 text-left transition ${
-                  selected
-                    ? 'border-blue-500 bg-blue-50/50 shadow-sm'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
-                }`}>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
-                      {day.title}
-                    </p>
-                    <p className="mt-1 text-sm text-slate-700">{day.date}</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">${day.price.toFixed(2)}</p>
-                  </div>
-                  <span
-                    className={`inline-flex w-fit rounded-lg px-3 py-1 text-xs font-semibold ${
-                      selected
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-slate-100 text-slate-700'
-                    }`}>
-                    {selected ? 'Selected' : 'Select'}
-                  </span>
-                </div>
-                {daySessions.length > 0 && (
-                  <div className="mt-3 space-y-1 border-t border-slate-100 pt-3">
-                    {daySessions.map((session, index) => (
-                      <p key={`${day.id}-${index}`} className="text-sm text-slate-600">
-                        <span className="font-medium text-slate-800">{session.time}</span> - {session.title}
+        {sessions.length > 0 && (
+          <div className="mt-4 space-y-4">
+            {sessions.map(session => {
+              const selected = selectedSessionIds.includes(session._id);
+              return (
+                <button
+                  key={session._id}
+                  type="button"
+                  onClick={() => toggleSession(session)}
+                  disabled={!allowPartialAttendance}
+                  className={`w-full rounded-xl border p-4 text-left transition ${
+                    selected
+                      ? 'border-blue-500 bg-blue-50/50 shadow-sm'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  } ${!allowPartialAttendance ? 'cursor-default' : ''}`}>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+                        {session.label}
                       </p>
-                    ))}
+                      <p className="mt-1 text-sm text-slate-700">
+                        {session.date ? new Date(session.date).toLocaleDateString() : ''}
+                      </p>
+                    </div>
+                    <span
+                      className={`inline-flex w-fit rounded-lg px-3 py-1 text-xs font-semibold ${
+                        selected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700'
+                      }`}>
+                      {allowPartialAttendance ? (selected ? 'Selected' : 'Select') : 'Included'}
+                    </span>
                   </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div className="sticky bottom-4 z-10 rounded-xl border border-slate-200 bg-white p-4 shadow-lg">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase text-slate-500">Total Cost</p>
-            <p className="text-2xl font-bold text-slate-900">${totalCost.toFixed(2)}</p>
+            <p className="text-xs font-semibold uppercase text-slate-500">Pricing</p>
+            <p className="text-sm text-slate-700">Calculated at checkout (member pricing applies automatically)</p>
           </div>
           <Button
             type="primary"
             loading={isSubmitting}
-            disabled={selectedDays.length === 0}
+            disabled={sessions.length > 0 && selectedSessionIds.length === 0}
             onClick={handleRegisterAndPay}
             className="!h-11 !rounded-lg !px-5 !font-semibold">
             Register & Pay
@@ -160,4 +195,3 @@ const EventRegistration = () => {
 };
 
 export default EventRegistration;
-

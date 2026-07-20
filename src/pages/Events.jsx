@@ -1,29 +1,72 @@
-import React, { useState } from 'react';
-import { Empty } from 'antd';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Empty, Spin } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import EventCard from '../components/events/EventCard';
-import { dummyData } from '../services/dummyData';
+import { fetchEventsRequest } from '../api/event.api';
+
+function toCardEvent(ev) {
+  const start = ev.startDate ? new Date(ev.startDate) : null;
+  const isPast = start ? start.getTime() < Date.now() : false;
+  return {
+    id: ev._id,
+    title: ev.title,
+    description: ev.description,
+    date: start ? start.toLocaleDateString() : 'Date TBD',
+    time: start ? start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Time TBD',
+    location: ev.isVirtual ? 'Virtual' : ev.venue || 'Location TBD',
+    attendees: 0,
+    category: 'Event',
+    status: ev.status === 'Completed' ? 'completed' : 'available',
+    type: isPast ? 'past' : 'upcoming',
+  };
+}
 
 const Events = () => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState('all');
-  
-  const filteredEvents = dummyData.events.filter(event => {
-    if (filter === 'all') return true;
-    return event.type.toLowerCase() === filter.toLowerCase();
-  });
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    fetchEventsRequest({ status: 'Published' })
+      .then((res) => {
+        if (cancelled) return;
+        const rows = res?.data?.data ?? res?.data ?? [];
+        setEvents(Array.isArray(rows) ? rows.map(toCardEvent) : []);
+      })
+      .catch(() => {
+        if (!cancelled) setEvents([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filteredEvents = useMemo(
+    () =>
+      events.filter((event) => {
+        if (filter === 'all') return true;
+        return event.type.toLowerCase() === filter.toLowerCase();
+      }),
+    [events, filter],
+  );
 
   const filters = [
-    { value: 'all', label: 'All Events', count: dummyData.events.length },
+    { value: 'all', label: 'All Events', count: events.length },
     {
       value: 'upcoming',
       label: 'Upcoming',
-      count: dummyData.events.filter(e => e.type === 'upcoming').length,
+      count: events.filter(e => e.type === 'upcoming').length,
     },
     {
       value: 'past',
       label: 'Past',
-      count: dummyData.events.filter(e => e.type === 'past').length,
+      count: events.filter(e => e.type === 'past').length,
     },
   ];
 
@@ -65,7 +108,11 @@ const Events = () => {
       </div>
 
       {/* Events Grid */}
-      {filteredEvents.length > 0 ? (
+      {loading ? (
+        <div className="flex justify-center p-12">
+          <Spin size="large" />
+        </div>
+      ) : filteredEvents.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
           {filteredEvents.map((event, index) => (
             <EventCard

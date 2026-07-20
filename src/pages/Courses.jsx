@@ -1,15 +1,31 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Spin } from 'antd';
 import Button from '../components/common/Button';
-import { staticCourses } from '../services/courseData';
+import { fetchCoursesRequest } from '../api/course.api';
 
 const filters = [
   { id: 'all', label: 'All Courses' },
-  { id: 'beginner', label: 'Beginner' },
-  { id: 'intermediate', label: 'Intermediate' },
-  { id: 'advanced', label: 'Advanced' },
-  { id: 'certificate', label: 'Certified' },
+  { id: 'online', label: 'Online' },
+  { id: 'in-person', label: 'In-Person' },
+  { id: 'blended', label: 'Blended' },
 ];
+
+function toCardCourse(course) {
+  return {
+    id: course._id,
+    title: course.title,
+    description: course.description || '',
+    level: course.deliveryMode,
+    category: course.deliveryMode === 'online' ? 'Online' : 'In-Person',
+    instructor: '',
+    duration: course.startDate ? new Date(course.startDate).toLocaleDateString() : '',
+    students: 0,
+    rating: null,
+    price: 'See details',
+    status: course.status === 'Completed' ? 'completed' : 'available',
+  };
+}
 
 const getStatusColor = status => {
   switch (status) {
@@ -37,47 +53,49 @@ const getStatusLabel = status => {
   }
 };
 
-const getLevelColor = level => {
-  switch (level) {
-    case 'Beginner':
-      return { bg: 'bg-emerald-50', text: 'text-emerald-700' };
-    case 'Intermediate':
-      return { bg: 'bg-blue-50', text: 'text-blue-700' };
-    case 'Advanced':
-      return { bg: 'bg-red-50', text: 'text-red-600' };
-    default:
-      return { bg: 'bg-gray-100', text: 'text-gray-600' };
-  }
-};
+const getLevelColor = () => ({ bg: 'bg-blue-50', text: 'text-blue-700' });
 
 const Courses = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [enrolledCourseIds, setEnrolledCourseIds] = useState([1, 6]);
+  const [enrolledCourseIds] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    fetchCoursesRequest({ status: 'Published' })
+      .then(res => {
+        if (cancelled) return;
+        const rows = res?.data?.data ?? res?.data ?? [];
+        setCourses(Array.isArray(rows) ? rows.map(toCardCourse) : []);
+      })
+      .catch(() => {
+        if (!cancelled) setCourses([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filteredCourses = useMemo(() => {
-    const byFilter = staticCourses.filter(course => {
+    const byFilter = courses.filter(course => {
       if (selectedFilter === 'all') return true;
-      if (selectedFilter === 'beginner') return course.level === 'Beginner';
-      if (selectedFilter === 'intermediate')
-        return course.level === 'Intermediate';
-      if (selectedFilter === 'advanced') return course.level === 'Advanced';
-      if (selectedFilter === 'certificate') return course.price !== 'Free';
-      return true;
+      return course.level === selectedFilter;
     });
 
     const q = searchQuery.trim().toLowerCase();
     if (!q) return byFilter;
 
     return byFilter.filter(course => {
-      return (
-        course.title.toLowerCase().includes(q) ||
-        course.category.toLowerCase().includes(q) ||
-        course.instructor.toLowerCase().includes(q)
-      );
+      return course.title.toLowerCase().includes(q);
     });
-  }, [selectedFilter, searchQuery]);
+  }, [courses, selectedFilter, searchQuery]);
 
   const getEffectiveStatus = course => {
     if (!course) return 'available';
@@ -155,8 +173,13 @@ const Courses = () => {
       </div>
 
       {/* Courses Grid */}
+      {loading && (
+        <div className="flex justify-center p-12">
+          <Spin size="large" />
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-        {filteredCourses.map(course => {
+        {!loading && filteredCourses.map(course => {
           const effectiveStatus = getEffectiveStatus(course);
           const statusColors = getStatusColor(effectiveStatus);
           const levelColors = getLevelColor(course.level);
@@ -165,14 +188,6 @@ const Courses = () => {
             <div
               key={course.id}
               className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow">
-              <div className="relative h-40 sm:h-44 md:h-48 w-full overflow-hidden">
-                <img
-                  src={course.image}
-                  alt={course.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
               <div className="p-4 sm:p-5 flex flex-col flex-1">
                 <div className="flex items-center justify-between mb-3 gap-2">
                   <span
@@ -188,9 +203,6 @@ const Courses = () => {
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 line-clamp-2">
                   {course.title}
                 </h2>
-                <p className="text-xs sm:text-sm text-gray-500 mb-2">
-                  by {course.instructor}
-                </p>
                 <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                   {course.description}
                 </p>
@@ -201,18 +213,6 @@ const Courses = () => {
                       ⏱
                     </span>
                     <span>{course.duration}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span role="img" aria-label="students">
-                      👥
-                    </span>
-                    <span>{course.students.toLocaleString()} students</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span role="img" aria-label="rating">
-                      ⭐
-                    </span>
-                    <span>{course.rating}</span>
                   </div>
                 </div>
 
@@ -244,7 +244,7 @@ const Courses = () => {
         })}
       </div>
 
-      {filteredCourses.length === 0 && (
+      {!loading && filteredCourses.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16">
           <div className="h-16 w-16 rounded-full bg-blue-50 flex items-center justify-center mb-4">
             <span className="text-blue-500 text-3xl">📘</span>
