@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { message } from 'antd';
@@ -13,6 +13,13 @@ const EventRegistration = () => {
   const [loading, setLoading] = useState(true);
   const [selectedSessionIds, setSelectedSessionIds] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Synchronous guard against a double-click/double-tap race: the Button's
+  // loading-disable is driven by React state (see loading={isSubmitting}
+  // below), which only takes effect after a render - two clicks close
+  // enough together can both fire this handler before that happens, each
+  // creating a SEPARATE registration + PaymentIntent. A ref update is
+  // synchronous, so checking/setting it first closes that window.
+  const isSubmittingRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,6 +67,8 @@ const EventRegistration = () => {
       message.error('An account email is required to register.');
       return;
     }
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     try {
       const res = await createEventRegistrationRequest({
@@ -88,6 +97,7 @@ const EventRegistration = () => {
     } catch (err) {
       message.error(err?.response?.data?.error?.message || err?.message || 'Failed to register');
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };

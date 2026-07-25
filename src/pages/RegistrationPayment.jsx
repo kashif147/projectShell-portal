@@ -38,12 +38,38 @@ const formatCurrency = value => {
   }
 };
 
+// React Router's location.state is in-memory only - a page refresh, a lost
+// tab, or coming back to this URL later wipes it out with no way to recover,
+// stranding a registration that already exists server-side (with an
+// unconfirmed Stripe PaymentIntent) with no way to ever complete payment for
+// it. Mirroring it into sessionStorage lets a refresh recover the same
+// payment session instead of silently abandoning it.
+const PENDING_PAYMENT_STORAGE_KEY = 'projectshell-portal:pending-registration-payment';
+
+function readPendingPayment(locationState) {
+  if (locationState) {
+    try {
+      sessionStorage.setItem(PENDING_PAYMENT_STORAGE_KEY, JSON.stringify(locationState));
+    } catch {
+      // sessionStorage unavailable (private browsing, quota) - fall back to
+      // in-memory-only behavior, same as before this change.
+    }
+    return locationState;
+  }
+  try {
+    const stored = sessionStorage.getItem(PENDING_PAYMENT_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
 const RegistrationPaymentInner = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const stripe = useStripe();
   const elements = useElements();
-  const paymentPayload = location.state || {};
+  const [paymentPayload] = useState(() => readPendingPayment(location.state) || {});
 
   const source = paymentPayload.source || 'course-registration';
   const title = paymentPayload.courseTitle || paymentPayload.eventTitle || 'Registration';
@@ -65,6 +91,11 @@ const RegistrationPaymentInner = () => {
         setStatusModal({ open: true, status: 'error', message: result.error.message || 'Payment failed' });
         return;
       }
+      // Payment confirmed - this session's clientSecret is spent, don't let
+      // a stale copy resurface on a later visit to this page.
+      try {
+        sessionStorage.removeItem(PENDING_PAYMENT_STORAGE_KEY);
+      } catch {}
       setStatusModal({
         open: true,
         status: 'success',
@@ -80,7 +111,7 @@ const RegistrationPaymentInner = () => {
     }
   };
 
-  if (!location.state || !title || !clientSecret) {
+  if (!title || !clientSecret) {
     return (
       <div className="space-y-4 sm:space-y-6">
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">

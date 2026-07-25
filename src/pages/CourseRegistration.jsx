@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { message } from 'antd';
@@ -12,6 +12,9 @@ const CourseRegistration = () => {
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Synchronous guard against a double-click/double-tap race - see the
+  // matching comment in EventRegistration.jsx's handleRegisterAndPay.
+  const isSubmittingRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,6 +44,8 @@ const CourseRegistration = () => {
       message.error('An account email is required to register.');
       return;
     }
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     try {
       const res = await createCourseRegistrationRequest({
@@ -68,6 +73,7 @@ const CourseRegistration = () => {
     } catch (err) {
       message.error(err?.response?.data?.error?.message || err?.message || 'Failed to register');
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
