@@ -23,6 +23,22 @@ import {
   resolvePaymentIntentOutcome,
 } from '../helpers/paymentIntent.helper';
 
+const stripePromise = loadStripe(
+  'pk_test_51SBAG4FTlZb0wcbr19eI8nC5u62DfuaUWRVS51VTERBocxSM9JSEs4ubrW57hYTCAHK9d6jrarrT4SAViKFMqKjT00TrEr3PNV',
+);
+
+const ELEMENT_OPTIONS = {
+  style: {
+    base: {
+      fontSize: '14px',
+      color: '#424770',
+      letterSpacing: '0.025em',
+      '::placeholder': { color: '#aab7c4' },
+    },
+    invalid: { color: '#9e2146' },
+  },
+};
+
 const formatCurrency = value => {
   const amount = Number(value) || 0;
   try {
@@ -52,7 +68,7 @@ const ELEMENT_OPTIONS = {
   },
 };
 
-const RegistrationPayment = () => {
+const RegistrationPaymentInner = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const stripe = useStripe();
@@ -352,7 +368,7 @@ const RegistrationPayment = () => {
     }
   };
 
-  if (!location.state || !title) {
+  if (!title || !clientSecret) {
     return (
       <div className="space-y-4 sm:space-y-6">
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
