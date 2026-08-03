@@ -25,11 +25,13 @@ const PersonalInformation = ({
   formData,
   onFormDataChange,
   showValidation = false,
+  showProfessionalFields = false,
 }) => {
   const inputRef = useRef(null);
   const searchInputRef = useRef(null);
   const [searchValue, setSearchValue] = React.useState('');
-  const { genderLookups, titleLookups, countryLookups } = useLookup();
+  const { genderLookups, titleLookups, countryLookups, workLocationLookups, gradeLookups } =
+    useLookup();
   const { profileDetail } = useProfile();
   const [organizationName, setOrganizationName] = useState('');
 
@@ -704,6 +706,115 @@ const PersonalInformation = ({
           />
         </div>
       </div>
+
+      {/* Professional Details (registration) */}
+      {showProfessionalFields ? (
+      <div className="section-card">
+        <div className="flex items-start gap-3 mb-6">
+          <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center shadow-lg shadow-amber-500/30">
+            <svg
+              className="w-6 h-6 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Professional Details
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Provide your work location and grade. NMBI number is optional.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <Select
+            label="Work Location"
+            name="workLocation"
+            required
+            value={formData?.workLocation || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+            placeholder="Select work location"
+            options={[
+              ...(workLocationLookups || [])
+                .map(item => {
+                  const name =
+                    item?.lookup?.DisplayName ||
+                    item?.lookup?.lookupname ||
+                    item?.DisplayName ||
+                    item?.lookupname ||
+                    '';
+                  return name ? { value: name, label: name } : null;
+                })
+                .filter(Boolean),
+              { value: 'other', label: 'Other' },
+            ]}
+          />
+          <Input
+            label="Other Work Location"
+            name="otherWorkLocation"
+            required={formData?.workLocation === 'other'}
+            disabled={formData?.workLocation !== 'other'}
+            value={formData?.otherWorkLocation || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+            placeholder="Enter your other work location"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <Select
+            label="Grade"
+            name="grade"
+            required
+            value={formData?.grade || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+            placeholder="Select grade"
+            options={[
+              ...(gradeLookups || [])
+                .map(item => {
+                  const name =
+                    item?.DisplayName || item?.lookupname || item?.name || '';
+                  return name ? { value: name, label: name } : null;
+                })
+                .filter(Boolean),
+              { value: 'other', label: 'Other' },
+            ]}
+          />
+          <Input
+            label="Other Grade"
+            name="otherGrade"
+            required={formData?.grade === 'other'}
+            disabled={formData?.grade !== 'other'}
+            value={formData?.otherGrade || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+            placeholder="Enter your other grade"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            label="NMBI No / An Board Altranais Number"
+            name="nmbiNumber"
+            value={formData?.nmbiNumber || ''}
+            onChange={handleInputChange}
+            showValidation={showValidation}
+            placeholder="Enter your NMBI number"
+          />
+        </div>
+      </div>
+      ) : null}
     </div>
   );
 };

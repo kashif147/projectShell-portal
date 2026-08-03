@@ -81,6 +81,12 @@ export const buildApplicationPersonalInfo = (personalDetail, prev = {}) => {
     homeWorkTelNo: orPrev(contact.telephoneNumber, prev.homeWorkTelNo),
     country: orPrev(contact.country, prev.country, 'Ireland'),
     workEmail: orPrev(contact.workEmail, prev.workEmail),
+    // Registration professional fields (persisted via professional-details API)
+    workLocation: orPrev(prev.workLocation, ''),
+    otherWorkLocation: coalescePrev(prev.otherWorkLocation, ''),
+    grade: orPrev(prev.grade, ''),
+    otherGrade: coalescePrev(prev.otherGrade, ''),
+    nmbiNumber: coalescePrev(prev.nmbiNumber, prev.nmbiNo, ''),
   };
 };
 
@@ -257,6 +263,148 @@ export const buildProfessionalDetailPayload = data => ({
     discipline: data.discipline,
   }),
 });
+
+/** Subset used by event/course registration personal-info gate. */
+export const buildRegistrationProfessionalFields = (
+  professionalDetail,
+  prev = {},
+) => {
+  const details =
+    professionalDetail?.professionalDetails || professionalDetail || {};
+
+  return {
+    workLocation: orPrev(details.workLocation, prev.workLocation),
+    otherWorkLocation: coalescePrev(
+      details.otherWorkLocation,
+      prev.otherWorkLocation,
+    ),
+    grade: orPrev(details.grade, prev.grade),
+    otherGrade: coalescePrev(details.otherGrade, prev.otherGrade),
+    nmbiNumber: coalescePrev(details.nmbiNumber, prev.nmbiNumber),
+  };
+};
+
+export const buildRegistrationProfessionalPayload = data => ({
+  professionalDetails: pickDefinedObject({
+    workLocation: data.workLocation,
+    otherWorkLocation: data.otherWorkLocation,
+    grade: data.grade,
+    otherGrade: data.otherGrade,
+    nmbiNumber: data.nmbiNumber || data.nmbiNo,
+  }),
+});
+
+/** Prefill registration personal form from profile-service data. */
+export const buildRegistrationFormFromProfileSources = ({
+  profileDetail = null,
+  profileByIdDetail = null,
+  user = null,
+  prev = {},
+} = {}) => {
+  const personal = profileByIdDetail?.personalInfo || {};
+  const contact = profileByIdDetail?.contactInfo || {};
+  const professional =
+    profileByIdDetail?.professionalDetails ||
+    profileByIdDetail?.professionalInfo ||
+    {};
+  const flat = profileDetail || {};
+
+  return {
+    ...prev,
+    profileId: flat.profileId || prev.profileId || '',
+    title: orPrev(personal.title, prev.title),
+    forename: orPrev(
+      personal.forename,
+      orPrev(flat.firstName, user?.userFirstName || user?.firstName || prev.forename),
+    ),
+    surname: orPrev(
+      personal.surname,
+      orPrev(flat.lastName, user?.userLastName || user?.lastName || prev.surname),
+    ),
+    gender: orPrev(personal.gender, prev.gender),
+    dateOfBirth: orPrev(personal.dateOfBirth, prev.dateOfBirth),
+    countryPrimaryQualification: orPrev(
+      personal.countryPrimaryQualification,
+      prev.countryPrimaryQualification,
+    ),
+    personalEmail: orPrev(
+      contact.personalEmail,
+      orPrev(flat.email, user?.userEmail || user?.email || prev.personalEmail),
+    ),
+    mobileNo:
+      normalizeMobileToE164(
+        contact.mobileNumber ||
+          flat.phone ||
+          prev.mobileNo ||
+          user?.userMobilePhone ||
+          user?.mobilePhone ||
+          '',
+      ) ||
+      prev.mobileNo ||
+      '',
+    preferredAddress: orPrev(contact.preferredAddress, prev.preferredAddress),
+    preferredEmail: orPrev(contact.preferredEmail, prev.preferredEmail),
+    workEmail: orPrev(contact.workEmail, prev.workEmail),
+    homeWorkTelNo: orPrev(contact.telephoneNumber, prev.homeWorkTelNo),
+    consent: coalescePrev(contact.consent, prev.consent, true),
+    addressLine1: orPrev(
+      contact.buildingOrHouse,
+      orPrev(flat.addressLine1, prev.addressLine1),
+    ),
+    addressLine2: orPrev(
+      contact.streetOrRoad,
+      orPrev(flat.addressLine2, prev.addressLine2),
+    ),
+    addressLine3: orPrev(
+      contact.areaOrTown,
+      orPrev(flat.townCity, prev.addressLine3),
+    ),
+    addressLine4: orPrev(
+      contact.countyCityOrPostCode,
+      orPrev(flat.countyState, prev.addressLine4),
+    ),
+    eircode: orPrev(contact.eircode, orPrev(flat.eircode, prev.eircode)),
+    country: orPrev(
+      contact.country,
+      orPrev(flat.country, prev.country || 'Ireland'),
+    ),
+    workLocation: orPrev(
+      professional.workLocation,
+      orPrev(flat.workLocation, prev.workLocation),
+    ),
+    otherWorkLocation: coalescePrev(
+      professional.otherWorkLocation,
+      prev.otherWorkLocation,
+    ),
+    grade: orPrev(professional.grade, orPrev(flat.grade, prev.grade)),
+    otherGrade: coalescePrev(professional.otherGrade, prev.otherGrade),
+    nmbiNumber: coalescePrev(professional.nmbiNumber, prev.nmbiNumber),
+  };
+};
+
+export const getRegistrationProfessionalMissingFields = (data = {}) => {
+  const missing = [];
+  if (!data.workLocation) missing.push('Work location');
+  if (
+    data.workLocation === 'other' &&
+    !String(data.otherWorkLocation || '').trim()
+  ) {
+    missing.push('Other work location');
+  }
+  if (!data.grade) missing.push('Grade');
+  if (data.grade === 'other' && !String(data.otherGrade || '').trim()) {
+    missing.push('Other grade');
+  }
+  return missing;
+};
+
+export const validateRegistrationProfessionalFields = data =>
+  getRegistrationProfessionalMissingFields(data).length === 0;
+
+export const hasRegistrationProfessionalInformation = professionalDetail => {
+  const fields = buildRegistrationProfessionalFields(professionalDetail);
+  return validateRegistrationProfessionalFields(fields);
+};
 
 export const resolveSubscriptionPaymentFields = ({
   data,

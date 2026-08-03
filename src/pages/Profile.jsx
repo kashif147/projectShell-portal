@@ -336,18 +336,20 @@ const Profile = () => {
 
     portalRequest
       .then(res => {
-        if (res.status === 200) {
-          getPersonalDetail();
-          toast.success(
-            applicationId
-              ? 'Personal Detail update successfully'
-              : 'Personal Detail created successfully',
-          );
-        } else {
+        if (res.status !== 200) {
           toast.error(
             res?.data?.message ?? 'Unable to save personal detail',
           );
+          return;
         }
+
+        getPersonalDetail();
+        toast.success(
+          applicationId
+            ? 'Personal Detail update successfully'
+            : 'Personal Detail created successfully',
+        );
+        setShowValidation(false);
       })
       .catch(() => {
         toast.error('Something went wrong');

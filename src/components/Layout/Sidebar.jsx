@@ -81,12 +81,7 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
     {
       key: '/events',
       icon: <CalendarOutlined style={{ color: '#ec4899' }} />,
-      label: 'Events & CPD',
-    },
-    {
-      key: '/courses',
-      icon: <BookOutlined style={{ color: '#2563eb' }} />,
-      label: 'Courses',
+      label: 'Events & Courses',
     },
     {
       key: '/communications',
@@ -153,12 +148,6 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
       icon: <FormOutlined />,
       label: 'Application',
       color: '#8b5cf6',
-    },
-    {
-      key: '/courses',
-      icon: <BookOutlined />,
-      label: 'Courses',
-      color: '#2563eb',
     },
     {
       key: '/payments/method',
@@ -271,97 +260,94 @@ const Sidebar = ({ collapsed, isMobile = false }) => {
           </div>
         </div>
 
-        {/* More Menu Drawer - Enhanced */}
+        {/* More Menu — match mobile bottom sheet */}
         <Drawer
-          title={
-            <div className="text-center pb-2">
-              <h2 className="text-xl font-bold text-gray-900 mb-1">More Options</h2>
-              <p className="text-xs text-gray-500">Access all your features</p>
-            </div>
-          }
+          title={null}
           placement="bottom"
           onClose={() => setMoreMenuVisible(false)}
           open={moreMenuVisible}
-          height="75vh"
-          closable={true}
-          bodyStyle={{ 
-            padding: '20px 16px', 
-            background: 'linear-gradient(to bottom, #f8fbff, #eef4ff)',
-            borderRadius: '24px 24px 0 0'
-          }}
-          headerStyle={{
-            borderBottom: '1px solid #dbeafe',
-            paddingTop: '24px',
-            paddingBottom: '16px',
-            background: 'linear-gradient(180deg, #eff6ff 0%, #ffffff 100%)',
+          height="auto"
+          closable={false}
+          className="more-options-drawer"
+          styles={{
+            body: {
+              padding: 0,
+              background: '#F5F7FA',
+              borderRadius: '24px 24px 0 0',
+              overflow: 'hidden',
+            },
+            wrapper: {
+              borderRadius: '24px 24px 0 0',
+              overflow: 'hidden',
+            },
+            content: {
+              borderRadius: '24px 24px 0 0',
+              overflow: 'hidden',
+              maxHeight: '80vh',
+            },
+            mask: {
+              backgroundColor: 'rgba(0, 0, 0, 0.45)',
+            },
           }}
         >
-          <div className="grid grid-cols-3 gap-3 px-2">
-            {moreMenuItems.map((item) => {
-              const isActive = location.pathname === item.key;
-              return (
-                <button
-                  key={item.key}
-                  onClick={() => {
-                    navigate(item.key);
-                    setMoreMenuVisible(false);
-                  }}
-                  className="relative flex flex-col items-center justify-center p-4 rounded-2xl transition-all duration-300 group overflow-hidden bg-white shadow-sm hover:shadow-xl border border-gray-100 hover:border-transparent"
-                >
-                  {/* Animated gradient background on hover */}
-                  <div 
-                    className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-2xl"
-                    style={{ 
-                      background: `linear-gradient(135deg, ${item.color} 0%, ${item.color}80 100%)`
-                    }}
-                  />
-                  
-                  {/* Icon container with gradient background and shadow */}
-                  <div className="relative z-10 mb-3">
-                    <div 
-                      className="w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-md group-hover:shadow-xl"
-                      style={{ 
-                        background: `linear-gradient(135deg, ${item.color} 0%, ${item.color}dd 100%)`,
-                        boxShadow: `0 4px 12px ${item.color}40`
+          <div className="flex max-h-[80vh] flex-col bg-[#F5F7FA]">
+            {/* Handle */}
+            <div className="flex justify-center bg-white pt-3 pb-1">
+              <div className="h-1 w-10 rounded-full bg-gray-200" />
+            </div>
+
+            {/* Header */}
+            <div className="relative border-b border-gray-100 bg-white px-5 pb-4 pt-2 text-center">
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={() => setMoreMenuVisible(false)}
+                className="absolute left-4 top-2 flex h-9 w-9 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+              >
+                <span className="text-xl leading-none">×</span>
+              </button>
+              <h2 className="text-lg font-bold text-slate-900">More Options</h2>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Access all your features
+              </p>
+            </div>
+
+            {/* Grid */}
+            <div className="overflow-y-auto px-4 py-5 pb-8">
+              <div className="grid grid-cols-3 gap-3">
+                {moreMenuItems.map(item => {
+                  const isActive = location.pathname === item.key;
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => {
+                        navigate(item.key);
+                        setMoreMenuVisible(false);
+                      }}
+                      className="flex flex-col items-center justify-center rounded-2xl border bg-white px-2 py-4 shadow-sm transition active:scale-[0.98]"
+                      style={{
+                        borderColor: isActive ? `${item.color}99` : '#F3F4F6',
+                        boxShadow: isActive
+                          ? `0 0 0 2px ${item.color}33`
+                          : '0 1px 2px rgba(0,0,0,0.04)',
                       }}
                     >
-                      <div className="text-2xl text-white">
-                      {item.icon}
+                      <div
+                        className="mb-2.5 flex h-12 w-12 items-center justify-center rounded-xl text-xl text-white shadow-sm [&_.anticon]:!text-white"
+                        style={{ backgroundColor: item.color }}
+                      >
+                        {item.icon}
                       </div>
-                    </div>
-                  </div>
-                  
-                  {/* Label with better typography */}
-                  <span className="relative z-10 text-[11px] font-semibold text-center leading-tight text-gray-700 group-hover:text-gray-900 transition-colors">
-                    {item.label}
-                  </span>
-                  
-                  {/* Active indicator with glow */}
-                  {isActive && (
-                    <>
-                    <div 
-                      className="absolute top-2 right-2 w-2 h-2 rounded-full animate-pulse"
-                        style={{ 
-                          backgroundColor: item.color,
-                          boxShadow: `0 0 8px ${item.color}`
-                        }}
-                      />
-                      <div 
-                        className="absolute inset-0 rounded-2xl border-2 animate-pulse"
-                        style={{ borderColor: `${item.color}60` }}
-                    />
-                    </>
-                  )}
-                  
-                  {/* Shimmer effect on hover */}
-                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-                </button>
-              );
-            })}
+                      <span className="text-center text-[11px] font-semibold leading-tight text-slate-700">
+                        {item.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
-          
-          {/* Bottom padding for visual balance */}
-          <div className="h-8" />
         </Drawer>
       </>
     );

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import QuickActionButton from '../components/dashboard/QuickActionButton';
-import UpcomingEventCard from '../components/dashboard/UpcomingEventCard';
+import FeaturedEventCard from '../components/dashboard/FeaturedEventCard';
 import ProfileCompletionCard from '../components/dashboard/ProfileCompletionCard';
 import PaymentsBillingCard from '../components/dashboard/PaymentsBillingCard';
 import EventDetailModal from '../components/dashboard/EventDetailModal';
@@ -46,12 +46,15 @@ import {
   getProfileCompletionCopy,
   shouldOpenPaymentModal,
   isPayDisabled,
-  getUpcomingEvents,
   buildPaymentSuccessModal,
 } from '../helpers/dashboard.helper';
+import {
+  getRegisteredCatalogItems,
+  parseRegistrationsResponse,
+} from '../helpers/events.helper';
 import { getAccountNetBalanceRequest } from '../api/account.api';
+import { fetchMyRegistrations } from '../api/events.api';
 import { useMemberRole } from '../hooks/useMemberRole';
-import { dummyData } from '../services/dummyData';
 import { getSubscriptionRequest } from '../api/subscription.api';
 import { canAccessProfile } from '../helpers/role.helper';
 import '../assets/theme/dashboard.css';
@@ -92,6 +95,8 @@ const Dashboard = () => {
   const [formData, setFormData] = useState(() =>
     createInitialDashboardFormData(user),
   );
+  const [registrations, setRegistrations] = useState([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
 
   const applyApplicationStatusState = state => {
     setApplicationStatus(state.applicationStatus);
@@ -439,10 +444,32 @@ const Dashboard = () => {
   const { message: profileCompletionMessage, buttonLabel: profileButtonLabel } =
     getProfileCompletionCopy({ isApplicationSubmitted, applicationStatus });
 
-  const upcomingEvents = useMemo(
-    () => getUpcomingEvents(dummyData?.events),
-    [],
+  // Upcoming Events section: registered events/courses from profile API.
+  const registeredEvents = useMemo(
+    () => getRegisteredCatalogItems(registrations),
+    [registrations],
   );
+
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        setEventsLoading(true);
+        const profileId = profileDetail?.profileId;
+        const registrationsRes = await fetchMyRegistrations(profileId);
+        const regs = registrationsRes
+          ? parseRegistrationsResponse(registrationsRes)
+          : [];
+        setRegistrations(regs);
+      } catch (error) {
+        console.error('Failed to fetch dashboard registrations:', error);
+        setRegistrations([]);
+      } finally {
+        setEventsLoading(false);
+      }
+    };
+
+    loadEvents();
+  }, [profileDetail?.profileId]);
 
   const paymentsBillingSection = (
     <PaymentsBillingCard
@@ -473,7 +500,15 @@ const Dashboard = () => {
           </div>
           <div className="quick-actions">
             {quickActions.map(
-              ({ key, title, subtitle, icon, onClick, disabled, colorScheme }) => (
+              ({
+                key,
+                title,
+                subtitle,
+                icon,
+                onClick,
+                disabled,
+                colorScheme,
+              }) => (
                 <QuickActionButton
                   key={key}
                   title={title}
@@ -520,19 +555,22 @@ const Dashboard = () => {
                 View All
               </button>
             </div>
-            <div className="space-y-3 sm:space-y-4">
-              {upcomingEvents.length > 0 ? (
-                upcomingEvents.map(event => (
-                  <UpcomingEventCard
-                    key={event.id}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+              {eventsLoading ? (
+                <div className="col-span-full rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center text-sm text-slate-600">
+                  Loading events...
+                </div>
+              ) : registeredEvents.length > 0 ? (
+                registeredEvents.map(event => (
+                  <FeaturedEventCard
+                    key={`registered-${event.registrationId || event.id}`}
                     event={event}
-                    onOpenDetail={setSelectedEvent}
-                    onRegister={() => navigate('/events')}
+                    onPress={setSelectedEvent}
                   />
                 ))
               ) : (
-                <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center text-sm text-slate-600">
-                  No upcoming events available.
+                <div className="col-span-full rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center text-sm text-slate-600">
+                  No registered events right now.
                 </div>
               )}
             </div>
@@ -573,8 +611,10 @@ const Dashboard = () => {
         event={selectedEvent}
         onClose={() => setSelectedEvent(null)}
         onRegister={() => {
+          if (selectedEvent?.id) {
+            navigate(`/events/${selectedEvent.id}/register`);
+          }
           setSelectedEvent(null);
-          navigate('/events');
         }}
       />
     </div>

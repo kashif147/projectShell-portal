@@ -34,6 +34,23 @@
   line-height: 1.45;
 }
 
+.dashboard-page .featured-events-section {
+  margin-bottom: var(--dash-gap);
+}
+
+.dashboard-page .featured-events-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dashboard-page .featured-events-scroll .featured-event-card--compact {
+  scroll-snap-align: start;
+}
+
 .dashboard-page .dash-top-row {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
