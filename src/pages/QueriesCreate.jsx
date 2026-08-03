@@ -10,6 +10,8 @@ import {
   Button,
   Space,
   Tag,
+  Row,
+  Col,
 } from 'antd';
 import { InboxOutlined, CloseOutlined } from '@ant-design/icons';
 import {
@@ -19,11 +21,6 @@ import {
 
 const { TextArea } = Input;
 const { Dragger } = Upload;
-
-// Mirrors mobile CreateCase field group structure and spacing
-const FieldGroup = ({ children, className = '' }) => (
-  <div className={`mb-4 ${className}`}>{children}</div>
-);
 
 const selectFilterOption = (input, option) =>
   String(option?.label || option?.children || '')
@@ -80,157 +77,157 @@ const QueriesCreate = () => {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6 px-2 sm:px-6 lg:px-8 py-3 sm:py-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card title="New Query / Case" className="shadow-sm">
-        <Form form={form} layout="vertical" className="max-w-2xl">
-          {/* Case Title - same as mobile caseTitle */}
-          <FieldGroup>
-            <Form.Item
-              name="caseTitle"
-              label="Title"
-              rules={[{ required: true, message: 'Please enter a title.' }]}
-            >
-              <Input
-                placeholder="Enter descriptive title."
-                size="large"
-              />
-            </Form.Item>
-          </FieldGroup>
+        <Form form={form} layout="vertical">
+          <Row gutter={[16, 0]}>
+            {/* Case Title - full width */}
+            <Col xs={24}>
+              <Form.Item
+                name="caseTitle"
+                label="Title"
+                rules={[{ required: true, message: 'Please enter a title.' }]}
+              >
+                <Input
+                  placeholder="Enter descriptive title."
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
 
-          {/* Description - same as mobile incidentDescription */}
-          <FieldGroup>
-            <Form.Item
-              name="incidentDescription"
-              label="Description"
-              rules={[{ required: true, message: 'Please enter a description.' }]}
-            >
-              <TextArea
-                rows={4}
-                placeholder="Detailed description of the incident..."
-              />
-            </Form.Item>
-          </FieldGroup>
+            {/* Description - full width */}
+            <Col xs={24}>
+              <Form.Item
+                name="incidentDescription"
+                label="Description"
+                rules={[{ required: true, message: 'Please enter a description.' }]}
+              >
+                <TextArea
+                  rows={4}
+                  placeholder="Detailed description of the incident..."
+                />
+              </Form.Item>
+            </Col>
 
-          {/* Incident Date - same as mobile incidentDate, with section spacing */}
-          <FieldGroup className="mt-6">
-            <Form.Item
-              name="incidentDate"
-              label="Incident Date"
-              rules={[
-                { required: true, message: 'Please select incident date.' },
-              ]}
-            >
-              <DatePicker
-                style={{ width: '100%' }}
-                size="large"
-                format="YYYY-MM-DD"
-              />
-            </Form.Item>
-          </FieldGroup>
+            {/* Incident Date | Location */}
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="incidentDate"
+                label="Incident Date"
+                rules={[
+                  { required: true, message: 'Please select incident date.' },
+                ]}
+              >
+                <DatePicker
+                  style={{ width: '100%' }}
+                  size="large"
+                  format="YYYY-MM-DD"
+                />
+              </Form.Item>
+            </Col>
 
-          {/* Location - same as mobile location */}
-          <FieldGroup>
-            <Form.Item
-              name="location"
-              label="Location"
-              rules={[{ required: true, message: 'Please enter location.' }]}
-            >
-              <Input
-                placeholder="City, Region or Branch"
-                size="large"
-              />
-            </Form.Item>
-          </FieldGroup>
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="location"
+                label="Location"
+                rules={[{ required: true, message: 'Please enter location.' }]}
+              >
+                <Input
+                  placeholder="City, Region or Branch"
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
 
-          {/* Category - same as mobile category, CASE_CATEGORY_OPTIONS */}
-          <FieldGroup>
-            <Form.Item
-              name="category"
-              label="Category"
-              rules={[{ required: true, message: 'Please select category.' }]}
-            >
-              <Select
-                placeholder="Select Category"
-                size="large"
-                showSearch
-                allowClear
-                optionFilterProp="label"
-                filterOption={selectFilterOption}
-                popupRender={renderClearableDropdown('category')}
-                options={CASE_CATEGORY_OPTIONS}
-              />
-            </Form.Item>
-          </FieldGroup>
+            {/* Category | Assigned To */}
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="category"
+                label="Category"
+                rules={[{ required: true, message: 'Please select category.' }]}
+              >
+                <Select
+                  placeholder="Select Category"
+                  size="large"
+                  showSearch
+                  allowClear
+                  optionFilterProp="label"
+                  filterOption={selectFilterOption}
+                  popupRender={renderClearableDropdown('category')}
+                  options={CASE_CATEGORY_OPTIONS}
+                />
+              </Form.Item>
+            </Col>
 
-          {/* Assigned To - same as mobile assignedLead, AVAILABLE_STAFF */}
-          <FieldGroup>
-            <Form.Item
-              name="assignedLead"
-              label="Assigned To"
-              rules={[
-                { required: true, message: 'Please select assigned lead.' },
-              ]}
-            >
-              <Select
-                placeholder="Select Lead Counsel"
-                size="large"
-                showSearch
-                allowClear
-                optionFilterProp="label"
-                filterOption={selectFilterOption}
-                popupRender={renderClearableDropdown('assignedLead')}
-                options={AVAILABLE_STAFF.map((s) => ({
-                  value: s.id,
-                  label: s.name,
-                }))}
-              />
-            </Form.Item>
-          </FieldGroup>
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="assignedLead"
+                label="Assigned To"
+                rules={[
+                  { required: true, message: 'Please select assigned lead.' },
+                ]}
+              >
+                <Select
+                  placeholder="Select Lead Counsel"
+                  size="large"
+                  showSearch
+                  allowClear
+                  optionFilterProp="label"
+                  filterOption={selectFilterOption}
+                  popupRender={renderClearableDropdown('assignedLead')}
+                  options={AVAILABLE_STAFF.map((s) => ({
+                    value: s.id,
+                    label: s.name,
+                  }))}
+                />
+              </Form.Item>
+            </Col>
 
-          {/* Attachment - same as mobile uploadedFiles, optional */}
-          <FieldGroup>
-            <Form.Item name="attachment" label="Attachment">
-              <Dragger {...uploadProps}>
-                <p className="ant-upload-drag-icon">
-                  <InboxOutlined
-                    style={{ fontSize: 48, color: '#3b82f6' }}
-                  />
-                </p>
-                <p className="ant-upload-text">Upload files</p>
-                <p className="ant-upload-hint">
-                  Drag & drop or click to select PDFs, PNGs, or DOCX.
-                </p>
-              </Dragger>
-            </Form.Item>
-            {fileList.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-3">
-                {fileList.map((file, index) => (
-                  <Tag
-                    key={file.uid ?? index}
-                    closable
-                    onClose={() => {
-                      const next = fileList.filter(
-                        (_, i) => i !== index
-                      );
-                      setFileList(next);
-                    }}
-                    className="pl-3 pr-1 py-1 rounded-full bg-blue-50 text-blue-700 border-0"
-                  >
-                    <span
-                      className="max-w-[180px] truncate inline-block align-middle"
-                      title={file.name}
+            {/* Attachment - full width */}
+            <Col xs={24}>
+              <Form.Item name="attachment" label="Attachment">
+                <Dragger {...uploadProps}>
+                  <p className="ant-upload-drag-icon">
+                    <InboxOutlined
+                      style={{ fontSize: 48, color: '#3b82f6' }}
+                    />
+                  </p>
+                  <p className="ant-upload-text">Upload files</p>
+                  <p className="ant-upload-hint">
+                    Drag & drop or click to select PDFs, PNGs, or DOCX.
+                  </p>
+                </Dragger>
+              </Form.Item>
+              {fileList.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3 mb-4">
+                  {fileList.map((file, index) => (
+                    <Tag
+                      key={file.uid ?? index}
+                      closable
+                      onClose={() => {
+                        const next = fileList.filter(
+                          (_, i) => i !== index
+                        );
+                        setFileList(next);
+                      }}
+                      className="pl-3 pr-1 py-1 rounded-full bg-blue-50 text-blue-700 border-0"
                     >
-                      {file.name}
-                    </span>
-                    <CloseOutlined className="ml-1 text-xs" />
-                  </Tag>
-                ))}
-              </div>
-            )}
-          </FieldGroup>
+                      <span
+                        className="max-w-[180px] truncate inline-block align-middle"
+                        title={file.name}
+                      >
+                        {file.name}
+                      </span>
+                      <CloseOutlined className="ml-1 text-xs" />
+                    </Tag>
+                  ))}
+                </div>
+              )}
+            </Col>
+          </Row>
 
           {/* Action buttons - same as mobile: Save Draft (outlined), Submit Case (primary) */}
-          <Form.Item className="mb-0 mt-6">
+          <Form.Item className="mb-0 mt-2">
             <Space size="middle">
               <Button size="large" onClick={handleSaveDraft}>
                 Save Draft

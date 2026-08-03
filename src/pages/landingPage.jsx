@@ -1,10 +1,8 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   BookOpen,
-  Calendar,
-  ChevronRight,
+  CalendarDays,
   CreditCard,
   Globe,
   GraduationCap,
@@ -13,32 +11,54 @@ import {
   Lock,
   MessageSquare,
   Plus,
-  Shield,
-  Users,
+  ShieldCheck,
+  UserPlus,
 } from 'lucide-react';
 import { Logo, ShellLogo, Splash } from '../assets/images/index';
 import { microSoftUrlRedirect } from '../helpers/B2C.helper';
+import '../assets/theme/landing.css';
+
+const FEATURES = [
+  { icon: LayoutDashboard, label: 'Personal Dashboard' },
+  { icon: LifeBuoy, label: 'Issue Management' },
+  { icon: UserPlus, label: 'Apply for Membership' },
+  { icon: CalendarDays, label: 'Events & Workshops' },
+  { icon: BookOpen, label: 'Member Resources' },
+  { icon: GraduationCap, label: 'Learning Courses' },
+  { icon: MessageSquare, label: 'Messages & Notifications' },
+  { icon: CreditCard, label: 'Secure Payments' },
+];
+
+function GoogleG() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 48 48" aria-hidden="true">
+      <path
+        fill="#EA4335"
+        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+      />
+      <path
+        fill="#4285F4"
+        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+      />
+    </svg>
+  );
+}
 
 const LandingPage = () => {
-  const navigate = useNavigate();
-  const portalFeatures = [
-    { label: 'Personal Dashboard', icon: LayoutDashboard },
-    { label: 'Issue Management', icon: LifeBuoy },
-    { label: 'Apply for Membership', icon: Users },
-    { label: 'Events & Workshops', icon: Calendar },
-    { label: 'Member Resources', icon: BookOpen },
-    { label: 'Learning Courses', icon: GraduationCap },
-    { label: 'Messages & Notifications', icon: MessageSquare },
-    { label: 'Secure Payments', icon: CreditCard },
-  ];
-
   const handleLogin = async () => {
     await microSoftUrlRedirect('signin');
   };
 
-  const handleGoogleLogin = async() => {
+  const handleGoogleLogin = async () => {
     await microSoftUrlRedirect('gmail');
-    // navigate('/google-signin');
   };
 
   const handleSignUp = async () => {
@@ -46,159 +66,113 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white lg:flex-row">
-      <div className="relative w-full overflow-hidden p-8 text-white md:p-14 lg:w-3/5">
+    <div className="landing">
+      <section className="landing__hero">
         <img
+          className="landing__hero-bg"
           src={Splash}
           alt="Members collaborating"
-          className="absolute inset-0 h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#3f3d8f]/80 via-[#4e4bb0]/75 to-[#2d2b6b]/82" />
-        <div className="absolute inset-0 bg-gradient-to-tr from-indigo-900/30 to-transparent" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(96,165,250,0.18),_transparent_50%)]" />
+        <div className="landing__hero-overlay" />
 
-        <div className="relative z-10 flex h-full flex-col justify-between">
-          <div className="inline-flex w-fit items-center gap-3 rounded-xl border border-white/25 bg-white px-3 py-2 shadow-lg shadow-black/20 sm:px-4 sm:py-2.5">
-            <img
-              src={ShellLogo}
-              alt="ProjectShell"
-              className="h-9 w-9 object-contain sm:hidden"
-            />
-            <img
-              src={Logo}
-              alt="ProjectShell"
-              className="hidden h-9 w-auto max-w-[160px] object-contain sm:block md:h-10 md:max-w-[200px]"
-            />
+        <a
+          className="landing__logo"
+          href="/"
+          onClick={e => e.preventDefault()}>
+          <img
+            src={ShellLogo}
+            alt="ProjectShell"
+            className="landing__logo-mark"
+          />
+          <img src={Logo} alt="ProjectShell" className="landing__logo-full" />
+        </a>
+
+        <div className="landing__hero-body">
+          <span className="landing__eyebrow">
+            <ShieldCheck size={14} /> Member Portal
+          </span>
+          <h1 className="hero-title">
+            Your Gateway to<span>Excellence.</span>
+          </h1>
+          <p className="landing__lead">
+            Manage your profile, track subscriptions, and handle payments in one
+            secure, unified platform designed for our members.
+          </p>
+
+          <div className="feature-grid">
+            {FEATURES.map(({ icon: Icon, label }) => (
+              <div key={label} className="feature-item">
+                <span className="feature-ic">
+                  <Icon size={18} />
+                </span>
+                {label}
+              </div>
+            ))}
           </div>
 
-          <div className="my-12 lg:my-0">
-            <h1 className="max-w-xl text-4xl font-bold leading-tight md:text-6xl">
-              Your Gateway to <br />
-              <span className="text-blue-200">Excellence.</span>
-            </h1>
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-blue-100 md:text-xl">
-              Manage your profile, track subscriptions, and handle payments in one
-              secure, unified platform designed for our members.
-            </p>
-
-            <div className="mt-10 grid grid-cols-1 gap-4 text-blue-50 sm:grid-cols-2">
-              {portalFeatures.map(({ label, icon: Icon }) => (
-                <div key={label} className="flex items-center gap-2.5">
-                  <span className="text-base text-blue-200">
-                    <Icon size={18} strokeWidth={2.25} />
-                  </span>
-                  <span className="font-medium">{label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-6 border-t border-white/15 pt-7 text-sm text-blue-200">
-            <span className="inline-flex items-center gap-2">
-              <Lock size={16} />
-              Bank-grade encryption
+          <div className="landing__trust">
+            <span className="trust-item">
+              <Lock size={16} /> Bank-grade encryption
             </span>
-            <span className="inline-flex items-center gap-2">
-              <Globe size={16} />
-              Global accessibility
+            <span className="trust-item">
+              <Globe size={16} /> Global accessibility
             </span>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="flex w-full items-center justify-center bg-slate-50 p-6 md:p-10 lg:w-2/5">
-        <div className="w-full max-w-md rounded-3xl border border-slate-100 bg-white p-8 shadow-xl shadow-slate-200/60 md:p-10">
-          <div className="mb-10">
-            <div className="mb-6 flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900">Already signed up?</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Sign in to access your portal.
-                </p>
-              </div>
-              <span className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
-                Secure SSO
-              </span>
-            </div>
-
-            <div className="space-y-4">
-              <button
-                type="button"
-                onClick={handleLogin}
-                className="flex w-full items-center justify-center gap-3 rounded-xl bg-[#1E3A8A] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-900/20 transition-all hover:bg-[#2563EB] sm:text-base"
-              >
-                <Shield size={18} />
-                <span>Sign in with your email</span>
-                <ArrowRight size={18} />
-              </button>
-
-              <div className="relative py-1">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-100" />
-                </div>
-                <div className="relative flex justify-center text-[10px]">
-                  <span className="bg-white px-2 font-bold uppercase tracking-widest text-slate-400">
-                    OR
-                  </span>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleGoogleLogin}
-                className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 px-4 py-3 transition-colors hover:bg-slate-50"
-              >
-                <img
-                  src="https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png"
-                  alt="Google"
-                  className="h-5 w-5"
-                  referrerPolicy="no-referrer"
-                />
-                <span className="font-semibold text-slate-700">Continue with Google</span>
-              </button>
-            </div>
+      <section className="landing__auth">
+        <div className="auth-card">
+          <div className="auth-head">
+            <h2>Already signed up?</h2>
+            <span className="sso-pill">
+              <ShieldCheck size={12} /> SECURE SSO
+            </span>
           </div>
+          <p className="auth-sub">Sign in to access your portal.</p>
 
-          <div className="relative mb-2 py-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-100" />
-            </div>
-            <div className="relative flex justify-center text-[10px]">
-              <span className="bg-white px-4 font-bold uppercase tracking-widest text-slate-400">
-                First time here?
-              </span>
-            </div>
-          </div>
+          <button type="button" className="btn-signin" onClick={handleLogin}>
+            <ShieldCheck size={18} /> Sign in with your email{' '}
+            <ArrowRight size={17} />
+          </button>
 
-          <div className="text-center">
-            <h3 className="mb-2 text-lg font-bold text-slate-900">New to the portal?</h3>
-            <p className="mb-6 px-4 text-sm text-slate-500">
+          <div className="or-divider">OR</div>
+
+          <button
+            type="button"
+            className="btn-google"
+            onClick={handleGoogleLogin}>
+            <GoogleG /> Continue with Google
+          </button>
+
+          <div className="section-divider">FIRST TIME HERE?</div>
+
+          <div className="new-block">
+            <h3>New to the portal?</h3>
+            <p>
               Apply for membership and create your account to access exclusive
               services.
             </p>
-
-            <button
-              type="button"
-              onClick={handleSignUp}
-                className="flex w-full items-center justify-center gap-3 rounded-xl border border-[#CBD5E1] bg-[#EEF2FF] px-4 py-3 font-bold text-[#1E3A8A] transition-all hover:bg-[#E0E7FF]"
-            >
-                <Plus size={18} />
-                <span>Create an Account</span>
-                <ChevronRight size={18} />
+            <button type="button" className="btn-create" onClick={handleSignUp}>
+              <Plus size={17} /> Create an Account <ArrowRight size={16} />
             </button>
           </div>
 
-          <div className="mt-10 border-t border-slate-100 pt-8">
-            <div className="flex justify-center gap-4 text-xs font-medium uppercase tracking-widest text-slate-400">
-              <span>Privacy</span>
-              <span>•</span>
-              <span>Terms</span>
-              <span>•</span>
-              <span>Support</span>
-            </div>
+          <div className="auth-footer">
+            <a href="#privacy" onClick={e => e.preventDefault()}>
+              Privacy
+            </a>
+            <span className="dot">•</span>
+            <a href="#terms" onClick={e => e.preventDefault()}>
+              Terms
+            </a>
+            <span className="dot">•</span>
+            <a href="#support" onClick={e => e.preventDefault()}>
+              Support
+            </a>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 };

@@ -61,42 +61,38 @@ const QuickActionButton = ({
       onClick={onClick}
       disabled={disabled}
       className={`
-        relative flex flex-col items-center justify-center p-2.5 sm:p-4 lg:p-6 rounded-xl border-2
+        relative flex flex-col items-center justify-center p-2 sm:p-2.5 lg:p-3 rounded-xl border
         transition-all duration-300 ease-in-out transform
         ${disabled
           ? 'cursor-not-allowed opacity-60'
-          : `${colors.hoverBorder} ${colors.hoverGradient} hover:shadow-xl sm:hover:scale-105 sm:hover:-translate-y-1 active:scale-100`
+          : `${colors.hoverBorder} ${colors.hoverGradient} hover:shadow-md sm:hover:scale-[1.02] active:scale-100`
         }
         ${colors.border} ${colors.gradient}
-        shadow-md backdrop-blur-sm
+        shadow-sm backdrop-blur-sm
       `}
     >
-      {/* Icon container with gradient and shadow */}
       <div className={`
-        w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center mb-1.5 sm:mb-3 lg:mb-4
-        ${colors.iconBg} shadow-lg ${colors.iconShadow}
+        w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 rounded-full flex items-center justify-center mb-1 sm:mb-1.5
+        ${colors.iconBg} shadow-md ${colors.iconShadow}
         transform transition-transform duration-300
         ${!disabled && 'group-hover:scale-110'}
         ${loading && 'animate-spin'}
       `}>
         {loading ? (
-          <Spinner size={20} color="#fff" loading={loading} />
+          <Spinner size={16} color="#fff" loading={loading} />
         ) : (
-          <Icon className="text-lg sm:text-xl lg:text-2xl text-white" />
+          <Icon className="text-sm sm:text-base lg:text-lg text-white" />
         )}
       </div>
-      
-      {/* Title with better typography */}
-      <h3 className="font-bold text-gray-900 mb-0.5 sm:mb-1 lg:mb-1.5 text-xs sm:text-sm lg:text-base tracking-tight">
+
+      <h3 className="font-bold text-gray-900 mb-0.5 text-[11px] sm:text-xs lg:text-sm tracking-tight">
         {title}
       </h3>
-      
-      {/* Subtitle with improved contrast */}
-      <p className="text-[10px] sm:text-xs text-gray-600 text-center leading-relaxed font-medium">
+
+      <p className="text-[9px] sm:text-[10px] text-gray-600 text-center leading-snug font-medium">
         {subtitle}
       </p>
-      
-      {/* Subtle shine effect overlay */}
+
       {!disabled && (
         <div className="absolute inset-0 rounded-xl bg-gradient-to-tr from-white/0 via-white/5 to-white/30 opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
       )}

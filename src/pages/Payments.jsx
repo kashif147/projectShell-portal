@@ -265,7 +265,7 @@ const Payments = () => {
   };
 
   return (
-    <div className="px-1 sm:px-6 py-4 sm:py-6">
+    <div>
       <Card title="Payment History" bodyStyle={{ padding: '8px' }}>
         {statementLoading && profileDetail?.membershipNumber ? (
           <div className="py-12 flex justify-center items-center">

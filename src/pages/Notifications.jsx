@@ -370,7 +370,7 @@ const Notifications = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div>
       <style>{`
         @media (max-width: 640px) {
           .filter-tabs-scroll::-webkit-scrollbar {
@@ -382,7 +382,7 @@ const Notifications = () => {
           }
         }
       `}</style>
-      <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-4 sm:mb-6 md:mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">

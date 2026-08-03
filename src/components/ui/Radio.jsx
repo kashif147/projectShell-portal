@@ -42,7 +42,7 @@ export const Radio = ({
           onChange={handleChange}
           disabled={disabled}
           className={`
-            ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+            ${disabled ? 'radio-group-disabled cursor-not-allowed' : ''}
             ${isEmpty ? 'border-red-500' : ''}
             ${className}
           `}

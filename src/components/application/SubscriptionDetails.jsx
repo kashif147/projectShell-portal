@@ -302,7 +302,7 @@ const SubscriptionDetails = ({
       )}
 
       {/* Payment Information Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-300">
+      <div className="section-card">
         <div className="flex items-start gap-3 mb-6">
           <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/30">
             <svg
@@ -381,7 +381,7 @@ const SubscriptionDetails = ({
       </div>
 
       {/* Member Status Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-300">
+      <div className="section-card">
         <div className="flex items-start gap-3 mb-6">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30">
             <svg
@@ -405,7 +405,7 @@ const SubscriptionDetails = ({
           </div>
         </div>
 
-        <div className="mt-6 p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+        <div className="option-box mt-6">
           <Radio
             label="Please select the most appropriate option below"
             name="memberStatus"
@@ -447,7 +447,7 @@ const SubscriptionDetails = ({
         </div>
 
         {isRejoinOrCareerBreak && (
-          <div className="mt-6 p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+          <div className="option-box mt-6">
             <Input
               label="Membership Number"
               name="previousMembershipNumber"
@@ -461,7 +461,7 @@ const SubscriptionDetails = ({
 
         {isNewOrGraduate && (
           <div className="mt-6 space-y-6">
-            <div className="p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+            <div className="option-box">
               <Radio
                 label="Are you a member of another Trade Union? If yes, which Union?"
                 name="otherIrishTradeUnion"
@@ -499,7 +499,7 @@ const SubscriptionDetails = ({
               )}
             </div>
 
-            <div className="p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+            <div className="option-box">
               <Radio
                 label="Are you or were you a member of another Irish trade Union salary or Income Protection Scheme?"
                 name="otherScheme"
@@ -529,7 +529,7 @@ const SubscriptionDetails = ({
 
             {formData?.otherScheme === 'no' &&
               formData?.memberStatus === 'new' && (
-                <div className="space-y-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="info-box space-y-4">
                   <p className="text-sm font-semibold text-gray-900 mb-3">
                     Additional Options for New Members
                   </p>
@@ -581,7 +581,7 @@ const SubscriptionDetails = ({
 
             {formData?.otherScheme === 'no' &&
               formData?.memberStatus === 'graduate' && (
-                <div className="space-y-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="info-box space-y-4">
                   <p className="text-sm font-semibold text-gray-900 mb-3">
                     Additional Options for Newly Graduated Members
                   </p>
@@ -661,7 +661,7 @@ const SubscriptionDetails = ({
       </div>
 
       {isUnder35 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-300">
+        <div className="section-card">
           <div className="flex items-start gap-3 mb-6">
             <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/30">
               <svg
@@ -686,7 +686,7 @@ const SubscriptionDetails = ({
           </div>
 
           <div className="space-y-6">
-            <div className="p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+            <div className="option-box">
               <Radio
                 label="Would you like to join Youth Forum?"
                 name="joinYouthForum"
@@ -725,7 +725,7 @@ const SubscriptionDetails = ({
       )}
 
       {/* Recruitment Details Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-300">
+      <div className="section-card">
         <div className="flex items-start gap-3 mb-6">
           <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/30">
             <svg
@@ -770,7 +770,7 @@ const SubscriptionDetails = ({
       </div>
 
       {/* Section Details */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-300">
+      <div className="section-card">
         <div className="flex items-start gap-3 mb-6">
           <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg flex items-center justify-center shadow-lg shadow-pink-500/30">
             <svg
@@ -846,7 +846,7 @@ const SubscriptionDetails = ({
       </div>
 
       {/* Additional Services & Terms Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-300">
+      <div className="section-card">
         <div className="flex items-start gap-3 mb-6">
           <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg shadow-teal-500/30">
             <svg

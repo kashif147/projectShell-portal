@@ -7,7 +7,7 @@ import Events from '../pages/Events';
 import Courses from '../pages/Courses';
 import EventRegistration from '../pages/EventRegistration';
 import CourseRegistration from '../pages/CourseRegistration';
-import RegistrationPayment from '../pages/RegistrationPayment';
+import RegistrationPaymentWrapper from '../pages/RegistrationPaymentWrapper';
 import Communications from '../pages/Communications';
 import Queries from '../pages/Queries';
 import QueriesCreate from '../pages/QueriesCreate';
@@ -119,7 +119,7 @@ export const privateRoutes = [
       },
       {
         path: 'registrations/payment',
-        element: <RegistrationPayment />,
+        element: <RegistrationPaymentWrapper />,
       },
       {
         path: 'communications',

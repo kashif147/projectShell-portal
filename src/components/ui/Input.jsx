@@ -34,16 +34,13 @@ export const Input = React.forwardRef(({
   };
   const fieldStateClasses = (() => {
     if (props.disabled) {
-      return 'bg-gray-200 border-gray-300 text-gray-400 cursor-not-allowed';
+      return 'bg-slate-100 border-slate-300 text-slate-800 cursor-not-allowed';
     }
     if (readOnly) {
       return 'bg-slate-100 border-slate-300 text-slate-800 cursor-default focus:ring-0 focus:border-slate-300';
     }
     if (isEmpty) {
       return 'bg-red-50 border-red-500';
-    }
-    if (required) {
-      return 'bg-white border-blue-500';
     }
     return 'bg-white border-gray-300';
   })();
