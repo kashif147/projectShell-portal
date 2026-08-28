@@ -158,7 +158,7 @@ const Header = ({
             <h1 className="app-header__title">{pageTitle}</h1>
           </div>
 
-          <div className="app-header__search">
+          {/* <div className="app-header__search">
             <Input
               allowClear
               placeholder="Search..."
@@ -168,7 +168,7 @@ const Header = ({
               onPressEnter={() => handleSearch(searchValue)}
               className="app-header__search-input"
             />
-          </div>
+          </div> */}
         </div>
 
         <div className="app-header__right">

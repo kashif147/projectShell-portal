@@ -210,23 +210,30 @@ const CourseRegistration = () => {
   return (
     <div className="space-y-5 sm:space-y-6">
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        {course.image ? (
-          <div className="w-full bg-slate-100">
-            <img
-              src={course.image}
-              alt={course.title}
-              className="block h-auto w-full"
-            />
+        <div
+          className={`border-b border-slate-100 ${
+            course.image
+              ? 'grid grid-cols-1 md:grid-cols-2 md:items-stretch'
+              : ''
+          }`}>
+          {course.image ? (
+            <div className="flex min-h-48 items-center justify-center bg-slate-100 p-3 sm:min-h-56 md:p-4">
+              <img
+                src={course.image}
+                alt={course.title}
+                className="max-h-48 w-full object-contain sm:max-h-56 md:max-h-64"
+              />
+            </div>
+          ) : null}
+          <div className="flex flex-col justify-center p-4 sm:p-6">
+            <p className="text-xs font-semibold tracking-wider text-blue-600">
+              {course.category}
+            </p>
+            <h1 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
+              {course.title}
+            </h1>
+            <p className="mt-2 text-sm text-slate-600">{course.location}</p>
           </div>
-        ) : null}
-        <div className="border-b border-slate-100 p-4 sm:p-6">
-          <p className="text-xs font-semibold tracking-wider text-blue-600">
-            {course.category}
-          </p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
-            {course.title}
-          </h1>
-          <p className="mt-1 text-sm text-slate-600">{course.location}</p>
         </div>
         <div className="grid gap-4 border-t border-slate-100 p-4 sm:grid-cols-2 sm:p-6">
           <div>

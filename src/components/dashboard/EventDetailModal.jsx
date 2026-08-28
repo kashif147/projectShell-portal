@@ -9,6 +9,8 @@ import {
 import {
   buildAvailablePricingOptions,
   formatRegistrationPrice,
+  getRegistrationStatusLabel,
+  isRegistrationLocked,
 } from '../../helpers/events.helper';
 import { useMemberRole } from '../../hooks/useMemberRole';
 import { useApplication } from '../../contexts/applicationContext';
@@ -23,9 +25,10 @@ const EventDetailModal = ({ event, onClose, onRegister }) => {
 
   if (!event) return null;
 
-  const isRegistered =
-    String(event?.status || '').toLowerCase() === 'registered' ||
-    Boolean(event?.registrationId);
+  const isLocked = isRegistrationLocked(event);
+  const statusLabel = getRegistrationStatusLabel(event?.status);
+  const isSubmitted =
+    String(event?.status || '').toLowerCase() === 'submitted';
 
   const descriptionHtml = event.descriptionHtml || event.raw?.description;
   const membershipCategory =
@@ -164,9 +167,14 @@ const EventDetailModal = ({ event, onClose, onRegister }) => {
             className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
             Close
           </button>
-          {isRegistered ? (
-            <span className="inline-flex items-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700">
-              Registered
+          {isLocked ? (
+            <span
+              className={`inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold ${
+                isSubmitted
+                  ? 'bg-amber-50 text-amber-800'
+                  : 'bg-blue-50 text-blue-700'
+              }`}>
+              {statusLabel}
             </span>
           ) : (
             <button

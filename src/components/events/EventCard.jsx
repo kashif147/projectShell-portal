@@ -7,9 +7,14 @@ import {
   TeamOutlined,
   TagOutlined,
 } from '@ant-design/icons';
+import {
+  getRegistrationStatusLabel,
+  isRegistrationLocked,
+} from '../../helpers/events.helper';
 
 const statusStyles = {
   registered: 'bg-blue-100 text-blue-700 border-blue-200',
+  submitted: 'bg-amber-100 text-amber-800 border-amber-200',
   available: 'bg-green-100 text-green-700 border-green-200',
   waitlist: 'bg-amber-100 text-amber-700 border-amber-200',
   completed: 'bg-slate-100 text-slate-700 border-slate-200',
@@ -28,16 +33,28 @@ const EventCardImageHeader = ({ event }) => (
 );
 
 const EventCard = ({ event, onRegister, onViewDetails }) => {
+  const statusKey = String(event?.status || '').toLowerCase();
   const statusClass =
-    statusStyles[event?.status?.toLowerCase()] ||
-    'bg-slate-100 text-slate-700 border-slate-200';
-  const isCompleted = String(event?.status || '').toLowerCase() === 'completed';
-  const isWaitlist = String(event?.status || '').toLowerCase() === 'waitlist';
-  const isRegistered =
-    String(event?.status || '').toLowerCase() === 'registered';
+    statusStyles[statusKey] || 'bg-slate-100 text-slate-700 border-slate-200';
+  const statusLabel = getRegistrationStatusLabel(event?.status);
+  const isCompleted = statusKey === 'completed';
+  const isWaitlist = statusKey === 'waitlist';
+  const isSubmitted = statusKey === 'submitted';
+  const isRegistered = statusKey === 'registered';
+  const isLocked = isRegistrationLocked(event);
   const description = event?.description || 'No description available.';
   const hasLongDescription = description.length > DESCRIPTION_PREVIEW_LENGTH;
   const hasImage = Boolean(event?.image);
+
+  const actionLabel = isCompleted
+    ? 'Completed'
+    : isRegistered
+      ? 'Registered'
+      : isSubmitted
+        ? 'Submitted'
+        : isWaitlist
+          ? 'Join Waitlist'
+          : 'Register';
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md">
@@ -56,8 +73,8 @@ const EventCard = ({ event, onRegister, onViewDetails }) => {
             </h3>
           </div>
           <span
-            className={`inline-flex shrink-0 items-center rounded-full border px-3 py-1 text-xs font-semibold capitalize ${statusClass}`}>
-            {event?.status || 'N/A'}
+            className={`inline-flex shrink-0 items-center rounded-full border px-3 py-1 text-xs font-semibold ${statusClass}`}>
+            {statusLabel}
           </span>
         </div>
 
@@ -124,22 +141,16 @@ const EventCard = ({ event, onRegister, onViewDetails }) => {
             </Button>
             <Button
               type="primary"
-              disabled={isCompleted || isRegistered}
+              disabled={isLocked || isCompleted}
               onClick={() => onRegister && onRegister(event)}
               className={`!h-10 !rounded-lg !px-4 !font-semibold ${
-                isCompleted || isRegistered
+                isLocked || isCompleted
                   ? ''
                   : isWaitlist
                     ? '!border-amber-500 !bg-amber-500 hover:!bg-amber-600'
                     : '!border-blue-600 !bg-blue-600 hover:!bg-blue-700'
               }`}>
-              {isCompleted
-                ? 'Completed'
-                : isRegistered
-                  ? 'Registered'
-                  : isWaitlist
-                    ? 'Join Waitlist'
-                    : 'Register'}
+              {actionLabel}
             </Button>
           </div>
         </div>

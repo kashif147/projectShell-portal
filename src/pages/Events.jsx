@@ -14,6 +14,7 @@ import {
   applyRegistrationStatus,
   filterEventsBySearch,
   filterRegisteredItems,
+  isRegistrationLocked,
   parseEventsResponse,
   parseRegistrationsResponse,
 } from '../helpers/events.helper';
@@ -193,6 +194,19 @@ const EventsAndCourses = () => {
       ? `/courses/${item.courseId || item.id}/register`
       : `/events/${item.id}/register`;
 
+  const handleRegister = item => {
+    if (!item?.id) return;
+    if (isRegistrationLocked(item)) {
+      toast.info(
+        item.status === 'submitted'
+          ? 'This registration is pending review.'
+          : 'You are already registered for this item.',
+      );
+      return;
+    }
+    navigate(registerPath(item));
+  };
+
   const emptyTitle =
     filter === 'my-event'
       ? 'No My Events yet'
@@ -280,15 +294,13 @@ const EventsAndCourses = () => {
           <Spinner />
         </div>
       ) : filteredItems.length > 0 ? (
-        <div className="grid grid-cols-1 items-stretch gap-3 sm:gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
+        <div className="grid grid-cols-1 items-stretch gap-3 sm:gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-4">
           {filteredItems.map(item => (
             <EventCard
               key={`${item.kind}-${item.id}`}
               event={item}
               onViewDetails={setSelectedItem}
-              onRegister={selected => {
-                navigate(registerPath(selected));
-              }}
+              onRegister={handleRegister}
             />
           ))}
         </div>
@@ -314,9 +326,7 @@ const EventsAndCourses = () => {
         event={selectedItem}
         onClose={() => setSelectedItem(null)}
         onRegister={() => {
-          if (selectedItem?.id) {
-            navigate(registerPath(selectedItem));
-          }
+          handleRegister(selectedItem);
           setSelectedItem(null);
         }}
       />

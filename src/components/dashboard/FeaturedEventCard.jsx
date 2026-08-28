@@ -4,9 +4,21 @@ import {
   ClockCircleOutlined,
   EnvironmentOutlined,
 } from '@ant-design/icons';
+import {
+  getRegistrationStatusLabel,
+  isRegistrationLocked,
+} from '../../helpers/events.helper';
 
 const FeaturedEventCard = ({ event, onPress, compact = false }) => {
-  const isRegistered = String(event?.status || '').toLowerCase() === 'registered';
+  const statusKey = String(event?.status || '').toLowerCase();
+  const isLocked = isRegistrationLocked(event);
+  const statusLabel = getRegistrationStatusLabel(event?.status);
+  const statusClass =
+    statusKey === 'submitted'
+      ? 'text-amber-700'
+      : statusKey === 'registered'
+        ? 'text-blue-700'
+        : 'text-slate-600';
 
   return (
     <button
@@ -22,7 +34,7 @@ const FeaturedEventCard = ({ event, onPress, compact = false }) => {
           <img
             src={event.image}
             alt={event?.title || 'Event'}
-            className="h-full w-full object-contain"
+            className="h-full w-full object-contain object-center"
           />
         </div>
       ) : null}
@@ -59,8 +71,8 @@ const FeaturedEventCard = ({ event, onPress, compact = false }) => {
             </p>
           ) : null}
         </div>
-        {isRegistered ? (
-          <p className="text-xs font-medium text-blue-700">Registered</p>
+        {isLocked ? (
+          <p className={`text-xs font-medium ${statusClass}`}>{statusLabel}</p>
         ) : null}
       </div>
     </button>
