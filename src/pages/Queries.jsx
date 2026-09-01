@@ -1,80 +1,97 @@
-import React from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Table, Tag } from 'antd';
+import { Card, Table, Tag, Spin } from 'antd';
+import { toast } from 'react-toastify';
 import Button from '../components/common/Button';
+import { fetchMyPortalIssues } from '../api/issue.api';
+import {
+  getIssueApiErrorMessage,
+  isIssueApiSuccess,
+  mapPortalIssueToListItem,
+  parseIssuesListResponse,
+} from '../helpers/issues.helper';
 
 const Queries = () => {
   const navigate = useNavigate();
-  const dummyQueries = [
-    {
-      id: 1,
-      subject: 'Technical Support',
-      date: '2024-02-01',
-      status: 'Open',
-      priority: 'High',
-    },
-    {
-      id: 2,
-      subject: 'Billing Question',
-      date: '2024-01-28',
-      status: 'Closed',
-      priority: 'Medium',
-    },
-  ];
+  const [issues, setIssues] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const columns = [
-    {
-      title: 'Subject',
-      dataIndex: 'subject',
-      key: 'subject',
-    },
-    {
-      title: 'Date',
-      dataIndex: 'date',
-      key: 'date',
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={status === 'Open' ? 'blue' : 'green'}>{status}</Tag>
-      ),
-    },
-    {
-      title: 'Priority',
-      dataIndex: 'priority',
-      key: 'priority',
-      render: (priority) => {
-        const color = {
-          High: 'red',
-          Medium: 'orange',
-          Low: 'green',
-        }[priority];
-        return <Tag color={color}>{priority}</Tag>;
+  const loadIssues = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetchMyPortalIssues();
+      if (isIssueApiSuccess(response)) {
+        setIssues(
+          parseIssuesListResponse(response).map(mapPortalIssueToListItem),
+        );
+      } else {
+        setIssues([]);
+        toast.error(getIssueApiErrorMessage(response, 'Failed to load complaints'));
+      }
+    } catch (error) {
+      setIssues([]);
+      toast.error('Failed to load complaints');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadIssues();
+  }, [loadIssues]);
+
+  const columns = useMemo(
+    () => [
+      {
+        title: 'Type',
+        dataIndex: 'subject',
+        key: 'subject',
       },
-    },
-    {
-      title: 'Action',
-      key: 'action',
-      render: () => <Button size="small">View Details</Button>,
-    },
-  ];
+      {
+        title: 'Date Received',
+        dataIndex: 'date',
+        key: 'date',
+      },
+      {
+        title: 'Status',
+        dataIndex: 'status',
+        key: 'status',
+        render: status => (
+          <Tag color={status === 'Open' ? 'blue' : status === 'Closed' ? 'green' : 'orange'}>
+            {status}
+          </Tag>
+        ),
+      },
+      {
+        title: 'Description',
+        dataIndex: 'description',
+        key: 'description',
+        ellipsis: true,
+      },
+    ],
+    [],
+  );
 
   return (
     <div>
-      <Card 
-        title="Queries & Cases" 
-        extra={<Button type="primary" onClick={() => navigate('/queries/create')}>New Query</Button>}
-      >
-        <Table
-          dataSource={dummyQueries}
-          columns={columns}
-          rowKey="id"
-        />
+      <Card
+        title="Queries & Cases"
+        extra={
+          <Button type="primary" onClick={() => navigate('/queries/create')}>
+            New Complaint
+          </Button>
+        }>
+        <Spin spinning={loading}>
+          <Table
+            dataSource={issues}
+            columns={columns}
+            rowKey={record => String(record.id)}
+            locale={{ emptyText: 'No complaints found' }}
+          />
+        </Spin>
       </Card>
     </div>
   );
 };
 
-export default Queries; 
+export default Queries;
