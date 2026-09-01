@@ -133,12 +133,7 @@ const EventRegistration = () => {
         quantities,
         totalCost,
       });
-    } catch (err) {
-      message.error(err?.response?.data?.error?.message || err?.message || 'Failed to register');
-    } finally {
-      isSubmittingRef.current = false;
-      setIsSubmitting(false);
-    }
+    }, 450);
   };
 
   const canProceed = selectedLineItems.length > 0;

@@ -394,38 +394,47 @@ const Application = () => {
     : "You don't have an application yet.";
 
   return (
-    <div>
-      <div
-        className={`mb-4 sm:mb-6 border rounded-lg p-3 sm:p-4 ${
-          isMember ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'
-        }`}>
-        <div className="flex items-center justify-between">
+    <div className="space-y-5 sm:space-y-6 max-w-5xl mx-auto">
+      {/* Member Status Hero Card */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_-4px_rgba(15,23,42,0.05)] relative overflow-hidden">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-100/50 blur-2xl" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 relative z-10">
           <div>
-            <p
-              className={`text-xs mb-1 ${isMember ? 'text-blue-600' : 'text-gray-600'}`}>
-              Member Status
-            </p>
-            <p
-              className={`text-base sm:text-lg font-semibold ${
-                isMember ? 'text-blue-900' : 'text-gray-700'
-              }`}>
-              {memberStatus}
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 font-poppins">
+              Application History
+            </h1>
+            <p className="mt-1 text-xs sm:text-sm text-slate-500 max-w-xl">
+              Track the progress, processing details, and review records of your membership application.
             </p>
           </div>
-          <Tag color={isMember ? 'blue' : 'default'} className="text-sm">
-            {memberStatus}
-          </Tag>
+
+          <div className="flex items-center gap-2">
+            <span className={`px-3.5 py-1 rounded-full text-xs font-bold ${
+              isMember
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                : 'bg-slate-100 text-slate-700 border border-slate-200'
+            }`}>
+              {isMember ? '● Active Member' : '○ Non-Member'}
+            </span>
+          </div>
         </div>
       </div>
-      <Card title="Application History" bodyStyle={{ padding: '8px' }}>
-        <div className="space-y-4 sm:space-y-6">
+
+      <Card
+        title={
+          <span className="font-poppins text-lg font-bold text-slate-900">
+            Application Records
+          </span>
+        }
+        className="overflow-hidden border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_10px_25px_-5px_rgba(15,23,42,0.04)]">
+        <div>
           {pageBusy ? (
-            <div className="flex justify-center py-12">
+            <div className="flex justify-center py-16">
               <Spinner />
             </div>
           ) : displayRows.length > 0 ? (
             <>
-              <div className="block md:hidden">
+              <div className="block md:hidden space-y-3">
                 {displayRows.map(record => (
                   <div key={record.applicationId}>
                     {renderMobileCard(record)}
@@ -433,7 +442,7 @@ const Application = () => {
                 ))}
               </div>
 
-              <div className="hidden md:block">
+              <div className="hidden md:block overflow-x-auto">
                 <Table
                   dataSource={displayRows}
                   columns={columns}
@@ -445,7 +454,7 @@ const Application = () => {
           ) : (
             <Empty
               description={emptyDescription}
-              className="py-12"
+              className="py-16"
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           )}

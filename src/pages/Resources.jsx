@@ -1,11 +1,15 @@
 import React, { useMemo, useRef } from 'react';
-import { Card, Button, Tag, Empty } from 'antd';
+import { Card, Tag, Empty } from 'antd';
 import {
-  FileOutlined,
+  FilePdfOutlined,
   DownloadOutlined,
   LinkOutlined,
   PlayCircleOutlined,
+  IdcardOutlined,
+  BookOutlined,
+  SafetyCertificateOutlined,
 } from '@ant-design/icons';
+import Button from '../components/common/Button';
 import { useApplication } from '../contexts/applicationContext';
 import { useProfile } from '../contexts/profileContext';
 
@@ -49,9 +53,9 @@ const Resources = () => {
     const base = [
       {
         id: 'rb',
-        title: 'Rule Book',
+        title: 'Rule Book & Constitutional Guidelines',
         type: 'PDF',
-        category: 'Links',
+        category: 'Governance',
         action: 'download-rule-book',
       },
     ];
@@ -120,121 +124,166 @@ const Resources = () => {
   };
 
   return (
-    <div>
-      <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
-        {/* Membership Card Section */}
-        <Card 
-          title={<span className="text-lg sm:text-xl font-bold">Membership Card</span>}
-          className="shadow-sm"
-          bodyStyle={{ padding: '16px' }}
-        >
-          {!hasApplication ? (
-            <Empty description="No application data" />
-          ) : (
-            <div className="flex flex-col gap-4">
-              <div ref={cardRef} id="membership-card" className="border-2 border-blue-200 rounded-xl p-4 sm:p-6 bg-gradient-to-br from-white to-blue-50 shadow-sm">
-                <div className="text-center mb-3 sm:mb-4">
-                  <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">MEMBERSHIP CARD</div>
-                  <div className="text-xs sm:text-sm text-gray-500 mt-1">{membershipCategoryLabels[membershipCategory] || membershipCategory}</div>
+    <div className="space-y-6 max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_-4px_rgba(15,23,42,0.05)] relative overflow-hidden">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-purple-100/50 blur-2xl" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="p-2 rounded-xl bg-purple-50 text-purple-600 text-lg">
+              <BookOutlined />
+            </span>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 font-poppins">
+              Member Resources & Credentials
+            </h1>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-500 max-w-2xl">
+            Access your digital membership card, organizational rulebooks, educational material, and official documents.
+          </p>
+        </div>
+      </div>
+
+      {/* Digital Membership Card Preview */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_10px_25px_-5px_rgba(15,23,42,0.04)]">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-lg font-bold tracking-tight text-slate-900 flex items-center gap-2 font-poppins">
+            <IdcardOutlined className="text-blue-600 text-xl" />
+            Digital Membership Card
+          </h2>
+          {hasApplication && (
+            <Button
+              type="primary"
+              size="middle"
+              icon={<DownloadOutlined />}
+              onClick={handleDownloadMembershipCard}>
+              Download Card PDF
+            </Button>
+          )}
+        </div>
+
+        {!hasApplication ? (
+          <Empty description="No application data available" className="py-8" />
+        ) : (
+          <div className="flex flex-col lg:flex-row gap-6 items-center">
+            {/* Card Widget */}
+            <div
+              ref={cardRef}
+              id="membership-card"
+              className="w-full max-w-md rounded-2xl bg-gradient-to-tr from-slate-900 via-indigo-950 to-blue-900 p-6 text-white shadow-xl relative overflow-hidden border border-slate-700/50">
+              <div className="pointer-events-none absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-blue-500/20 blur-xl" />
+              <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-indigo-500/20 blur-xl" />
+
+              <div className="flex items-center justify-between mb-6 relative z-10">
+                <div>
+                  <p className="text-[10px] uppercase font-bold tracking-widest text-blue-300">
+                    Official Member Card
+                  </p>
+                  <p className="text-xs font-semibold text-slate-300 mt-0.5">
+                    {membershipCategoryLabels[membershipCategory] || membershipCategory}
+                  </p>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
-                  <div className="font-semibold text-gray-600 py-1">Name</div>
-                  <div className="text-gray-800 py-1 break-words">{memberName || 'N/A'}</div>
-                  <div className="font-semibold text-gray-600 py-1">Membership Number</div>
-                  <div className="text-gray-800 py-1 break-words">{membershipNumber || 'N/A'}</div>
-                  <div className="font-semibold text-gray-600 py-1">Branch</div>
-                  <div className="text-gray-800 py-1 break-words">{branch || 'N/A'}</div>
-                  <div className="font-semibold text-gray-600 py-1">Section</div>
-                  <div className="text-gray-800 py-1 break-words">{section || 'N/A'}</div>
-                </div>
-                <div className="mt-4 sm:mt-5 text-center sm:text-right text-xs text-gray-500">Digital Card Preview</div>
+                <SafetyCertificateOutlined className="text-2xl text-blue-400" />
               </div>
-              <div className="flex justify-center sm:justify-start">
-                <Button 
-                  type="primary" 
-                  size="large"
-                  icon={<DownloadOutlined />} 
-                  onClick={handleDownloadMembershipCard}
-                  className="w-full sm:w-auto touch-manipulation"
-                  style={{ minHeight: '44px' }}
-                >
-                  Download PDF
-                </Button>
+
+              <div className="space-y-3 relative z-10">
+                <div>
+                  <p className="text-[10px] uppercase font-semibold text-slate-400">
+                    Cardholder
+                  </p>
+                  <p className="text-lg font-bold text-white tracking-tight">
+                    {memberName || 'N/A'}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10 text-xs">
+                  <div>
+                    <p className="text-[10px] uppercase font-semibold text-slate-400">
+                      Membership No
+                    </p>
+                    <p className="font-mono font-bold text-blue-200 mt-0.5">
+                      {membershipNumber || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase font-semibold text-slate-400">
+                      Branch / Section
+                    </p>
+                    <p className="font-semibold text-slate-200 mt-0.5 truncate">
+                      {branch || 'N/A'} / {section || 'N/A'}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
-          )}
-        </Card>
 
-        {/* Resources Library Section */}
-        <Card 
-          title={<span className="text-lg sm:text-xl font-bold">Resources Library</span>}
-          className="shadow-sm"
-          bodyStyle={{ padding: '16px' }}
-        >
-          {educationalResources.length === 0 ? (
-            <Empty description="No resources available" />
-          ) : (
-            <div className="space-y-3 sm:space-y-4">
-              {educationalResources.map(item => (
-                <div
-                  key={item.id}
-                  className="bg-white border border-gray-200 rounded-lg sm:rounded-xl p-3 sm:p-4 hover:shadow-md transition-all duration-300 active:scale-[0.99]"
-                >
-                  <div className="flex items-start gap-3 sm:gap-4">
-                    {/* Icon */}
-                    <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg sm:rounded-xl flex items-center justify-center">
-                      <FileOutlined className="text-lg sm:text-xl text-blue-600" />
-                    </div>
+            {/* Explanatory text */}
+            <div className="flex-1 space-y-3 text-sm text-slate-600">
+              <div className="p-4 rounded-xl bg-blue-50/60 border border-blue-100/80">
+                <p className="font-semibold text-blue-900 mb-1">
+                  Official Proof of Membership
+                </p>
+                <p className="text-xs text-blue-700 leading-relaxed">
+                  Use this digital card for verification at seminars, regional branch meetings, and partner discounts. Download the PDF version for a printable copy.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-2 break-words">
-                        {item.title}
-                      </h3>
-                      <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
-                        <Tag color="blue" className="text-xs sm:text-sm m-0">
-                          {item.category}
-                        </Tag>
-                        <Tag 
-                          color={item.type === 'PDF' ? 'green' : item.type === 'Video' ? 'purple' : 'geekblue'}
-                          className="text-xs sm:text-sm m-0"
-                        >
-                          {item.type}
-                        </Tag>
-                      </div>
-                    </div>
+      {/* Resources Library */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_10px_25px_-5px_rgba(15,23,42,0.04)]">
+        <h2 className="text-lg font-bold tracking-tight text-slate-900 mb-4 font-poppins">
+          Document & Media Library
+        </h2>
 
-                    {/* Action Button */}
-                    <div className="flex-shrink-0">
-                      <Button
-                        type="primary"
-                        size="small"
-                        icon={
-                          item.type === 'PDF' ? <DownloadOutlined /> : 
-                          item.type === 'Video' ? <PlayCircleOutlined /> : 
-                          <LinkOutlined />
-                        }
-                        onClick={() => handleResourceAction(item)}
-                        className="touch-manipulation"
-                        style={{ minHeight: '36px', minWidth: '80px' }}
-                      >
-                        <span className="hidden sm:inline">
-                          {item.type === 'PDF' ? 'Download' : 'Open'}
-                        </span>
-                        <span className="sm:hidden">
-                          {item.type === 'PDF' ? 'DL' : 'Open'}
-                        </span>
-                      </Button>
+        {educationalResources.length === 0 ? (
+          <Empty description="No resources available" className="py-8" />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {educationalResources.map(item => (
+              <div
+                key={item.id}
+                className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-200 flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3.5 min-w-0">
+                  <div className="h-11 w-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 text-xl">
+                    {item.type === 'PDF' ? (
+                      <FilePdfOutlined className="text-rose-600" />
+                    ) : item.type === 'Video' ? (
+                      <PlayCircleOutlined className="text-purple-600" />
+                    ) : (
+                      <LinkOutlined className="text-blue-600" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold text-slate-900 truncate mb-1">
+                      {item.title}
+                    </h3>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
+                        {item.category}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700">
+                        {item.type}
+                      </span>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </Card>
+
+                <Button
+                  type="default"
+                  size="small"
+                  onClick={() => handleResourceAction(item)}
+                  className="shrink-0">
+                  {item.type === 'PDF' ? 'Download' : 'Open'}
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default Resources; 
+export default Resources;

@@ -483,15 +483,34 @@ const Dashboard = () => {
   );
 
   return (
-    <div className="dashboard-page">
-      <div className="page-title-row">
-        <h1>
-          Welcome back, {user?.userFirstName || user?.fullName || 'Member'}!
-        </h1>
-        <p>Here's a quick overview of your member account.</p>
+    <div className="dashboard-page space-y-5 sm:space-y-6">
+      {/* Hero Welcome Banner */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_-4px_rgba(15,23,42,0.05)] relative overflow-hidden">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-100/50 blur-2xl" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 relative z-10">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                ● Member Portal
+              </span>
+            </div>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-slate-900 font-poppins">
+              Welcome back, {user?.userFirstName || user?.fullName || 'Member'}! 👋
+            </h1>
+            <p className="mt-1 text-xs sm:text-sm text-slate-500 max-w-xl">
+              Here is what is happening across your subscriptions, upcoming events, and portal account today.
+            </p>
+          </div>
+
+          <div className="hidden sm:flex items-center gap-2">
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-100/80 text-slate-600 border border-slate-200/80">
+              {new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+            </span>
+          </div>
+        </div>
       </div>
 
-      <div className="lg:hidden mb-6">{paymentsBillingSection}</div>
+      <div className="lg:hidden">{paymentsBillingSection}</div>
 
       <div className="dash-top-row">
         <div className="section-card">

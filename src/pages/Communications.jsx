@@ -7,7 +7,8 @@ import {
   FileTextOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  EyeOutlined
+  EyeOutlined,
+  ArrowRightOutlined,
 } from '@ant-design/icons';
 import { dummyData } from '../services/dummyData';
 
@@ -33,22 +34,22 @@ const Communications = () => {
 
   const getTypeColor = (type) => {
     const colors = {
-      'Email': 'from-blue-500 to-blue-600',
-      'Notification': 'from-orange-500 to-orange-600',
-      'Newsletter': 'from-green-500 to-green-600',
-      'Message': 'from-purple-500 to-purple-600',
+      'Email': 'bg-blue-600 text-white',
+      'Notification': 'bg-amber-500 text-white',
+      'Newsletter': 'bg-emerald-600 text-white',
+      'Message': 'bg-indigo-600 text-white',
     };
-    return colors[type] || 'from-gray-500 to-gray-600';
+    return colors[type] || 'bg-slate-600 text-white';
   };
 
   const getTypeBgColor = (type) => {
     const colors = {
-      'Email': 'bg-blue-50',
-      'Notification': 'bg-orange-50',
-      'Newsletter': 'bg-green-50',
-      'Message': 'bg-purple-50',
+      'Email': 'bg-blue-50 text-blue-700 border-blue-200',
+      'Notification': 'bg-amber-50 text-amber-700 border-amber-200',
+      'Newsletter': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      'Message': 'bg-indigo-50 text-indigo-700 border-indigo-200',
     };
-    return colors[type] || 'bg-gray-50';
+    return colors[type] || 'bg-slate-50 text-slate-700 border-slate-200';
   };
 
   const statusFilters = [
@@ -67,77 +68,84 @@ const Communications = () => {
 
   const stats = [
     { 
-      label: 'Total', 
+      label: 'Total Messages', 
       value: dummyData.communications?.length || 0, 
       icon: <MessageOutlined />,
-      color: 'from-blue-500 to-blue-600'
+      bgColor: 'bg-blue-50 text-blue-600'
     },
     { 
-      label: 'Unread', 
+      label: 'Unread Items', 
       value: dummyData.communications?.filter(c => c.status === 'Unread').length || 0, 
       icon: <BellOutlined />,
-      color: 'from-orange-500 to-orange-600'
+      bgColor: 'bg-amber-50 text-amber-600'
     },
     { 
-      label: 'Read', 
+      label: 'Read & Archived', 
       value: dummyData.communications?.filter(c => c.status === 'Read').length || 0, 
       icon: <CheckCircleOutlined />,
-      color: 'from-green-500 to-green-600'
+      bgColor: 'bg-emerald-50 text-emerald-600'
     },
   ];
 
   return (
-    <div className="space-y-5 sm:space-y-6">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          Communications
-        </h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Stay updated with all your messages and notifications.
-        </p>
+    <div className="space-y-5 sm:space-y-6 max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_-4px_rgba(15,23,42,0.05)] relative overflow-hidden">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-100/50 blur-2xl" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="p-2 rounded-xl bg-blue-50 text-blue-600 text-lg">
+              <MessageOutlined />
+            </span>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 font-poppins">
+              Communications
+            </h1>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-500 max-w-2xl">
+            Stay updated with official union notices, newsletters, and direct member communications.
+          </p>
+        </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {stats.map((stat, index) => (
           <div
             key={index}
-            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-md"
+            className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_6px_16px_-4px_rgba(15,23,42,0.04)] flex items-center justify-between"
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="mb-1 text-sm font-medium text-slate-600">{stat.label}</p>
-                <p className="text-3xl font-bold text-slate-900">{stat.value}</p>
-              </div>
-              <div className={`rounded-full bg-gradient-to-br ${stat.color} p-3 shadow-sm`}>
-                {React.cloneElement(stat.icon, { className: 'text-white text-xl' })}
-              </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{stat.label}</p>
+              <p className="text-2xl font-bold text-slate-900 mt-1">{stat.value}</p>
+            </div>
+            <div className={`h-11 w-11 rounded-xl flex items-center justify-center text-xl ${stat.bgColor}`}>
+              {stat.icon}
             </div>
           </div>
         ))}
       </div>
 
       {/* Filters */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_6px_16px_-4px_rgba(15,23,42,0.04)] space-y-3.5">
         {/* Status Filter */}
-        <div>
-          <p className="text-sm font-semibold text-gray-700 mb-2">Status</p>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400 w-16 shrink-0">Status</span>
           <div className="flex flex-wrap gap-2">
             {statusFilters.map((tab) => (
               <button
                 key={tab.value}
                 onClick={() => setFilter(tab.value)}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                className={`px-3.5 py-1.5 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 ${
                   filter === tab.value
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25'
+                    : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/70'
                 }`}
               >
-                {tab.label}
-                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                <span>{tab.label}</span>
+                <span className={`ml-2 px-1.5 py-0.5 rounded-full text-[11px] font-bold ${
                   filter === tab.value 
-                    ? 'bg-white/20' 
-                    : 'bg-white'
+                    ? 'bg-white/25 text-white' 
+                    : 'bg-white text-slate-700 shadow-sm'
                 }`}>
                   {tab.count}
                 </span>
@@ -147,17 +155,17 @@ const Communications = () => {
         </div>
 
         {/* Type Filter */}
-        <div>
-          <p className="text-sm font-semibold text-gray-700 mb-2">Type</p>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-2 border-t border-slate-100">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400 w-16 shrink-0">Type</span>
           <div className="flex flex-wrap gap-2">
             {typeFilters.map((tab) => (
               <button
                 key={tab.value}
                 onClick={() => setSelectedType(tab.value)}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                className={`px-3.5 py-1.5 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 ${
                   selectedType === tab.value
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25'
+                    : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/70'
                 }`}
               >
                 {tab.label}
@@ -173,66 +181,58 @@ const Communications = () => {
           {filteredCommunications.map((item, index) => (
             <div
               key={index}
-              className={`rounded-xl border bg-white shadow-sm ${
+              className={`rounded-2xl border bg-white shadow-sm ${
                 item.status === 'Unread' 
                   ? 'border-blue-200 bg-blue-50/20' 
-                  : 'border-slate-200'
-              } overflow-hidden hover:shadow-md transition-all duration-300 group`}
+                  : 'border-slate-200/80'
+              } p-4 sm:p-5 hover:shadow-md transition-all duration-200 group`}
             >
-              <div className="p-5">
-                <div className="flex items-start gap-4">
-                  {/* Icon */}
-                  <div className={`bg-gradient-to-br ${getTypeColor(item.type)} p-3 rounded-full shadow-md flex-shrink-0`}>
-                    {React.cloneElement(getTypeIcon(item.type), { className: 'text-white text-lg' })}
+              <div className="flex items-start gap-4">
+                {/* Icon */}
+                <div className={`h-11 w-11 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0 ${getTypeColor(item.type)}`}>
+                  {getTypeIcon(item.type)}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-4 mb-1">
+                    <h3 className={`text-sm sm:text-base font-bold group-hover:text-blue-600 transition-colors ${
+                      item.status === 'Unread' ? 'text-slate-900' : 'text-slate-700'
+                    }`}>
+                      {item.title}
+                    </h3>
+                    <span className="text-xs text-slate-400 font-medium whitespace-nowrap">
+                      {item.date}
+                    </span>
                   </div>
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4 mb-2">
-                      <h3 className={`text-base font-bold group-hover:text-blue-600 transition-colors ${
-                        item.status === 'Unread' ? 'text-slate-900' : 'text-slate-700'
-                      }`}>
-                        {item.title}
-                      </h3>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="text-xs text-gray-500 font-medium">
-                          {item.date}
-                        </span>
-                      </div>
-                    </div>
+                  <div className="flex items-center gap-2.5 flex-wrap mt-2">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${getTypeBgColor(item.type)}`}>
+                      {item.type}
+                    </span>
 
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getTypeBgColor(item.type)} ${
-                        item.type === 'Email' ? 'text-blue-700' :
-                        item.type === 'Notification' ? 'text-orange-700' :
-                        item.type === 'Newsletter' ? 'text-green-700' :
-                        'text-purple-700'
-                      }`}>
-                        {item.type}
-                      </span>
-
-                      <div className="flex items-center gap-1">
-                        {item.status === 'Read' ? (
-                          <>
-                            <CheckCircleOutlined className="text-green-600 text-sm" />
-                            <span className="text-xs font-medium text-green-600">Read</span>
-                          </>
-                        ) : (
-                          <>
-                            <ClockCircleOutlined className="text-orange-600 text-sm" />
-                            <span className="text-xs font-medium text-orange-600">Unread</span>
-                          </>
-                        )}
-                      </div>
+                    <div className="flex items-center gap-1">
+                      {item.status === 'Read' ? (
+                        <>
+                          <CheckCircleOutlined className="text-emerald-600 text-xs" />
+                          <span className="text-xs font-semibold text-emerald-700">Read</span>
+                        </>
+                      ) : (
+                        <>
+                          <ClockCircleOutlined className="text-amber-600 text-xs" />
+                          <span className="text-xs font-semibold text-amber-700">Unread</span>
+                        </>
+                      )}
                     </div>
+                  </div>
 
-                    {/* Action Button */}
-                    <div className="mt-3">
-                      <button className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
-                        <EyeOutlined />
-                        View Details
-                      </button>
-                    </div>
+                  {/* Action Button */}
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 flex justify-end">
+                    <button className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors">
+                      <EyeOutlined />
+                      <span>View Details</span>
+                      <ArrowRightOutlined className="text-[10px]" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -240,13 +240,13 @@ const Communications = () => {
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-slate-200 bg-white p-12 shadow-sm">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-12 sm:p-16 text-center shadow-sm">
           <Empty
             description={
-              <div className="space-y-2">
-                <p className="text-slate-900 font-semibold">No Communications Found</p>
-                <p className="text-slate-500 text-sm">
-                  There are no communications matching your filters.
+              <div className="space-y-1">
+                <p className="text-slate-900 font-bold">No Communications Found</p>
+                <p className="text-slate-500 text-xs sm:text-sm">
+                  There are no communications matching your current filter.
                 </p>
               </div>
             }
@@ -258,4 +258,4 @@ const Communications = () => {
   );
 };
 
-export default Communications; 
+export default Communications;

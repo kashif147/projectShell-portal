@@ -17,8 +17,8 @@ export const Radio = ({
   const isEmpty = required && !value && showValidation;
 
   const labelClasses = `
-    block text-sm font-medium mb-2
-    ${isEmpty ? 'text-red-600' : 'text-gray-700'}
+    block mb-2 text-xs font-semibold tracking-tight uppercase text-slate-600
+    ${isEmpty ? 'text-red-600' : ''}
   `;
 
   const handleChange = (e) => {
@@ -32,7 +32,7 @@ export const Radio = ({
       {label && (
         <label className={labelClasses}>
           {label} {required && <span className="text-red-500">*</span>}
-          {isEmpty && <span className="ml-1 text-xs text-red-500">(Required)</span>}
+          {isEmpty && <span className="ml-1 text-xs font-normal lowercase text-red-500">(Required)</span>}
         </label>
       )}
       <div className="relative">
@@ -43,7 +43,7 @@ export const Radio = ({
           disabled={disabled}
           className={`
             ${disabled ? 'radio-group-disabled cursor-not-allowed' : ''}
-            ${isEmpty ? 'border-red-500' : ''}
+            ${isEmpty ? 'border-red-400' : ''}
             ${className}
           `}
           {...props}
@@ -53,7 +53,7 @@ export const Radio = ({
               <AntRadio
                 key={option.value}
                 value={option.value}
-                className="mb-0"
+                className="mb-0 text-sm font-medium text-slate-700"
                 disabled={disabled}
               >
                 {option.label}
@@ -71,4 +71,4 @@ export const Radio = ({
   );
 };
 
-export default Radio; 
+export default Radio;

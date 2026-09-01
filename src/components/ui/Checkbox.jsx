@@ -12,8 +12,8 @@ export const Checkbox = ({
   const isEmpty = required && !checked && showValidation;
 
   const labelClasses = `
-    ml-2 text-sm
-    ${isEmpty ? 'text-red-600' : 'text-gray-700'}
+    ml-2.5 text-sm font-medium text-slate-700 select-none cursor-pointer leading-snug
+    ${isEmpty ? 'text-red-600' : ''}
   `;
 
   return (
@@ -23,8 +23,8 @@ export const Checkbox = ({
         id={name}
         name={name}
         className={`
-          h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-0.5 flex-shrink-0
-          ${isEmpty ? 'border-red-500' : ''}
+          h-4.5 w-4.5 text-blue-600 focus:ring-2 focus:ring-blue-500/20 border-slate-300 rounded-md mt-0.5 flex-shrink-0 cursor-pointer transition-colors
+          ${isEmpty ? 'border-red-400 focus:ring-red-500/20' : ''}
         `}
         checked={checked}
         {...props}
@@ -32,11 +32,10 @@ export const Checkbox = ({
       {label && (
         <label htmlFor={name} className={labelClasses}>
           {label}
-          {/* {isEmpty && <span className="ml-1 text-xs">(Required)</span>} */}
         </label>
       )}
     </div>
   );
 };
 
-export default Checkbox; 
+export default Checkbox;

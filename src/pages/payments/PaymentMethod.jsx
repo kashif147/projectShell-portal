@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { CreditCardOutlined } from '@ant-design/icons';
 import { useProfile } from '../../contexts/profileContext';
 import { getSubscriptionRequest } from '../../api/subscription.api';
 import {
@@ -215,43 +216,41 @@ const PaymentMethod = () => {
   }
 
   return (
-    <div>
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
-        <div className="max-w-7xl mx-auto py-3 sm:py-4">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <button
-              type="button"
-              onClick={() => navigate('/')}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
-              aria-label="Go back">
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </button>
-            <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-              <div className="min-w-0 flex-1">
-                <h1 className="text-sm sm:text-base font-semibold text-gray-900 leading-tight">
-                  {headerMeta.title}
-                </h1>
-                <p className="text-xs text-gray-500 mt-0.5 leading-snug">
-                  {headerMeta.subtitle}
-                </p>
-                {isActivePaymentMethod && (
-                  <span className="inline-flex mt-1.5 items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700 ring-1 ring-green-600/20">
-                    {activePortalForm.status}
-                  </span>
-                )}
-              </div>
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-slate-200/80 bg-white/95 backdrop-blur-md sticky top-0 z-30 p-4 sm:p-5 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_6px_16px_-4px_rgba(15,23,42,0.04)]">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition-all hover:bg-slate-200 active:scale-95"
+            aria-label="Go back">
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+          <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-base sm:text-lg font-bold text-slate-900 font-poppins">
+                {headerMeta.title}
+              </h1>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {headerMeta.subtitle}
+              </p>
             </div>
+            {isActivePaymentMethod && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                ● {activePortalForm.status}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -260,23 +259,12 @@ const PaymentMethod = () => {
         {selectedPaymentType ? (
           renderPaymentComponent()
         ) : (
-          <div className="min-h-[60vh] flex items-center justify-center px-4 py-8">
-            <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-5">
-                <svg
-                  className="w-8 h-8 text-slate-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                  />
-                </svg>
+          <div className="min-h-[50vh] flex items-center justify-center px-4 py-8">
+            <div className="max-w-md w-full rounded-2xl bg-white shadow-sm border border-slate-200 p-8 text-center space-y-4">
+              <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto text-2xl text-slate-400">
+                <CreditCardOutlined />
               </div>
-              <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                 {!profileDetail?.profileId
                   ? 'Please complete your member profile before managing payment methods.'
                   : 'Your current payment type does not use a portal authorization form. If you need to update your payment method, please contact support or update it from your profile settings.'}
