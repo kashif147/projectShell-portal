@@ -159,18 +159,20 @@ const Router = ({ auth }) => {
   return (
     <Routes>
       {routes.map((route, index) => (
-        <Route key={index} path={route.path} element={route.element}>
+        <Route
+          key={index}
+          {...(route.path ? { path: route.path } : {})}
+          element={route.element}>
           {route.children?.map((child, childIndex) => (
             <Route
               key={childIndex}
-              index={child.index}
-              path={child.path}
+              {...(child.index ? { index: true } : { path: child.path })}
               element={child.element}
             />
           ))}
         </Route>
       ))}
-      <Route exact path="*" element={<ErrorPage />} />
+      <Route path="*" element={<ErrorPage />} />
     </Routes>
   );
 };

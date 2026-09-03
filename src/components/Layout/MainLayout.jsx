@@ -88,7 +88,9 @@ const MainLayout = () => {
     );
   };
 
-  const pageTitle = routeTitleMap[location.pathname] || 'Dashboard';
+  const pageTitle =
+    routeTitleMap[location.pathname] ||
+    (location.pathname.startsWith('/queries/') ? 'Case Details' : 'Dashboard');
 
   return (
     <Layout className="app-main-shell" style={{ minHeight: '100vh' }}>

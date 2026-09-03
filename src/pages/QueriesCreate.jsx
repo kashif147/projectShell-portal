@@ -18,7 +18,7 @@ import {
 } from 'antd';
 import { InboxOutlined, CloseOutlined } from '@ant-design/icons';
 import { COMPLAINT_TYPE_OPTIONS } from '../constants/queriesCases';
-import { createPortalIssue } from '../api/issue.api';
+import { createPortalIssue, uploadIssueAttachments } from '../api/issue.api';
 import { useLookup } from '../contexts/lookupContext';
 import { useProfile } from '../contexts/profileContext';
 import {
@@ -29,6 +29,7 @@ import {
   isMemberOnMemberComplaintType,
   isMemberOnServiceProviderComplaintType,
   mapComplaintTypeLookupOptions,
+  parseIssueIdFromResponse,
 } from '../helpers/issues.helper';
 
 const { TextArea } = Input;
@@ -155,10 +156,28 @@ const QueriesCreate = () => {
         complaintTypeLookups,
       });
 
-      const files = fileList.map(file => file.originFileObj || file);
-      const response = await createPortalIssue(payload, files);
+      const files = fileList
+        .map(file => file.originFileObj || file)
+        .filter(Boolean);
+      const response = await createPortalIssue(payload);
 
       if (isIssueApiSuccess(response)) {
+        const issueId = parseIssueIdFromResponse(response);
+
+        if (files.length && issueId) {
+          const uploadResponse = await uploadIssueAttachments(issueId, files);
+          if (!isIssueApiSuccess(uploadResponse)) {
+            toast.warning(
+              getIssueApiErrorMessage(
+                uploadResponse,
+                'Complaint created but attachments failed to upload.',
+              ),
+            );
+            navigate('/queries');
+            return;
+          }
+        }
+
         toast.success('Complaint submitted successfully');
         navigate('/queries');
         return;
@@ -210,7 +229,7 @@ const QueriesCreate = () => {
               <Col xs={24} md={12}>
                 <Form.Item
                   name="incidentDate"
-                  label="Date Received"
+                  label="Issue Date"
                   rules={[
                     { required: true, message: 'Please select date received.' },
                   ]}>

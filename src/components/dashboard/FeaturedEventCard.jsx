@@ -31,13 +31,23 @@ const FeaturedEventCard = ({ event, onPress, compact = false }) => {
       }`}>
       {event?.image ? (
         <div className="h-32 w-full overflow-hidden bg-slate-100 sm:h-36 relative">
-          <img
-            src={event.image}
-            alt={event?.title || 'Event'}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
+          <div className="relative h-full w-full overflow-hidden bg-gray-100">
+            {/* Background image - fills the area */}
+            <img
+              src={event.image}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover blur-xl scale-110"
+            />
+
+            {/* Main image - completely visible */}
+            <img
+              src={event.image}
+              alt={event?.title || 'Event'}
+              className="relative z-10 h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
+            />
+          </div>
           {event?.category && (
-            <span className="absolute top-2.5 left-2.5 inline-flex rounded-lg bg-white/90 backdrop-blur-md px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700 shadow-sm border border-white/60">
+            <span className="absolute z-10 top-2.5 left-2.5 inline-flex rounded-lg bg-white/90 backdrop-blur-md px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700 shadow-sm border border-white/60">
               {event.category}
             </span>
           )}
@@ -82,7 +92,8 @@ const FeaturedEventCard = ({ event, onPress, compact = false }) => {
 
         {isLocked && (
           <div className="pt-2 border-t border-slate-100">
-            <span className={`inline-flex rounded-md border px-2 py-0.5 text-[11px] font-semibold ${statusClass}`}>
+            <span
+              className={`inline-flex rounded-md border px-2 py-0.5 text-[11px] font-semibold ${statusClass}`}>
               {statusLabel}
             </span>
           </div>

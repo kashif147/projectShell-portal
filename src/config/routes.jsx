@@ -11,6 +11,7 @@ import RegistrationPaymentWrapper from '../pages/RegistrationPaymentWrapper';
 import Communications from '../pages/Communications';
 import Queries from '../pages/Queries';
 import QueriesCreate from '../pages/QueriesCreate';
+import QueriesDetail from '../pages/QueriesDetail';
 import Voting from '../pages/Voting';
 import Resources from '../pages/Resources';
 import LandingPage from '../pages/landingPage';
@@ -50,7 +51,6 @@ export const publicRoutes = [
 
 export const privateRoutes = [
   {
-    path: '/',
     element: <MainLayout />,
     children: [
       {
@@ -132,6 +132,10 @@ export const privateRoutes = [
       {
         path: 'queries/create',
         element: <QueriesCreate />,
+      },
+      {
+        path: 'queries/:issueId',
+        element: <QueriesDetail />,
       },
       {
         path: 'voting',

@@ -25,13 +25,24 @@ const DESCRIPTION_PREVIEW_LENGTH = 140;
 
 const EventCardImageHeader = ({ event }) => (
   <div className="w-full shrink-0 overflow-hidden bg-slate-100 relative h-40">
-    <img
-      src={event.image}
-      alt={event?.title || 'Event'}
-      className="block h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-    />
+    <div className="relative h-full w-full overflow-hidden bg-gray-100">
+      {/* Background image - fills the area */}
+      <img
+        src={event.image}
+        alt=""
+        className="absolute inset-0 h-full w-full object-cover blur-xl scale-110"
+      />
+
+      {/* Main image - completely visible */}
+      <img
+        src={event.image}
+        alt={event?.title || 'Event'}
+        className="relative z-10 h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
+      />
+    </div>
+
     {event?.category && (
-      <span className="absolute top-3 left-3 inline-flex rounded-lg bg-white/95 backdrop-blur-md px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700 shadow-sm border border-white/60">
+      <span className="absolute z-10 top-3 left-3 inline-flex rounded-lg bg-white/95 backdrop-blur-md px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700 shadow-sm border border-white/60">
         {event.category}
       </span>
     )}

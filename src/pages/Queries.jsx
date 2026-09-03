@@ -55,12 +55,6 @@ const Queries = () => {
         render: val => <span className="font-bold text-slate-900">{val}</span>,
       },
       {
-        title: 'Date Submitted',
-        dataIndex: 'date',
-        key: 'date',
-        render: val => <span className="font-medium text-slate-600">{val}</span>,
-      },
-      {
         title: 'Status',
         dataIndex: 'status',
         key: 'status',
@@ -70,7 +64,7 @@ const Queries = () => {
           if (s.includes('open') || s.includes('new')) color = 'processing';
           else if (s.includes('closed') || s.includes('resolved')) color = 'success';
           else if (s.includes('progress') || s.includes('pending')) color = 'warning';
-
+          
           return (
             <Tag color={color} className="px-2.5 py-0.5 font-semibold text-xs rounded-full capitalize">
               {status}
@@ -84,6 +78,12 @@ const Queries = () => {
         key: 'description',
         ellipsis: true,
         render: val => <span className="text-slate-500 line-clamp-1">{val}</span>,
+      },
+      {
+        title: 'Date Submitted',
+        dataIndex: 'date',
+        key: 'date',
+        render: val => <span className="font-medium text-slate-600">{val}</span>,
       },
     ],
     [],
@@ -196,6 +196,10 @@ const Queries = () => {
                 columns={columns}
                 rowKey={record => String(record.id)}
                 pagination={{ pageSize: 10 }}
+                onRow={record => ({
+                  onClick: () => navigate(`/queries/${record.id}`),
+                  className: 'cursor-pointer',
+                })}
               />
             </div>
           )}
