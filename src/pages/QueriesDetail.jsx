@@ -1,12 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Empty, Input, Spin, Tag, Upload } from 'antd';
+import { Empty, Input, Modal, Spin, Tag, Upload } from 'antd';
 import {
   ArrowLeftOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
+  DeleteOutlined,
   DownloadOutlined,
+  EditOutlined,
   FileTextOutlined,
   PaperClipOutlined,
   SendOutlined,
@@ -16,9 +18,12 @@ import { toast } from 'react-toastify';
 import Button from '../components/common/Button';
 import {
   createPortalIssueActivity,
+  deletePortalIssueActivity,
+  deletePortalIssueActivityAttachment,
   downloadPortalIssueActivityAttachment,
   fetchPortalIssueActivities,
   fetchPortalIssueById,
+  updatePortalIssueActivity,
 } from '../api/issue.api';
 import {
   formatDisplayValue,
@@ -82,6 +87,11 @@ const QueriesDetail = () => {
   const [submittingComment, setSubmittingComment] = useState(false);
   const [downloadingKey, setDownloadingKey] = useState('');
   const [activityFilter, setActivityFilter] = useState('all');
+  const [editingActivityId, setEditingActivityId] = useState('');
+  const [editingBody, setEditingBody] = useState('');
+  const [savingActivityId, setSavingActivityId] = useState('');
+  const [deletingActivityId, setDeletingActivityId] = useState('');
+  const [deletingAttachmentKey, setDeletingAttachmentKey] = useState('');
 
   const loadIssue = useCallback(async () => {
     setLoading(true);
@@ -193,6 +203,108 @@ const QueriesDetail = () => {
     } finally {
       setDownloadingKey('');
     }
+  };
+
+  const startEditActivity = activity => {
+    setEditingActivityId(activity.id);
+    setEditingBody(activity.body || '');
+  };
+
+  const cancelEditActivity = () => {
+    setEditingActivityId('');
+    setEditingBody('');
+  };
+
+  const handleUpdateActivity = async activity => {
+    const trimmedBody = editingBody.trim();
+    if (!trimmedBody) {
+      toast.error('Please enter a comment.');
+      return;
+    }
+
+    setSavingActivityId(activity.id);
+    try {
+      const response = await updatePortalIssueActivity(issueId, activity.id, {
+        body: trimmedBody,
+      });
+
+      if (isIssueApiSuccess(response)) {
+        toast.success('Comment updated');
+        cancelEditActivity();
+        await loadActivities();
+        return;
+      }
+
+      toast.error(getIssueApiErrorMessage(response, 'Failed to update comment'));
+    } catch (error) {
+      toast.error('Failed to update comment');
+    } finally {
+      setSavingActivityId('');
+    }
+  };
+
+  const handleDeleteActivity = activity => {
+    Modal.confirm({
+      title: 'Delete comment',
+      content: 'Are you sure you want to delete this comment? This cannot be undone.',
+      okText: 'Delete',
+      okButtonProps: { danger: true },
+      cancelText: 'Cancel',
+      onOk: async () => {
+        setDeletingActivityId(activity.id);
+        try {
+          const response = await deletePortalIssueActivity(issueId, activity.id);
+          if (isIssueApiSuccess(response)) {
+            toast.success('Comment deleted');
+            if (editingActivityId === activity.id) {
+              cancelEditActivity();
+            }
+            await Promise.all([loadActivities(), loadIssue()]);
+            return;
+          }
+          toast.error(
+            getIssueApiErrorMessage(response, 'Failed to delete comment'),
+          );
+        } catch (error) {
+          toast.error('Failed to delete comment');
+        } finally {
+          setDeletingActivityId('');
+        }
+      },
+    });
+  };
+
+  const handleDeleteAttachment = (activity, attachment) => {
+    Modal.confirm({
+      title: 'Remove attachment',
+      content: `Remove "${attachment.name}" from this comment?`,
+      okText: 'Remove',
+      okButtonProps: { danger: true },
+      cancelText: 'Cancel',
+      onOk: async () => {
+        const deleteKey = `${activity.id}-${attachment.index}`;
+        setDeletingAttachmentKey(deleteKey);
+        try {
+          const response = await deletePortalIssueActivityAttachment(
+            issueId,
+            activity.id,
+            attachment.index,
+          );
+          if (isIssueApiSuccess(response)) {
+            toast.success('Attachment removed');
+            await loadActivities();
+            return;
+          }
+          toast.error(
+            getIssueApiErrorMessage(response, 'Failed to remove attachment'),
+          );
+        } catch (error) {
+          toast.error('Failed to remove attachment');
+        } finally {
+          setDeletingAttachmentKey('');
+        }
+      },
+    });
   };
 
   const filteredActivities = useMemo(() => {
@@ -373,7 +485,7 @@ const QueriesDetail = () => {
                         <div key={activity.id} className="relative pl-10">
                           <span className="absolute left-2 top-3 h-3.5 w-3.5 rounded-full border-2 border-white bg-blue-500 shadow" />
                           <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
-                            <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                               <div>
                                 <p className="text-xs text-slate-500">
                                   {activity.createdAt ||
@@ -381,12 +493,54 @@ const QueriesDetail = () => {
                                     'Date unavailable'}
                                 </p>
                               </div>
-                              <Tag className="w-fit capitalize">
-                                {String(activity.type || 'COMMENT').toLowerCase()}
-                              </Tag>
+                              <div className="flex flex-wrap items-center gap-1">
+                                <Tag className="w-fit capitalize">
+                                  {String(activity.type || 'COMMENT').toLowerCase()}
+                                </Tag>
+                                {editingActivityId !== activity.id ? (
+                                  <>
+                                    <Button
+                                      type="text"
+                                      size="small"
+                                      icon={<EditOutlined />}
+                                      onClick={() => startEditActivity(activity)}>
+                                      Edit
+                                    </Button>
+                                    <Button
+                                      type="default"
+                                      size="small"
+                                      variant="default"
+                                      icon={<DeleteOutlined />}
+                                      loading={deletingActivityId === activity.id}
+                                      onClick={() => handleDeleteActivity(activity)}>
+                                      Delete
+                                    </Button>
+                                  </>
+                                ) : null}
+                              </div>
                             </div>
 
-                            {activity.body ? (
+                            {editingActivityId === activity.id ? (
+                              <div className="mt-3 space-y-3">
+                                <TextArea
+                                  rows={3}
+                                  value={editingBody}
+                                  onChange={event => setEditingBody(event.target.value)}
+                                  className="!rounded-xl"
+                                />
+                                <div className="flex items-center justify-end gap-2">
+                                  <Button type="default" onClick={cancelEditActivity}>
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    type="primary"
+                                    loading={savingActivityId === activity.id}
+                                    onClick={() => handleUpdateActivity(activity)}>
+                                    Save
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : activity.body ? (
                               <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
                                 {activity.body}
                               </p>
@@ -396,6 +550,7 @@ const QueriesDetail = () => {
                               <div className="mt-3 space-y-2">
                                 {activity.attachments.map(attachment => {
                                   const downloadKey = `${activity.id}-${attachment.index}`;
+                                  const deleteKey = `${activity.id}-${attachment.index}`;
                                   return (
                                     <div
                                       key={`${activity.id}-${attachment.index}`}
@@ -406,19 +561,34 @@ const QueriesDetail = () => {
                                           {attachment.name}
                                         </span>
                                       </div>
-                                      <Button
-                                        type="link"
-                                        size="small"
-                                        icon={<DownloadOutlined />}
-                                        loading={downloadingKey === downloadKey}
-                                        onClick={() =>
-                                          handleDownloadAttachment(
-                                            activity,
-                                            attachment,
-                                          )
-                                        }>
-                                        Download
-                                      </Button>
+                                      <div className="flex shrink-0 items-center gap-1">
+                                        <Button
+                                          type="link"
+                                          size="small"
+                                          icon={<DownloadOutlined />}
+                                          loading={downloadingKey === downloadKey}
+                                          onClick={() =>
+                                            handleDownloadAttachment(
+                                              activity,
+                                              attachment,
+                                            )
+                                          }>
+                                          Download
+                                        </Button>
+                                        <Button
+                                          type="default"
+                                          size="small"
+                                          icon={<DeleteOutlined />}
+                                          loading={deletingAttachmentKey === deleteKey}
+                                          onClick={() =>
+                                            handleDeleteAttachment(
+                                              activity,
+                                              attachment,
+                                            )
+                                          }>
+                                          Remove
+                                        </Button>
+                                      </div>
                                     </div>
                                   );
                                 })}

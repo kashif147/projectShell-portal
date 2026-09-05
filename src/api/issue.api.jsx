@@ -67,6 +67,23 @@ export const downloadPortalIssueActivityAttachment = (
     `${PORTAL_ISSUES_BASE}/${issueId}/activities/${activityId}/attachments/${attachmentIndex}/download`,
   );
 
+export const updatePortalIssueActivity = (issueId, activityId, { body = '' } = {}) =>
+  issue_request.put(`${PORTAL_ISSUES_BASE}/${issueId}/activities/${activityId}`, {
+    body: String(body || '').trim(),
+  });
+
+export const deletePortalIssueActivity = (issueId, activityId) =>
+  issue_request.delete(`${PORTAL_ISSUES_BASE}/${issueId}/activities/${activityId}`);
+
+export const deletePortalIssueActivityAttachment = (
+  issueId,
+  activityId,
+  attachmentIndex,
+) =>
+  issue_request.delete(
+    `${PORTAL_ISSUES_BASE}/${issueId}/activities/${activityId}/attachments/${attachmentIndex}`,
+  );
+
 export const fetchPortalServiceProviders = () =>
   issue_request.get(`${PORTAL_ISSUES_BASE}/service-providers`);
 
