@@ -25,23 +25,21 @@ export const DatePicker = ({
   const isEmpty = required && !value && showValidation;
 
   const inputClasses = `
-    w-full px-3 py-2 border rounded-md pr-10
-    ${props.disabled ? 'bg-slate-100 text-slate-800 cursor-not-allowed' : 'bg-white'}
-    ${isEmpty ? 'border-red-500 bg-red-50' : 'border-gray-300'}
-    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-    ${error ? 'border-red-500' : ''}
+    w-full px-3.5 py-2.5 text-sm rounded-xl border pr-10 shadow-sm transition-all duration-200
+    ${props.disabled ? 'bg-slate-100/80 text-slate-700 cursor-not-allowed border-slate-200' : 'bg-white text-slate-900 border-slate-200 hover:border-slate-300'}
+    ${isEmpty ? 'border-red-400 bg-red-50/50 focus:ring-red-500/15 focus:border-red-500' : 'focus:ring-2 focus:ring-blue-500/15 focus:border-blue-500'}
+    ${error ? 'border-red-400' : ''}
     ${className}
   `;
 
   const labelClasses = `
-    mb-1 text-sm font-medium
-    ${isEmpty ? 'text-red-600' : 'text-gray-700'}
+    mb-1.5 text-xs font-semibold tracking-tight uppercase text-slate-600
+    ${isEmpty ? 'text-red-600' : ''}
   `;
 
   const validateAge = (dateString) => {
     if (disableAgeValidation) return 16;
 
-    // Use dayjs to parse consistently
     const birthDate = dayjs(dateString, ["YYYY-MM-DD", "DD/MM/YYYY"], true);
     if (!birthDate.isValid()) return 0;
 
@@ -59,16 +57,15 @@ export const DatePicker = ({
 
   useEffect(() => {
     if (value) {
-      // Allow ISO with time, ISO date only, and DD/MM/YYYY
       const parsed = dayjs(value, [
         "YYYY-MM-DDTHH:mm:ss.SSSZ",
         "YYYY-MM-DD",
         "DD/MM/YYYY"
-      ], false); // strict = false to accept variations
+      ], false);
 
       if (parsed.isValid()) {
-        setDateValue(parsed.format("YYYY-MM-DD")); // internal ISO
-        setDisplayValue(parsed.format("DD/MM/YYYY")); // shown to user
+        setDateValue(parsed.format("YYYY-MM-DD"));
+        setDisplayValue(parsed.format("DD/MM/YYYY"));
       } else {
         setDateValue("");
         setDisplayValue("");
@@ -90,7 +87,7 @@ export const DatePicker = ({
     setDisplayValue(formattedValue);
 
     if (formattedValue.length === 10) {
-      const parsedDate = dayjs(formattedValue, "DD/MM/YYYY", true); // strict mode
+      const parsedDate = dayjs(formattedValue, "DD/MM/YYYY", true);
       if (parsedDate.isValid()) {
         const isoDate = parsedDate.format("YYYY-MM-DD");
         setDateValue(isoDate);
@@ -161,7 +158,7 @@ export const DatePicker = ({
       {label && (
         <label htmlFor={name} className={labelClasses}>
           {label} {required && <span className="text-red-500">*</span>}
-          {isEmpty && <span className="ml-1 text-xs text-red-500">(Required)</span>}
+          {isEmpty && <span className="ml-1 text-xs font-normal lowercase text-red-500">(Required)</span>}
         </label>
       )}
       <div className="relative">
@@ -180,7 +177,7 @@ export const DatePicker = ({
         <button
           type="button"
           onClick={() => !props.disabled && setIsCalendarOpen(true)}
-          className={`absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 
+          className={`absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors
             ${props.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
           disabled={props.disabled}
         >
@@ -205,9 +202,9 @@ export const DatePicker = ({
           </div>
         )}
       </div>
-      {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+      {error && <p className="mt-1 text-xs font-medium text-red-500">{error}</p>}
     </div>
   );
 };
 
-export default DatePicker; 
+export default DatePicker;

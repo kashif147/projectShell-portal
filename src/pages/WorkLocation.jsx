@@ -287,174 +287,196 @@ setLoading(true);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6 max-w-5xl mx-auto">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <EnvironmentOutlined className="text-3xl text-white" />
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_-4px_rgba(15,23,42,0.05)] relative overflow-hidden">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-teal-100/50 blur-2xl" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="p-2 rounded-xl bg-teal-50 text-teal-600 text-lg">
+              <EnvironmentOutlined />
+            </span>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 font-poppins">
+              Work Location & Branch
+            </h1>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Work Location</h1>
-            <p className="text-sm text-gray-600 mt-1">
-              View and update your work location details
-            </p>
-          </div>
+          <p className="text-xs sm:text-sm text-slate-500 max-w-2xl">
+            View your registered primary health facility, branch assignment, and submit formal transfer requests.
+          </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {hasPendingRequest && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 sm:p-5 flex items-start gap-3.5 shadow-sm">
+          <div className="p-2 rounded-xl bg-amber-100 text-amber-800 text-base flex-shrink-0">
+            <EditOutlined />
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-amber-900">
+              Transfer Request Under Review
+            </h4>
+            <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+              You have a pending transfer request to <strong>{form.workLocation || 'another facility'}</strong>. Further modifications are locked until processed by branch administration.
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
         {/* Current Work Location */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-300">
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-green-200">
+        <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04),0_10px_25px_-5px_rgba(15,23,42,0.04)] overflow-hidden flex flex-col justify-between">
+          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 px-5 sm:px-6 py-4 border-b border-emerald-100">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-md">
-                <CheckCircleOutlined className="text-white text-xl" />
+              <div className="w-9 h-9 bg-emerald-600 text-white rounded-xl flex items-center justify-center shadow-sm">
+                <CheckCircleOutlined className="text-lg" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900">Current Location</h3>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 font-poppins">Current Assignment</h3>
+                <span className="text-[11px] font-semibold text-emerald-700">Active Workplace</span>
+              </div>
             </div>
           </div>
 
-          <div className="p-6">
+          <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between space-y-6">
             {existing.workLocation ? (
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    Work Location
+              <div className="space-y-5">
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    Primary Facility
                   </p>
-                  <p className="text-lg font-bold text-gray-900">
+                  <p className="text-lg sm:text-xl font-bold text-slate-900">
                     {existing.workLocation}
                   </p>
                 </div>
 
                 {existing.otherWorkLocation && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                      Other Work Location
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      Other Location Details
                     </p>
-                    <p className="text-base font-semibold text-gray-900">
+                    <p className="text-sm font-semibold text-slate-800">
                       {existing.otherWorkLocation}
                     </p>
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                      Branch
+                <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
+                  <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-100">
+                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                      Assigned Branch
                     </p>
-                    <p className="text-base font-semibold text-gray-900">
+                    <p className="text-sm font-bold text-slate-800 mt-0.5 truncate">
                       {existing.branch || 'N/A'}
                     </p>
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                      Region
+                  <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-100">
+                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                      Assigned Region
                     </p>
-                    <p className="text-base font-semibold text-gray-900">
+                    <p className="text-sm font-bold text-slate-800 mt-0.5 truncate">
                       {existing.region || 'N/A'}
                     </p>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <EnvironmentOutlined className="text-3xl text-gray-400" />
+              <div className="text-center py-12">
+                <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl text-slate-400">
+                  <EnvironmentOutlined />
                 </div>
-                <p className="text-gray-600 text-sm">No work location assigned</p>
+                <p className="text-slate-500 text-sm font-medium">No work location currently assigned.</p>
               </div>
             )}
           </div>
         </div>
 
         {/* Update Work Location */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-300">
-          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 px-6 py-4 border-b border-teal-200">
+        <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04),0_10px_25px_-5px_rgba(15,23,42,0.04)] overflow-hidden flex flex-col justify-between">
+          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 px-5 sm:px-6 py-4 border-b border-teal-100">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center shadow-md">
-                <EditOutlined className="text-white text-xl" />
+              <div className="w-9 h-9 bg-teal-600 text-white rounded-xl flex items-center justify-center shadow-sm">
+                <EditOutlined className="text-lg" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900">Update Location</h3>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 font-poppins">Request Transfer</h3>
+                <span className="text-[11px] font-semibold text-teal-700">Change Work Location</span>
+              </div>
             </div>
           </div>
 
-          <div className="p-6 space-y-4">
-            <Select
-              label="Work Location"
-              name="workLocation"
-              value={form.workLocation}
-              onChange={onChange}
-              required
-              disabled={hasPendingRequest || initialLoading}
-              tooltip="Select your primary work location. If your location is not listed, choose 'Other'."
-              placeholder="Select work location"
-              options={[
-                ...workLocationOptions,
-                { value: 'other', label: 'Other' },
-              ]}
-            />
-
-            <Input
-              label="Other Work Location"
-              name="otherWorkLocation"
-              value={form.otherWorkLocation}
-              onChange={onChange}
-              disabled={form.workLocation !== 'other' || hasPendingRequest || initialLoading}
-              required={form.workLocation === 'other'}
-              placeholder="Enter your work location"
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-5 sm:p-6 space-y-4 flex-1 flex flex-col justify-between">
+            <div className="space-y-4">
               <Select
-                label="Branch"
-                name="branch"
-                value={form.branch}
+                label="Target Work Location"
+                name="workLocation"
+                value={form.workLocation}
                 onChange={onChange}
-                disabled={form.workLocation !== 'other' || hasPendingRequest || initialLoading}
-                required={form.workLocation === 'other'}
-                placeholder="Select branch"
-                options={form.workLocation === 'other' ? branchOptions : form.branch ? [{ value: form.branch, label: form.branch }] : branchOptions}
+                required
+                disabled={hasPendingRequest || initialLoading}
+                tooltip="Select your primary work location. If your location is not listed, choose 'Other'."
+                placeholder="Select work location"
+                options={[
+                  ...workLocationOptions,
+                  { value: 'other', label: 'Other' },
+                ]}
               />
-              <Select
-                label="Region"
-                name="region"
-                value={form.region}
+
+              <Input
+                label="Other Work Location"
+                name="otherWorkLocation"
+                value={form.otherWorkLocation}
                 onChange={onChange}
                 disabled={form.workLocation !== 'other' || hasPendingRequest || initialLoading}
                 required={form.workLocation === 'other'}
-                placeholder="Select region"
-                options={form.workLocation === 'other' ? regionOptions : form.region ? [{ value: form.region, label: form.region }] : regionOptions}
+                placeholder="Enter your work location"
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                <Select
+                  label="Branch"
+                  name="branch"
+                  value={form.branch}
+                  onChange={onChange}
+                  disabled={form.workLocation !== 'other' || hasPendingRequest || initialLoading}
+                  required={form.workLocation === 'other'}
+                  placeholder="Select branch"
+                  options={form.workLocation === 'other' ? branchOptions : form.branch ? [{ value: form.branch, label: form.branch }] : branchOptions}
+                />
+                <Select
+                  label="Region"
+                  name="region"
+                  value={form.region}
+                  onChange={onChange}
+                  disabled={form.workLocation !== 'other' || hasPendingRequest || initialLoading}
+                  required={form.workLocation === 'other'}
+                  placeholder="Select region"
+                  options={form.workLocation === 'other' ? regionOptions : form.region ? [{ value: form.region, label: form.region }] : regionOptions}
+                />
+              </div>
+
+              <Input
+                label="Reason for Transfer"
+                name="reasonToChange"
+                required
+                value={form.reasonToChange}
+                onChange={onChange}
+                disabled={hasPendingRequest || initialLoading}
+                multiline
+                placeholder="Please explain why you are requesting this work location transfer..."
+                rows={3}
               />
             </div>
 
-            <Input
-              label="Reason to Change"
-              name="reasonToChange"
-              required
-              value={form.reasonToChange}
-              onChange={onChange}
-              disabled={hasPendingRequest || initialLoading}
-              multiline
-              placeholder="Please provide a reason for changing your work location"
-              rows={4}
-            />
-
-            <div className="pt-4">
+            <div className="pt-2 space-y-3">
               <Button
                 loading={loading || initialLoading}
                 type="primary"
+                size="large"
+                block
                 onClick={onSubmit}
-                disabled={hasPendingRequest || initialLoading}
-                className="w-full bg-teal-600 hover:bg-teal-700 border-teal-600 h-11 text-base font-medium shadow-sm">
-                Update Work Location
+                disabled={hasPendingRequest || initialLoading}>
+                Submit Transfer Request
               </Button>
-            </div>
-
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-xs text-blue-700">
-                <strong>Note:</strong> Selecting a work location will automatically populate the branch and region fields.
-              </p>
             </div>
           </div>
         </div>

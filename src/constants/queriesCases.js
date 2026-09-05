@@ -1,21 +1,12 @@
-export const CASE_CATEGORY_OPTIONS = [
-  { label: 'Civil', value: 'civil' },
-  { label: 'Criminal', value: 'criminal' },
-  { label: 'Corporate', value: 'corporate' },
-  { label: 'Family', value: 'family' },
-  { label: 'Other', value: 'other' },
+export const COMPLAINT_TYPE_OPTIONS = [
+  { label: 'Member on Member', value: 'MOM' },
+  { label: 'Member on Service Provider', value: 'MOSP' },
 ];
 
-export const CASE_TYPE_OPTIONS = [
-  { label: 'Complaint', value: 'complaint' },
-  { label: 'Inquiry', value: 'inquiry' },
-  { label: 'Appeal', value: 'appeal' },
-  { label: 'Other', value: 'other' },
-];
+export const CASE_FILTERS = ['All', 'Open', 'In Progress', 'Closed'];
 
-export const AVAILABLE_STAFF = [
-  { id: '1', name: 'David Chen' },
-  { id: '2', name: 'Lisa Volkov' },
-  { id: '3', name: 'James Wilson' },
-  { id: '4', name: 'Sarah Miller' },
-];
+export const CASE_STATUS_STYLES = {
+  Open: { color: '#10B981', bg: '#D1FAE5' },
+  'In Progress': { color: '#F59E0B', bg: '#FEF3C7' },
+  Closed: { color: '#6B7280', bg: '#F3F4F6' },
+};

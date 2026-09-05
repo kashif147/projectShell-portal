@@ -36,15 +36,15 @@ export const Select = ({
 }) => {
   const isEmpty = required && !value && showValidation;
   const selectClasses = `
-    w-full h-10 
-    ${props.disabled ? 'bg-slate-100 text-slate-800 cursor-not-allowed border-slate-300' : 'bg-white border-gray-300'}
-    ${isEmpty ? 'border-red-500 bg-red-50' : ''}
+    w-full h-10 rounded-xl
+    ${props.disabled ? 'bg-slate-100/80 text-slate-700 cursor-not-allowed border-slate-200' : 'bg-white border-slate-200'}
+    ${isEmpty ? 'border-red-400 bg-red-50/50' : ''}
     ${className}
   `;
 
   const labelClasses = `
-    mb-1 text-sm font-medium
-    ${isEmpty ? 'text-red-600' : 'text-gray-700'}
+    mb-1.5 text-xs font-semibold tracking-tight uppercase text-slate-600
+    ${isEmpty ? 'text-red-600' : ''}
   `;
 
   const actualValue = value ?? defaultValue ?? undefined;
@@ -76,14 +76,14 @@ export const Select = ({
             {label} {required && <span className="text-red-500">*</span>}
             {tooltip && (
               <Tooltip title={tooltip}>
-                <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 cursor-help" />
+                <InfoCircleOutlined className="text-slate-400 hover:text-slate-600 cursor-help" />
               </Tooltip>
             )}
             {labelExtra && (
-              <span className="ml-2 text-xs text-gray-500">{labelExtra}</span>
+              <span className="ml-2 text-xs font-normal normal-case text-slate-500">{labelExtra}</span>
             )}
             {isEmpty && (
-              <span className="ml-1 text-xs text-red-500">(Required)</span>
+              <span className="ml-1 text-xs font-normal lowercase text-red-500">(Required)</span>
             )}
           </span>
         </label>
@@ -106,13 +106,13 @@ export const Select = ({
             <>
               <button
                 type="button"
-                className="w-full px-3 py-2 text-left text-sm text-gray-600 hover:bg-gray-50 disabled:text-gray-300 disabled:hover:bg-white"
+                className="w-full px-3 py-2 text-left text-xs font-medium text-slate-500 hover:bg-slate-50 disabled:text-slate-300 disabled:hover:bg-white transition-colors"
                 disabled={props.disabled || selectValue == null}
                 onMouseDown={event => event.preventDefault()}
                 onClick={handleClear}>
                 Clear selection
               </button>
-              <div className="border-t border-gray-100" />
+              <div className="border-t border-slate-100" />
               {menu}
             </>
           )}

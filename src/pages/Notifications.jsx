@@ -382,27 +382,35 @@ const Notifications = () => {
           }
         }
       `}</style>
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-5xl mx-auto space-y-5 sm:space-y-6">
         {/* Header */}
-        <div className="mb-4 sm:mb-6 md:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
-            <div className="flex items-center gap-3 sm:gap-4">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
-                <BellOutlined className="text-2xl sm:text-3xl text-white" />
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_-4px_rgba(15,23,42,0.05)] relative overflow-hidden">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-100/50 blur-2xl" />
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 relative z-10">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-md shadow-blue-500/25 flex-shrink-0">
+                <BellOutlined className="text-2xl text-white" />
               </div>
               <div className="min-w-0 flex-1">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Notifications</h1>
-                <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1">
-                  {loading ? 'Loading...' : unreadCount > 0 ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}` : 'All caught up!'}
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 font-poppins">
+                  Notifications
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                  {loading
+                    ? 'Loading notifications...'
+                    : unreadCount > 0
+                      ? `You have ${unreadCount} unread update${unreadCount > 1 ? 's' : ''}`
+                      : 'All caught up! No unread notifications.'}
                 </p>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+
+            <div className="flex flex-wrap items-center gap-2">
               {unreadCount > 0 && !loading && (
                 <button
                   onClick={markAllAsRead}
                   disabled={markingAsRead || deletingNotification}
-                  className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed">
+                  className="px-3.5 py-2 text-xs sm:text-sm font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 active:scale-95 rounded-xl transition-all disabled:opacity-50">
                   {markingAsRead ? 'Marking...' : 'Mark all as read'}
                 </button>
               )}
@@ -410,160 +418,160 @@ const Notifications = () => {
                 <button
                   onClick={deleteAllNotifications}
                   disabled={deletingNotification || markingAsRead}
-                  className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 active:bg-red-100 rounded-lg transition-colors touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed">
-                  {deletingNotification ? 'Deleting...' : 'Delete all'}
+                  className="px-3.5 py-2 text-xs sm:text-sm font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 active:scale-95 rounded-xl transition-all disabled:opacity-50">
+                  {deletingNotification ? 'Deleting...' : 'Clear all'}
                 </button>
               )}
             </div>
           </div>
+        </div>
 
-          {/* Filter Tabs */}
-          <div className="bg-white rounded-xl p-1.5 sm:p-2 shadow-sm border border-gray-200 overflow-x-auto filter-tabs-scroll">
-            <div className="flex gap-1.5 sm:gap-2 min-w-max sm:min-w-0">
-              <button
-                onClick={() => setFilter('all')}
-                disabled={loading}
-                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap touch-manipulation disabled:opacity-50 ${
-                  filter === 'all'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                }`}>
-                All ({notifications.length})
-              </button>
-              <button
-                onClick={() => setFilter('unread')}
-                disabled={loading}
-                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap touch-manipulation disabled:opacity-50 ${
-                  filter === 'unread'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                }`}>
-                Unread ({unreadCount})
-              </button>
-              <button
-                onClick={() => setFilter('payment')}
-                disabled={loading}
-                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap touch-manipulation disabled:opacity-50 ${
-                  filter === 'payment'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                }`}>
-                Payments ({notifications.filter(n => n.type === 'payment').length})
-              </button>
-              <button
-                onClick={() => setFilter('subscription')}
-                disabled={loading}
-                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap touch-manipulation disabled:opacity-50 ${
-                  filter === 'subscription'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                }`}>
-                Subscription ({notifications.filter(n => n.type === 'subscription').length})
-              </button>
-            </div>
+        {/* Filter Tabs */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-2 sm:p-2.5 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_6px_16px_-4px_rgba(15,23,42,0.04)] overflow-x-auto filter-tabs-scroll">
+          <div className="flex gap-2 min-w-max">
+            <button
+              onClick={() => setFilter('all')}
+              disabled={loading}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                filter === 'all'
+                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}>
+              All ({notifications.length})
+            </button>
+            <button
+              onClick={() => setFilter('unread')}
+              disabled={loading}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                filter === 'unread'
+                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}>
+              Unread ({unreadCount})
+            </button>
+            <button
+              onClick={() => setFilter('payment')}
+              disabled={loading}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                filter === 'payment'
+                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}>
+              Payments ({notifications.filter(n => n.type === 'payment').length})
+            </button>
+            <button
+              onClick={() => setFilter('subscription')}
+              disabled={loading}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                filter === 'subscription'
+                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}>
+              Subscriptions ({notifications.filter(n => n.type === 'subscription').length})
+            </button>
           </div>
         </div>
 
         {/* Loading State */}
         {loading && (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-16 text-center shadow-sm">
             <Spinner />
-            <p className="text-gray-500 mt-4 font-medium">Loading notifications...</p>
+            <p className="text-slate-500 mt-4 text-sm font-medium">Loading your notifications...</p>
           </div>
         )}
 
         {/* Notifications List */}
         {!loading && (
-          <div className="space-y-2.5 sm:space-y-3">
+          <div className="space-y-3">
             {filteredNotifications.length > 0 ? (
               <>
-                {filteredNotifications.map((notification) => (
+                {filteredNotifications.map(notification => (
                   <div
                     key={notification.id}
-                    className={`bg-white rounded-lg sm:rounded-xl border transition-all duration-300 hover:shadow-md active:scale-[0.99] ${
+                    className={`rounded-2xl border bg-white p-4 sm:p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
                       notification.read
-                        ? 'border-gray-200'
-                        : 'border-blue-200 shadow-sm'
+                        ? 'border-slate-200/80 shadow-sm'
+                        : 'border-blue-200 bg-blue-50/20 shadow-[0_1px_3px_rgba(37,99,235,0.08),0_6px_16px_-4px_rgba(37,99,235,0.06)]'
                     }`}>
-                    <div className="p-3 sm:p-4 md:p-5">
-                      <div className="flex items-start gap-2.5 sm:gap-3 md:gap-4">
-                        {/* Icon */}
-                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ${getIconBgColor(notification.color)}`}>
-                          {getIcon(notification.icon)}
-                        </div>
+                    <div className="flex items-start gap-3 sm:gap-4">
+                      {/* Icon */}
+                      <div
+                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-base shadow-sm ${getIconBgColor(
+                          notification.color,
+                        )}`}>
+                        {getIcon(notification.icon)}
+                      </div>
 
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2 sm:gap-3 mb-1.5 sm:mb-2">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
-                                <h3 className={`text-sm sm:text-base font-semibold text-gray-900 truncate pr-1 ${
-                                  notification.read ? '' : ''
-                                }`}>
-                                  {notification.title}
-                                </h3>
-                                {!notification.read && (
-                                  <span className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0"></span>
-                                )}
-                              </div>
-                              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed break-words">
-                                {notification.message}
-                              </p>
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-3 mb-1.5">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                                {notification.title}
+                              </h3>
+                              {!notification.read && (
+                                <span className="h-2 w-2 bg-blue-600 rounded-full flex-shrink-0 ring-2 ring-blue-100" />
+                              )}
                             </div>
-                            
-                            {/* Delete Button */}
-                            <button
-                              onClick={() => deleteNotification(notification.id)}
-                              disabled={deletingNotification || markingAsRead}
-                              className="text-gray-400 hover:text-red-500 active:text-red-600 transition-colors p-1.5 hover:bg-red-50 active:bg-red-100 rounded-lg touch-manipulation flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
-                              <CloseOutlined className="text-base sm:text-lg" />
-                            </button>
+                            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed break-words">
+                              {notification.message}
+                            </p>
                           </div>
 
-                          {/* Footer */}
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mt-2.5 sm:mt-3">
-                            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                              <span className="text-xs text-gray-500">{notification.time}</span>
-                              <span className={`px-2 py-0.5 sm:py-1 text-xs font-medium rounded-md whitespace-nowrap ${
+                          {/* Delete Button */}
+                          <button
+                            onClick={() => deleteNotification(notification.id)}
+                            disabled={deletingNotification || markingAsRead}
+                            className="text-slate-400 hover:text-rose-600 transition-colors p-1.5 hover:bg-rose-50 rounded-lg flex-shrink-0 disabled:opacity-50">
+                            <CloseOutlined className="text-sm" />
+                          </button>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100 mt-2.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-medium text-slate-400">
+                              {notification.time}
+                            </span>
+                            <span
+                              className={`px-2.5 py-0.5 text-[11px] font-bold rounded-full ${
                                 notification.type === 'payment'
-                                  ? 'bg-emerald-100 text-emerald-700'
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                   : notification.type === 'subscription'
-                                  ? 'bg-purple-100 text-purple-700'
-                                  : 'bg-gray-100 text-gray-700'
+                                    ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                                    : 'bg-slate-100 text-slate-700'
                               }`}>
-                                {notification.type === 'payment' ? '💳 Payment' : notification.type === 'subscription' ? '📋 Subscription' : '📢 General'}
-                              </span>
-                              {notification.pdfAttachments?.length > 0 && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 sm:py-1 text-xs font-medium rounded-md bg-red-100 text-red-700 whitespace-nowrap">
-                                  <FilePdfOutlined />
-                                  PDF
-                                </span>
-                              )}
-                            </div>
+                              {notification.type === 'payment'
+                                ? 'Payment'
+                                : notification.type === 'subscription'
+                                  ? 'Subscription'
+                                  : 'General'}
+                            </span>
+                          </div>
 
-                            <div className="flex items-center gap-2 w-full sm:w-auto">
-                              {notification.pdfAttachments?.length > 0 && (
-                                <button
-                                  onClick={() =>
-                                    handleDownloadAttachment(
-                                      notification.pdfAttachments[0],
-                                    )
-                                  }
-                                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 text-xs font-medium text-red-600 hover:text-red-700 active:text-red-800 px-3 py-1.5 sm:py-1 hover:bg-red-50 active:bg-red-100 rounded-lg transition-colors touch-manipulation">
-                                  <DownloadOutlined />
-                                  Download PDF
-                                </button>
-                              )}
+                          <div className="flex items-center gap-2">
+                            {notification.pdfAttachments?.length > 0 && (
+                              <button
+                                onClick={() =>
+                                  handleDownloadAttachment(
+                                    notification.pdfAttachments[0],
+                                  )
+                                }
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors">
+                                <DownloadOutlined />
+                                Download PDF
+                              </button>
+                            )}
 
-                              {!notification.read && (
-                                <button
-                                  onClick={() => markAsRead(notification.id)}
-                                  disabled={markingAsRead}
-                                  className="w-full sm:w-auto text-xs font-medium text-blue-600 hover:text-blue-700 active:text-blue-800 px-3 py-1.5 sm:py-1 hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors touch-manipulation text-left sm:text-center disabled:opacity-50 disabled:cursor-not-allowed">
-                                  {markingAsRead ? 'Marking...' : 'Mark as read'}
-                                </button>
-                              )}
-                            </div>
+                            {!notification.read && (
+                              <button
+                                onClick={() => markAsRead(notification.id)}
+                                disabled={markingAsRead}
+                                className="text-xs font-semibold text-blue-600 hover:text-blue-700 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors disabled:opacity-50">
+                                {markingAsRead ? 'Marking...' : 'Mark as read'}
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -573,14 +581,14 @@ const Notifications = () => {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="mt-6 flex justify-center">
+                  <div className="mt-6 flex justify-center pt-2">
                     <Pagination
                       current={currentPage}
                       total={total}
                       pageSize={pageSize}
                       showSizeChanger={true}
                       showTotal={(total, range) =>
-                        `${range[0]}-${range[1]} of ${total} notification${total > 1 ? 's' : ''}`
+                        `${range[0]}-${range[1]} of ${total} notifications`
                       }
                       onChange={handlePageChange}
                       onShowSizeChange={handlePageChange}
@@ -590,15 +598,17 @@ const Notifications = () => {
                 )}
               </>
             ) : (
-              <div className="bg-white rounded-xl border border-gray-200 p-8 sm:p-12 text-center">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <BellOutlined className="text-3xl sm:text-4xl text-gray-400" />
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-12 sm:p-16 text-center shadow-sm">
+                <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl text-slate-400">
+                  <BellOutlined />
                 </div>
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">No notifications</h3>
-                <p className="text-xs sm:text-sm text-gray-600 px-4">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-1">
+                  No notifications
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
                   {filter === 'unread'
                     ? "You're all caught up! No unread notifications."
-                    : `No ${filter === 'all' ? '' : filter} notifications to display.`}
+                    : `No ${filter === 'all' ? '' : filter} notifications found.`}
                 </p>
               </div>
             )}

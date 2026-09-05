@@ -5,10 +5,13 @@ import {
   EnvironmentOutlined,
   TagOutlined,
   TeamOutlined,
+  CloseOutlined,
 } from '@ant-design/icons';
 import {
   buildAvailablePricingOptions,
   formatRegistrationPrice,
+  getRegistrationStatusLabel,
+  isRegistrationLocked,
 } from '../../helpers/events.helper';
 import { useMemberRole } from '../../hooks/useMemberRole';
 import { useApplication } from '../../contexts/applicationContext';
@@ -23,9 +26,10 @@ const EventDetailModal = ({ event, onClose, onRegister }) => {
 
   if (!event) return null;
 
-  const isRegistered =
-    String(event?.status || '').toLowerCase() === 'registered' ||
-    Boolean(event?.registrationId);
+  const isLocked = isRegistrationLocked(event);
+  const statusLabel = getRegistrationStatusLabel(event?.status);
+  const isSubmitted =
+    String(event?.status || '').toLowerCase() === 'submitted';
 
   const descriptionHtml = event.descriptionHtml || event.raw?.description;
   const membershipCategory =
@@ -41,68 +45,66 @@ const EventDetailModal = ({ event, onClose, onRegister }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
       onClick={onClose}>
       <div
-        className="flex max-h-[90vh] w-full max-w-2xl min-w-0 flex-col overflow-hidden rounded-xl bg-white shadow-xl"
+        className="flex max-h-[90vh] w-full max-w-2xl min-w-0 flex-col overflow-hidden rounded-2xl bg-white shadow-2xl border border-slate-200/80"
         onClick={e => e.stopPropagation()}>
-        <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
+        <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
           <div className="min-w-0 pr-4">
-            <p className="text-xs font-semibold tracking-wide text-blue-600">
+            <span className="inline-flex rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-blue-700 mb-1">
               {event.category || 'Event'}
-            </p>
-            <h3 className="mt-1 break-words text-lg font-semibold text-slate-900 sm:text-xl">
+            </span>
+            <h3 className="break-words text-lg font-bold text-slate-900 font-poppins sm:text-xl">
               {event.title}
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 text-sm font-medium text-slate-500 hover:text-slate-700">
-            Close
+            className="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors">
+            <CloseOutlined className="text-sm" />
           </button>
         </div>
 
-        <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-5 py-4 sm:px-6">
+        <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-6 py-5 space-y-4">
           {event.image && (
-            <div className="mb-4 w-full overflow-hidden rounded-lg bg-slate-100">
+            <div className="w-full overflow-hidden rounded-xl bg-slate-100 h-48 sm:h-56">
               <img
                 src={event.image}
                 alt={event.title || 'Event'}
-                className="block h-auto w-full"
+                className="h-full w-full object-cover"
               />
             </div>
           )}
 
-          <div className="mb-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-            <p className="flex min-w-0 items-start gap-2 text-slate-700">
-              <CalendarOutlined className="mt-0.5 shrink-0 text-blue-600" />
-              <span className="min-w-0 break-words">{event.date || 'Date TBD'}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs sm:text-sm">
+            <p className="flex min-w-0 items-center gap-2 text-slate-700">
+              <CalendarOutlined className="text-blue-600 shrink-0" />
+              <span className="font-semibold text-slate-900">{event.date || 'Date TBD'}</span>
             </p>
             {event.time && (
-              <p className="flex min-w-0 items-start gap-2 text-slate-700">
-                <ClockCircleOutlined className="mt-0.5 shrink-0 text-violet-700" />
-                <span className="min-w-0 break-words">{event.time}</span>
+              <p className="flex min-w-0 items-center gap-2 text-slate-700">
+                <ClockCircleOutlined className="text-indigo-600 shrink-0" />
+                <span className="text-slate-700">{event.time}</span>
               </p>
             )}
             <p className="flex min-w-0 items-start gap-2 text-slate-700 sm:col-span-2">
-              <EnvironmentOutlined className="mt-0.5 shrink-0 text-cyan-700" />
-              <span className="min-w-0 break-words">
-                {event.location || 'Location TBD'}
-              </span>
+              <EnvironmentOutlined className="text-emerald-600 shrink-0 mt-0.5" />
+              <span className="text-slate-700">{event.location || 'Location TBD'}</span>
             </p>
-            <p className="flex min-w-0 items-start gap-2 text-slate-700">
-              <TeamOutlined className="mt-0.5 shrink-0 text-emerald-700" />
-              <span className="min-w-0 break-words">
+            <p className="flex min-w-0 items-center gap-2 text-slate-700">
+              <TeamOutlined className="text-purple-600 shrink-0" />
+              <span className="text-slate-700">
                 {event.attendees != null
                   ? `${event.attendees} capacity`
                   : 'Open registration'}
               </span>
             </p>
             {event.cpdCredits != null && (
-              <p className="flex min-w-0 items-start gap-2 text-slate-700">
-                <TagOutlined className="mt-0.5 shrink-0 text-slate-600" />
-                <span className="min-w-0 break-words">
+              <p className="flex min-w-0 items-center gap-2 text-slate-700">
+                <TagOutlined className="text-amber-600 shrink-0" />
+                <span className="font-semibold text-amber-900">
                   {event.cpdCredits} CPD credits
                 </span>
               </p>
@@ -110,26 +112,26 @@ const EventDetailModal = ({ event, onClose, onRegister }) => {
           </div>
 
           {pricingOptions.length > 0 && (
-            <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Available Pricing
+            <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-blue-900">
+                Registration Fees
               </p>
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {pricingOptions.map(option => (
                   <div
                     key={option.id}
-                    className="flex min-w-0 items-start justify-between gap-3 text-sm text-slate-700">
+                    className="flex min-w-0 items-center justify-between gap-3 text-xs sm:text-sm">
                     <div className="min-w-0">
-                      <p className="break-words font-medium text-slate-900">
+                      <p className="font-semibold text-slate-900">
                         {option.title}
                       </p>
-                      {option.subtitle ? (
-                        <p className="break-words text-xs text-slate-500">
+                      {option.subtitle && (
+                        <p className="text-xs text-slate-500">
                           {option.subtitle}
                         </p>
-                      ) : null}
+                      )}
                     </div>
-                    <span className="shrink-0 font-semibold text-slate-900">
+                    <span className="font-extrabold text-blue-700">
                       {option.isGroup
                         ? `${formatRegistrationPrice(option.unitPrice)} / student`
                         : formatRegistrationPrice(option.unitPrice)}
@@ -140,40 +142,45 @@ const EventDetailModal = ({ event, onClose, onRegister }) => {
             </div>
           )}
 
-          <div className="min-w-0 border-t border-slate-100 pt-4">
-            <h4 className="mb-2 text-sm font-semibold text-slate-900">
+          <div className="border-t border-slate-100 pt-4">
+            <h4 className="mb-2 text-sm font-bold text-slate-900 font-poppins">
               About this event
             </h4>
             {descriptionHtml ? (
               <div
-                className="prose prose-sm max-w-none overflow-x-hidden break-words text-slate-600 prose-headings:break-words prose-p:my-2 prose-p:break-words prose-a:break-all prose-img:h-auto prose-img:max-w-full prose-pre:whitespace-pre-wrap prose-pre:break-words prose-table:block prose-table:w-full prose-table:overflow-x-auto prose-strong:text-slate-800 [&_*]:max-w-full"
+                className="prose prose-sm max-w-none text-slate-600 leading-relaxed [&_*]:max-w-full"
                 dangerouslySetInnerHTML={{ __html: descriptionHtml }}
               />
             ) : (
-              <p className="break-words text-sm text-slate-600">
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                 {event.description || 'No additional details available.'}
               </p>
             )}
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-4 sm:px-6">
+        <div className="flex justify-end items-center gap-2.5 border-t border-slate-100 px-6 py-4 bg-slate-50/50">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
             Close
           </button>
-          {isRegistered ? (
-            <span className="inline-flex items-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700">
-              Registered
+          {isLocked ? (
+            <span
+              className={`inline-flex items-center rounded-xl px-4 py-2 text-xs sm:text-sm font-bold border ${
+                isSubmitted
+                  ? 'bg-amber-50 text-amber-800 border-amber-200'
+                  : 'bg-blue-50 text-blue-700 border-blue-200'
+              }`}>
+              {statusLabel}
             </span>
           ) : (
             <button
               type="button"
               onClick={onRegister}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-              Register
+              className="rounded-xl bg-blue-600 px-5 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-blue-700 shadow-sm shadow-blue-500/20 active:scale-95 transition-all">
+              Register Now
             </button>
           )}
         </div>

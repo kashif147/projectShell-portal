@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Modal, Empty, Pagination, Spin } from 'antd';
+import { Card, Table, Modal, Empty, Pagination, Spin, Tag } from 'antd';
+import {
+  CreditCardOutlined,
+  FilePdfOutlined,
+  DollarCircleOutlined,
+  CheckCircleOutlined,
+} from '@ant-design/icons';
 import Button from '../components/common/Button';
 import Receipt, { ReceiptPDF } from '../components/Receipt';
 import { PDFDownloadLink } from '@react-pdf/renderer';
@@ -23,12 +29,10 @@ const Payments = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
 
-  // Ensure profile is loaded for membership number
   useEffect(() => {
     getProfileDetail();
   }, []);
 
-  // Fetch account statement when membership number is available
   useEffect(() => {
     const memberId = profileDetail?.membershipNumber;
     if (!memberId) {
@@ -49,11 +53,9 @@ const Payments = () => {
       });
   }, [profileDetail?.membershipNumber]);
 
-  // Helper to derive amount (in cents) from transaction entries
   const getTxnAmountInCents = tx => {
     if (!tx) return 0;
 
-    // Prefer explicit amount/total if API provides it
     if (typeof tx.amount === 'number') return Math.abs(tx.amount);
     if (typeof tx.total === 'number') return Math.abs(tx.total);
 
@@ -67,7 +69,6 @@ const Payments = () => {
 
     if (!relevant.length) return 0;
 
-    // Net for member: Debits positive, Credits negative; then show absolute value
     const net = relevant.reduce((sum, e) => {
       const amount = typeof e.amount === 'number' ? e.amount : 0;
       if (!amount) return sum;
@@ -77,9 +78,7 @@ const Payments = () => {
     return Math.abs(net);
   };
 
-  // Build payment rows from statement transactions
   useEffect(() => {
-    // Exclude Invoice documents from payment history
     const txns = Array.isArray(statementData?.txns)
       ? statementData.txns.filter(
           txn => String(txn.docType || '').toLowerCase() !== 'invoice',
@@ -149,11 +148,9 @@ const Payments = () => {
     categoryLookups,
   ]);
 
-  // Get category name by ID from dynamic lookup
   const getMembershipCategoryLabel = categoryId => {
     if (!categoryId) return 'N/A';
 
-    // Find category in the lookup by _id or id
     const category = categoryLookups?.find(
       cat => cat?._id === categoryId || cat?.id === categoryId,
     );
@@ -166,25 +163,28 @@ const Payments = () => {
       title: 'Date',
       dataIndex: 'date',
       key: 'date',
+      render: val => <span className="font-semibold text-slate-700">{val}</span>,
     },
     {
       title: 'Description',
       dataIndex: 'description',
       key: 'description',
-      render: description =>
-        description || getMembershipCategoryLabel(description) || 'N/A',
+      render: description => (
+        <span className="font-medium text-slate-900">
+          {description || getMembershipCategoryLabel(description) || 'N/A'}
+        </span>
+      ),
     },
     {
       title: 'Amount',
       dataIndex: 'amount',
       key: 'amount',
       render: amount => {
-        // Amount is in cents from API; convert to euros
         const amountInEuros =
           typeof amount === 'number'
             ? (amount / 100).toFixed(2)
             : '0.00';
-        return `€${amountInEuros}`;
+        return <span className="font-extrabold text-slate-900">€{amountInEuros}</span>;
       },
     },
     {
@@ -193,6 +193,8 @@ const Payments = () => {
       render: (_, record) => (
         <Button
           size="small"
+          type="default"
+          icon={<FilePdfOutlined />}
           onClick={() => {
             setReceiptData(record.details);
             setReceiptVisible(true);
@@ -203,72 +205,104 @@ const Payments = () => {
     },
   ];
 
-  // Calculate pagination - ensure we don't go out of bounds
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const paginatedRows = paymentRows.slice(startIndex, endIndex);
   const totalPages = Math.ceil(paymentRows.length / pageSize);
 
-  // Reset to page 1 if current page is out of bounds
   useEffect(() => {
     if (paymentRows.length > 0 && currentPage > totalPages) {
       setCurrentPage(1);
     }
   }, [paymentRows.length, totalPages, currentPage]);
 
-  // Render mobile card view
   const renderMobileCard = record => {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm mb-3">
-        <div className="space-y-2.5">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <p className="text-xs text-gray-500 mb-1">Date</p>
-              <p className="text-sm font-medium text-gray-800">
-                {record.date || 'N/A'}
-              </p>
-            </div>
-          </div>
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm mb-3 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-slate-500">{record.date || 'N/A'}</span>
+          <span className="text-base font-black text-slate-900">
+            {typeof record.amount === 'number'
+              ? `€${(record.amount / 100).toFixed(2)}`
+              : '€0.00'}
+          </span>
+        </div>
 
-          <div className="border-t border-gray-100 pt-2.5">
-            <p className="text-xs text-gray-500 mb-1">Description</p>
-            <p className="text-sm font-medium text-gray-800">
-              {record.description ||
-                getMembershipCategoryLabel(record.description) ||
-                'N/A'}
-            </p>
-          </div>
+        <div className="pt-2 border-t border-slate-100">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Description</p>
+          <p className="text-sm font-semibold text-slate-800 mt-0.5">
+            {record.description || getMembershipCategoryLabel(record.description) || 'N/A'}
+          </p>
+        </div>
 
-          <div className="border-t border-gray-100 pt-2.5">
-            <p className="text-xs text-gray-500 mb-1">Amount</p>
-            <p className="text-sm font-medium text-gray-800">
-              {typeof record.amount === 'number'
-                ? `€${(record.amount / 100).toFixed(2)}`
-                : '€0.00'}
-            </p>
-          </div>
-
-          <div className="border-t border-gray-100 pt-2.5">
-            <Button
-              size="small"
-              onClick={() => {
-                setReceiptData(record.details);
-                setReceiptVisible(true);
-              }}
-              className="w-full">
-              View Receipt
-            </Button>
-          </div>
+        <div className="pt-2 border-t border-slate-100">
+          <Button
+            size="middle"
+            type="default"
+            icon={<FilePdfOutlined />}
+            onClick={() => {
+              setReceiptData(record.details);
+              setReceiptVisible(true);
+            }}
+            className="w-full">
+            View Receipt
+          </Button>
         </div>
       </div>
     );
   };
 
   return (
-    <div>
-      <Card title="Payment History" bodyStyle={{ padding: '8px' }}>
+    <div className="space-y-5 sm:space-y-6">
+      {/* Overview Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_6px_16px_-4px_rgba(15,23,42,0.04)]">
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+              <DollarCircleOutlined />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Processed Transactions
+              </p>
+              <p className="text-2xl font-bold text-slate-900 mt-0.5">
+                {paymentRows.length}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_6px_16px_-4px_rgba(15,23,42,0.04)]">
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+              <CreditCardOutlined />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Account Status
+              </p>
+              <p className="text-sm font-bold text-slate-900 mt-0.5">
+                {profileDetail?.membershipNumber ? `Member #${profileDetail.membershipNumber}` : 'Account Active'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Card
+        title={
+          <div className="flex items-center justify-between py-1">
+            <span className="font-poppins text-lg font-bold text-slate-900">
+              Payment History
+            </span>
+            <span className="text-xs font-semibold text-slate-500">
+              {paymentRows.length} records
+            </span>
+          </div>
+        }
+        className="overflow-hidden border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_10px_25px_-5px_rgba(15,23,42,0.04)]">
         {statementLoading && profileDetail?.membershipNumber ? (
-          <div className="py-12 flex justify-center items-center">
+          <div className="py-16 flex justify-center items-center">
             <Spin size="large" tip="Loading transactions..." />
           </div>
         ) : paymentRows.length === 0 ? (
@@ -278,41 +312,34 @@ const Payments = () => {
                 ? 'No transactions found.'
                 : 'No payment history found.'
             }
-            className="py-12"
+            className="py-16"
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           />
         ) : (
           <>
             {/* Mobile Card View */}
-            <div className="block md:hidden">
+            <div className="block md:hidden space-y-3">
               {paginatedRows.length > 0 ? (
                 <>
                   {paginatedRows.map(record => (
                     <div key={record.key}>{renderMobileCard(record)}</div>
                   ))}
 
-                  {/* Mobile Pagination - Show if more than pageSize items */}
                   {paymentRows.length > pageSize && (
-                    <div className="mt-4 flex flex-col items-center gap-2">
+                    <div className="mt-4 flex flex-col items-center gap-2 pt-2">
                       <Pagination
                         current={currentPage}
                         total={paymentRows.length}
                         pageSize={pageSize}
                         onChange={page => {
                           setCurrentPage(page);
-                          // Scroll to top when page changes
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
                         showSizeChanger={false}
-                        showTotal={(total, range) =>
-                          `${range[0]}-${range[1]} of ${total} payment${total > 1 ? 's' : ''}`
-                        }
                         size="small"
-                        simple={false}
                       />
-                      <p className="text-xs text-gray-500">
-                        Page {currentPage} of{' '}
-                        {Math.ceil(paymentRows.length / pageSize)}
+                      <p className="text-xs text-slate-500">
+                        Page {currentPage} of {Math.ceil(paymentRows.length / pageSize)}
                       </p>
                     </div>
                   )}
@@ -327,7 +354,7 @@ const Payments = () => {
             </div>
 
             {/* Desktop Table View */}
-            <div className="hidden md:block">
+            <div className="hidden md:block overflow-x-auto">
               <Table
                 dataSource={paymentRows}
                 columns={columns}
@@ -363,27 +390,27 @@ const Payments = () => {
             document={<ReceiptPDF data={receiptData || {}} />}
             fileName={`receipt-${new Date().getTime()}.pdf`}>
             {({ loading }) => (
-              <Button type="primary" loading={loading}>
-                {loading ? 'Preparing PDF...' : 'Download as PDF'}
+              <Button type="primary" size="large" icon={<FilePdfOutlined />} loading={loading}>
+                {loading ? 'Preparing PDF...' : 'Download PDF Receipt'}
               </Button>
             )}
           </PDFDownloadLink>,
         ]}
         title="Payment Receipt"
         width={800}
-        style={{ 
+        style={{
           maxWidth: '90vw',
           maxHeight: '90vh',
-          paddingBottom: 0
+          paddingBottom: 0,
         }}
-        bodyStyle={{ 
-          padding: '0', 
+        bodyStyle={{
+          padding: '0',
           height: 'calc(90vh - 120px)',
-          maxHeight: 'calc(90vh - 120px)', 
+          maxHeight: 'calc(90vh - 120px)',
           overflow: 'auto',
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'flex-start'
+          alignItems: 'flex-start',
         }}
         centered>
         {receiptData && <Receipt data={receiptData} />}

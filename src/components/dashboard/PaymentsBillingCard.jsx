@@ -1,4 +1,5 @@
 import React from 'react';
+import { CreditCardOutlined, ArrowRightOutlined } from '@ant-design/icons';
 
 const PaymentsBillingCard = ({
   membershipNumber,
@@ -15,63 +16,86 @@ const PaymentsBillingCard = ({
   );
 
   return (
-    <div className="section-card">
-      <h2 className="mb-4 text-xl font-extrabold tracking-tight text-slate-900">
-        Payments & Billing
-      </h2>
-      <div className="space-y-2.5 sm:space-y-4">
-        {membershipNumber && (
-          <div className="rounded-lg bg-slate-50 p-3 sm:p-4">
-            <p className="mb-1 text-sm font-semibold text-slate-900 sm:text-sm sm:font-normal sm:text-slate-600 sm:text-right">
+    <div className="section-card flex flex-col justify-between">
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold tracking-tight text-slate-900 flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
+              <CreditCardOutlined />
+            </span>
+            Payments & Billing
+          </h2>
+          {membershipNumber && (
+            <span className="hidden sm:inline-flex text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+              ID: {membershipNumber}
+            </span>
+          )}
+        </div>
+
+        <div className="rounded-xl bg-gradient-to-br from-slate-50 to-blue-50/40 border border-slate-200/80 p-4 sm:p-5">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
               Net Balance
               {accountNetBalance?.year && (
-                <span className="ml-1">({accountNetBalance.year})</span>
+                <span className="ml-1 text-slate-400">({accountNetBalance.year})</span>
               )}
             </p>
+            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+              isCredit ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+            }`}>
+              {isCredit ? 'Credit' : 'Due'}
+            </span>
+          </div>
+
+          <div className="mt-2">
             {accountNetBalanceLoading ? (
-              <p className="animate-pulse text-xl font-bold text-slate-500 sm:text-3xl sm:text-right">
-                Loading...
-              </p>
+              <div className="h-9 w-32 bg-slate-200 animate-pulse rounded-lg" />
             ) : (
               <p
-                className={`text-xl font-bold sm:text-3xl sm:text-right ${
-                  isCredit ? 'text-green-600' : 'text-red-600'
+                className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${
+                  isCredit ? 'text-emerald-600' : 'text-slate-900'
                 }`}>
                 {displayAmount}
               </p>
             )}
+          </div>
 
-            <div className="mt-3 flex items-center gap-2 sm:hidden">
-              <div className="flex-1 rounded-lg bg-slate-200 px-2.5 py-1.5">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.06em] text-slate-500">
-                  Membership No
+          <div className="mt-4 flex items-center gap-2 sm:hidden">
+            {membershipNumber && (
+              <div className="flex-1 rounded-lg bg-white border border-slate-200 px-3 py-1.5">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                  Member No
                 </p>
-                <p className="mt-0.5 text-lg font-bold leading-none text-slate-900">
+                <p className="text-sm font-bold text-slate-800">
                   {membershipNumber}
                 </p>
               </div>
-              <button
-                onClick={onPay}
-                disabled={payDisabled}
-                className={`min-w-[96px] rounded-lg px-3 py-1.5 text-base font-semibold transition-colors ${
-                  payDisabled
-                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}>
-                Pay Now
-              </button>
-            </div>
+            )}
+            <button
+              onClick={onPay}
+              disabled={payDisabled}
+              className={`rounded-xl px-4 py-2 text-sm font-bold transition-all shadow-sm ${
+                payDisabled
+                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95 shadow-blue-500/20'
+              }`}>
+              Pay Now
+            </button>
           </div>
-        )}
-        <button
-          onClick={onPay}
-          disabled={payDisabled}
-          className={`hidden sm:block w-full px-4 py-2.5 sm:py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm sm:text-base ${
-            payDisabled ? 'opacity-50 cursor-not-allowed' : ''
-          }`}>
-          Pay Now
-        </button>
+        </div>
       </div>
+
+      <button
+        onClick={onPay}
+        disabled={payDisabled}
+        className={`hidden sm:flex items-center justify-center gap-2 mt-4 w-full px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${
+          payDisabled
+            ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+            : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md hover:shadow-blue-500/20 active:scale-[0.99]'
+        }`}>
+        <span>Pay Balance</span>
+        <ArrowRightOutlined className="text-xs" />
+      </button>
     </div>
   );
 };

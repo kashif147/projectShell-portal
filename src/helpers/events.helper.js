@@ -17,10 +17,10 @@ const stripHtml = html => {
   return (doc.body.textContent || '').replace(/\s+/g, ' ').trim();
 };
 
-export const getEventCategoryLabel = (eventCategoryCode, fallback = 'General') => {
-  if (eventCategoryCode === 'CPD') return 'Course';
-  if (eventCategoryCode === 'EVENT') return 'Event';
-  return eventCategoryCode || fallback;
+export const getEventCategoryLabel = (eventCategoryLookupCode, fallback = 'General') => {
+  if (eventCategoryLookupCode === 'CPD') return 'Course';
+  if (eventCategoryLookupCode === 'EVENT') return 'Event';
+  return eventCategoryLookupCode || fallback;
 };
 
 export const getEventImageUrl = apiEvent => {
@@ -43,6 +43,72 @@ export const getEventImageUrl = apiEvent => {
   return '';
 };
 
+/** Normalize API approval/status into UI card status. */
+export const resolveRegistrationCardStatus = (item = {}) => {
+  const approval = String(item?.approvalStatus || '').toLowerCase();
+  const status = String(item?.status || '').toLowerCase();
+
+  // Prefer explicit approvalStatus from registrations API.
+  if (approval === 'pending_review' || approval === 'pending') {
+    return 'submitted';
+  }
+  if (approval === 'approved' || approval === 'confirmed') {
+    return 'registered';
+  }
+
+  if (
+    status === 'pending_review' ||
+    status === 'pending' ||
+    status === 'submitted'
+  ) {
+    return 'submitted';
+  }
+
+  if (
+    status === 'confirmed' ||
+    status === 'approved' ||
+    status === 'registered'
+  ) {
+    return 'registered';
+  }
+
+  return status || 'registered';
+};
+
+export const getRegistrationStatusLabel = status => {
+  switch (String(status || '').toLowerCase()) {
+    case 'registered':
+      return 'Registered';
+    case 'submitted':
+      return 'Submitted';
+    case 'available':
+      return 'Available';
+    case 'waitlist':
+      return 'Waitlist';
+    case 'completed':
+      return 'Completed';
+    default:
+      return status ? String(status) : 'Available';
+  }
+};
+
+/** True when user already applied (approved or pending) — block re-register. */
+export const isRegistrationLocked = (item = {}) => {
+  const status = String(item?.status || '').toLowerCase();
+  const approval = String(item?.approvalStatus || '').toLowerCase();
+
+  return (
+    status === 'registered' ||
+    status === 'submitted' ||
+    status === 'completed' ||
+    Boolean(item?.registrationId) ||
+    approval === 'approved' ||
+    approval === 'confirmed' ||
+    approval === 'pending_review' ||
+    approval === 'pending'
+  );
+};
+
 export const isCourseRegistration = item => {
   if (!item) return false;
 
@@ -50,10 +116,10 @@ export const isCourseRegistration = item => {
     item.registrationType || item.type || '',
   ).toLowerCase();
   const categoryCode = String(
-    item.eventCategoryCode ||
+    item.eventCategoryLookupCode ||
       item.categoryCode ||
-      item.event?.eventCategoryCode ||
-      item.course?.eventCategoryCode ||
+      item.event?.eventCategoryLookupCode ||
+      item.course?.eventCategoryLookupCode ||
       '',
   ).toUpperCase();
   const eventTypeName = String(
@@ -111,7 +177,6 @@ export const formatEventTime = (startDate, endDate) => {
 export const formatRegistrationPrice = (price, currency = 'EUR') => {
   if (price == null || price === '') return 'Free';
   const amount = Number(price);
-  if (Number.isNaN(amount) || amount <= 0) return 'Free';
   try {
     return new Intl.NumberFormat('en-IE', {
       style: 'currency',
@@ -438,8 +503,8 @@ export const mapApiEventToCard = apiEvent => {
     date: formatEventDate(apiEvent.startDate),
     time: formatEventTime(apiEvent.startDate, apiEvent.endDate),
     location: apiEvent.isVirtual ? 'Online' : apiEvent.venue || 'Location TBD',
-    category: getEventCategoryLabel(apiEvent.eventCategoryCode || 'CPD'),
-    eventCategoryCode: apiEvent.eventCategoryCode || 'CPD',
+    category: getEventCategoryLabel(apiEvent.eventCategoryLookupCode || 'CPD'),
+    eventCategoryLookupCode: apiEvent.eventCategoryLookupCode || 'CPD',
     type: getEventTimingType(apiEvent.startDate),
     status: 'available',
     attendees: apiEvent.capacity,
@@ -526,11 +591,7 @@ export const mapRegistrationToCard = item => {
 
   if (!entityId) return null;
 
-  const cardStatus =
-    String(item.status || '').toLowerCase() === 'confirmed' ||
-    String(item.approvalStatus || '').toLowerCase() === 'approved'
-      ? 'registered'
-      : String(item.status || 'registered').toLowerCase();
+  const cardStatus = resolveRegistrationCardStatus(item);
 
   return {
     id: entityId,
@@ -544,9 +605,9 @@ export const mapRegistrationToCard = item => {
     location: item.isVirtual ? 'Online' : item.venue || 'Location TBD',
     category:
       item.eventTypeName || (isCourse ? 'Course' : 'Event'),
-    eventCategoryCode: isCourse
-      ? item.eventCategoryCode || 'CPD'
-      : item.eventCategoryCode || 'EVENT',
+    eventCategoryLookupCode: isCourse
+      ? item.eventCategoryLookupCode || 'CPD'
+      : item.eventCategoryLookupCode || 'EVENT',
     type: item.timing || getEventTimingType(item.startDate),
     status: cardStatus,
     kind: isCourse ? 'course' : 'event',
@@ -639,9 +700,14 @@ export const applyRegistrationStatus = (items = [], registrations = []) => {
       byEntityId.get(String(item.id)) ||
       (item.courseId ? byEntityId.get(String(item.courseId)) : null);
     if (!reg) return item;
+    const nextStatus = resolveRegistrationCardStatus({
+      ...reg.card,
+      approvalStatus: reg.approvalStatus,
+      status: reg.status || reg.card?.status,
+    });
     return {
       ...item,
-      status: 'registered',
+      status: nextStatus,
       registrationId: reg.id,
       registrationType: item.kind || reg.registrationType,
       approvalStatus: reg.approvalStatus,
@@ -659,6 +725,7 @@ export const filterRegisteredItems = (
   const fromCatalog = (items || []).filter(item => {
     const isRegistered =
       String(item?.status || '').toLowerCase() === 'registered' ||
+      String(item?.status || '').toLowerCase() === 'submitted' ||
       Boolean(item?.registrationId);
     if (!isRegistered) return false;
     if (!registrationType) return true;

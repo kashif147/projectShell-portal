@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { IdcardOutlined, CheckCircleOutlined, EditOutlined } from '@ant-design/icons';
+import { IdcardOutlined, CheckCircleOutlined, EditOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useApplication } from '../contexts/applicationContext';
 import { useLookup } from '../contexts/lookupContext';
 import { updateProfessionalDetailRequest } from '../api/application.api';
@@ -68,11 +68,6 @@ const Membership = () => {
     return selected?.code === code;
   };
 
-  const handleDateChange = (name, value) => {
-    console.log('Date change:', name, value);
-    setForm({ ...form, [name]: value });
-  };
-
   const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
     setForm({
@@ -97,17 +92,6 @@ const Membership = () => {
         isRetired: form.isRetired,
       },
     };
-
-    // updateProfessionalDetailRequest(personalDetail?.ApplicationId, payload)
-    //   .then(res => {
-    //     if (res.status === 200) {
-    //       toast.success('Membership category updated successfully');
-    //       getProfessionalDetail();
-    //     } else {
-    //       toast.error(res.data?.message || 'Update failed');
-    //     }
-    //   })
-    //   .catch(() => toast.error('Something went wrong'));
   };
 
   const formatPrice = (price, currency = 'EUR') => {
@@ -118,72 +102,80 @@ const Membership = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6 max-w-5xl mx-auto">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <IdcardOutlined className="text-3xl text-white" />
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_-4px_rgba(15,23,42,0.05)] relative overflow-hidden">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-amber-100/50 blur-2xl" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="p-2 rounded-xl bg-amber-50 text-amber-600 text-lg">
+              <IdcardOutlined />
+            </span>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 font-poppins">
+              Membership Category
+            </h1>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Membership Category</h1>
-            <p className="text-sm text-gray-600 mt-1">
-              View and update your membership category
-            </p>
-          </div>
+          <p className="text-xs sm:text-sm text-slate-500 max-w-2xl">
+            Review your active membership designation, privileges, and request a category modification.
+          </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
         {/* Current Membership Category */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-300">
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-green-200">
+        <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04),0_10px_25px_-5px_rgba(15,23,42,0.04)] overflow-hidden flex flex-col justify-between">
+          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 px-5 sm:px-6 py-4 border-b border-emerald-100">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-md">
-                <CheckCircleOutlined className="text-white text-xl" />
+              <div className="w-9 h-9 bg-emerald-600 text-white rounded-xl flex items-center justify-center shadow-sm">
+                <CheckCircleOutlined className="text-lg" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900">Current Membership</h3>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 font-poppins">Current Category</h3>
+                <span className="text-[11px] font-semibold text-emerald-700">Active Membership</span>
+              </div>
             </div>
           </div>
 
-          <div className="p-6">
+          <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between space-y-6">
             {currentCategory ? (
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    Category Name
+              <div className="space-y-5">
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    Assigned Tier
                   </p>
-                  <p className="text-xl font-bold text-gray-900">
+                  <p className="text-xl font-bold text-slate-900">
                     {currentCategory.name}
                   </p>
-                  <p className="text-sm text-gray-600">
-                    {currentCategory.description || 'No description available'}
+                  <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                    {currentCategory.description || 'Standard membership tier.'}
                   </p>
                 </div>
 
                 {currentCategory.code && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                       Category Code
                     </p>
-                    <p className="text-base font-semibold text-gray-900">
+                    <p className="text-sm font-bold text-slate-800 font-mono">
                       {currentCategory.code}
                     </p>
                   </div>
                 )}
 
                 {currentCategory.currentPricing && (
-                  <div className="pt-4 border-t border-gray-200">
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
-                      <p className="text-xs font-medium text-gray-600 mb-2">Annual Fee</p>
-                      <p className="text-3xl font-bold text-blue-600">
+                  <div className="pt-4 border-t border-slate-100">
+                    <div className="rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50/50 p-4 border border-blue-100">
+                      <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-1">
+                        Annual Subscription
+                      </p>
+                      <p className="text-3xl font-extrabold text-blue-900">
                         {formatPrice(
                           currentCategory.currentPricing.price,
                           currentCategory.currentPricing.currency
                         )}
                       </p>
                       {currentCategory.currentPricing.effectiveFrom && (
-                        <p className="text-xs text-gray-600 mt-2">
+                        <p className="text-[11px] text-blue-600/80 mt-1 font-medium">
                           Valid: {new Date(currentCategory.currentPricing.effectiveFrom).toLocaleDateString('en-GB')}
                           {currentCategory.currentPricing.effectiveTo && 
                             ` - ${new Date(currentCategory.currentPricing.effectiveTo).toLocaleDateString('en-GB')}`}
@@ -194,103 +186,110 @@ const Membership = () => {
                 )}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <IdcardOutlined className="text-3xl text-gray-400" />
+              <div className="text-center py-12">
+                <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl text-slate-400">
+                  <IdcardOutlined />
                 </div>
-                <p className="text-gray-600 text-sm">No membership category assigned</p>
+                <p className="text-slate-500 text-sm font-medium">No membership category assigned yet.</p>
               </div>
             )}
           </div>
         </div>
 
         {/* Update Membership Category */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-300">
-          <div className="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-4 border-b border-purple-200">
+        <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04),0_10px_25px_-5px_rgba(15,23,42,0.04)] overflow-hidden flex flex-col justify-between">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-5 sm:px-6 py-4 border-b border-blue-100">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-md">
-                <EditOutlined className="text-white text-xl" />
+              <div className="w-9 h-9 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-sm">
+                <EditOutlined className="text-lg" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900">Update Category</h3>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 font-poppins">Request Category Change</h3>
+                <span className="text-[11px] font-semibold text-blue-700">Update Membership Tier</span>
+              </div>
             </div>
           </div>
 
-          <div className="p-6 space-y-4">
-            <Select
-              label="Membership Category"
-              name="membershipCategory"
-              value={form.membershipCategory}
-              onChange={handleInputChange}
-              required
-              tooltip="Please select the membership category most appropriate to yourselves."
-              placeholder="Select membership category"
-              options={membershipCategoryOptions}
-            />
+          <div className="p-5 sm:p-6 space-y-4 flex-1 flex flex-col justify-between">
+            <div className="space-y-4">
+              <Select
+                label="New Membership Category"
+                name="membershipCategory"
+                value={form.membershipCategory}
+                onChange={handleInputChange}
+                required
+                tooltip="Please select the membership category most appropriate to yourselves."
+                placeholder="Select membership category"
+                options={membershipCategoryOptions}
+              />
 
-            {/* Undergraduate Student Fields */}
-            {isCategoryCode('MEM-UG') && (
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-4">
-                <h4 className="text-sm font-semibold text-gray-900">Student Information</h4>
-                <div className="grid grid-cols-1 gap-4">
-                  <Select
-                    label="Study Location"
-                    name="studyLocation"
-                    value={form.studyLocation}
-                    onChange={handleInputChange}
-                    placeholder="Select study location"
-                    options={[
-                      { value: 'location1', label: 'Location 1' },
-                      { value: 'location2', label: 'Location 2' },
-                      { value: 'location3', label: 'Location 3' },
-                    ]}
-                  />
-                  <DatePicker
-                    label="Graduation Date"
-                    name="graduationDate"
-                    value={form.graduationDate}
-                    onChange={handleInputChange}
-                    disableAgeValidation
-                  />
+              {/* Undergraduate Student Fields */}
+              {isCategoryCode('MEM-UG') && (
+                <div className="p-4 bg-blue-50/70 border border-blue-100 rounded-xl space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900">Student Information</h4>
+                  <div className="space-y-3">
+                    <Select
+                      label="Study Location"
+                      name="studyLocation"
+                      value={form.studyLocation}
+                      onChange={handleInputChange}
+                      placeholder="Select study location"
+                      options={[
+                        { value: 'location1', label: 'Location 1' },
+                        { value: 'location2', label: 'Location 2' },
+                        { value: 'location3', label: 'Location 3' },
+                      ]}
+                    />
+                    <DatePicker
+                      label="Graduation Date"
+                      name="graduationDate"
+                      value={form.graduationDate}
+                      onChange={handleInputChange}
+                      disableAgeValidation
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Retired Associate Fields */}
-            {isCategoryCode('MEM-RET') && (
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg space-y-4">
-                <h4 className="text-sm font-semibold text-gray-900">Retirement Information</h4>
-                <div className="grid grid-cols-1 gap-4">
-                  <DatePicker
-                    label="Retired Date"
-                    name="retiredDate"
-                    value={form.retiredDate}
-                    onChange={handleInputChange}
-                    disableAgeValidation
-                  />
-                  <Input
-                    label="Pension No"
-                    name="pensionNo"
-                    value={form.pensionNo}
-                    onChange={handleInputChange}
-                    placeholder="Enter your pension number"
-                  />
+              {/* Retired Associate Fields */}
+              {isCategoryCode('MEM-RET') && (
+                <div className="p-4 bg-amber-50/70 border border-amber-100 rounded-xl space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900">Retirement Information</h4>
+                  <div className="space-y-3">
+                    <DatePicker
+                      label="Retired Date"
+                      name="retiredDate"
+                      value={form.retiredDate}
+                      onChange={handleInputChange}
+                      disableAgeValidation
+                    />
+                    <Input
+                      label="Pension No"
+                      name="pensionNo"
+                      value={form.pensionNo}
+                      onChange={handleInputChange}
+                      placeholder="Enter your pension number"
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
-
-            <div className="pt-4">
-              <Button 
-                type="primary" 
-                onClick={onSubmit}
-                className="w-full bg-purple-600 hover:bg-purple-700 border-purple-600 h-11 text-base font-medium shadow-sm">
-                Update Membership Category
-              </Button>
+              )}
             </div>
 
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-xs text-blue-700">
-                <strong>Note:</strong> Some category selections may require you to contact our Membership team for verification.
-              </p>
+            <div className="pt-2 space-y-3">
+              <Button 
+                type="primary"
+                size="large"
+                block
+                onClick={onSubmit}>
+                Submit Category Change
+              </Button>
+
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start gap-2">
+                <InfoCircleOutlined className="text-blue-600 mt-0.5" />
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Some category upgrades or concessions require verification from our member services department before activation.
+                </p>
+              </div>
             </div>
           </div>
         </div>

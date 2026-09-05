@@ -377,28 +377,44 @@ const Profile = () => {
     }`.trim() || 'Member';
 
   return (
-    <div className="w-full max-w-none space-y-4 sm:space-y-5">
-      <Card className="profile-hero-card w-full border border-slate-200 shadow-sm">
-        <div className="flex flex-col items-center gap-3 py-2 text-center sm:flex-row sm:gap-5 sm:text-left">
+    <div className="w-full max-w-none space-y-5 sm:space-y-6">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_-4px_rgba(15,23,42,0.05)] relative overflow-hidden">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-100/50 blur-2xl" />
+        <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-6 sm:text-left text-center relative z-10">
           <Avatar
-            size={88}
+            size={84}
             src={user?.avatar}
-            icon={<UserOutlined />}
-            className="shrink-0 bg-blue-600"
+            icon={<UserOutlined className="text-3xl" />}
+            className="shrink-0 bg-gradient-to-tr from-blue-600 to-indigo-600 shadow-md ring-4 ring-blue-50"
           />
-          <div className="min-w-0">
-            <h2 className="m-0 text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">
-              {displayName}
-            </h2>
-            <p className="m-0 mt-1 text-sm text-slate-500">
-              {isMember ? 'Member' : 'Non Member'}
-              {profileDetail?.membershipNumber
-                ? ` · ${profileDetail.membershipNumber}`
-                : ''}
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 mb-1.5">
+              <h2 className="m-0 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl font-poppins">
+                {displayName}
+              </h2>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                isMember
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-slate-100 text-slate-700 border border-slate-200'
+              }`}>
+                {isMember ? 'Active Member' : 'Non Member'}
+              </span>
+            </div>
+            <p className="m-0 text-xs sm:text-sm text-slate-500 flex flex-wrap items-center justify-center sm:justify-start gap-3">
+              {profileDetail?.membershipNumber && (
+                <span className="font-semibold text-slate-700">
+                  Membership #{profileDetail.membershipNumber}
+                </span>
+              )}
+              {personalInfo?.personalEmail && (
+                <span className="text-slate-500">
+                  {personalInfo.personalEmail}
+                </span>
+              )}
             </p>
           </div>
         </div>
-      </Card>
+      </div>
 
       <div className="w-full">
         <PersonalInformation
@@ -408,14 +424,19 @@ const Profile = () => {
         />
       </div>
 
-      <div className="flex flex-wrap gap-2 pt-1">
+      <div className="flex flex-wrap items-center gap-3 pt-2">
         <Button
           type="primary"
+          size="large"
           onClick={updatePersonalDetail}
           disabled={isReadOnly}>
-          Save
+          Save Changes
         </Button>
-        <Button type="default" onClick={handleCancel} disabled={isReadOnly}>
+        <Button
+          type="default"
+          size="large"
+          onClick={handleCancel}
+          disabled={isReadOnly}>
           Cancel
         </Button>
       </div>

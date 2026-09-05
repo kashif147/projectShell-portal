@@ -14,6 +14,7 @@ import {
   applyRegistrationStatus,
   filterEventsBySearch,
   filterRegisteredItems,
+  isRegistrationLocked,
   parseEventsResponse,
   parseRegistrationsResponse,
 } from '../helpers/events.helper';
@@ -193,6 +194,19 @@ const EventsAndCourses = () => {
       ? `/courses/${item.courseId || item.id}/register`
       : `/events/${item.id}/register`;
 
+  const handleRegister = item => {
+    if (!item?.id) return;
+    if (isRegistrationLocked(item)) {
+      toast.info(
+        item.status === 'submitted'
+          ? 'This registration is pending review.'
+          : 'You are already registered for this item.',
+      );
+      return;
+    }
+    navigate(registerPath(item));
+  };
+
   const emptyTitle =
     filter === 'my-event'
       ? 'No My Events yet'
@@ -206,33 +220,35 @@ const EventsAndCourses = () => {
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          Events & Courses
-        </h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Browse current events and CPD courses, or view what you have already
-          registered for.
-        </p>
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_-4px_rgba(15,23,42,0.05)] relative overflow-hidden">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-indigo-100/50 blur-2xl" />
+        <div className="relative z-10">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 font-poppins">
+            Events & Courses
+          </h1>
+          <p className="mt-1 text-xs sm:text-sm text-slate-500 max-w-2xl">
+            Browse upcoming workshops, networking events, and accredited CPD courses to advance your professional career.
+          </p>
+        </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_6px_16px_-4px_rgba(15,23,42,0.04)]">
+        <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div className="flex min-w-0 flex-1 flex-wrap gap-2">
             {filterTabs.map(tab => (
               <button
                 key={tab.value}
                 type="button"
                 onClick={() => handleFilterChange(tab.value)}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                className={`rounded-xl px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center ${
                   filter === tab.value
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25'
+                    : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/70'
                 }`}>
-                {tab.label}
+                <span>{tab.label}</span>
                 <span
-                  className={`ml-2 rounded-full px-2 py-0.5 text-xs ${
-                    filter === tab.value ? 'bg-white/20' : 'bg-white'
+                  className={`ml-2 rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                    filter === tab.value ? 'bg-white/25 text-white' : 'bg-white text-slate-700 shadow-sm'
                   }`}>
                   {tab.count}
                 </span>
@@ -241,11 +257,11 @@ const EventsAndCourses = () => {
           </div>
 
           <div className="w-full shrink-0 sm:w-72 md:w-80">
-            <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
-              <span className="text-slate-500">
+            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/15 transition-all">
+              <span className="text-slate-400">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
+                  className="h-4.5 w-4.5"
                   viewBox="0 0 20 20"
                   fill="currentColor">
                   <path
@@ -259,13 +275,13 @@ const EventsAndCourses = () => {
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 sm:text-base"
-                placeholder="Search events and courses..."
+                className="flex-1 bg-transparent text-xs sm:text-sm text-slate-900 outline-none placeholder:text-slate-400"
+                placeholder="Search events, courses, venues..."
               />
               {searchQuery ? (
                 <button
                   type="button"
-                  className="text-slate-400 hover:text-slate-600"
+                  className="text-slate-400 hover:text-slate-600 text-xs"
                   onClick={() => setSearchQuery('')}>
                   ✕
                 </button>
@@ -276,29 +292,27 @@ const EventsAndCourses = () => {
       </div>
 
       {loading ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-12 shadow-sm">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-16 shadow-sm flex items-center justify-center">
           <Spinner />
         </div>
       ) : filteredItems.length > 0 ? (
-        <div className="grid grid-cols-1 items-stretch gap-3 sm:gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
+        <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 lg:gap-5 xl:grid-cols-4">
           {filteredItems.map(item => (
             <EventCard
               key={`${item.kind}-${item.id}`}
               event={item}
               onViewDetails={setSelectedItem}
-              onRegister={selected => {
-                navigate(registerPath(selected));
-              }}
+              onRegister={handleRegister}
             />
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-slate-200 bg-white p-12 shadow-sm">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-16 shadow-sm">
           <Empty
             description={
               <div className="space-y-2">
-                <p className="font-semibold text-slate-900">{emptyTitle}</p>
-                <p className="text-sm text-slate-500">
+                <p className="font-bold text-slate-900">{emptyTitle}</p>
+                <p className="text-xs sm:text-sm text-slate-500">
                   {filter.startsWith('my-')
                     ? 'Register for an item to see it here.'
                     : 'There are no current items matching this filter.'}
@@ -314,9 +328,7 @@ const EventsAndCourses = () => {
         event={selectedItem}
         onClose={() => setSelectedItem(null)}
         onRegister={() => {
-          if (selectedItem?.id) {
-            navigate(registerPath(selectedItem));
-          }
+          handleRegister(selectedItem);
           setSelectedItem(null);
         }}
       />

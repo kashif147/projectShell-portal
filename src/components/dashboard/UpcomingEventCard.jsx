@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalendarOutlined, EnvironmentOutlined } from '@ant-design/icons';
+import { CalendarOutlined, EnvironmentOutlined, ArrowRightOutlined } from '@ant-design/icons';
 
 const UpcomingEventCard = ({ event, onOpenDetail, onRegister }) => {
   const isClosed =
@@ -8,7 +8,7 @@ const UpcomingEventCard = ({ event, onOpenDetail, onRegister }) => {
 
   return (
     <div
-      className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 transition-colors hover:bg-slate-100 sm:flex-row sm:items-center sm:gap-4 sm:p-4"
+      className="group flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 transition-all duration-200 hover:border-slate-300 hover:shadow-md sm:flex-row sm:items-center sm:gap-4 cursor-pointer"
       onClick={() => onOpenDetail(event)}
       role="button"
       tabIndex={0}
@@ -22,23 +22,23 @@ const UpcomingEventCard = ({ event, onOpenDetail, onRegister }) => {
         <img
           src={event.image}
           alt={event?.title || 'Event'}
-          className="h-14 w-14 flex-shrink-0 rounded-lg object-cover sm:h-16 sm:w-16"
+          className="h-16 w-16 flex-shrink-0 rounded-xl object-cover border border-slate-100 group-hover:scale-105 transition-transform duration-200"
         />
       ) : (
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100 sm:h-12 sm:w-12">
-          <CalendarOutlined className="text-lg text-blue-600 sm:text-xl" />
+        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-200">
+          <CalendarOutlined className="text-xl" />
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <h3 className="text-sm font-semibold text-slate-800 sm:text-base">
+        <h3 className="text-sm font-bold text-slate-900 sm:text-base group-hover:text-blue-600 transition-colors line-clamp-1">
           {event?.title || 'Upcoming Event'}
         </h3>
-        <p className="text-xs text-slate-600 sm:text-sm">
+        <p className="text-xs text-slate-600 sm:text-sm mt-0.5">
           {event?.date || 'TBD'}
-          {event?.time ? ` @ ${event.time}` : ''}
+          {event?.time ? ` · ${event.time}` : ''}
         </p>
-        <p className="mt-1 flex items-center gap-1 text-xs text-slate-500 sm:text-sm">
-          <EnvironmentOutlined />
+        <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 line-clamp-1">
+          <EnvironmentOutlined className="text-slate-400" />
           <span>{event?.location || 'Location TBD'}</span>
         </p>
       </div>
@@ -47,13 +47,14 @@ const UpcomingEventCard = ({ event, onOpenDetail, onRegister }) => {
           e.stopPropagation();
           onRegister(event);
         }}
-        className={`w-full rounded-lg px-3 py-1.5 text-xs font-medium transition-colors sm:w-auto sm:px-4 sm:py-2 sm:text-sm ${
+        className={`w-full rounded-xl px-4 py-2 text-xs font-semibold transition-all duration-200 sm:w-auto sm:text-sm flex items-center justify-center gap-1.5 ${
           isClosed
-            ? 'border border-slate-300 text-slate-700 hover:bg-white'
-            : 'bg-blue-600 text-white hover:bg-blue-700'
+            ? 'border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+            : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95 shadow-sm shadow-blue-500/20'
         }`}
       >
-        {isClosed ? 'Learn More' : 'Register'}
+        <span>{isClosed ? 'Learn More' : 'Register'}</span>
+        {!isClosed && <ArrowRightOutlined className="text-xs" />}
       </button>
     </div>
   );
