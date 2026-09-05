@@ -352,7 +352,7 @@ const RegistrationPayment = () => {
     }
   };
 
-  if (!title || !clientSecret) {
+  if (!location.state || !title) {
     return (
       <div className="space-y-4 sm:space-y-6">
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">

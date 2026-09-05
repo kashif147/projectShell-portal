@@ -23,11 +23,8 @@ const EventRegistration = () => {
   const navigate = useNavigate();
   const { eventId } = useParams();
   const { isMember } = useMemberRole();
-  const {
-    professionalDetail,
-    subscriptionDetail,
-    categoryData,
-  } = useApplication();
+  const { professionalDetail, subscriptionDetail, categoryData } =
+    useApplication();
   const [quantities, setQuantities] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -79,7 +76,13 @@ const EventRegistration = () => {
     } finally {
       setLoading(false);
     }
-  }, [eventId, isMember, membershipCategory, categoryData?.code, categoryData?.name]);
+  }, [
+    eventId,
+    isMember,
+    membershipCategory,
+    categoryData?.code,
+    categoryData?.name,
+  ]);
 
   useEffect(() => {
     loadEvent();
@@ -236,12 +239,20 @@ const EventRegistration = () => {
         </div>
         <div className="grid gap-4 border-t border-slate-100 p-4 sm:grid-cols-2 sm:p-6">
           <div>
-            <p className="text-xs font-semibold uppercase text-slate-500">Venue</p>
-            <p className="mt-1 text-sm font-medium text-slate-800">{event.venue}</p>
+            <p className="text-xs font-semibold uppercase text-slate-500">
+              Venue
+            </p>
+            <p className="mt-1 text-sm font-medium text-slate-800">
+              {event.venue}
+            </p>
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase text-slate-500">Credits</p>
-            <p className="mt-1 text-sm font-medium text-slate-800">{event.credits}</p>
+            <p className="text-xs font-semibold uppercase text-slate-500">
+              Credits
+            </p>
+            <p className="mt-1 text-sm font-medium text-slate-800">
+              {event.credits}
+            </p>
           </div>
         </div>
       </div>
