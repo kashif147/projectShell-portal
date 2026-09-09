@@ -7,12 +7,14 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   DeleteOutlined,
+  DownOutlined,
   DownloadOutlined,
   EditOutlined,
   FileTextOutlined,
   PaperClipOutlined,
   SendOutlined,
   TeamOutlined,
+  UpOutlined,
 } from '@ant-design/icons';
 import { toast } from 'react-toastify';
 import Button from '../components/common/Button';
@@ -23,21 +25,64 @@ import {
   downloadPortalIssueActivityAttachment,
   fetchPortalIssueActivities,
   fetchPortalIssueById,
+  fetchPortalIssueHistory,
   updatePortalIssueActivity,
 } from '../api/issue.api';
 import {
   formatDisplayValue,
   formatIssueDateTime,
+  getHistoryActionColor,
   getIssueApiErrorMessage,
   isIssueApiSuccess,
   mapPortalIssueActivities,
   mapPortalIssueDetail,
+  mapPortalIssueHistory,
   parseAttachmentDownloadResponse,
   parseIssueDetailResponse,
   triggerUrlDownload,
 } from '../helpers/issues.helper';
 
 const { TextArea } = Input;
+
+const CollapsibleSection = ({
+  title,
+  icon,
+  badge,
+  subtitle,
+  expanded,
+  onToggle,
+  headerExtra,
+  children,
+}) => (
+  <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex w-full items-start justify-between gap-3 text-left"
+      aria-expanded={expanded}>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          {icon}
+          <h2 className="text-base font-bold text-slate-900">{title}</h2>
+          {badge}
+        </div>
+        {subtitle ? (
+          <p className="mt-1 text-xs text-slate-500">{subtitle}</p>
+        ) : null}
+      </div>
+      <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+        {expanded ? <UpOutlined /> : <DownOutlined />}
+      </span>
+    </button>
+
+    {expanded ? (
+      <div className="mt-4 border-t border-slate-100 pt-4">
+        {headerExtra ? <div className="mb-4">{headerExtra}</div> : null}
+        {children}
+      </div>
+    ) : null}
+  </section>
+);
 
 const getStatusColor = status => {
   const value = String(status || '').toLowerCase();
@@ -80,8 +125,10 @@ const QueriesDetail = () => {
   const { issueId } = useParams();
   const [issue, setIssue] = useState(null);
   const [activities, setActivities] = useState([]);
+  const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activitiesLoading, setActivitiesLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [commentBody, setCommentBody] = useState('');
   const [commentFile, setCommentFile] = useState(null);
   const [submittingComment, setSubmittingComment] = useState(false);
@@ -92,6 +139,9 @@ const QueriesDetail = () => {
   const [savingActivityId, setSavingActivityId] = useState('');
   const [deletingActivityId, setDeletingActivityId] = useState('');
   const [deletingAttachmentKey, setDeletingAttachmentKey] = useState('');
+  const [attachmentsExpanded, setAttachmentsExpanded] = useState(true);
+  const [activityExpanded, setActivityExpanded] = useState(true);
+  const [historyExpanded, setHistoryExpanded] = useState(true);
 
   const loadIssue = useCallback(async () => {
     setLoading(true);
@@ -133,10 +183,31 @@ const QueriesDetail = () => {
     }
   }, [issueId]);
 
+  const loadHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    try {
+      const response = await fetchPortalIssueHistory(issueId);
+      if (isIssueApiSuccess(response)) {
+        setHistory(mapPortalIssueHistory(response));
+      } else {
+        setHistory([]);
+        toast.error(
+          getIssueApiErrorMessage(response, 'Failed to load history'),
+        );
+      }
+    } catch (error) {
+      setHistory([]);
+      toast.error('Failed to load history');
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [issueId]);
+
   useEffect(() => {
     loadIssue();
     loadActivities();
-  }, [loadIssue, loadActivities]);
+    loadHistory();
+  }, [loadIssue, loadActivities, loadHistory]);
 
   const handleSubmitComment = async () => {
     const trimmedBody = commentBody.trim();
@@ -158,7 +229,7 @@ const QueriesDetail = () => {
         );
         setCommentBody('');
         setCommentFile(null);
-        await Promise.all([loadActivities(), loadIssue()]);
+        await Promise.all([loadActivities(), loadHistory(), loadIssue()]);
         return;
       }
 
@@ -231,7 +302,7 @@ const QueriesDetail = () => {
       if (isIssueApiSuccess(response)) {
         toast.success('Comment updated');
         cancelEditActivity();
-        await loadActivities();
+        await Promise.all([loadActivities(), loadHistory()]);
         return;
       }
 
@@ -259,7 +330,7 @@ const QueriesDetail = () => {
             if (editingActivityId === activity.id) {
               cancelEditActivity();
             }
-            await Promise.all([loadActivities(), loadIssue()]);
+            await Promise.all([loadActivities(), loadHistory(), loadIssue()]);
             return;
           }
           toast.error(
@@ -292,7 +363,7 @@ const QueriesDetail = () => {
           );
           if (isIssueApiSuccess(response)) {
             toast.success('Attachment removed');
-            await loadActivities();
+            await Promise.all([loadActivities(), loadHistory()]);
             return;
           }
           toast.error(
@@ -317,14 +388,35 @@ const QueriesDetail = () => {
     return activities;
   }, [activities, activityFilter]);
 
+  const activityAttachments = useMemo(
+    () =>
+      activities.flatMap(activity =>
+        (activity.attachments || []).map(attachment => ({
+          ...attachment,
+          activity,
+        })),
+      ),
+    [activities],
+  );
+
+  const issueAttachments = issue?.attachments || [];
+  const attachmentCount = issueAttachments.length + activityAttachments.length;
+
   const caseReference =
     issue?.internalReferenceNumber || issue?.caseTitle || issue?.id || '';
+  const caseTitle = issue?.caseTitle || caseReference;
+  const hasDistinctReference =
+    Boolean(issue?.internalReferenceNumber) &&
+    String(issue.internalReferenceNumber).trim() !==
+      String(issue?.caseTitle || '').trim();
   const statusLabel = issue?.issueStatus || issue?.status || 'Open';
   const statusColor = getStatusColor(statusLabel);
   const isResolved =
     String(statusLabel).toLowerCase().includes('closed') ||
     String(statusLabel).toLowerCase().includes('resolved') ||
     Boolean(issue?.resolution && issue.resolution !== '—');
+  const complaintTypeLabel =
+    issue?.complaintTypeLabel || issue?.complaintType || '';
 
   const commentUploadProps = {
     maxCount: 1,
@@ -352,30 +444,13 @@ const QueriesDetail = () => {
             <p className="text-xs font-medium text-slate-500">
               Issues{' '}
               <span className="text-slate-300">/</span>{' '}
-              <span className="font-semibold text-slate-700">
-                #{formatDisplayValue(caseReference)}
-              </span>
+              <span className="font-semibold text-slate-700">Case Details</span>
             </p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 font-poppins sm:text-3xl">
-              {formatDisplayValue(issue?.caseTitle || caseReference)}
+              {hasDistinctReference
+                ? formatDisplayValue(caseTitle)
+                : `Reference ${formatDisplayValue(caseReference)}`}
             </h1>
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-500">
-              <Tag color="blue" className="m-0 rounded-full px-2.5 py-0.5">
-                {formatDisplayValue(
-                  issue?.complaintTypeLabel || issue?.complaintType,
-                )}
-              </Tag>
-              <span className="inline-flex items-center gap-1">
-                <CalendarOutlined />
-                Received {formatDisplayValue(issue?.dateReceived)}
-              </span>
-              {issue?.lastActivityAt ? (
-                <span className="inline-flex items-center gap-1">
-                  <ClockCircleOutlined />
-                  Updated {formatDisplayValue(issue.lastActivityAt)}
-                </span>
-              ) : null}
-            </div>
           </div>
           <Tag
             color={statusColor}
@@ -395,19 +470,11 @@ const QueriesDetail = () => {
             <div className="space-y-5 xl:col-span-8">
               {isResolved && issue.resolution ? (
                 <section className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-5 shadow-sm sm:p-6">
-                  <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="flex items-center gap-2">
-                      <CheckCircleOutlined className="text-emerald-600" />
-                      <h2 className="text-base font-bold text-slate-900">
-                        Resolution & Outcome
-                      </h2>
-                      <Tag color="success" className="m-0 rounded-full">
-                        {statusLabel}
-                      </Tag>
-                    </div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Ref: {formatDisplayValue(caseReference)}
-                    </p>
+                  <div className="mb-3 flex items-center gap-2">
+                    <CheckCircleOutlined className="text-emerald-600" />
+                    <h2 className="text-base font-bold text-slate-900">
+                      Resolution & Outcome
+                    </h2>
                   </div>
                   <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
                     {issue.resolution}
@@ -415,7 +482,6 @@ const QueriesDetail = () => {
                   {issue.dateResolved ? (
                     <p className="mt-4 text-xs text-slate-500">
                       Resolved on {issue.dateResolved}
-                      {issue.ownerTeam ? ` • ${issue.ownerTeam}` : ''}
                     </p>
                   ) : null}
                 </section>
@@ -437,22 +503,115 @@ const QueriesDetail = () => {
                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
                   {formatDisplayValue(issue.description)}
                 </p>
-                <p className="mt-4 text-xs text-slate-500">
-                  Received {formatDisplayValue(issue.dateReceived)}
-                </p>
               </section>
 
-              <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
-                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-base font-bold text-slate-900">
-                      Activity & Messages
-                    </h2>
-                    <Tag className="m-0 rounded-full">
-                      {activities.length} update
-                      {activities.length === 1 ? '' : 's'}
-                    </Tag>
+              <CollapsibleSection
+                title="Attachments"
+                icon={<PaperClipOutlined className="text-blue-600" />}
+                badge={
+                  attachmentCount > 0 ? (
+                    <Tag className="m-0 rounded-full">{attachmentCount}</Tag>
+                  ) : null
+                }
+                subtitle={
+                  attachmentCount > 0
+                    ? `${attachmentCount} file${
+                        attachmentCount === 1 ? '' : 's'
+                      }`
+                    : 'No files attached'
+                }
+                expanded={attachmentsExpanded}
+                onToggle={() => setAttachmentsExpanded(prev => !prev)}>
+                {attachmentCount === 0 ? (
+                  <Empty
+                    description="No attachments yet."
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  />
+                ) : (
+                  <div className="space-y-3">
+                    {issueAttachments.map((attachment, index) => (
+                      <div
+                        key={`issue-${attachment.id || index}`}
+                        className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <FileTextOutlined className="shrink-0 text-slate-500" />
+                          <span className="truncate text-sm font-semibold text-slate-900">
+                            {attachment.name || `Attachment ${index + 1}`}
+                          </span>
+                        </div>
+                        {attachment.url ? (
+                          <Button
+                            type="link"
+                            size="small"
+                            icon={<DownloadOutlined />}
+                            onClick={() =>
+                              window.open(attachment.url, '_blank', 'noopener,noreferrer')
+                            }>
+                            Download
+                          </Button>
+                        ) : null}
+                      </div>
+                    ))}
+
+                    {activityAttachments.map(attachment => {
+                      const downloadKey = `${attachment.activity.id}-${attachment.index}`;
+                      const deleteKey = `${attachment.activity.id}-${attachment.index}`;
+                      return (
+                        <div
+                          key={`activity-${attachment.activity.id}-${attachment.index}`}
+                          className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <FileTextOutlined className="shrink-0 text-slate-500" />
+                            <span className="truncate text-sm font-semibold text-slate-900">
+                              {attachment.name}
+                            </span>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1">
+                            <Button
+                              type="link"
+                              size="small"
+                              icon={<DownloadOutlined />}
+                              loading={downloadingKey === downloadKey}
+                              onClick={() =>
+                                handleDownloadAttachment(
+                                  attachment.activity,
+                                  attachment,
+                                )
+                              }>
+                              Download
+                            </Button>
+                            <Button
+                              type="default"
+                              size="small"
+                              icon={<DeleteOutlined />}
+                              loading={deletingAttachmentKey === deleteKey}
+                              onClick={() =>
+                                handleDeleteAttachment(
+                                  attachment.activity,
+                                  attachment,
+                                )
+                              }>
+                              Remove
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
+                )}
+              </CollapsibleSection>
+
+              <CollapsibleSection
+                title="Activity & Messages"
+                badge={
+                  <Tag className="m-0 rounded-full">
+                    {activities.length} update
+                    {activities.length === 1 ? '' : 's'}
+                  </Tag>
+                }
+                expanded={activityExpanded}
+                onToggle={() => setActivityExpanded(prev => !prev)}
+                headerExtra={
                   <div className="flex flex-wrap gap-2">
                     {[
                       { key: 'all', label: 'All Activity' },
@@ -471,8 +630,7 @@ const QueriesDetail = () => {
                       </button>
                     ))}
                   </div>
-                </div>
-
+                }>
                 <Spin spinning={activitiesLoading}>
                   {filteredActivities.length === 0 ? (
                     <Empty
@@ -600,7 +758,92 @@ const QueriesDetail = () => {
                     </div>
                   )}
                 </Spin>
-              </section>
+              </CollapsibleSection>
+
+              <CollapsibleSection
+                title="History"
+                icon={<ClockCircleOutlined className="text-blue-600" />}
+                badge={
+                  <Tag className="m-0 rounded-full">
+                    {history.length} event{history.length === 1 ? '' : 's'}
+                  </Tag>
+                }
+                expanded={historyExpanded}
+                onToggle={() => setHistoryExpanded(prev => !prev)}>
+                <Spin spinning={historyLoading}>
+                  {history.length === 0 ? (
+                    <Empty
+                      description="No history yet."
+                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    />
+                  ) : (
+                    <div className="relative space-y-4 before:absolute before:bottom-3 before:left-[15px] before:top-3 before:w-px before:bg-slate-200">
+                      {history.map(entry => (
+                        <div key={entry.id} className="relative pl-10">
+                          <span className="absolute left-2 top-3 h-3.5 w-3.5 rounded-full border-2 border-white bg-slate-400 shadow" />
+                          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                              <div>
+                                <p className="text-sm font-semibold text-slate-900">
+                                  {entry.summary}
+                                </p>
+                                <p className="mt-1 text-xs text-slate-500">
+                                  {entry.actorName ||
+                                    entry.actorEmail ||
+                                    'Unknown actor'}
+                                  {' · '}
+                                  {entry.createdAt ||
+                                    formatIssueDateTime(entry.createdAtRaw) ||
+                                    'Date unavailable'}
+                                </p>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-1">
+                                {entry.action ? (
+                                  <Tag
+                                    color={getHistoryActionColor(entry.action)}
+                                    className="m-0 capitalize">
+                                    {String(entry.action).toLowerCase()}
+                                  </Tag>
+                                ) : null}
+                                {entry.entityType ? (
+                                  <Tag className="m-0 capitalize">
+                                    {String(entry.entityType).toLowerCase()}
+                                  </Tag>
+                                ) : null}
+                              </div>
+                            </div>
+                            {entry.changedFields?.length ? (
+                              <ul className="mt-3 space-y-1 border-t border-slate-200 pt-3">
+                                {entry.changedFields.map((field, index) => {
+                                  const label =
+                                    field?.field ||
+                                    field?.name ||
+                                    field?.key ||
+                                    `Field ${index + 1}`;
+                                  const from =
+                                    field?.from ?? field?.oldValue ?? '—';
+                                  const to =
+                                    field?.to ?? field?.newValue ?? '—';
+                                  return (
+                                    <li
+                                      key={`${entry.id}-field-${index}`}
+                                      className="text-xs text-slate-600">
+                                      <span className="font-semibold text-slate-800">
+                                        {label}:
+                                      </span>{' '}
+                                      {String(from)} → {String(to)}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            ) : null}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Spin>
+              </CollapsibleSection>
 
               <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
                 <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
@@ -662,38 +905,21 @@ const QueriesDetail = () => {
 
             <aside className="space-y-5 xl:col-span-4">
               <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
-                <div className="mb-3 flex items-center justify-between gap-2">
-                  <h2 className="text-base font-bold text-slate-900">
-                    Query Summary
-                  </h2>
-                  <Tag
-                    color={statusColor}
-                    className="m-0 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase">
-                    {statusLabel}
-                  </Tag>
-                </div>
+                <h2 className="mb-3 text-base font-bold text-slate-900">
+                  Query Summary
+                </h2>
 
                 <SectionLabel>Case Overview</SectionLabel>
-                <SummaryRow label="Case Title">
-                  {formatDisplayValue(issue.caseTitle)}
-                </SummaryRow>
-                <SummaryRow label="Reference">
-                  {formatDisplayValue(issue.internalReferenceNumber)}
-                </SummaryRow>
+                {hasDistinctReference ? (
+                  <SummaryRow label="Reference">
+                    {formatDisplayValue(issue.internalReferenceNumber)}
+                  </SummaryRow>
+                ) : null}
                 <SummaryRow label="Issue Type">
                   {formatDisplayValue(issue.issueType)}
                 </SummaryRow>
-                <SummaryRow label="Status">
-                  <Tag
-                    color={statusColor}
-                    className="m-0 rounded-full px-2 py-0.5 text-xs font-semibold capitalize">
-                    {formatDisplayValue(issue.issueStatus || statusLabel)}
-                  </Tag>
-                </SummaryRow>
                 <SummaryRow label="Complaint Type">
-                  {formatDisplayValue(
-                    issue.complaintTypeLabel || issue.complaintType,
-                  )}
+                  {formatDisplayValue(complaintTypeLabel)}
                 </SummaryRow>
 
                 <SectionLabel>Dates</SectionLabel>
@@ -737,13 +963,8 @@ const QueriesDetail = () => {
                   Need further assistance?
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                  Use the comment box to follow up with the{' '}
-                  {formatDisplayValue(issue.ownerTeam || 'assigned')} team. Quote
-                  reference{' '}
-                  <span className="font-semibold text-slate-800">
-                    {formatDisplayValue(caseReference)}
-                  </span>{' '}
-                  when contacting support.
+                  Use the comment box below to follow up. Include your case
+                  reference from the summary when contacting support.
                 </p>
               </section>
             </aside>
