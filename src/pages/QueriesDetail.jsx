@@ -120,6 +120,53 @@ const SectionLabel = ({ children }) => (
   </p>
 );
 
+const AttachmentCard = ({
+  name,
+  createdAt,
+  downloading,
+  onDownload,
+  onRemove,
+  removing,
+}) => (
+  <div className="flex w-[112px] flex-col items-center rounded-lg border border-slate-200 bg-white px-2 py-2 text-center shadow-sm">
+    <div className="mb-1.5 flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-slate-50">
+      <FileTextOutlined className="text-[22px] text-red-500" />
+    </div>
+    <p
+      className="w-full break-words text-[11px] font-semibold leading-[1.2] text-slate-800"
+      title={name}>
+      {name || 'Attachment'}
+    </p>
+    {createdAt ? (
+      <p className="mt-0.5 text-[9px] leading-none text-slate-400">{createdAt}</p>
+    ) : null}
+    <div className="mt-1.5 flex items-center gap-3 text-slate-600">
+      {onDownload ? (
+        <button
+          type="button"
+          className="inline-flex items-center justify-center transition hover:text-blue-600 disabled:opacity-50"
+          onClick={onDownload}
+          disabled={downloading}
+          title="Download"
+          aria-label="Download attachment">
+          <DownloadOutlined className="text-sm" />
+        </button>
+      ) : null}
+      {onRemove ? (
+        <button
+          type="button"
+          className="inline-flex items-center justify-center transition hover:text-red-600 disabled:opacity-50"
+          onClick={onRemove}
+          disabled={removing}
+          title="Remove"
+          aria-label="Remove attachment">
+          <DeleteOutlined className="text-sm" />
+        </button>
+      ) : null}
+    </div>
+  </div>
+);
+
 const QueriesDetail = () => {
   const navigate = useNavigate();
   const { issueId } = useParams();
@@ -241,36 +288,38 @@ const QueriesDetail = () => {
     }
   };
 
+  const resolveActivityAttachmentUrl = async (activity, attachment) => {
+    if (attachment?.url) return attachment.url;
+
+    const response = await downloadPortalIssueActivityAttachment(
+      issueId,
+      activity.id,
+      attachment.index,
+    );
+
+    if (!isIssueApiSuccess(response)) {
+      throw new Error(
+        getIssueApiErrorMessage(response, 'Failed to open attachment'),
+      );
+    }
+
+    const downloadInfo = parseAttachmentDownloadResponse(response);
+    if (!downloadInfo?.url) {
+      throw new Error('Download link was not returned by the server.');
+    }
+
+    return downloadInfo.url;
+  };
+
   const handleDownloadAttachment = async (activity, attachment) => {
     const downloadKey = `${activity.id}-${attachment.index}`;
     setDownloadingKey(downloadKey);
 
     try {
-      const response = await downloadPortalIssueActivityAttachment(
-        issueId,
-        activity.id,
-        attachment.index,
-      );
-
-      if (!isIssueApiSuccess(response)) {
-        toast.error(
-          getIssueApiErrorMessage(response, 'Failed to download attachment'),
-        );
-        return;
-      }
-
-      const downloadInfo = parseAttachmentDownloadResponse(response);
-      if (!downloadInfo?.url) {
-        toast.error('Download link was not returned by the server.');
-        return;
-      }
-
-      triggerUrlDownload(
-        downloadInfo.url,
-        downloadInfo.filename || attachment.name || 'attachment',
-      );
+      const url = await resolveActivityAttachmentUrl(activity, attachment);
+      triggerUrlDownload(url, attachment.name || 'attachment');
     } catch (error) {
-      toast.error('Failed to download attachment');
+      toast.error(error?.message || 'Failed to download attachment');
     } finally {
       setDownloadingKey('');
     }
@@ -449,7 +498,7 @@ const QueriesDetail = () => {
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 font-poppins sm:text-3xl">
               {hasDistinctReference
                 ? formatDisplayValue(caseTitle)
-                : `Reference ${formatDisplayValue(caseReference)}`}
+                : `Case ${formatDisplayValue(caseReference)}`}
             </h1>
           </div>
           <Tag
@@ -528,73 +577,47 @@ const QueriesDetail = () => {
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
                   />
                 ) : (
-                  <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
                     {issueAttachments.map((attachment, index) => (
-                      <div
+                      <AttachmentCard
                         key={`issue-${attachment.id || index}`}
-                        className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex min-w-0 items-center gap-2">
-                          <FileTextOutlined className="shrink-0 text-slate-500" />
-                          <span className="truncate text-sm font-semibold text-slate-900">
-                            {attachment.name || `Attachment ${index + 1}`}
-                          </span>
-                        </div>
-                        {attachment.url ? (
-                          <Button
-                            type="link"
-                            size="small"
-                            icon={<DownloadOutlined />}
-                            onClick={() =>
-                              window.open(attachment.url, '_blank', 'noopener,noreferrer')
-                            }>
-                            Download
-                          </Button>
-                        ) : null}
-                      </div>
+                        name={attachment.name || `Attachment ${index + 1}`}
+                        createdAt={attachment.createdAt}
+                        onDownload={
+                          attachment.url
+                            ? () =>
+                                triggerUrlDownload(
+                                  attachment.url,
+                                  attachment.name || 'attachment',
+                                )
+                            : undefined
+                        }
+                      />
                     ))}
 
                     {activityAttachments.map(attachment => {
                       const downloadKey = `${attachment.activity.id}-${attachment.index}`;
                       const deleteKey = `${attachment.activity.id}-${attachment.index}`;
                       return (
-                        <div
+                        <AttachmentCard
                           key={`activity-${attachment.activity.id}-${attachment.index}`}
-                          className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="flex min-w-0 items-center gap-2">
-                            <FileTextOutlined className="shrink-0 text-slate-500" />
-                            <span className="truncate text-sm font-semibold text-slate-900">
-                              {attachment.name}
-                            </span>
-                          </div>
-                          <div className="flex shrink-0 items-center gap-1">
-                            <Button
-                              type="link"
-                              size="small"
-                              icon={<DownloadOutlined />}
-                              loading={downloadingKey === downloadKey}
-                              onClick={() =>
-                                handleDownloadAttachment(
-                                  attachment.activity,
-                                  attachment,
-                                )
-                              }>
-                              Download
-                            </Button>
-                            <Button
-                              type="default"
-                              size="small"
-                              icon={<DeleteOutlined />}
-                              loading={deletingAttachmentKey === deleteKey}
-                              onClick={() =>
-                                handleDeleteAttachment(
-                                  attachment.activity,
-                                  attachment,
-                                )
-                              }>
-                              Remove
-                            </Button>
-                          </div>
-                        </div>
+                          name={attachment.name}
+                          createdAt={attachment.createdAt}
+                          downloading={downloadingKey === downloadKey}
+                          removing={deletingAttachmentKey === deleteKey}
+                          onDownload={() =>
+                            handleDownloadAttachment(
+                              attachment.activity,
+                              attachment,
+                            )
+                          }
+                          onRemove={() =>
+                            handleDeleteAttachment(
+                              attachment.activity,
+                              attachment,
+                            )
+                          }
+                        />
                       );
                     })}
                   </div>
@@ -705,49 +728,30 @@ const QueriesDetail = () => {
                             ) : null}
 
                             {activity.attachments?.length ? (
-                              <div className="mt-3 space-y-2">
+                              <div className="mt-3 flex flex-wrap gap-2">
                                 {activity.attachments.map(attachment => {
                                   const downloadKey = `${activity.id}-${attachment.index}`;
                                   const deleteKey = `${activity.id}-${attachment.index}`;
                                   return (
-                                    <div
+                                    <AttachmentCard
                                       key={`${activity.id}-${attachment.index}`}
-                                      className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
-                                      <div className="flex min-w-0 items-center gap-2">
-                                        <PaperClipOutlined className="text-slate-500" />
-                                        <span className="truncate text-sm font-medium text-slate-800">
-                                          {attachment.name}
-                                        </span>
-                                      </div>
-                                      <div className="flex shrink-0 items-center gap-1">
-                                        <Button
-                                          type="link"
-                                          size="small"
-                                          icon={<DownloadOutlined />}
-                                          loading={downloadingKey === downloadKey}
-                                          onClick={() =>
-                                            handleDownloadAttachment(
-                                              activity,
-                                              attachment,
-                                            )
-                                          }>
-                                          Download
-                                        </Button>
-                                        <Button
-                                          type="default"
-                                          size="small"
-                                          icon={<DeleteOutlined />}
-                                          loading={deletingAttachmentKey === deleteKey}
-                                          onClick={() =>
-                                            handleDeleteAttachment(
-                                              activity,
-                                              attachment,
-                                            )
-                                          }>
-                                          Remove
-                                        </Button>
-                                      </div>
-                                    </div>
+                                      name={attachment.name}
+                                      createdAt={attachment.createdAt}
+                                      downloading={downloadingKey === downloadKey}
+                                      removing={deletingAttachmentKey === deleteKey}
+                                      onDownload={() =>
+                                        handleDownloadAttachment(
+                                          activity,
+                                          attachment,
+                                        )
+                                      }
+                                      onRemove={() =>
+                                        handleDeleteAttachment(
+                                          activity,
+                                          attachment,
+                                        )
+                                      }
+                                    />
                                   );
                                 })}
                               </div>

@@ -12,8 +12,8 @@ export const createEventRegistrationRequest = (data) => {
   return event_request.post('/api/registrations', data);
 };
 
-export const fetchMyRegistrationsRequest = (profileId) => {
-  return event_request.get(`/api/registrations/profile/${profileId}`);
+export const fetchMyRegistrationsRequest = () => {
+  return event_request.get('/api/registrations/mine');
 };
 
 export const cancelRegistrationRequest = (id) => {

@@ -454,8 +454,7 @@ const Dashboard = () => {
     const loadEvents = async () => {
       try {
         setEventsLoading(true);
-        const profileId = profileDetail?.profileId;
-        const registrationsRes = await fetchMyRegistrations(profileId);
+        const registrationsRes = await fetchMyRegistrations();
         const regs = registrationsRes
           ? parseRegistrationsResponse(registrationsRes)
           : [];
@@ -469,7 +468,7 @@ const Dashboard = () => {
     };
 
     loadEvents();
-  }, [profileDetail?.profileId]);
+  }, []);
 
   const paymentsBillingSection = (
     <PaymentsBillingCard

@@ -42,7 +42,7 @@ const excludePast = items =>
 const EventsAndCourses = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { profileDetail, getProfileDetail } = useProfile();
+  const { getProfileDetail } = useProfile();
 
   const initialFilter = (() => {
     const type = searchParams.get('type');
@@ -64,11 +64,10 @@ const EventsAndCourses = () => {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const profileId = profileDetail?.profileId;
       const [eventsRes, coursesRes, registrationsRes] = await Promise.all([
         fetchPublishedEvents(),
         fetchPublishedCourses(),
-        fetchMyRegistrations(profileId),
+        fetchMyRegistrations(),
       ]);
 
       const eventsOk = eventsRes?.status >= 200 && eventsRes?.status < 300;
@@ -103,7 +102,7 @@ const EventsAndCourses = () => {
     } finally {
       setLoading(false);
     }
-  }, [profileDetail?.profileId]);
+  }, []);
 
   useEffect(() => {
     getProfileDetail?.();
