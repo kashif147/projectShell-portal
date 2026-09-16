@@ -19,12 +19,12 @@ export const uploadIssueAttachments = (issueId, files = []) => {
   files.forEach(file => {
     const uploadFile = file?.originFileObj || file;
     if (uploadFile) {
-      formData.append('file', uploadFile);
+      formData.append('files', uploadFile);
     }
   });
 
   return issue_request.post(
-    `${PORTAL_ISSUES_BASE}/${issueId}/activities`,
+    `${PORTAL_ISSUES_BASE}/${issueId}/attachments`,
     formData,
   );
 };

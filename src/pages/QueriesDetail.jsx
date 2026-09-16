@@ -10,8 +10,10 @@ import {
   DownOutlined,
   DownloadOutlined,
   EditOutlined,
+  EyeOutlined,
   FileTextOutlined,
   PaperClipOutlined,
+  PlusOutlined,
   SendOutlined,
   TeamOutlined,
   UpOutlined,
@@ -27,10 +29,12 @@ import {
   fetchPortalIssueById,
   fetchPortalIssueHistory,
   updatePortalIssueActivity,
+  uploadIssueAttachments,
 } from '../api/issue.api';
 import {
   formatDisplayValue,
   formatIssueDateTime,
+  findMatchingActivityAttachment,
   getHistoryActionColor,
   getIssueApiErrorMessage,
   isIssueApiSuccess,
@@ -124,6 +128,7 @@ const AttachmentCard = ({
   name,
   createdAt,
   downloading,
+  onView,
   onDownload,
   onRemove,
   removing,
@@ -133,14 +138,25 @@ const AttachmentCard = ({
       <FileTextOutlined className="text-[22px] text-red-500" />
     </div>
     <p
-      className="w-full break-words text-[11px] font-semibold leading-[1.2] text-slate-800"
+      className="w-full truncate text-[11px] font-semibold leading-[1.2] text-slate-800"
       title={name}>
       {name || 'Attachment'}
     </p>
     {createdAt ? (
       <p className="mt-0.5 text-[9px] leading-none text-slate-400">{createdAt}</p>
     ) : null}
-    <div className="mt-1.5 flex items-center gap-3 text-slate-600">
+    <div className="mt-1.5 flex items-center gap-3 text-slate-700">
+      {onView ? (
+        <button
+          type="button"
+          className="inline-flex items-center justify-center transition hover:text-blue-600 disabled:opacity-50"
+          onClick={onView}
+          disabled={downloading}
+          title="View"
+          aria-label="View attachment">
+          <EyeOutlined className="text-sm" />
+        </button>
+      ) : null}
       {onDownload ? (
         <button
           type="button"
@@ -167,6 +183,28 @@ const AttachmentCard = ({
   </div>
 );
 
+const UploadNewCard = ({ uploading, uploadProps, disabled }) => (
+  <Upload {...uploadProps} disabled={disabled || uploading} showUploadList={false}>
+    <button
+      type="button"
+      disabled={disabled || uploading}
+      className="flex w-[112px] flex-col items-center rounded-lg bg-transparent px-2 py-2 text-center disabled:opacity-50"
+      title="Upload new attachment"
+      aria-label="Upload new attachment">
+      <div className="mb-1.5 flex h-11 w-11 items-center justify-center rounded-lg bg-slate-900 text-white shadow-sm">
+        {uploading ? (
+          <Spin size="small" />
+        ) : (
+          <PlusOutlined className="text-lg" />
+        )}
+      </div>
+      <p className="w-full text-[11px] font-semibold leading-[1.2] text-slate-800">
+        {uploading ? 'Uploading…' : 'Upload New'}
+      </p>
+    </button>
+  </Upload>
+);
+
 const QueriesDetail = () => {
   const navigate = useNavigate();
   const { issueId } = useParams();
@@ -186,6 +224,7 @@ const QueriesDetail = () => {
   const [savingActivityId, setSavingActivityId] = useState('');
   const [deletingActivityId, setDeletingActivityId] = useState('');
   const [deletingAttachmentKey, setDeletingAttachmentKey] = useState('');
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [attachmentsExpanded, setAttachmentsExpanded] = useState(true);
   const [activityExpanded, setActivityExpanded] = useState(true);
   const [historyExpanded, setHistoryExpanded] = useState(true);
@@ -286,6 +325,54 @@ const QueriesDetail = () => {
     } finally {
       setSubmittingComment(false);
     }
+  };
+
+  const handleDownloadIssueAttachment = async attachment => {
+    const match = findMatchingActivityAttachment(activities, attachment);
+    if (match) {
+      await handleDownloadAttachment(match.activity, match.attachment);
+      return;
+    }
+
+    if (attachment?.url) {
+      triggerUrlDownload(attachment.url, attachment.name || 'attachment');
+      return;
+    }
+
+    toast.error('Unable to download this attachment.');
+  };
+
+  const handleDeleteIssueAttachment = attachment => {
+    const match = findMatchingActivityAttachment(activities, attachment);
+    if (match) {
+      handleDeleteAttachment(match.activity, match.attachment);
+      return;
+    }
+
+    toast.error('Unable to remove this attachment.');
+  };
+
+  const handleUploadIssueAttachments = async file => {
+    if (!file || !issueId) return false;
+
+    setUploadingAttachment(true);
+    try {
+      const response = await uploadIssueAttachments(issueId, [file]);
+      if (isIssueApiSuccess(response)) {
+        toast.success('Attachment uploaded');
+        await Promise.all([loadIssue(), loadActivities(), loadHistory()]);
+      } else {
+        toast.error(
+          getIssueApiErrorMessage(response, 'Failed to upload attachment'),
+        );
+      }
+    } catch (error) {
+      toast.error('Failed to upload attachment');
+    } finally {
+      setUploadingAttachment(false);
+    }
+
+    return false;
   };
 
   const resolveActivityAttachmentUrl = async (activity, attachment) => {
@@ -412,7 +499,7 @@ const QueriesDetail = () => {
           );
           if (isIssueApiSuccess(response)) {
             toast.success('Attachment removed');
-            await Promise.all([loadActivities(), loadHistory()]);
+            await Promise.all([loadActivities(), loadHistory(), loadIssue()]);
             return;
           }
           toast.error(
@@ -437,19 +524,8 @@ const QueriesDetail = () => {
     return activities;
   }, [activities, activityFilter]);
 
-  const activityAttachments = useMemo(
-    () =>
-      activities.flatMap(activity =>
-        (activity.attachments || []).map(attachment => ({
-          ...attachment,
-          activity,
-        })),
-      ),
-    [activities],
-  );
-
   const issueAttachments = issue?.attachments || [];
-  const attachmentCount = issueAttachments.length + activityAttachments.length;
+  const attachmentCount = issueAttachments.length;
 
   const caseReference =
     issue?.internalReferenceNumber || issue?.caseTitle || issue?.id || '';
@@ -473,6 +549,16 @@ const QueriesDetail = () => {
     showUploadList: false,
     beforeUpload: file => {
       setCommentFile(file);
+      return false;
+    },
+  };
+
+  const issueAttachmentUploadProps = {
+    maxCount: 1,
+    accept: '.pdf,.png,.jpg,.jpeg,.docx',
+    showUploadList: false,
+    beforeUpload: file => {
+      handleUploadIssueAttachments(file);
       return false;
     },
   };
@@ -571,57 +657,38 @@ const QueriesDetail = () => {
                 }
                 expanded={attachmentsExpanded}
                 onToggle={() => setAttachmentsExpanded(prev => !prev)}>
-                {attachmentCount === 0 ? (
-                  <Empty
-                    description="No attachments yet."
-                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  />
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {issueAttachments.map((attachment, index) => (
+                <div className="flex flex-wrap gap-2">
+                  {issueAttachments.map((attachment, index) => {
+                    const match = findMatchingActivityAttachment(
+                      activities,
+                      attachment,
+                    );
+                    const actionKey = match
+                      ? `${match.activity.id}-${match.attachment.index}`
+                      : `issue-${attachment.index ?? index}`;
+                    return (
                       <AttachmentCard
                         key={`issue-${attachment.id || index}`}
                         name={attachment.name || `Attachment ${index + 1}`}
                         createdAt={attachment.createdAt}
-                        onDownload={
-                          attachment.url
-                            ? () =>
-                                triggerUrlDownload(
-                                  attachment.url,
-                                  attachment.name || 'attachment',
-                                )
-                            : undefined
+                        downloading={downloadingKey === actionKey}
+                        removing={deletingAttachmentKey === actionKey}
+                        onDownload={() =>
+                          handleDownloadIssueAttachment(attachment)
+                        }
+                        onRemove={() =>
+                          handleDeleteIssueAttachment(attachment)
                         }
                       />
-                    ))}
+                    );
+                  })}
 
-                    {activityAttachments.map(attachment => {
-                      const downloadKey = `${attachment.activity.id}-${attachment.index}`;
-                      const deleteKey = `${attachment.activity.id}-${attachment.index}`;
-                      return (
-                        <AttachmentCard
-                          key={`activity-${attachment.activity.id}-${attachment.index}`}
-                          name={attachment.name}
-                          createdAt={attachment.createdAt}
-                          downloading={downloadingKey === downloadKey}
-                          removing={deletingAttachmentKey === deleteKey}
-                          onDownload={() =>
-                            handleDownloadAttachment(
-                              attachment.activity,
-                              attachment,
-                            )
-                          }
-                          onRemove={() =>
-                            handleDeleteAttachment(
-                              attachment.activity,
-                              attachment,
-                            )
-                          }
-                        />
-                      );
-                    })}
-                  </div>
-                )}
+                  <UploadNewCard
+                    uploading={uploadingAttachment}
+                    uploadProps={issueAttachmentUploadProps}
+                    disabled={isResolved || uploadingAttachment}
+                  />
+                </div>
               </CollapsibleSection>
 
               <CollapsibleSection
