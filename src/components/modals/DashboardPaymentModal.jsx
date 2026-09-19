@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import {
   Modal,
   Form,
@@ -21,6 +21,14 @@ import { useLookup } from '../../contexts/lookupContext';
 import Spinner from '../common/Spinner';
 import { useProfile } from '../../contexts/profileContext';
 import { resolvePaymentIntentOutcome } from '../../helpers/paymentIntent.helper';
+import CardProviderSelector from '../payments/CardProviderSelector';
+import GlobalPaymentsCardForm from '../payments/GlobalPaymentsCardForm';
+import {
+  CARD_PROVIDERS,
+  getDefaultCardProvider,
+  resolveCardProvider,
+  shouldShowProviderSelector,
+} from '../../constants/paymentProviders';
 
 const DashboardPaymentModal = ({
   isVisible,
@@ -35,6 +43,10 @@ const DashboardPaymentModal = ({
   const [form] = Form.useForm();
   const stripe = useStripe();
   const elements = useElements();
+  const providerResolution = useMemo(() => resolveCardProvider(), []);
+  const [selectedProvider, setSelectedProvider] = useState(() =>
+    getDefaultCardProvider(providerResolution),
+  );
   const [loading, setLoading] = useState(false);
   const [editablePrice, setEditablePrice] = useState(0);
   const [clientSecret, setClientSecret] = useState(null);
@@ -52,6 +64,14 @@ const DashboardPaymentModal = ({
   const { userDetail, user } = useSelector(state => state.auth);
   const { personalDetail, categoryData, categoryLoading, getCategoryData } = useApplication();
   const { categoryLookups } = useLookup();
+  const isStripe = selectedProvider === CARD_PROVIDERS.STRIPE;
+  const showSelector = shouldShowProviderSelector(providerResolution);
+
+  useEffect(() => {
+    if (!isVisible) {
+      setSelectedProvider(getDefaultCardProvider(providerResolution));
+    }
+  }, [isVisible, providerResolution]);
 
   // Debug: Log user data structure
   useEffect(() => {
@@ -254,6 +274,12 @@ const DashboardPaymentModal = ({
     }
   };
 
+  const amountInCents = Math.round((editablePrice || 0) * 100);
+  const payCurrency = categoryData?.currentPricing?.currency || 'eur';
+  const memberId = profileDetail?.membershipNumber;
+  const userId = userDetail?.id || userDetail?._id;
+  const tenantId = userDetail?.tenantId || userDetail?.userTenantId;
+
   return (
     <Modal
       title={null}
@@ -297,6 +323,14 @@ const DashboardPaymentModal = ({
           form={form}
           layout="vertical"
           className="space-y-5">
+          {showSelector && (
+            <CardProviderSelector
+              value={selectedProvider}
+              onChange={setSelectedProvider}
+              providers={providerResolution?.providers}
+              disabled={loading}
+            />
+          )}
           
           {/* Membership Category Details - Modern Card */}
           {categoryData && (
@@ -458,6 +492,8 @@ const DashboardPaymentModal = ({
             </div>
           </div>
 
+          {isStripe ? (
+            <>
           {/* Card Number - Modern Style */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -474,92 +510,51 @@ const DashboardPaymentModal = ({
                   options={ELEMENT_OPTIONS}
                   onChange={(e) => {
                     setCardComplete(prev => ({ ...prev, cardNumber: e.complete }));
-                    // Auto-focus expiry field when card number is complete
                     if (e.complete && cardExpiryRef.current) {
                       cardExpiryRef.current.focus();
                     }
                   }}
                 />
               </div>
-              {cardComplete.cardNumber && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Expiry & CVC - Modern Style */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 <span className="text-red-500 mr-1">*</span>Expiry Date
               </label>
-              <div className="relative group">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div className="pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
-                  <CardExpiryElement
-                    onReady={element => (cardExpiryRef.current = element)}
-                    options={ELEMENT_OPTIONS}
-                    onChange={(e) => {
-                      setCardComplete(prev => ({ ...prev, cardExpiry: e.complete }));
-                      // Auto-focus CVC field when expiry is complete
-                      if (e.complete && cardCvcRef.current) {
-                        cardCvcRef.current.focus();
-                      }
-                    }}
-                  />
-                </div>
-                {cardComplete.cardExpiry && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                )}
+              <div className="pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm">
+                <CardExpiryElement
+                  onReady={element => (cardExpiryRef.current = element)}
+                  options={ELEMENT_OPTIONS}
+                  onChange={(e) => {
+                    setCardComplete(prev => ({ ...prev, cardExpiry: e.complete }));
+                    if (e.complete && cardCvcRef.current) {
+                      cardCvcRef.current.focus();
+                    }
+                  }}
+                />
               </div>
             </div>
-
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 <span className="text-red-500 mr-1">*</span>Security Code
               </label>
-              <div className="relative group">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
-                <div className="pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
-                  <CardCvcElement
-                    onReady={element => (cardCvcRef.current = element)}
-                    options={ELEMENT_OPTIONS}
-                    onChange={(e) => {
-                      setCardComplete(prev => ({ ...prev, cardCvc: e.complete }));
-                    }}
-                  />
-                </div>
-                {cardComplete.cardCvc && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                )}
+              <div className="pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm">
+                <CardCvcElement
+                  onReady={element => (cardCvcRef.current = element)}
+                  options={ELEMENT_OPTIONS}
+                  onChange={(e) => {
+                    setCardComplete(prev => ({ ...prev, cardCvc: e.complete }));
+                  }}
+                />
               </div>
             </div>
           </div>
 
-          {/* Divider */}
           <div className="border-t border-gray-200 my-6"></div>
 
-          {/* Footer with Total and Pay Button */}
           <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-indigo-50 rounded-xl border border-gray-200">
             <div>
               <p className="text-xs text-gray-500 mb-1">Total Amount</p>
@@ -577,13 +572,57 @@ const DashboardPaymentModal = ({
             </Button>
           </div>
 
-          {/* Security Notice */}
           <div className="flex items-center justify-center text-xs text-gray-500 mt-4">
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
             Secure payment powered by Stripe
           </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-indigo-50 rounded-xl border border-gray-200">
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Total Amount</p>
+                  <p className="text-2xl font-bold text-gray-800">
+                    {formatCurrency(editablePrice)}
+                  </p>
+                </div>
+              </div>
+              <GlobalPaymentsCardForm
+                amount={amountInCents}
+                currency={payCurrency}
+                purpose="subscriptionFee"
+                submitLabel="Pay Now"
+                disabled={!editablePrice || editablePrice <= 0}
+                metadata={{
+                  memberId,
+                  description: 'Membership payment from dashboard',
+                  tenantId,
+                  userId,
+                  membershipCategory,
+                  paymentType: 'Card Payment',
+                }}
+                onSuccess={result => {
+                  onSuccess?.({
+                    paymentMethod: 'card',
+                    provider: CARD_PROVIDERS.GLOBAL_PAYMENTS,
+                    total: editablePrice,
+                    paymentDetails: {
+                      name:
+                        user?.userFirstName && user?.userLastName
+                          ? `${user.userFirstName} ${user.userLastName}`
+                          : userDetail?.userName || '',
+                      email: user?.userEmail || userDetail?.userEmail || '',
+                    },
+                    customPrice: editablePrice,
+                    ...result,
+                  });
+                }}
+                onFailure={message => onFailure?.(message)}
+              />
+              <div className="flex items-center justify-center text-xs text-gray-500 mt-4">
+                Secure payment powered by Global Payments
+              </div>
+            </>
+          )}
         </Form>
       )}
     </Modal>

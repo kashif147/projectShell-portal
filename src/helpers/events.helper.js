@@ -920,6 +920,7 @@ export const buildEventsRegistrationPayload = ({
   paymentMethod = 'stripe',
   registeredVia = 'portal',
   stripePaymentIntentId,
+  globalPaymentsTransactionId,
 } = {}) => {
   const id = eventId || courseId || event?.id;
   const registrationType = 'event';
@@ -950,6 +951,10 @@ export const buildEventsRegistrationPayload = ({
 
   if (stripePaymentIntentId) {
     payload.stripePaymentIntentId = stripePaymentIntentId;
+  }
+
+  if (globalPaymentsTransactionId) {
+    payload.globalPaymentsTransactionId = globalPaymentsTransactionId;
   }
 
   return payload;

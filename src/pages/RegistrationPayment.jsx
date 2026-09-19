@@ -22,6 +22,14 @@ import {
   getOrCreateRegistrationPaymentIntent,
   resolvePaymentIntentOutcome,
 } from '../helpers/paymentIntent.helper';
+import CardProviderSelector from '../components/payments/CardProviderSelector';
+import GlobalPaymentsCardForm from '../components/payments/GlobalPaymentsCardForm';
+import {
+  CARD_PROVIDERS,
+  getDefaultCardProvider,
+  resolveCardProvider,
+  shouldShowProviderSelector,
+} from '../constants/paymentProviders';
 
 const formatCurrency = value => {
   const amount = Number(value) || 0;
@@ -104,6 +112,12 @@ const RegistrationPayment = () => {
     message: '',
   });
   const [retryKey, setRetryKey] = useState(0);
+  const providerResolution = useMemo(() => resolveCardProvider(), []);
+  const [selectedProvider, setSelectedProvider] = useState(() =>
+    getDefaultCardProvider(providerResolution),
+  );
+  const isStripe = selectedProvider === CARD_PROVIDERS.STRIPE;
+  const showSelector = shouldShowProviderSelector(providerResolution);
 
   const cardExpiryRef = useRef(null);
   const cardCvcRef = useRef(null);
@@ -130,13 +144,14 @@ const RegistrationPayment = () => {
   const isReady = useMemo(() => {
     if (!nameOnCard.trim() || !email.trim()) return false;
     if (isFree) return true;
+    if (!isStripe) return true; // GP form handles its own submit
     return (
       Boolean(clientSecret) &&
       isCardReady &&
       Boolean(stripe) &&
       Boolean(elements)
     );
-  }, [nameOnCard, email, isFree, clientSecret, isCardReady, stripe, elements]);
+  }, [nameOnCard, email, isFree, isStripe, clientSecret, isCardReady, stripe, elements]);
 
   useEffect(() => {
     if (!location.state || !registrationEntityId) {
@@ -144,7 +159,7 @@ const RegistrationPayment = () => {
       return undefined;
     }
 
-    if (isFree) {
+    if (isFree || !isStripe) {
       setInitLoading(false);
       setClientSecret(null);
       clientSecretRef.current = null;
@@ -227,9 +242,13 @@ const RegistrationPayment = () => {
     // Intentionally omit userId/tenantId/lineItems so auth hydration does not
     // cancel a successful intent and leave the UI stuck loading.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [registrationEntityId, isFree, isCourse, amountInCents, title, retryKey]);
+  }, [registrationEntityId, isFree, isStripe, isCourse, amountInCents, title, retryKey]);
 
-  const submitRegistration = async stripePaymentIntentId => {
+  const submitRegistration = async ({
+    stripePaymentIntentId,
+    globalPaymentsTransactionId,
+    paymentMethod = 'stripe',
+  } = {}) => {
     const registrationPayload = buildEventsRegistrationPayload({
       source,
       eventId: paymentPayload.eventId,
@@ -238,9 +257,10 @@ const RegistrationPayment = () => {
       lineItems: paymentPayload.lineItems,
       selectedDays: paymentPayload.selectedDays,
       profile: paymentPayload.registrationProfile,
-      paymentMethod: 'stripe',
+      paymentMethod,
       registeredVia: 'portal',
       stripePaymentIntentId,
+      globalPaymentsTransactionId,
     });
 
     if (!registrationPayload.profile?.email) {
@@ -330,7 +350,10 @@ const RegistrationPayment = () => {
           paymentIntent?.id || stripePaymentIntentIdRef.current;
       }
 
-      await submitRegistration(stripePaymentIntentId);
+      await submitRegistration({
+        stripePaymentIntentId,
+        paymentMethod: 'stripe',
+      });
 
       setStatusModal({
         open: true,
@@ -352,7 +375,7 @@ const RegistrationPayment = () => {
     }
   };
 
-  if (!title || !clientSecret) {
+  if (!location.state || !registrationEntityId) {
     return (
       <div className="space-y-4 sm:space-y-6">
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -437,6 +460,14 @@ const RegistrationPayment = () => {
           </div>
         ) : (
           <Form layout="vertical" className="space-y-5">
+            {!isFree && showSelector && (
+              <CardProviderSelector
+                value={selectedProvider}
+                onChange={setSelectedProvider}
+                providers={providerResolution?.providers}
+                disabled={isPaying || initLoading}
+              />
+            )}
             <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border border-indigo-200 shadow-sm">
               <div className="relative p-5">
                 <div className="flex items-start justify-between mb-3">
@@ -498,7 +529,7 @@ const RegistrationPayment = () => {
               Auto-fill from profile
             </button>
 
-            {!isFree ? (
+            {!isFree && isStripe ? (
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   <span className="text-red-500 mr-1">*</span>Card Details
@@ -553,6 +584,55 @@ const RegistrationPayment = () => {
                   </div>
                 </div>
               </div>
+            ) : !isFree ? (
+              <GlobalPaymentsCardForm
+                amount={amountInCents}
+                currency="eur"
+                purpose="eventRegistration"
+                eventId={registrationEntityId}
+                submitLabel={isCourse ? 'Enroll & Pay' : 'Register & Pay'}
+                disabled={!nameOnCard.trim() || !email.trim() || isPaying}
+                metadata={{
+                  eventId: registrationEntityId,
+                  eventTitle: title,
+                  tenantId,
+                  userId,
+                }}
+                onSuccess={async result => {
+                  try {
+                    setIsPaying(true);
+                    await submitRegistration({
+                      globalPaymentsTransactionId: result.transactionId,
+                      paymentMethod: 'global_payments',
+                    });
+                    setStatusModal({
+                      open: true,
+                      status: 'success',
+                      message: isCourse
+                        ? 'Course registration payment completed successfully.'
+                        : 'Event registration payment completed successfully.',
+                    });
+                  } catch (error) {
+                    console.error('Registration after GP payment failed:', error);
+                    toast.error(error?.message || 'Registration failed.');
+                    setStatusModal({
+                      open: true,
+                      status: 'error',
+                      message: error?.message || 'Registration failed.',
+                    });
+                  } finally {
+                    setIsPaying(false);
+                  }
+                }}
+                onFailure={message => {
+                  toast.error(message || 'Payment failed.');
+                  setStatusModal({
+                    open: true,
+                    status: 'error',
+                    message: message || 'Payment failed.',
+                  });
+                }}
+              />
             ) : (
               <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
                 No payment required for this registration.
@@ -561,43 +641,34 @@ const RegistrationPayment = () => {
 
             <div className="border-t border-gray-200 my-6" />
 
-            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-indigo-50 rounded-xl border border-gray-200">
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Total Amount</p>
-                <p className="text-2xl font-bold text-gray-800">
-                  {formatCurrency(totalCost)}
-                </p>
+            {(isFree || isStripe) && (
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-indigo-50 rounded-xl border border-gray-200">
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Total Amount</p>
+                  <p className="text-2xl font-bold text-gray-800">
+                    {formatCurrency(totalCost)}
+                  </p>
+                </div>
+                <Button
+                  type="primary"
+                  onClick={handlePay}
+                  loading={isPaying}
+                  disabled={!isReady}
+                  className="!h-12 !px-8 !text-base !font-semibold !bg-gradient-to-r !from-indigo-600 !to-purple-600 hover:!from-indigo-700 hover:!to-purple-700 !border-0 !shadow-lg hover:!shadow-xl !transition-all !duration-200 disabled:!bg-gradient-to-r disabled:!from-indigo-300 disabled:!to-purple-300 disabled:!text-white disabled:!opacity-100 disabled:!cursor-not-allowed disabled:!shadow-md">
+                  {isFree
+                    ? isCourse
+                      ? 'Complete Enrollment'
+                      : 'Complete Registration'
+                    : isCourse
+                      ? 'Enroll & Pay'
+                      : 'Register & Pay'}
+                </Button>
               </div>
-              <Button
-                type="primary"
-                onClick={handlePay}
-                loading={isPaying}
-                disabled={!isReady}
-                className="!h-12 !px-8 !text-base !font-semibold !bg-gradient-to-r !from-indigo-600 !to-purple-600 hover:!from-indigo-700 hover:!to-purple-700 !border-0 !shadow-lg hover:!shadow-xl !transition-all !duration-200 disabled:!bg-gradient-to-r disabled:!from-indigo-300 disabled:!to-purple-300 disabled:!text-white disabled:!opacity-100 disabled:!cursor-not-allowed disabled:!shadow-md">
-                {isFree
-                  ? isCourse
-                    ? 'Complete Enrollment'
-                    : 'Complete Registration'
-                  : isCourse
-                    ? 'Enroll & Pay'
-                    : 'Register & Pay'}
-              </Button>
-            </div>
+            )}
 
             <div className="flex items-center justify-center text-xs text-gray-500 mt-4">
-              <svg
-                className="w-4 h-4 mr-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
-              Secure payment powered by Stripe
+              Secure payment powered by{' '}
+              {isFree ? 'portal' : isStripe ? 'Stripe' : 'Global Payments'}
             </div>
           </Form>
         )}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Form, Input, InputNumber } from 'antd';
 import {
   useStripe,
@@ -16,6 +16,14 @@ import { useNavigate } from 'react-router-dom';
 import Spinner from '../../components/common/Spinner';
 import { PaymentStatusModal } from '../../components/modals';
 import { resolvePaymentIntentOutcome } from '../../helpers/paymentIntent.helper';
+import CardProviderSelector from '../../components/payments/CardProviderSelector';
+import GlobalPaymentsCardForm from '../../components/payments/GlobalPaymentsCardForm';
+import {
+  CARD_PROVIDERS,
+  getDefaultCardProvider,
+  resolveCardProvider,
+  shouldShowProviderSelector,
+} from '../../constants/paymentProviders';
 
 const CreditCardPayment = () => {
   const [form] = Form.useForm();
@@ -38,6 +46,12 @@ const CreditCardPayment = () => {
     title: '',
     message: '',
   });
+  const providerResolution = useMemo(() => resolveCardProvider(), []);
+  const [selectedProvider, setSelectedProvider] = useState(() =>
+    getDefaultCardProvider(providerResolution),
+  );
+  const isStripe = selectedProvider === CARD_PROVIDERS.STRIPE;
+  const showSelector = shouldShowProviderSelector(providerResolution);
 
   // Refs for auto-focusing card elements
   const cardExpiryRef = useRef(null);
@@ -281,6 +295,14 @@ const CreditCardPayment = () => {
             </div>
           ) : (
             <Form form={form} layout="vertical" className="space-y-4 sm:space-y-5">
+              {showSelector && (
+                <CardProviderSelector
+                  value={selectedProvider}
+                  onChange={setSelectedProvider}
+                  providers={providerResolution?.providers}
+                  disabled={loading}
+                />
+              )}
               {/* Membership Category Details */}
               {product && (
                 <div className="relative overflow-hidden rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border border-indigo-200 shadow-sm">
@@ -510,157 +532,63 @@ const CreditCardPayment = () => {
                 </div>
               </div>
 
+              {isStripe ? (
+                <>
               {/* Card Number */}
               <div>
                 <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">
                   <span className="text-red-500 mr-1">*</span>Card Number
                 </label>
-                <div className="relative group">
-                  <div className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
-                    <svg
-                      className="w-4 h-4 sm:w-5 sm:h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                      />
-                    </svg>
-                  </div>
-                  <div className="pl-8 sm:pl-10 pr-3 sm:pr-4 py-2.5 sm:py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
-                    <CardNumberElement
-                      options={ELEMENT_OPTIONS}
-                      onChange={e => {
-                        setCardComplete(prev => ({ ...prev, cardNumber: e.complete }));
-                        if (e.complete && cardExpiryRef.current) {
-                          cardExpiryRef.current.focus();
-                        }
-                      }}
-                    />
-                  </div>
-                  {cardComplete.cardNumber && (
-                    <div className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2">
-                      <svg
-                        className="w-4 h-4 sm:w-5 sm:h-5 text-green-500"
-                        fill="currentColor"
-                        viewBox="0 0 20 20">
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </div>
-                  )}
+                <div className="pl-8 sm:pl-10 pr-3 sm:pr-4 py-2.5 sm:py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm">
+                  <CardNumberElement
+                    options={ELEMENT_OPTIONS}
+                    onChange={e => {
+                      setCardComplete(prev => ({ ...prev, cardNumber: e.complete }));
+                      if (e.complete && cardExpiryRef.current) {
+                        cardExpiryRef.current.focus();
+                      }
+                    }}
+                  />
                 </div>
               </div>
 
-              {/* Expiry & CVC */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">
                     <span className="text-red-500 mr-1">*</span>Expiry Date
                   </label>
-                  <div className="relative group">
-                    <div className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
-                      <svg
-                        className="w-4 h-4 sm:w-5 sm:h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="pl-8 sm:pl-10 pr-3 sm:pr-4 py-2.5 sm:py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
-                      <CardExpiryElement
-                        onReady={element => (cardExpiryRef.current = element)}
-                        options={ELEMENT_OPTIONS}
-                        onChange={e => {
-                          setCardComplete(prev => ({ ...prev, cardExpiry: e.complete }));
-                          if (e.complete && cardCvcRef.current) {
-                            cardCvcRef.current.focus();
-                          }
-                        }}
-                      />
-                    </div>
-                    {cardComplete.cardExpiry && (
-                      <div className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2">
-                        <svg
-                          className="w-4 h-4 sm:w-5 sm:h-5 text-green-500"
-                          fill="currentColor"
-                          viewBox="0 0 20 20">
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </div>
-                    )}
+                  <div className="pl-8 sm:pl-10 pr-3 sm:pr-4 py-2.5 sm:py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm">
+                    <CardExpiryElement
+                      onReady={element => (cardExpiryRef.current = element)}
+                      options={ELEMENT_OPTIONS}
+                      onChange={e => {
+                        setCardComplete(prev => ({ ...prev, cardExpiry: e.complete }));
+                        if (e.complete && cardCvcRef.current) {
+                          cardCvcRef.current.focus();
+                        }
+                      }}
+                    />
                   </div>
                 </div>
-
                 <div>
                   <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">
                     <span className="text-red-500 mr-1">*</span>Security Code
                   </label>
-                  <div className="relative group">
-                    <div className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
-                      <svg
-                        className="w-4 h-4 sm:w-5 sm:h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="pl-8 sm:pl-10 pr-3 sm:pr-4 py-2.5 sm:py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm group-hover:border-indigo-300 transition-colors">
-                      <CardCvcElement
-                        onReady={element => (cardCvcRef.current = element)}
-                        options={ELEMENT_OPTIONS}
-                        onChange={e => {
-                          setCardComplete(prev => ({ ...prev, cardCvc: e.complete }));
-                        }}
-                      />
-                    </div>
-                    {cardComplete.cardCvc && (
-                      <div className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2">
-                        <svg
-                          className="w-4 h-4 sm:w-5 sm:h-5 text-green-500"
-                          fill="currentColor"
-                          viewBox="0 0 20 20">
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </div>
-                    )}
+                  <div className="pl-8 sm:pl-10 pr-3 sm:pr-4 py-2.5 sm:py-3 border-2 border-gray-200 rounded-lg bg-white shadow-sm">
+                    <CardCvcElement
+                      onReady={element => (cardCvcRef.current = element)}
+                      options={ELEMENT_OPTIONS}
+                      onChange={e => {
+                        setCardComplete(prev => ({ ...prev, cardCvc: e.complete }));
+                      }}
+                    />
                   </div>
                 </div>
               </div>
 
-              {/* Divider */}
-              <div className="border-t border-gray-200 my-4 sm:my-6"></div>
-
-              {/* Footer with Total and Pay Button */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-gray-50 to-indigo-50 rounded-lg sm:rounded-xl border border-gray-200 gap-3 sm:gap-4">
-                <div className="flex-1 sm:flex-none">
-                  <p className="text-xs text-gray-500 mb-0.5 sm:mb-1">Total Amount</p>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 sm:p-4 bg-gradient-to-r from-gray-50 to-indigo-50 rounded-lg sm:rounded-xl border border-gray-200">
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Total Amount</p>
                   <p className="text-xl sm:text-2xl font-bold text-gray-800">
                     {formatCurrency(editablePrice)}
                   </p>
@@ -670,27 +598,61 @@ const CreditCardPayment = () => {
                   onClick={handlePayNow}
                   loading={loading}
                   disabled={!isCardReady || !editablePrice || editablePrice <= 0}
-                  className="!h-11 sm:!h-12 !px-6 sm:!px-8 !text-sm sm:!text-base !font-semibold !bg-gradient-to-r !from-indigo-600 !to-purple-600 hover:!from-indigo-700 hover:!to-purple-700 !border-0 !shadow-lg hover:!shadow-xl !transition-all !duration-200 disabled:!bg-gradient-to-r disabled:!from-indigo-300 disabled:!to-purple-300 disabled:!text-white disabled:!opacity-100 disabled:!cursor-not-allowed disabled:!shadow-md w-full sm:w-auto">
+                  className="!h-11 sm:!h-12 !px-6 sm:!px-8 !text-sm sm:!text-base !font-semibold !bg-gradient-to-r !from-indigo-600 !to-purple-600 hover:!from-indigo-700 hover:!to-purple-700 !border-0">
                   {loading ? 'Processing...' : 'Pay Now'}
                 </Button>
               </div>
 
-              {/* Security Notice */}
-              <div className="flex items-center justify-center text-xs text-gray-500 mt-3 sm:mt-4">
-                <svg
-                  className="w-3 h-3 sm:w-4 sm:h-4 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                  />
-                </svg>
-                <span className="text-xs">Secure payment powered by Stripe</span>
+              <div className="flex items-center justify-center text-xs text-gray-500 mt-2 sm:mt-4">
+                Secure payment powered by Stripe
               </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-gray-50 to-indigo-50 rounded-lg sm:rounded-xl border border-gray-200">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Total Amount</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-800">
+                        {formatCurrency(editablePrice)}
+                      </p>
+                    </div>
+                  </div>
+                  <GlobalPaymentsCardForm
+                    amount={Math.round((editablePrice || 0) * 100)}
+                    currency={product?.currentPricing?.currency || 'eur'}
+                    purpose="subscriptionFee"
+                    submitLabel="Pay Now"
+                    disabled={!editablePrice || editablePrice <= 0}
+                    metadata={{
+                      memberId: personalDetail?.ApplicationId,
+                      description: 'Membership payment from dashboard',
+                      tenantId: userDetail?.tenantId || userDetail?.userTenantId,
+                      userId: userDetail?.id || userDetail?._id,
+                      membershipCategory,
+                      paymentType: 'Card Payment',
+                    }}
+                    onSuccess={result => {
+                      setStatusModal({
+                        open: true,
+                        status: 'success',
+                        title: 'Payment successful',
+                        message: 'Your Global Payments card payment was completed.',
+                      });
+                    }}
+                    onFailure={message => {
+                      setStatusModal({
+                        open: true,
+                        status: 'error',
+                        message: message || 'Payment failed.',
+                      });
+                    }}
+                  />
+                  <div className="flex items-center justify-center text-xs text-gray-500 mt-2 sm:mt-4">
+                    Secure payment powered by Global Payments
+                  </div>
+                </>
+              )}
+
             </Form>
           )}
         </div>

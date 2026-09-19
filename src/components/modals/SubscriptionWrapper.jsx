@@ -7,6 +7,11 @@ import { useSelector } from 'react-redux';
 import { useApplication } from '../../contexts/applicationContext';
 import { useLookup } from '../../contexts/lookupContext';
 import { isUndergraduateStudentMembership } from '../../helpers/subscriptionPricing.helper';
+import {
+  CARD_PROVIDERS,
+  getDefaultCardProvider,
+  resolveCardProvider,
+} from '../../constants/paymentProviders';
 
 const stripePromise = loadStripe(
   'pk_test_51SBAG4FTlZb0wcbr19eI8nC5u62DfuaUWRVS51VTERBocxSM9JSEs4ubrW57hYTCAHK9d6jrarrT4SAViKFMqKjT00TrEr3PNV',
@@ -20,22 +25,35 @@ const SubscriptionWrapper = ({
   formData,
   membershipCategory,
 }) => {
+  const providerResolution = useMemo(() => resolveCardProvider(), []);
+  const [selectedProvider, setSelectedProvider] = useState(() =>
+    getDefaultCardProvider(providerResolution),
+  );
   const [clientSecret, setClientSecret] = useState(null);
   const [loading, setLoading] = useState(false);
   const paymentIntentCreatedRef = useRef(false);
 
-  // ✅ Access user and application context data
   const { userDetail } = useSelector(state => state.auth);
-  const { personalDetail, subscriptionDetail, categoryData, categoryLoading, getCategoryData } = useApplication();
+  const {
+    personalDetail,
+    categoryData,
+    categoryLoading,
+    getCategoryData,
+  } = useApplication();
   const { categoryLookups } = useLookup();
 
-  // ✅ Extract specific values to avoid unnecessary re-renders
-  const userId = useMemo(() => userDetail?.id || userDetail?._id, [userDetail?.id, userDetail?._id]);
-  const tenantId = useMemo(() => userDetail?.tenantId || userDetail?.userTenantId, [userDetail?.tenantId, userDetail?.userTenantId]);
+  const userId = useMemo(
+    () => userDetail?.id || userDetail?._id,
+    [userDetail?.id, userDetail?._id],
+  );
+  const tenantId = useMemo(
+    () => userDetail?.tenantId || userDetail?.userTenantId,
+    [userDetail?.tenantId, userDetail?.userTenantId],
+  );
   const applicationId = personalDetail?.applicationId;
   const paymentType = formData?.subscriptionDetails?.paymentType;
+  const isStripe = selectedProvider === CARD_PROVIDERS.STRIPE;
 
-  // Fetch category data when membershipCategory changes
   useEffect(() => {
     if (membershipCategory && isVisible) {
       getCategoryData(membershipCategory, categoryLookups);
@@ -46,6 +64,14 @@ const SubscriptionWrapper = ({
     if (!isVisible) {
       paymentIntentCreatedRef.current = false;
       setClientSecret(null);
+      setSelectedProvider(getDefaultCardProvider(providerResolution));
+      return;
+    }
+
+    if (!isStripe) {
+      paymentIntentCreatedRef.current = false;
+      setClientSecret(null);
+      setLoading(false);
       return;
     }
 
@@ -68,33 +94,29 @@ const SubscriptionWrapper = ({
       paymentIntentCreatedRef.current = true;
 
       try {
-        // ✅ Step 1: Use category data from context
         const currentPricing = categoryData?.currentPricing || {};
-
-        const basePrice = currentPricing?.price; // Stripe expects amount in cents
+        const basePrice = currentPricing?.price;
         const currency = currentPricing?.currency || 'eur';
 
         if (!basePrice) throw new Error('Invalid category price data');
 
-        // Calculate amount based on payment type
-        // Retired Associate gets full price regardless of payment type (special offer)
         const isRetiredAssociate = categoryData?.name === 'Retired Associate';
         const amountInCents = isRetiredAssociate
-          ? basePrice // Full price for Retired Associate
-          : paymentType === 'Credit Card' 
-            ? basePrice 
-            : Math.round(basePrice / 4); // Divide by 4 for other payment types
+          ? basePrice
+          : paymentType === 'Credit Card'
+            ? basePrice
+            : Math.round(basePrice / 4);
 
-        // ✅ Step 2: Create Payment Intent
         const paymentData = {
           purpose: 'subscriptionFee',
-          amount: amountInCents, // Stripe amount is in smallest currency unit
+          amount: amountInCents,
           currency,
           metadata: {
             applicationId,
-            description: paymentType === 'Credit Card' 
-              ? 'Annual membership fees' 
-              : 'Quarterly membership fees',
+            description:
+              paymentType === 'Credit Card'
+                ? 'Annual membership fees'
+                : 'Quarterly membership fees',
             tenantId,
             userId,
             membershipCategory,
@@ -102,11 +124,8 @@ const SubscriptionWrapper = ({
           },
         };
 
-        console.log('🧾 Creating Payment Intent with:', paymentData);
-
         const res = await createPaymentIntentRequest(paymentData);
-        console.log('Payment Intent Response:', res);
-        
+
         const secret =
           res?.data?.data?.clientSecret ||
           res?.data?.client_secret ||
@@ -125,13 +144,25 @@ const SubscriptionWrapper = ({
     };
 
     initPayment();
-    // ✅ Only track the specific primitive values that affect payment intent creation
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isVisible, membershipCategory, categoryData, applicationId, paymentType, userId, tenantId]);
+  }, [
+    isVisible,
+    membershipCategory,
+    categoryData,
+    applicationId,
+    paymentType,
+    userId,
+    tenantId,
+    isStripe,
+  ]);
 
   if (!isVisible) return null;
 
-  if (categoryLoading || loading || !clientSecret || !categoryData) {
+  const waitingForStripe =
+    isStripe && (categoryLoading || loading || !clientSecret || !categoryData);
+  const waitingForGp = !isStripe && (categoryLoading || !categoryData);
+
+  if (waitingForStripe || waitingForGp) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
         <div className="bg-white rounded-lg shadow-2xl p-8 flex flex-col items-center gap-4">
@@ -140,7 +171,9 @@ const SubscriptionWrapper = ({
             <div className="absolute inset-0 border-4 border-t-blue-600 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
           </div>
           <p className="text-gray-700 font-medium text-lg">
-            {categoryLoading ? 'Loading category details...' : 'Initializing payment form...'}
+            {categoryLoading
+              ? 'Loading category details...'
+              : 'Initializing payment form...'}
           </p>
           <p className="text-gray-500 text-sm">
             Please wait while we prepare your payment
@@ -150,20 +183,43 @@ const SubscriptionWrapper = ({
     );
   }
 
-  const options = { clientSecret };
+  const currentPricing = categoryData?.currentPricing || {};
+  const basePrice = currentPricing?.price || 0;
+  const currency = currentPricing?.currency || 'eur';
+  const isRetiredAssociate = categoryData?.name === 'Retired Associate';
+  const amountInCents = isRetiredAssociate
+    ? basePrice
+    : paymentType === 'Credit Card'
+      ? basePrice
+      : Math.round(basePrice / 4);
 
+  const modal = (
+    <SubscriptionModal
+      isVisible={isVisible}
+      onClose={onClose}
+      onSuccess={onSuccess}
+      onFailure={onFailure}
+      formData={formData}
+      membershipCategory={membershipCategory}
+      clientSecret={clientSecret}
+      categoryData={categoryData}
+      selectedProvider={selectedProvider}
+      onProviderChange={setSelectedProvider}
+      providerResolution={providerResolution}
+      applicationId={applicationId}
+      amountInCents={amountInCents}
+      currency={currency}
+      userId={userId}
+      tenantId={tenantId}
+    />
+  );
+
+  // Always wrap in Elements so Stripe hooks remain valid if user switches back
   return (
-    <Elements stripe={stripePromise} options={options}>
-      <SubscriptionModal
-        isVisible={isVisible}
-        onClose={onClose}
-        onSuccess={onSuccess}
-        onFailure={onFailure}
-        formData={formData}
-        membershipCategory={membershipCategory}
-        clientSecret={clientSecret}
-        categoryData={categoryData}
-      />
+    <Elements
+      stripe={stripePromise}
+      options={clientSecret ? { clientSecret } : undefined}>
+      {modal}
     </Elements>
   );
 };
