@@ -17,8 +17,11 @@ import './assets/theme/index.css';
 import { signInMicrosoft, validation } from './services/auth.services';
 import './config/globals.js';
 import { ErrorPage } from './pages/errorPage';
-import { getVerifier } from './helpers/verifier.helper.js';
-import { B2C_FLOW_STORAGE_KEY } from './helpers/B2C.helper.js';
+import { getB2CAuthTransaction, clearB2CAuthTransaction } from './helpers/verifier.helper.js';
+import {
+  B2C_FLOW_STORAGE_KEY,
+  extractOAuthParam,
+} from './helpers/B2C.helper.js';
 import { ContextProvider } from './contexts/ContextProvider';
 import NotificationSetup from './components/NotificationSetup';
 import {
@@ -183,6 +186,8 @@ const App = () => {
   const auth = useSelector(state => state.auth);
   const queryParams = new URLSearchParams(location.search);
   const authCode = queryParams.get('code');
+  const authState = queryParams.get('state');
+  const authError = queryParams.get('error');
   const notificationUnsubscribeRef = React.useRef(null);
   const fcmListenerInitializedRef = React.useRef(false);
   const fcmRegisteredRef = React.useRef(false);
@@ -210,41 +215,82 @@ const App = () => {
   React.useEffect(() => {
     const handleAuthentication = async () => {
       try {
-        const code_verifier = getVerifier();
-        if (authCode && code_verifier) {
-          if (processedAuthCodeRef.current === authCode) {
-            return;
-          }
-
-          processedAuthCodeRef.current = authCode;
-          const storedFlow = localStorage.getItem(B2C_FLOW_STORAGE_KEY);
-          const data = {
-            code: authCode,
-            codeVerifier: code_verifier,
-          };
-
-          if (storedFlow) {
-            data.flow = storedFlow;
-          }
-
-          const signInResult = await dispatch(signInMicrosoft(data));
-          if (storedFlow) {
-            localStorage.removeItem(B2C_FLOW_STORAGE_KEY);
-          }
-          if (signInResult?.success) {
-            window.history.replaceState(null, '', '/');
-          }
-        } else {
+        if (authError) {
+          clearB2CAuthTransaction();
+          sessionStorage.removeItem(B2C_FLOW_STORAGE_KEY);
+          localStorage.removeItem(B2C_FLOW_STORAGE_KEY);
+          window.history.replaceState(null, '', '/');
+          toast.error('Sign-in was cancelled or failed. Please try again.');
           dispatch(validation());
+          return;
+        }
+
+        if (!authCode) {
+          dispatch(validation());
+          return;
+        }
+
+        if (processedAuthCodeRef.current === authCode) {
+          return;
+        }
+        processedAuthCodeRef.current = authCode;
+
+        const { codeVerifier, state: storedState } = getB2CAuthTransaction();
+        const callbackState = authState || extractOAuthParam(window.location.href, 'state');
+
+        if (!codeVerifier || !callbackState) {
+          clearB2CAuthTransaction();
+          sessionStorage.removeItem(B2C_FLOW_STORAGE_KEY);
+          localStorage.removeItem(B2C_FLOW_STORAGE_KEY);
+          window.history.replaceState(null, '', '/');
+          toast.error(
+            'Your sign-in session expired or was incomplete. Please try again.',
+          );
+          dispatch(validation());
+          return;
+        }
+
+        // Optional client-side sanity check only — backend is authoritative.
+        if (storedState && storedState !== callbackState) {
+          clearB2CAuthTransaction();
+          sessionStorage.removeItem(B2C_FLOW_STORAGE_KEY);
+          localStorage.removeItem(B2C_FLOW_STORAGE_KEY);
+          window.history.replaceState(null, '', '/');
+          toast.error(
+            'Your sign-in session was invalid. Please try signing in again.',
+          );
+          dispatch(validation());
+          return;
+        }
+
+        const data = {
+          code: authCode,
+          codeVerifier,
+          state: callbackState,
+        };
+
+        const signInResult = await dispatch(signInMicrosoft(data));
+        sessionStorage.removeItem(B2C_FLOW_STORAGE_KEY);
+        localStorage.removeItem(B2C_FLOW_STORAGE_KEY);
+        clearB2CAuthTransaction();
+
+        if (signInResult?.success) {
+          window.history.replaceState(null, '', '/');
+        } else {
+          window.history.replaceState(null, '', '/');
         }
       } catch (error) {
-        toast.error('Authentication failed');
+        clearB2CAuthTransaction();
+        sessionStorage.removeItem(B2C_FLOW_STORAGE_KEY);
+        localStorage.removeItem(B2C_FLOW_STORAGE_KEY);
+        window.history.replaceState(null, '', '/');
+        toast.error('Authentication failed. Please try again.');
       }
     };
 
     handleAuthentication();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authCode, dispatch]);
+  }, [authCode, authState, authError, dispatch]);
 
   // Fetch FCM token and set up foreground listener once per signed-in session
   React.useEffect(() => {

@@ -11,7 +11,7 @@ import {
   setHeaders,
   setRefreshToken,
 } from '../helpers/auth.helper';
-import { deleteVerifier } from '../helpers/verifier.helper';
+import { clearB2CAuthTransaction } from '../helpers/verifier.helper';
 import { setSignedIn, setUser, setDetail } from '../store/slice/auth.slice';
 import { getMemberDetail } from '../helpers/decode.helper';
 import { toast } from 'react-toastify';
@@ -32,7 +32,7 @@ const performLogoutCleanup = dispatch => {
   bumpAuthSession();
   deleteHeaders();
   deleteRefreshToken();
-  deleteVerifier();
+  clearB2CAuthTransaction();
   dispatch(setSignedIn(false));
   dispatch(setUser({}));
   dispatch(setDetail(null));
@@ -102,29 +102,45 @@ export const signInMicrosoft = data => {
       const res = await signInMicrosoftRequest(data);
       if (!isAuthSessionCurrent(generation)) return { success: false };
 
-      if (res.status === 200) {
+      if (res?.status === 200) {
         setHeaders(res.data);
         setRefreshToken(res?.data?.refreshToken);
-        deleteVerifier();
+        clearB2CAuthTransaction();
         dispatch(setSignedIn(true));
         dispatch(setUser(res.data.user));
         const memberDetail = await getMemberDetail();
         if (!isAuthSessionCurrent(generation)) return { success: false };
         dispatch(setDetail(memberDetail));
 
-        // Fetch all lookups after successful login
-        fetchAllLookupsOnLogin().catch(error => {
-          console.error('Failed to fetch lookups on login:', error);
+        fetchAllLookupsOnLogin().catch(() => {
+          // Lookups are non-blocking; avoid logging auth payload details.
         });
         return { success: true };
       }
 
-      toast.error(res.data.errors[0] ?? 'Unable to Sign In');
-      return { success: false };
+      clearB2CAuthTransaction();
+
+      const status = res?.status;
+      const apiMessage =
+        res?.data?.message ||
+        res?.data?.error ||
+        res?.data?.errors?.[0];
+
+      if (status === 400) {
+        toast.error(
+          'Your sign-in session expired or was invalid. Please try again.',
+        );
+      } else if (status === 401) {
+        toast.error('Authentication failed. Please try signing in again.');
+      } else {
+        toast.error(apiMessage || 'Unable to Sign In');
+      }
+
+      return { success: false, status };
     } catch (error) {
-      toast.error('Something went wrong');
+      clearB2CAuthTransaction();
+      toast.error('Authentication failed. Please try again.');
       return { success: false, error };
-      // navigate('/')
     }
   };
 };

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Logo, ShellLogo, Splash } from '../assets/images/index';
 import { microSoftUrlRedirect } from '../helpers/B2C.helper';
+import { toast } from 'react-toastify';
 import '../assets/theme/landing.css';
 
 const FEATURES = [
@@ -53,16 +54,31 @@ function GoogleG() {
 }
 
 const LandingPage = () => {
+  const [authStarting, setAuthStarting] = React.useState(false);
+
+  const startAuth = async intent => {
+    if (authStarting) return;
+    setAuthStarting(true);
+    try {
+      await microSoftUrlRedirect(intent);
+    } catch (error) {
+      setAuthStarting(false);
+      toast.error(
+        error?.message || 'Unable to start sign-in. Please try again.',
+      );
+    }
+  };
+
   const handleLogin = async () => {
-    await microSoftUrlRedirect('signin');
+    await startAuth('signin');
   };
 
   const handleGoogleLogin = async () => {
-    await microSoftUrlRedirect('gmail');
+    await startAuth('gmail');
   };
 
   const handleSignUp = async () => {
-    await microSoftUrlRedirect('signup');
+    await startAuth('signup');
   };
 
   return (
