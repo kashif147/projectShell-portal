@@ -1,4 +1,4 @@
-import { generatePkceRequest } from '../api/auth.api';
+import { generatePkceRequest, getLogoutUrlsRequest } from '../api/auth.api';
 import {
   clearB2CAuthTransaction,
   setB2CAuthTransaction,
@@ -101,4 +101,35 @@ export const microSoftUrlRedirect = async (intent = 'signin') => {
   setB2CAuthTransaction({ codeVerifier, state });
 
   window.location.href = authUrl;
+};
+
+/**
+ * Clearing our own token/localStorage on logout never touches B2C's own session cookie
+ * (*.b2clogin.com is a separate session this app doesn't own) - left alone, the next
+ * "Sign in with Microsoft" click silently re-authenticates from that cookie with no
+ * credential prompt. Actually ending it requires navigating the browser to B2C's own
+ * logout endpoint. Caller must already have cleared local state before calling this - it
+ * only handles the cross-domain redirect, and navigates away from the SPA entirely, so
+ * nothing after this call runs.
+ */
+export const microsoftLogoutRedirect = async () => {
+  const fallback = () => {
+    window.location.href = '/';
+  };
+
+  try {
+    const response = await getLogoutUrlsRequest();
+    const url = response?.data?.b2cLogoutUrl;
+
+    if (!(response?.status >= 200 && response?.status < 300) || !url) {
+      console.warn('Failed to fetch B2C logout URL, falling back to /');
+      fallback();
+      return;
+    }
+
+    window.location.href = url;
+  } catch (error) {
+    console.warn('B2C logout redirect failed, falling back to /:', error);
+    fallback();
+  }
 };

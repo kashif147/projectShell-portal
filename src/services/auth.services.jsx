@@ -12,6 +12,7 @@ import {
   setRefreshToken,
 } from '../helpers/auth.helper';
 import { clearB2CAuthTransaction } from '../helpers/verifier.helper';
+import { microsoftLogoutRedirect } from '../helpers/B2C.helper';
 import { setSignedIn, setUser, setDetail } from '../store/slice/auth.slice';
 import { getMemberDetail } from '../helpers/decode.helper';
 import { toast } from 'react-toastify';
@@ -176,11 +177,12 @@ export const signOut = navigate => {
       // Use setTimeout to allow React to finish unmounting before navigation
       // This prevents the "removeChild" error during component cleanup
       setTimeout(() => {
-        // Use window.location for a clean navigation that resets everything
-        window.location.href = '/';
+        // Redirect to B2C's own logout endpoint, not just "/" - clearing our own
+        // localStorage doesn't end B2C's session cookie, so a plain in-app navigation
+        // would let the next "Sign in with Microsoft" silently re-authenticate with no
+        // credential prompt. See helpers/B2C.helper.js's microsoftLogoutRedirect.
+        microsoftLogoutRedirect();
       }, 100);
-
-      // await microSoftUrlRedirect();
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('Something went wrong');

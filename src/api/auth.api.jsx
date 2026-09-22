@@ -20,3 +20,12 @@ export const validationRequest = () => {
 export const refreshTokenRequest = (data) => {
   return request.post('/auth/refresh', data);
 };
+
+/**
+ * Front-channel logout URLs (Azure AD + B2C) - see user-service's pkce.controller.js's
+ * getLogoutUrls for why these are needed (clearing our own token doesn't end Microsoft's
+ * own session cookie) and why no auth is required for this call.
+ */
+export const getLogoutUrlsRequest = () => {
+  return request.get('/pkce/logout-urls');
+};
