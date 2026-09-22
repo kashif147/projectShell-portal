@@ -1,7 +1,6 @@
 import { io } from 'socket.io-client';
 import { notification } from 'antd';
 import { NOTIFICATION_URL } from '../constants/api';
-import { decryptToken } from '../helpers/crypt.helper';
 
 let notificationSocket = null;
 let handlers = {
@@ -59,8 +58,9 @@ export const initNotificationSocket = async({
     });
     return;
   }
-  const decryptoken = await decryptToken(token);
-  
+  // The backend now sends the signed JWT as-is (no client-side decryption) - see
+  // helpers/crypt.helper.js.
+
   // Always keep latest handlers so components can update callbacks without recreating socket
   handlers.onNotification = onNotification;
   handlers.onUnreadCount = onUnreadCount;
@@ -72,7 +72,7 @@ export const initNotificationSocket = async({
   
   try {
     console.log('Connecting notification socket with token and URL', {
-      token: decryptoken,
+      token,
       NOTIFICATION_URL,
     });
     const baseSocketUrl = getBaseSocketUrl();
@@ -91,7 +91,7 @@ export const initNotificationSocket = async({
       path: '/notification-service/api/socket.io',
       transports: ['websocket', 'polling'],
       auth: {
-        token: decryptoken
+        token
       },
       reconnection: true,
       reconnectionAttempts: 5,

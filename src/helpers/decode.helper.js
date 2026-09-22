@@ -1,38 +1,13 @@
 import { jwtDecode } from 'jwt-decode';
 import { getHeaders } from './auth.helper';
-import { decryptToken } from './crypt.helper';
 
-export const decryptHelper = async (encryptedToken) => {
-  try {
-    if (encryptedToken && encryptedToken.includes(':')) {
-      const decrypted = await decryptToken(encryptedToken);
-      return decrypted;
-    }
-    return encryptedToken;
-  } catch (error) {
-    console.error('Decryption failed:', error);
-    return null;
-  }
-};
-
+// The backend now sends the signed JWT as-is (no client-side decryption) - see
+// helpers/crypt.helper.js.
 export const getMemberDetail = async () => {
   const res = getHeaders();
   if (res?.token) {
     // Remove "Bearer " if included
-    let cleanToken = res.token.replace(/^Bearer\s+/i, '');
-
-    // Decrypt token if it's encrypted
-    if (cleanToken && cleanToken.includes(':')) {
-      try {
-        cleanToken = await decryptHelper(cleanToken);
-        if (!cleanToken) {
-          return null;
-        }
-      } catch (error) {
-        console.error('Token decryption failed:', error);
-        return null;
-      }
-    }
+    const cleanToken = res.token.replace(/^Bearer\s+/i, '');
 
     try {
       const decoded = jwtDecode(cleanToken); // Decode JWT payload

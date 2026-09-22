@@ -16,7 +16,6 @@ import { setSignedIn, setUser, setDetail } from '../store/slice/auth.slice';
 import { getMemberDetail } from '../helpers/decode.helper';
 import { toast } from 'react-toastify';
 import { fetchAllLookupsOnLogin } from '../contexts/lookupContext';
-import { decryptToken } from '../helpers/crypt.helper';
 
 let authSessionGeneration = 0;
 
@@ -64,10 +63,9 @@ export const validation = () => {
 
       if (refreshUser?.status === 200) {
         setHeaders(refreshUser?.data?.data);
-        const refreshDectoken = await decryptToken(
-          refreshUser?.data?.data?.refreshToken,
-        );
-        setRefreshToken(refreshDectoken);
+        // The backend now sends both tokens as-is (no client-side decryption) - see
+        // helpers/crypt.helper.js.
+        setRefreshToken(refreshUser?.data?.data?.refreshToken);
 
         const meRes = await validationRequest();
         if (!isAuthSessionCurrent(generation)) return;
