@@ -11,7 +11,11 @@ request.interceptors.request.use(
     // The backend now sends the signed JWT as-is (no client-side decryption) - see
     // helpers/crypt.helper.js.
     const token = headers.token;
-    config.headers['Authorization'] = `Bearer ${token}`;
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    } else {
+      delete config.headers['Authorization'];
+    }
     config.headers['Content-Type'] = 'application/json';
 
     config.baseURL = BASE_URL;
