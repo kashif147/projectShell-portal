@@ -12,6 +12,7 @@ import { fetchCategoryByCategoryId } from '../../api/category.api';
 import { createPaymentIntentRequest } from '../../api/payment.api';
 import { useSelector } from 'react-redux';
 import { useApplication } from '../../contexts/applicationContext';
+import { useProfile } from '../../contexts/profileContext';
 import { useNavigate } from 'react-router-dom';
 import Spinner from '../../components/common/Spinner';
 import { PaymentStatusModal } from '../../components/modals';
@@ -58,7 +59,11 @@ const CreditCardPayment = () => {
   const cardCvcRef = useRef(null);
 
   const { userDetail, user } = useSelector(state => state.auth);
-  const { personalDetail, subscriptionDetail } = useApplication();
+  const { subscriptionDetail } = useApplication();
+  const { profileDetail } = useProfile();
+  // Payments on account are made against the caller's own membership number (from
+  // /api/profile/my-profile) - account-service rejects any other memberId with 403.
+  const memberId = profileDetail?.membershipNumber;
 
   // Get membership category from subscription details
   const membershipCategory =
@@ -168,13 +173,21 @@ const CreditCardPayment = () => {
       return;
     }
 
+    if (!memberId) {
+      setStatusModal({
+        open: true,
+        status: 'error',
+        message: 'Your membership number is not available yet. Please try again shortly.',
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
       // Step 1: Create Payment Intent with the edited price
       const amountInCents = Math.round(editablePrice * 100);
       const currency = product?.currentPricing?.currency || 'eur';
-      const applicationId = personalDetail?.ApplicationId;
       const userId = userDetail?.id || userDetail?._id;
       const tenantId = userDetail?.tenantId || userDetail?.userTenantId;
 
@@ -183,7 +196,7 @@ const CreditCardPayment = () => {
         amount: amountInCents,
         currency,
         metadata: {
-          memberId: applicationId,
+          memberId,
           description: 'Membership payment from dashboard',
           tenantId,
           userId,
@@ -622,9 +635,9 @@ const CreditCardPayment = () => {
                     currency={product?.currentPricing?.currency || 'eur'}
                     purpose="subscriptionFee"
                     submitLabel="Pay Now"
-                    disabled={!editablePrice || editablePrice <= 0}
+                    disabled={!memberId || !editablePrice || editablePrice <= 0}
                     metadata={{
-                      memberId: personalDetail?.ApplicationId,
+                      memberId,
                       description: 'Membership payment from dashboard',
                       tenantId: userDetail?.tenantId || userDetail?.userTenantId,
                       userId: userDetail?.id || userDetail?._id,
