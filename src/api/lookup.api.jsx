@@ -8,8 +8,9 @@ export const fetchLookupById = id => {
   return request.get(`/api/lookup/${id}`);
 };
 
-export const fetchLookupHierarchyByType = (typeId) => {
-  return request.get(`/api/lookup/by-type/${typeId}/hierarchy`);
+// Phase A / A13: by the lookup type's stable code (e.g. WORKLOC), for the session's tenant.
+export const fetchLookupHierarchyByTypeCode = typeCode => {
+  return request.get(`/api/lookup/by-type-code/${encodeURIComponent(typeCode)}/hierarchy`);
 };
 
 export const fetchAllCountry = () => {

@@ -17,6 +17,7 @@ import {
   CARD_PROVIDERS,
   shouldShowProviderSelector,
 } from '../../constants/paymentProviders';
+import { isRetiredAssociateProduct } from '../../helpers/subscriptionPricing.helper';
 
 const SubscriptionModal = ({
   isVisible,
@@ -114,7 +115,7 @@ const SubscriptionModal = ({
 
   const getDisplayPrice = () => {
     const defaultPrice =
-      categoryData?.name === 'Retired Associate'
+      isRetiredAssociateProduct(categoryData)
         ? priceInfo.full // Full price for Retired Associate
         : formData?.subscriptionDetails?.paymentType === 'Credit Card'
           ? priceInfo.full

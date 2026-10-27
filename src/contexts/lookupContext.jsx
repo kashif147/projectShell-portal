@@ -1,15 +1,36 @@
 import React, { createContext, useContext, useEffect, useCallback, useRef } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { getHeaders } from '../helpers/auth.helper';
-import { fetchAllCountry, fetchAllLookupRequest, fetchLookupHierarchyByType } from '../api/lookup.api';
-import { fetchCategoryByTypeId } from '../api/category.api';
+import { fetchAllCountry, fetchAllLookupRequest, fetchLookupHierarchyByTypeCode } from '../api/lookup.api';
+import { fetchCategoryByTypeCode } from '../api/category.api';
+import {
+  purgeForeignLookupStorage,
+  readLookupItem,
+  sessionTenantId,
+  writeLookupItem,
+} from '../helpers/tenantStorage';
+
+// Phase A / A13: tenant-owned metadata is resolved by stable code for the signed-in session's
+// tenant (the server takes the tenant from the token) and cached under lk:v2:<tenantId>:<key>
+// (helpers/tenantStorage.js). No lookup-type / product-type ObjectId is hardcoded.
+export const WORK_LOCATION_TYPE_CODE = 'WORKLOC';
+export const MEMBERSHIP_PRODUCT_TYPE_CODE = 'MEM';
+
+const readStoredLookup = key => {
+  try {
+    const raw = readLookupItem(key);
+    return raw !== null ? JSON.parse(raw) : null;
+  } catch (error) {
+    return null;
+  }
+};
 import { toast } from 'react-toastify';
 
 const globalFetchLock = { isFetching: false, promise: null };
 
 const readStoredLookupArray = key => {
   try {
-    const raw = window.localStorage.getItem(key);
+    const raw = readLookupItem(key);
     if (raw === null) {
       return [];
     }
@@ -33,7 +54,7 @@ const hasCachedLookupData = () =>
 
 const verifyLocalStorageSave = (key, expectedValue) => {
   try {
-    const saved = window.localStorage.getItem(key);
+    const saved = readLookupItem(key);
     if (saved === null) {
       return expectedValue.length === 0;
     }
@@ -146,6 +167,11 @@ export const LookupProvider = ({ children }) => {
   const [error, setError] = React.useState(null);
   const isFetchingRef = useRef(false);
 
+  useEffect(() => {
+    // Boot: legacy global keys and other tenants' entries are removed, never read.
+    purgeForeignLookupStorage();
+  }, []);
+
   const loadLookupsFromStorage = useCallback(async () => {
     try {
       const [
@@ -164,20 +190,20 @@ export const LookupProvider = ({ children }) => {
         youthForumLookupsData,
         allLookupsData,
       ] = await Promise.all([
-        fetchLocal('genderLookups'),
-        fetchLocal('cityLookups'),
-        fetchLocal('titleLookups'),
-        fetchLocal('primarySection'),
-        fetchLocal('secondarySection'),
-        fetchLocal('workLocationLookups'),
-        fetchLocal('countries'),
-        fetchLocal('categories'),
-        fetchLocal('gradeLookups'),
-        fetchLocal('paymentLookups'),
-        fetchLocal('studyLocationLookups'),
-        fetchLocal('disciplineLookups'),
-        fetchLocal('youthForumLookups'),
-        fetchLocal('allLookups'),
+        readStoredLookup('genderLookups'),
+        readStoredLookup('cityLookups'),
+        readStoredLookup('titleLookups'),
+        readStoredLookup('primarySection'),
+        readStoredLookup('secondarySection'),
+        readStoredLookup('workLocationLookups'),
+        readStoredLookup('countries'),
+        readStoredLookup('categories'),
+        readStoredLookup('gradeLookups'),
+        readStoredLookup('paymentLookups'),
+        readStoredLookup('studyLocationLookups'),
+        readStoredLookup('disciplineLookups'),
+        readStoredLookup('youthForumLookups'),
+        readStoredLookup('allLookups'),
       ]);
 
       const sanitizeData = (data, key) => {
@@ -258,6 +284,10 @@ export const LookupProvider = ({ children }) => {
         allLookupsData = [],
       } = lookupData;
 
+      if (!sessionTenantId()) {
+        return false; // no trusted session tenant: nothing is cached
+      }
+
       const lookupKeys = [
         { key: 'allLookups', data: allLookupsData },
         { key: 'paymentLookups', data: paymentData },
@@ -280,7 +310,7 @@ export const LookupProvider = ({ children }) => {
           retrySaveWithBackoff(
             async () => {
               const json = JSON.stringify(data);
-              window.localStorage.setItem(key, json);
+              writeLookupItem(key, json);
             },
             () => verifyLocalStorageSave(key, data),
             3
@@ -303,7 +333,7 @@ export const LookupProvider = ({ children }) => {
                 await retrySaveWithBackoff(
                   async () => {
                     const json = JSON.stringify(data);
-                    window.localStorage.setItem(key, json);
+                    writeLookupItem(key, json);
                   },
                   () => verifyLocalStorageSave(key, data),
                   3
@@ -358,7 +388,7 @@ export const LookupProvider = ({ children }) => {
           getAllLookups(),
           (async () => {
             try {
-              const response = await fetchLookupHierarchyByType('68d036e2662428d1c504b3ad');
+              const response = await fetchLookupHierarchyByTypeCode(WORK_LOCATION_TYPE_CODE);
               return response?.data?.results || [];
             } catch (error) {
               console.error('❌ Failed to fetch work location lookups:', error);
@@ -368,7 +398,7 @@ export const LookupProvider = ({ children }) => {
           getAllCountry(),
           (async () => {
             try {
-              const response = await fetchCategoryByTypeId('68dae613c5b15073d66b891f');
+              const response = await fetchCategoryByTypeCode(MEMBERSHIP_PRODUCT_TYPE_CODE);
               return response?.data?.data?.products || [];
             } catch (error) {
               console.error('❌ Failed to fetch category lookups:', error);
@@ -573,13 +603,18 @@ export const fetchAllLookupsOnLogin = async () => {
       return;
     }
 
+    if (!sessionTenantId()) {
+      return; // no trusted session tenant: nothing is fetched into the tenant cache
+    }
+
     globalFetchLock.isFetching = true;
+    purgeForeignLookupStorage();
 
     const saveToLocalStorage = async (key, value) => {
       return retrySaveWithBackoff(
         async () => {
           const json = JSON.stringify(value);
-          window.localStorage.setItem(key, json);
+          writeLookupItem(key, json);
         },
         () => verifyLocalStorageSave(key, value),
         3
@@ -590,7 +625,7 @@ export const fetchAllLookupsOnLogin = async () => {
       getAllLookups(),
       (async () => {
         try {
-          const response = await fetchLookupHierarchyByType('68d036e2662428d1c504b3ad');
+          const response = await fetchLookupHierarchyByTypeCode(WORK_LOCATION_TYPE_CODE);
           return response?.data?.results || [];
         } catch (error) {
           console.error('❌ Failed to fetch work location lookups:', error);
@@ -600,7 +635,7 @@ export const fetchAllLookupsOnLogin = async () => {
       getAllCountry(),
       (async () => {
         try {
-          const response = await fetchCategoryByTypeId('68dae613c5b15073d66b891f');
+          const response = await fetchCategoryByTypeCode(MEMBERSHIP_PRODUCT_TYPE_CODE);
           return response?.data?.data?.products || [];
         } catch (error) {
           console.error('❌ Failed to fetch category lookups:', error);

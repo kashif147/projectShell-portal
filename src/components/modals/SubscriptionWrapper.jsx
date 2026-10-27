@@ -6,7 +6,10 @@ import { createPaymentIntentRequest } from '../../api/payment.api';
 import { useSelector } from 'react-redux';
 import { useApplication } from '../../contexts/applicationContext';
 import { useLookup } from '../../contexts/lookupContext';
-import { isUndergraduateStudentMembership } from '../../helpers/subscriptionPricing.helper';
+import {
+  isRetiredAssociateProduct,
+  isUndergraduateStudentMembership,
+} from '../../helpers/subscriptionPricing.helper';
 import {
   CARD_PROVIDERS,
   getDefaultCardProvider,
@@ -100,7 +103,7 @@ const SubscriptionWrapper = ({
 
         if (!basePrice) throw new Error('Invalid category price data');
 
-        const isRetiredAssociate = categoryData?.name === 'Retired Associate';
+        const isRetiredAssociate = isRetiredAssociateProduct(categoryData);
         const amountInCents = isRetiredAssociate
           ? basePrice
           : paymentType === 'Credit Card'
@@ -186,7 +189,7 @@ const SubscriptionWrapper = ({
   const currentPricing = categoryData?.currentPricing || {};
   const basePrice = currentPricing?.price || 0;
   const currency = currentPricing?.currency || 'eur';
-  const isRetiredAssociate = categoryData?.name === 'Retired Associate';
+  const isRetiredAssociate = isRetiredAssociateProduct(categoryData);
   const amountInCents = isRetiredAssociate
     ? basePrice
     : paymentType === 'Credit Card'

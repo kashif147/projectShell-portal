@@ -17,6 +17,10 @@ import { setSignedIn, setUser, setDetail } from '../store/slice/auth.slice';
 import { getMemberDetail } from '../helpers/decode.helper';
 import { toast } from 'react-toastify';
 import { fetchAllLookupsOnLogin } from '../contexts/lookupContext';
+import {
+  clearTenantLookupStorage,
+  purgeForeignLookupStorage,
+} from '../helpers/tenantStorage';
 
 let authSessionGeneration = 0;
 
@@ -30,6 +34,8 @@ const isAuthSessionCurrent = generation =>
 
 const performLogoutCleanup = dispatch => {
   bumpAuthSession();
+  // Phase A / A13: also the token-expiry / failed-refresh path - no tenant lookup cache survives.
+  clearTenantLookupStorage();
   deleteHeaders();
   deleteRefreshToken();
   clearB2CAuthTransaction();
@@ -64,6 +70,7 @@ export const validation = () => {
 
       if (refreshUser?.status === 200) {
         setHeaders(refreshUser?.data?.data);
+        purgeForeignLookupStorage(); // Phase A / A13: refreshed identity keeps only its own tenant cache
         // The backend now sends both tokens as-is (no client-side decryption) - see
         // helpers/crypt.helper.js.
         setRefreshToken(refreshUser?.data?.data?.refreshToken);
@@ -104,6 +111,8 @@ export const signInMicrosoft = data => {
       if (res?.status === 200) {
         setHeaders(res.data);
         setRefreshToken(res?.data?.refreshToken);
+        // Phase A / A13: a new session never sees another tenant's (or legacy global) lookups.
+        purgeForeignLookupStorage();
         clearB2CAuthTransaction();
         dispatch(setSignedIn(true));
         dispatch(setUser(res.data.user));
@@ -147,30 +156,9 @@ export const signInMicrosoft = data => {
 export const signOut = navigate => {
   return async dispatch => {
     try {
-      // Clear all lookup data from local storage first
-      const lookupKeys = [
-        'paymentLookups',
-        'genderLookups',
-        'cityLookups',
-        'titleLookups',
-        'secondarySection',
-        'primarySection',
-        'gradeLookups',
-        'studyLocationLookups',
-        'disciplineLookups',
-        'workLocationLookups',
-        'allLookups',
-        'countries',
-        'categories',
-      ];
-
-      lookupKeys.forEach(key => {
-        try {
-          window.localStorage.removeItem(key);
-        } catch (error) {
-          console.error(`Failed to remove ${key} from localStorage:`, error);
-        }
-      });
+      // Phase A / A13: every tenant lookup cache (the single TENANT_LOOKUP_KEYS list, incl.
+      // youthForumLookups, which the old list missed) plus the legacy global keys.
+      clearTenantLookupStorage();
 
       performLogoutCleanup(dispatch);
 

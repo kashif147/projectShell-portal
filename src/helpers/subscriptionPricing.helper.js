@@ -224,20 +224,26 @@ const normalizeCategoryLabel = value =>
     .replace(/[_-]+/g, ' ')
     .replace(/\s+/g, ' ');
 
+// Phase A / A13: membership products are identified by their stable product code (MEM type).
+export const RETIRED_ASSOCIATE_PRODUCT_CODE = '4080';
+export const UNDERGRADUATE_STUDENT_PRODUCT_CODE = '4090';
+
+/** Retired Associate: by the resolved product's code only (labels are not behaviour). */
+export const isRetiredAssociateProduct = categoryData =>
+  String(categoryData?.code ?? '') === RETIRED_ASSOCIATE_PRODUCT_CODE;
+
 /** Undergraduate members skip subscription payment on first application submit. */
 export const isUndergraduateStudentMembership = (
   membershipCategory,
   categoryData = null,
 ) => {
-  if (normalizeCategoryLabel(membershipCategory) === 'undergraduate student') {
-    return true;
+  // The resolved product decides by its stable code (4090).
+  if (categoryData && categoryData.code != null) {
+    return String(categoryData.code) === UNDERGRADUATE_STUDENT_PRODUCT_CODE;
   }
 
-  if (categoryData?.code === 'undergraduate_student') {
-    return true;
-  }
-
-  return normalizeCategoryLabel(categoryData?.name) === 'undergraduate student';
+  // Product not resolved yet: legacy display-name fallback on the form value (Phase C backlog).
+  return normalizeCategoryLabel(membershipCategory) === 'undergraduate student';
 };
 
 export const UNDERGRADUATE_STUDENT_PAYMENT_TYPE = 'Cash';
