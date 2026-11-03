@@ -142,6 +142,12 @@ const EventDetailModal = ({ event, onClose, onRegister }) => {
             </div>
           )}
 
+          {event.studentClaimStatus ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs sm:text-sm font-medium text-amber-900">
+              {event.studentClaimStatus}
+            </div>
+          ) : null}
+
           <div className="border-t border-slate-100 pt-4">
             <h4 className="mb-2 text-sm font-bold text-slate-900 font-poppins">
               About this event

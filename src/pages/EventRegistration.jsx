@@ -5,6 +5,11 @@ import Button from '../components/common/Button';
 import Spinner from '../components/common/Spinner';
 import PersonalInformation from '../components/application/PersonalInformation';
 import RegistrationPricingOptions from '../components/events/RegistrationPricingOptions';
+import StudentClaimField from '../components/events/StudentClaimField';
+import {
+  isStudentClaimRequired,
+  validateStudentInstitution,
+} from '../helpers/studentClaim';
 import { fetchPublishedEvents } from '../api/events.api';
 import {
   buildEventRegistrationData,
@@ -30,6 +35,8 @@ const EventRegistration = () => {
   } = useApplication();
   const [quantities, setQuantities] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [studentInstitution, setStudentInstitution] = useState('');
+  const [showClaimError, setShowClaimError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [event, setEvent] = useState(null);
 
@@ -104,9 +111,17 @@ const EventRegistration = () => {
     }));
   };
 
+  const studentClaimRequired = isStudentClaimRequired(pricingOptions, quantities);
+  const studentClaimCheck = validateStudentInstitution(studentInstitution);
+
   const handleRegisterAndPay = () => {
     if (!event || !selectedLineItems.length) {
       toast.error('Please select at least one ticket quantity.');
+      return;
+    }
+    if (studentClaimRequired && !studentClaimCheck.ok) {
+      setShowClaimError(true);
+      toast.error(studentClaimCheck.error);
       return;
     }
 
@@ -132,6 +147,8 @@ const EventRegistration = () => {
         lineItems: buildRegistrationLineItems(pricingOptions, quantities),
         quantities,
         totalCost,
+        // P5 STUDENT claim (institution declaration); null unless a Student ticket needs one.
+        studentClaim: studentClaimRequired ? { institution: studentClaimCheck.value } : null,
       });
     }, 450);
   };
@@ -260,6 +277,14 @@ const EventRegistration = () => {
           onQuantityChange={handleQuantityChange}
           entityLabel="event"
         />
+        {studentClaimRequired ? (
+          <StudentClaimField
+            value={studentInstitution}
+            onChange={setStudentInstitution}
+            error={studentClaimCheck.error}
+            showError={showClaimError}
+          />
+        ) : null}
       </div>
 
       <div className="sticky bottom-4 z-10 rounded-xl border border-slate-200 bg-white p-4 shadow-lg">
