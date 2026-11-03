@@ -84,3 +84,15 @@ export const createRegistrationRequest = data =>
 
 export const fetchMyRegistrations = () =>
   withEventsRetry(() => events_request.get('/api/registrations/mine'));
+
+// P5 attendance: a check-in pass for one session, shown to the organiser (who scans it).
+export const fetchCheckinPass = (registrationId, sessionId) =>
+  events_request.get(`/api/registrations/${registrationId}/sessions/${sessionId}/checkin-qr`);
+
+// P5 attendance: self-marking, ONLINE sessions only, inside the check-in window.
+export const markOwnAttendance = (registrationId, sessionId) =>
+  events_request.post(`/api/registrations/${registrationId}/sessions/${sessionId}/attendance/self`);
+
+// Event detail with its sessions (the list endpoint does not include sessions).
+export const fetchEventWithSessions = (eventId) =>
+  withEventsRetry(() => events_request.get(`/api/events/${eventId}`));

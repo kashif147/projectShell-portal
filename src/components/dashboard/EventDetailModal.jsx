@@ -15,6 +15,7 @@ import {
 } from '../../helpers/events.helper';
 import { useMemberRole } from '../../hooks/useMemberRole';
 import { useApplication } from '../../contexts/applicationContext';
+import CheckinPassSection from '../events/CheckinPassSection';
 
 const EventDetailModal = ({ event, onClose, onRegister }) => {
   const { isMember } = useMemberRole();
@@ -163,6 +164,8 @@ const EventDetailModal = ({ event, onClose, onRegister }) => {
               </p>
             )}
           </div>
+
+          <CheckinPassSection event={event} />
         </div>
 
         <div className="flex justify-end items-center gap-2.5 border-t border-slate-100 px-6 py-4 bg-slate-50/50">
