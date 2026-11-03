@@ -16,6 +16,7 @@ import { PaymentStatusModal } from '../components/modals';
 import { createPaymentIntentRequest } from '../api/payment.api';
 import { createRegistrationRequest } from '../api/events.api';
 import { buildEventsRegistrationPayload } from '../helpers/events.helper';
+import { registrationErrorMessage } from '../helpers/studentClaim';
 import {
   buildRegistrationIntentCacheKey,
   clearRegistrationPaymentIntentCache,
@@ -261,6 +262,7 @@ const RegistrationPayment = () => {
       registeredVia: 'portal',
       stripePaymentIntentId,
       globalPaymentsTransactionId,
+      studentClaim: paymentPayload.studentClaim,
     });
 
     if (!registrationPayload.profile?.email) {
@@ -277,11 +279,9 @@ const RegistrationPayment = () => {
 
     const res = await createRegistrationRequest(registrationPayload);
     if (res?.status !== 200 && res?.status !== 201) {
-      throw new Error(
-        res?.data?.message ||
-          res?.data?.error?.message ||
-          'Unable to create registration.',
-      );
+      // P5 STUDENT: 400 STUDENT_CLAIM_REQUIRED / 403 GROUP_STUDENT_CRM_ONLY / 503
+      // MEMBERSHIP_LOOKUP_FAILED get specific messages; never a fallback price.
+      throw new Error(registrationErrorMessage(res));
     }
     return res;
   };
