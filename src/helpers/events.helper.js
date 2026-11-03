@@ -8,6 +8,12 @@ import {
   PORTAL_REGISTRATION_TYPE,
   resolvePortalRegistrationEntityId,
 } from './registrationPaymentBinding';
+import {
+  STUDENT_PROVISIONAL_COPY,
+  buildStudentClaim,
+  studentClaimStatusLabel,
+  studentOptionRequiresInstitution,
+} from './studentClaim';
 
 export const PRICING_TIER_TYPES = {
   EARLY_BIRD_MEMBER: 'EARLY_BIRD_MEMBER',
@@ -255,10 +261,6 @@ export const buildAvailablePricingOptions = (
     PRICING_TIER_TYPES.EARLY_BIRD_NON_MEMBER,
   );
   const studentTier = findPricingTierByType(event, PRICING_TIER_TYPES.STUDENT);
-  const groupStudentTier = findPricingTierByType(
-    event,
-    PRICING_TIER_TYPES.GROUP_STUDENT,
-  );
   const earlyBirdMemberActive = isEarlyBirdPricingActive(
     earlyBirdMemberTier,
     now,
@@ -360,32 +362,23 @@ export const buildAvailablePricingOptions = (
         title: 'Student',
         subtitle: isMember
           ? 'Available for undergraduate student members'
-          : 'Student registration rate',
+          : `Student registration rate · ${STUDENT_PROVISIONAL_COPY}`,
         price: Number(studentTier.price) || 0,
         unitPrice: Number(studentTier.price) || 0,
         isGroup: false,
         minGroupSize: null,
         cutoffDate: studentTier.cutoffDate || null,
         selectable: true,
+        // P5: a non-member (or non-undergraduate) must declare an institution; the organiser
+        // verifies it in the CRM before approval/capture (see helpers/studentClaim.js).
+        requiresInstitution: studentOptionRequiresInstitution({ isMember, isUndergraduate }),
       });
     }
   }
 
-  if (groupStudentTier) {
-    const minGroupSize = Number(groupStudentTier.minGroupSize) || 1;
-    options.push({
-      id: 'group-student',
-      tierType: PRICING_TIER_TYPES.GROUP_STUDENT,
-      title: 'Group Student',
-      subtitle: `Minimum ${minGroupSize} students · charged per student`,
-      price: Number(groupStudentTier.price) || 0,
-      unitPrice: Number(groupStudentTier.price) || 0,
-      isGroup: true,
-      minGroupSize,
-      cutoffDate: groupStudentTier.cutoffDate || null,
-      selectable: true,
-    });
-  }
+  // P5 STUDENT policy: Group Student is arranged by the organiser in the CRM until a group
+  // verification flow exists (events-service refuses it from the portal with 403
+  // GROUP_STUDENT_CRM_ONLY), so no 'group-student' option is offered here.
 
   return options;
 };
@@ -631,6 +624,8 @@ export const mapRegistrationToCard = item => {
       getEventImageUrl(item.event) ||
       getEventImageUrl(item.course) ||
       undefined,
+    // Member-facing student claim status (server sends source/institution/status only).
+    studentClaimStatus: studentClaimStatusLabel(item.studentEligibility),
     rawRegistration: item,
   };
 };
@@ -717,6 +712,7 @@ export const applyRegistrationStatus = (items = [], registrations = []) => {
       registrationType: item.kind || reg.registrationType,
       approvalStatus: reg.approvalStatus,
       paymentStatus: reg.paymentStatus,
+      studentClaimStatus: reg.card?.studentClaimStatus || null,
     };
   });
 };
@@ -925,6 +921,7 @@ export const buildEventsRegistrationPayload = ({
   registeredVia = 'portal',
   stripePaymentIntentId,
   globalPaymentsTransactionId,
+  studentClaim,
 } = {}) => {
   const id = resolvePortalRegistrationEntityId({ eventId, courseId, event });
   const registrationType = PORTAL_REGISTRATION_TYPE;
@@ -959,6 +956,15 @@ export const buildEventsRegistrationPayload = ({
 
   if (globalPaymentsTransactionId) {
     payload.globalPaymentsTransactionId = globalPaymentsTransactionId;
+  }
+
+  // P5 STUDENT claim: only with a STUDENT line item and a valid institution.
+  const claim = buildStudentClaim({
+    lineItems: payload.lineItems,
+    institution: studentClaim?.institution,
+  });
+  if (claim) {
+    payload.studentClaim = claim;
   }
 
   return payload;
