@@ -14,6 +14,10 @@ import Button from '../components/common/Button';
 import Spinner from '../components/common/Spinner';
 import { PaymentStatusModal } from '../components/modals';
 import { createPaymentIntentRequest } from '../api/payment.api';
+import {
+  registrationPaymentBinding,
+  resolvePortalRegistrationEntityId,
+} from '../helpers/registrationPaymentBinding';
 import { createRegistrationRequest } from '../api/events.api';
 import { buildEventsRegistrationPayload } from '../helpers/events.helper';
 import { registrationErrorMessage } from '../helpers/studentClaim';
@@ -126,12 +130,14 @@ const RegistrationPayment = () => {
   const stripePaymentIntentIdRef = useRef(null);
   const intentCacheKeyRef = useRef(null);
 
-  const registrationEntityId =
-    paymentPayload.courseId ||
-    paymentPayload.eventId ||
-    paymentPayload.course?.courseId ||
-    paymentPayload.course?.id ||
-    paymentPayload.event?.id;
+  // P5: the intent is created for exactly the id and type the registration is submitted
+  // with (buildEventsRegistrationPayload), so account-service's attach binding matches.
+  const registrationEntityId = resolvePortalRegistrationEntityId({
+    eventId: paymentPayload.eventId,
+    courseId: paymentPayload.courseId,
+    event: paymentPayload.event || paymentPayload.course,
+  });
+  const paymentBinding = registrationPaymentBinding({ entityId: registrationEntityId });
   const userId = user?.id || user?._id || userDetail?.id || userDetail?._id;
   const tenantId =
     user?.tenantId ||
@@ -169,7 +175,7 @@ const RegistrationPayment = () => {
       return undefined;
     }
 
-    const purpose = 'eventRegistration';
+    const { purpose } = paymentBinding;
     const cacheKey = buildRegistrationIntentCacheKey({
       purpose,
       eventId: registrationEntityId,
@@ -196,10 +202,10 @@ const RegistrationPayment = () => {
           purpose,
           amount: amountInCents,
           currency: 'eur',
+          entityType: paymentBinding.entityType,
+          entityId: paymentBinding.entityId,
           metadata: {
-            ...(isCourse
-              ? { eventId: registrationEntityId }
-              : { eventId: registrationEntityId }),
+            ...paymentBinding.metadata,
             eventTitle: title,
             tenantId,
             userId,
@@ -588,7 +594,7 @@ const RegistrationPayment = () => {
               <GlobalPaymentsCardForm
                 amount={amountInCents}
                 currency="eur"
-                purpose="eventRegistration"
+                purpose={paymentBinding.purpose}
                 eventId={registrationEntityId}
                 submitLabel={isCourse ? 'Enroll & Pay' : 'Register & Pay'}
                 disabled={!nameOnCard.trim() || !email.trim() || isPaying}

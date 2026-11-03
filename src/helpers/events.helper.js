@@ -5,6 +5,10 @@ import {
 } from './applicationForm.helper';
 import { isDataFormat } from './date.helper';
 import {
+  PORTAL_REGISTRATION_TYPE,
+  resolvePortalRegistrationEntityId,
+} from './registrationPaymentBinding';
+import {
   STUDENT_PROVISIONAL_COPY,
   buildStudentClaim,
   studentClaimStatusLabel,
@@ -919,8 +923,8 @@ export const buildEventsRegistrationPayload = ({
   globalPaymentsTransactionId,
   studentClaim,
 } = {}) => {
-  const id = eventId || courseId || event?.id;
-  const registrationType = 'event';
+  const id = resolvePortalRegistrationEntityId({ eventId, courseId, event });
+  const registrationType = PORTAL_REGISTRATION_TYPE;
 
   const resolvedLineItems = (lineItems?.length
     ? lineItems
