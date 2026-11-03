@@ -4,6 +4,10 @@ import {
   validateApplicationStep,
 } from './applicationForm.helper';
 import { isDataFormat } from './date.helper';
+import {
+  PORTAL_REGISTRATION_TYPE,
+  resolvePortalRegistrationEntityId,
+} from './registrationPaymentBinding';
 
 export const PRICING_TIER_TYPES = {
   EARLY_BIRD_MEMBER: 'EARLY_BIRD_MEMBER',
@@ -922,8 +926,8 @@ export const buildEventsRegistrationPayload = ({
   stripePaymentIntentId,
   globalPaymentsTransactionId,
 } = {}) => {
-  const id = eventId || courseId || event?.id;
-  const registrationType = 'event';
+  const id = resolvePortalRegistrationEntityId({ eventId, courseId, event });
+  const registrationType = PORTAL_REGISTRATION_TYPE;
 
   const resolvedLineItems = (lineItems?.length
     ? lineItems
