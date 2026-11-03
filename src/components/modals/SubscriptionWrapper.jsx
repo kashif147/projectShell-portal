@@ -111,7 +111,7 @@ const SubscriptionWrapper = ({
             : Math.round(basePrice / 4);
 
         const paymentData = {
-          purpose: 'subscriptionFee',
+          purpose: 'applicationFee',
           amount: amountInCents,
           currency,
           metadata: {

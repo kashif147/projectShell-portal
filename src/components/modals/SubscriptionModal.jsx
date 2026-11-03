@@ -571,7 +571,7 @@ const SubscriptionModal = ({
             <GlobalPaymentsCardForm
               amount={amountInCents}
               currency={currency}
-              purpose="subscriptionFee"
+              purpose="applicationFee"
               applicationId={applicationId}
               submitLabel="Pay Now"
               metadata={{
