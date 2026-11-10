@@ -7,6 +7,7 @@ import {
   TeamOutlined,
   TagOutlined,
   ArrowRightOutlined,
+  CloseCircleFilled,
 } from '@ant-design/icons';
 import {
   getRegistrationStatusLabel,
@@ -19,6 +20,9 @@ const statusStyles = {
   available: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   waitlist: 'bg-purple-50 text-purple-700 border-purple-200',
   completed: 'bg-slate-100 text-slate-700 border-slate-200',
+  // Prominent on purpose: a cancelled registration must not read like an active one.
+  cancelled:
+    'bg-red-600 text-white border-red-600 shadow-sm uppercase tracking-wide',
 };
 
 const DESCRIPTION_PREVIEW_LENGTH = 140;
@@ -58,12 +62,15 @@ const EventCard = ({ event, onRegister, onViewDetails }) => {
   const isWaitlist = statusKey === 'waitlist';
   const isSubmitted = statusKey === 'submitted';
   const isRegistered = statusKey === 'registered';
+  const isCancelled = statusKey === 'cancelled';
   const isLocked = isRegistrationLocked(event);
   const description = event?.description || 'No description available.';
   const hasLongDescription = description.length > DESCRIPTION_PREVIEW_LENGTH;
   const hasImage = Boolean(event?.image);
 
-  const actionLabel = isCompleted
+  const actionLabel = isCancelled
+    ? 'Cancelled'
+    : isCompleted
     ? 'Completed'
     : isRegistered
       ? 'Registered'
@@ -74,7 +81,21 @@ const EventCard = ({ event, onRegister, onViewDetails }) => {
           : 'Register Now';
 
   return (
-    <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_20px_-4px_rgba(15,23,42,0.04)] transition-all duration-250 hover:-translate-y-1 hover:shadow-xl hover:border-slate-300">
+    <div
+      data-registration-status={statusKey || undefined}
+      className={`group flex h-full flex-col overflow-hidden rounded-2xl border ${
+        isCancelled
+          ? 'border-red-300 ring-1 ring-red-200 hover:border-red-400'
+          : 'border-slate-200/80 hover:border-slate-300'
+      } bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_20px_-4px_rgba(15,23,42,0.04)] transition-all duration-250 hover:-translate-y-1 hover:shadow-xl`}>
+      {isCancelled ? (
+        <div
+          role="status"
+          className="flex items-center gap-2 bg-red-600 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white">
+          <CloseCircleFilled />
+          <span>Registration cancelled</span>
+        </div>
+      ) : null}
       {hasImage ? <EventCardImageHeader event={event} /> : null}
 
       <div className="flex flex-1 flex-col space-y-4 p-5">
@@ -90,7 +111,8 @@ const EventCard = ({ event, onRegister, onViewDetails }) => {
             </h3>
           </div>
           <span
-            className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${statusClass}`}>
+            className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${statusClass}`}>
+            {isCancelled ? <CloseCircleFilled /> : null}
             {statusLabel}
           </span>
         </div>
