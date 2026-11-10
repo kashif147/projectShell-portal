@@ -5,6 +5,10 @@ import {
 } from './applicationForm.helper';
 import { isDataFormat } from './date.helper';
 import {
+  CANCELLED_CARD_STATUS,
+  isCancelledRegistration,
+} from './registrationCancellation';
+import {
   PORTAL_REGISTRATION_TYPE,
   resolvePortalRegistrationEntityId,
 } from './registrationPaymentBinding';
@@ -59,6 +63,12 @@ export const resolveRegistrationCardStatus = (item = {}) => {
   const approval = String(item?.approvalStatus || '').toLowerCase();
   const status = String(item?.status || '').toLowerCase();
 
+  // Cancelled / rejected first: a registration cancelled while still pending review must not show as
+  // "Submitted".
+  if (isCancelledRegistration(item)) {
+    return CANCELLED_CARD_STATUS;
+  }
+
   // Prefer explicit approvalStatus from registrations API.
   if (approval === 'pending_review' || approval === 'pending') {
     return 'submitted';
@@ -98,6 +108,8 @@ export const getRegistrationStatusLabel = status => {
       return 'Waitlist';
     case 'completed':
       return 'Completed';
+    case 'cancelled':
+      return 'Cancelled';
     default:
       return status ? String(status) : 'Available';
   }
